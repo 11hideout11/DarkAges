@@ -36,7 +36,7 @@ jobs:
     
     steps:
     - name: Checkout repository
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
       with:
         submodules: recursive
     
@@ -84,7 +84,7 @@ jobs:
         fi
     
     - name: Upload test results
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       if: always()
       with:
         name: redis-test-results-linux
@@ -99,12 +99,12 @@ jobs:
     
     steps:
     - name: Checkout repository
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
       with:
         submodules: recursive
     
     - name: Setup MSVC
-      uses: microsoft/setup-msbuild@v1.1
+      uses: microsoft/setup-msbuild@v2
     
     - name: Start Redis container
       run: |
@@ -151,7 +151,7 @@ jobs:
         }
     
     - name: Upload test results
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       if: always()
       with:
         name: redis-test-results-windows
@@ -182,7 +182,7 @@ jobs:
     
     steps:
     - name: Checkout repository
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
       with:
         submodules: recursive
     
@@ -226,7 +226,7 @@ jobs:
         echo "- Latency (p99): <20ms ✅" >> $GITHUB_STEP_SUMMARY
     
     - name: Upload performance results
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       if: always()
       with:
         name: redis-performance-results
@@ -257,7 +257,7 @@ jobs:
     
     - name: Post PR comment
       if: github.event_name == 'pull_request'
-      uses: actions/github-script@v6
+      uses: actions/github-script@v7
       with:
         script: |
           const linuxStatus = '${{ needs.redis-tests-linux.result }}' === 'success' ? '✅ Pass' : '❌ Fail';
