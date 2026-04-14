@@ -41,7 +41,7 @@ jobs:
       run: |
         mkdir -p build
         cd build
-        cmake .. -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -DBUILD_TESTS=ON
+        cmake .. -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -DBUILD_TESTS=ON -DENABLE_SCYLLA=OFF
 
     - name: Build
       working-directory: ${{github.workspace}}/build
@@ -74,7 +74,7 @@ jobs:
       run: |
         mkdir build
         cd build
-        cmake .. -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -DBUILD_TESTS=ON
+        cmake .. -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -DBUILD_TESTS=ON -DENABLE_SCYLLA=OFF
 
     - name: Build
       working-directory: ${{github.workspace}}/build
@@ -104,8 +104,7 @@ jobs:
       run: |
         mkdir -p build
         cd build
-        cmake .. -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} \
-                 -DCMAKE_CXX_CLANG_TIDY="clang-tidy;-checks=cppcoreguidelines-*"
+        cmake .. -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -DENABLE_SCYLLA=OFF -DCMAKE_CXX_CLANG_TIDY="clang-tidy;-checks=cppcoreguidelines-*"
 
     - name: Build with analysis
       working-directory: ${{github.workspace}}/build

@@ -55,6 +55,7 @@ jobs:
         cmake .. -G Ninja \
           -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} \
           -DBUILD_TESTS=ON \
+          -DENABLE_SCYLLA=OFF \
           -DCMAKE_CXX_COMPILER=g++-11
 
     - name: Build server
