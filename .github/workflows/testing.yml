@@ -25,15 +25,15 @@ jobs:
     
     steps:
     - name: Checkout
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
       with:
         submodules: recursive
     
     - name: Setup MSVC
-      uses: microsoft/setup-msbuild@v1.3
+      uses: microsoft/setup-msbuild@v2
     
     - name: Cache Build
-      uses: actions/cache@v3
+      uses: actions/cache@v4
       with:
         path: build
         key: ${{ runner.os }}-build-${{ hashFiles('**/CMakeLists.txt', '**/*.cpp', '**/*.hpp') }}
@@ -56,7 +56,7 @@ jobs:
       continue-on-error: true
     
     - name: Upload Test Results
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       if: always()
       with:
         name: unit-test-results
@@ -72,7 +72,7 @@ jobs:
     
     steps:
     - name: Checkout
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
     
     - name: Setup Python
       uses: actions/setup-python@v4
@@ -91,7 +91,7 @@ jobs:
       continue-on-error: true
     
     - name: Upload Test Reports
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       if: always()
       with:
         name: simulation-test-reports
@@ -108,7 +108,7 @@ jobs:
     
     steps:
     - name: Checkout
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
       with:
         submodules: recursive
     
@@ -118,12 +118,12 @@ jobs:
         python-version: '3.11'
     
     - name: Setup Node.js
-      uses: actions/setup-node@v3
+      uses: actions/setup-node@v4
       with:
         node-version: '18'
     
     - name: Cache Godot
-      uses: actions/cache@v3
+      uses: actions/cache@v4
       id: cache-godot
       with:
         path: tools/godot
@@ -147,7 +147,7 @@ jobs:
         npm run build
     
     - name: Cache Server Build
-      uses: actions/cache@v3
+      uses: actions/cache@v4
       with:
         path: build
         key: ${{ runner.os }}-build-${{ hashFiles('**/CMakeLists.txt') }}
@@ -174,14 +174,14 @@ jobs:
       continue-on-error: true
     
     - name: Upload Screenshots
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       if: always()
       with:
         name: test-screenshots
         path: tools/automated-qa/screenshots/
     
     - name: Upload Test Reports
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       if: always()
       with:
         name: real-test-reports
@@ -198,10 +198,10 @@ jobs:
     
     steps:
     - name: Checkout
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
     
     - name: Download All Artifacts
-      uses: actions/download-artifact@v3
+      uses: actions/download-artifact@v4
       with:
         path: artifacts
     
@@ -219,7 +219,7 @@ jobs:
     
     - name: Post PR Comment
       if: github.event_name == 'pull_request'
-      uses: actions/github-script@v6
+      uses: actions/github-script@v7
       with:
         script: |
           const { data: comments } = await github.rest.issues.listComments({

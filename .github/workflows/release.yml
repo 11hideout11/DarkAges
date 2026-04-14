@@ -89,7 +89,7 @@ jobs:
       # Windows dependencies
       - name: Setup MSVC (Windows)
         if: runner.os == 'Windows'
-        uses: microsoft/setup-msbuild@v1.3
+        uses: microsoft/setup-msbuild@v2
       
       - name: Configure CMake
         shell: bash
