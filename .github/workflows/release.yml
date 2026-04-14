@@ -97,9 +97,9 @@ jobs:
           mkdir -p build
           cd build
           if [ "${{ runner.os }}" == "Windows" ]; then
-            cmake .. -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }} -DBUILD_TESTS=ON
+            cmake .. -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }} -DBUILD_TESTS=ON -DENABLE_SCYLLA=OFF
           else
-            cmake .. -G Ninja -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }} -DBUILD_TESTS=ON
+            cmake .. -G Ninja -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }} -DBUILD_TESTS=ON -DENABLE_SCYLLA=OFF
           fi
       
       - name: Build
