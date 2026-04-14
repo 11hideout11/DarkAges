@@ -108,7 +108,7 @@ jobs:
     
     - name: Start Redis container
       run: |
-        docker-compose -f infra/docker-compose.redis.yml up -d
+        docker compose -f infra/docker-compose.redis.yml up -d
         Start-Sleep -Seconds 10
     
     - name: Verify Redis connectivity
@@ -159,7 +159,7 @@ jobs:
     
     - name: Stop Redis container
       if: always()
-      run: docker-compose -f infra/docker-compose.redis.yml down
+      run: docker compose -f infra/docker-compose.redis.yml down
 
   # ==========================================================================
   # Redis Performance Baseline
