@@ -96,9 +96,6 @@ HitResult CombatSystem::performRangedAttack(Registry& registry, EntityID attacke
                                            const glm::vec3& aimDir, uint32_t currentTimeMs) {
     HitResult result;
     
-    // TODO: Implement projectile system or raycast
-    // For now, simple instant raycast
-    
     const Position* attackerPos = registry.try_get<Position>(attacker);
     const Rotation* attackerRot = registry.try_get<Rotation>(attacker);
     
@@ -107,11 +104,66 @@ HitResult CombatSystem::performRangedAttack(Registry& registry, EntityID attacke
         return result;
     }
     
-    // Simple raycast in aim direction
-    // In full implementation, use spatial hash for efficient raycast
-    // and implement actual projectile physics
+    glm::vec3 forward = getForwardVector(attackerRot->yaw);
     
-    result.hitType = "ranged";
+    auto view = registry.view<Position, CombatState>();
+    
+    EntityID closestTarget = entt::null;
+    float closestDist = 50.0f * 50.0f;
+    
+    view.each([&](EntityID target, const Position& targetPos, const CombatState& targetCombat) {
+        if (target == attacker) return;
+        if (targetCombat.isDead) return;
+        if (!canDamage(registry, attacker, target)) return;
+        
+        float dx = (targetPos.x - attackerPos->x) * Constants::FIXED_TO_FLOAT;
+        float dy = (targetPos.y - attackerPos->y) * Constants::FIXED_TO_FLOAT;
+        float dz = (targetPos.z - attackerPos->z) * Constants::FIXED_TO_FLOAT;
+        float distSq = dx*dx + dy*dy + dz*dz;
+        
+        if (distSq > 50.0f * 50.0f) return;
+        
+        glm::vec3 toTarget(dx, dy, dz);
+        float toTargetLen = std::sqrt(distSq);
+        if (toTargetLen < 0.001f) return;
+        
+        glm::vec3 toTargetNorm = toTarget / toTargetLen;
+        float dotProduct = glm::dot(forward, toTargetNorm);
+        
+        if (dotProduct <= 0.0f) return;
+        
+        if (distSq < closestDist) {
+            closestDist = distSq;
+            closestTarget = target;
+        }
+    });
+    
+    if (closestTarget != entt::null) {
+        bool isCritical = false;
+        int16_t damage = calculateDamage(registry, attacker, closestTarget,
+                                         config_.baseRangedDamage, isCritical);
+        
+        if (applyDamage(registry, closestTarget, attacker, damage, currentTimeMs)) {
+            result.hit = true;
+            result.target = closestTarget;
+            result.damageDealt = damage;
+            result.isCritical = isCritical;
+            result.hitType = "ranged";
+            
+            if (const Position* pos = registry.try_get<Position>(closestTarget)) {
+                result.hitLocation = *pos;
+            }
+            
+            if (onDamage_) {
+                onDamage_(attacker, closestTarget, damage, result.hitLocation);
+            }
+        } else {
+            result.hitType = "miss";
+        }
+    } else {
+        result.hitType = "miss";
+    }
+    
     return result;
 }
 

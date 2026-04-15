@@ -26,6 +26,8 @@ set(TEST_SOURCES
     TestLagCompensator.cpp
     TestLagCompensatedCombat.cpp
     TestCombatSystem.cpp
+    TestAbilitySystem.cpp
+    TestProjectileSystem.cpp
     TestZoneOrchestrator.cpp
     TestEntityMigration.cpp
     TestMemoryPool.cpp
@@ -52,6 +54,7 @@ set(TEST_SERVER_SOURCES
     ${CMAKE_SOURCE_DIR}/src/combat/PositionHistory.cpp
     ${CMAKE_SOURCE_DIR}/src/combat/CombatSystem.cpp
     ${CMAKE_SOURCE_DIR}/src/combat/LagCompensatedCombat.cpp
+    ${CMAKE_SOURCE_DIR}/src/combat/AbilitySystem.cpp
     ${CMAKE_SOURCE_DIR}/src/memory/MemoryPool.cpp
     ${CMAKE_SOURCE_DIR}/src/memory/LeakDetector.cpp
     ${CMAKE_SOURCE_DIR}/src/security/AntiCheat.cpp
