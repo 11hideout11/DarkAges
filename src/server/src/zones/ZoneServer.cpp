@@ -505,6 +505,9 @@ void ZoneServer::updateGameLogic() {
     // Health regeneration
     healthRegenSystem_.update(registry_, getCurrentTimeMs());
     
+    // Process pending respawns
+    processRespawns();
+    
     // [PHASE 4] Zone transitions and migration
     checkEntityZoneTransitions();
     
@@ -636,7 +639,42 @@ void ZoneServer::onEntityDied(EntityID victim, EntityID killer) {
     }
     
     // Schedule respawn
-    // TODO: Implement respawn timer
+    pendingRespawns_.push_back({victim, getCurrentTimeMs() + RESPAWN_DELAY_MS});
+}
+
+void ZoneServer::processRespawns() {
+    if (pendingRespawns_.empty()) return;
+    
+    uint32_t currentTimeMs = getCurrentTimeMs();
+    
+    // Process from back to front for safe removal during iteration
+    for (auto it = pendingRespawns_.begin(); it != pendingRespawns_.end(); ) {
+        if (currentTimeMs >= it->respawnTimeMs) {
+            EntityID entity = it->entity;
+            
+            // Verify entity still exists
+            if (registry_.valid(entity)) {
+                // Restore health
+                if (auto* stats = registry_.try_get<CombatState>(entity)) {
+                    stats->health = stats->maxHealth;
+                }
+                
+                // Teleport to spawn point (origin for now)
+                if (auto* pos = registry_.try_get<Position>(entity)) {
+                    pos->x = 0.0f;
+                    pos->y = 0.0f;
+                    pos->z = 0.0f;
+                }
+                
+                std::cout << "[ZONE " << config_.zoneId << "] Entity "
+                          << static_cast<uint32_t>(entity) << " respawned" << std::endl;
+            }
+            
+            it = pendingRespawns_.erase(it);
+        } else {
+            ++it;
+        }
+    }
 }
 
 void ZoneServer::sendCombatEvent(EntityID attacker, EntityID target, int16_t damage, const Position& location) {
