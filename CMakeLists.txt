@@ -471,7 +471,7 @@ endif()
 
 # Database layer - conditional on hiredis
 if(HIREDIS_FOUND)
-    list(APPEND SERVER_SOURCES src/server/src/db/RedisManager.cpp)
+    list(APPEND SERVER_SOURCES src/server/src/db/RedisManager.cpp src/server/src/db/ConnectionPool.cpp)
     message(STATUS "RedisManager: Using hiredis implementation")
 else()
     list(APPEND SERVER_SOURCES src/server/src/db/RedisManager_stub.cpp)
