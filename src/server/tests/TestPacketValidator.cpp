@@ -16,7 +16,7 @@ TEST_CASE("PacketValidator Position Validation", "[security][packet]") {
     }
 
     SECTION("Position at world boundary is valid") {
-        Position pos{PacketValidator::WORLD_MAX_X, 0, PacketValidator::WORLD_MAX_Z, 0};
+        Position pos{static_cast<int>(PacketValidator::WORLD_MAX_X), 0, static_cast<int>(PacketValidator::WORLD_MAX_Z), 0};
         REQUIRE(PacketValidator::IsPositionInBounds(pos));
     }
 
