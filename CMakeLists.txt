@@ -481,10 +481,16 @@ endif()
 
 # ScyllaDB layer - conditional on cassandra-cpp-driver (stub on Windows)
 if(CASSANDRA_FOUND)
-    list(APPEND SERVER_SOURCES src/server/src/db/ScyllaManager.cpp)
+    list(APPEND SERVER_SOURCES
+        src/server/src/db/ScyllaManager.cpp
+        src/server/src/db/AntiCheatLogger.cpp
+        src/server/src/db/CombatEventLogger.cpp)
     message(STATUS "ScyllaManager: Using cassandra-cpp-driver implementation")
 else()
-    list(APPEND SERVER_SOURCES src/server/src/db/ScyllaManager_stub.cpp)
+    list(APPEND SERVER_SOURCES
+        src/server/src/db/ScyllaManager_stub.cpp
+        src/server/src/db/AntiCheatLogger_stub.cpp
+        src/server/src/db/CombatEventLogger_stub.cpp)
     if(WIN32)
         message(STATUS "ScyllaManager: Using stub implementation (Windows build)")
     else()
