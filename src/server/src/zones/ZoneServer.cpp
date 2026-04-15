@@ -693,17 +693,31 @@ void ZoneServer::processRespawns() {
 }
 
 void ZoneServer::sendCombatEvent(EntityID attacker, EntityID target, int16_t damage, const Position& location) {
-    // TODO: Send EventPacket to clients
-    // This would serialize the damage event and broadcast to relevant players
+    auto attackerConnIt = entityToConnection_.find(attacker);
+    auto targetConnIt = entityToConnection_.find(target);
     
-    // [DATABASE_AGENT] Log combat event to ScyllaDB for analytics
+    auto damageEvent = Netcode::ProtobufProtocol::createDamageEvent(
+        static_cast<uint32_t>(attacker),
+        static_cast<uint32_t>(target),
+        static_cast<int32_t>(damage)
+    );
+    damageEvent.set_timestamp(getCurrentTimeMs());
+    auto eventData = Netcode::ProtobufProtocol::serializeEvent(damageEvent);
+    
+    if (attackerConnIt != entityToConnection_.end()) {
+        network_->sendEvent(attackerConnIt->second, eventData);
+    }
+    if (targetConnIt != entityToConnection_.end()) {
+        network_->sendEvent(targetConnIt->second, eventData);
+    }
+    
     HitResult hit;
     hit.hit = true;
     hit.target = target;
     hit.damageDealt = damage;
     hit.hitLocation = location;
     hit.hitType = "damage";
-    hit.isCritical = false;  // Will be set by combat system
+    hit.isCritical = false;
     logCombatEvent(hit, attacker, target);
 }
 
