@@ -19,8 +19,8 @@ Prioritized list of autonomous improvements for DarkAges.
 - [x] CombatSystem — Implement projectile/raycast stub ✅ 2026-04-15 (commit 107ad78)
 
 ## P2 — Refactoring Candidates (large files)
-- [ ] RedisManager.cpp (1655 lines) — extract connection pool to separate class
-- [ ] ZoneServer.cpp (1632 lines) — extract player management, event handling
+- [x] RedisManager.cpp (1655 lines) — extract connection pool ✅ 2026-04-15
+- [x] ZoneServer.cpp (1632 lines) — extract player management ✅ 2026-04-15
 
 ## P2 — Documentation
 - [ ] Add inline documentation to key ECS components
