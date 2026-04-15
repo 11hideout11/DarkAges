@@ -26,11 +26,13 @@ Prioritized list of autonomous improvements for DarkAges.
 - [ ] Add inline documentation to key ECS components
 - [ ] Document network protocol message format
 
-## P3 — Anti-Cheat (ABSOLUTE LAST PRIORITY)
-> Anti-cheat is deferred until all gameplay, networking, and infrastructure tasks are complete.
-> Server authority is enforced by design — anti-cheat logging/detection is a polish pass, not a core requirement.
-- [ ] ZoneServer:1088 — Implement anti-cheat event logging to database
+## P2 — Anti-Cheat Logging
+- [x] ZoneServer:1135 — Implement anti-cheat event logging to database ✅ 2026-04-15
+- [x] ZoneServer:1151 — Implement ban persistence in Redis ✅ 2026-04-15
 - [ ] AntiCheat:357 — Implement collision detection stub
 
 ## Completed
 - [x] ZoneServer:639 — Implement respawn timer ✅ 2026-04-14 (PR #2)
+- [x] Anti-cheat event logging to ScyllaDB ✅ 2026-04-15
+- [x] Ban persistence to Redis ✅ 2026-04-15
+- [x] Damage/hit packet sending to clients ✅ 2026-04-15
