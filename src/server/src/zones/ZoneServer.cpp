@@ -5,6 +5,7 @@
 #include "zones/ReplicationOptimizer.hpp"
 #include "zones/EntityMigration.hpp"
 #include "combat/LagCompensatedCombat.hpp"
+#include "netcode/ProtobufProtocol.hpp"
 #include "profiling/PerfettoProfiler.hpp"
 #include "profiling/PerformanceMonitor.hpp"
 #include "monitoring/MetricsExporter.hpp"
@@ -553,7 +554,15 @@ void ZoneServer::onEntityDied(EntityID victim, EntityID killer) {
     }
     
     // Send death event to clients
-    // TODO: Implement event packet broadcast
+    if (network_) {
+        auto deathEvent = ProtobufProtocol::createPlayerDeathEvent(
+            static_cast<uint32_t>(victim),
+            static_cast<uint32_t>(killer)
+        );
+        deathEvent.set_timestamp(getCurrentTimeMs());
+        auto eventData = ProtobufProtocol::serializeEvent(deathEvent);
+        network_->broadcastEvent(eventData);
+    }
     
     // [DATABASE_AGENT] Log kill event to ScyllaDB
     if (scylla_ && scylla_->isConnected()) {
