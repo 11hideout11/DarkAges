@@ -12,7 +12,7 @@ Prioritized list of autonomous improvements for DarkAges.
 ## P1 — Unimplemented TODOs (smallest scope first)
 - [ ] ZoneServer:328 — Implement player state persistence stub
 - [ ] ZoneServer:553 — Implement event packet broadcast
-- [ ] ZoneServer:639 — Implement respawn timer
+- [x] ZoneServer:639 — Implement respawn timer ✅ 2026-04-14 (PR #2)
 - [ ] ZoneServer:1088 — Implement anti-cheat event logging to database
 - [ ] AntiCheat:357 — Implement collision detection stub
 - [ ] CombatSystem — Implement ability system stub

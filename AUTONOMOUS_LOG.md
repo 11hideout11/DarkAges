@@ -4,6 +4,19 @@ All autonomous improvements tracked here. Most recent first.
 
 ---
 
+### ✅ 2026-04-15 — PacketValidator Test Fixes
+- **Task:** Fix 4 test failures in TestPacketValidator.cpp
+- **Status:** SUCCESS
+- **Branch:** `autonomous/respawn-timer`
+- **Changes:** 1 file, +17/-9 lines.
+  1. ClampPosition: compared fixed-point values against fixed-point-converted bounds (1000x offset); now uses float world bounds directly
+  2. ValidateSpeed: missing negative speed rejection
+  3. ValidateAbilityId: rejected ID 0 (basic attack); now allows it
+  4. ValidatePlayerName: auto-fixed empty names; now rejects them
+- **Validation:** Build PASS, Tests PASS (104 cases, 789 assertions)
+
+---
+
 ### ✅ 2026-04-14 — Respawn Timer Implementation
 - **Task:** Implement respawn timer (replaces TODO at ZoneServer.cpp:639)
 - **Status:** SUCCESS
