@@ -188,3 +188,22 @@ All autonomous improvements tracked here. Most recent first.
 - **Validation:** Build PASS, Tests PASS (131 cases, 859 assertions)
 - **Remaining TODOs:** 1 (config population at ZoneServer.cpp:73 — infrastructure-dependent, low priority)
 
+
+---
+
+### ✅ 2026-04-16 — ProtobufProtocol Unit Tests
+- **Task:** Add unit tests for ProtobufProtocol
+- **Status:** SUCCESS
+- **Branch:** `feature/protobuf-protocol-tests`
+- **Changes:** 2 files, +740 lines. 10 test cases, 198 assertions covering all packet types, roundtrip serialization, boundary values, EntityState quantization
+- **Validation:** Build PASS, Tests PASS (9 suites)
+
+---
+
+### ✅ 2026-04-16 — GNSNetworkManager Unit Tests
+- **Task:** Add unit tests for GNSNetworkManager (GNS-conditional)
+- **Status:** SUCCESS
+- **Branch:** `feature/gns-network-manager-tests`
+- **Changes:** 1 file, +410 lines. 31 test cases — type tests always available, implementation tests behind ENABLE_GNS
+- **Validation:** Build PASS, Tests PASS (9 suites)
+
