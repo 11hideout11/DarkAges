@@ -12,6 +12,7 @@
 #include <algorithm>
 #include <mutex>
 #include <queue>
+#include <memory>
 #include <unordered_map>
 #include <string>
 
@@ -34,18 +35,50 @@ struct ConnectionState {
     bool isActive{false};
 };
 
+// Move-only callable wrapper (needed because std::function requires copyability,
+// but capturing std::unique_ptr produces a move-only lambda)
+template <typename Signature>
+class MoveOnlyFunction;
+
+template <typename R, typename... Args>
+class MoveOnlyFunction<R(Args...)> {
+    struct Concept {
+        virtual ~Concept() = default;
+        virtual R invoke(Args... args) = 0;
+    };
+    template <typename F>
+    struct Model : Concept {
+        F func;
+        explicit Model(F&& f) : func(std::move(f)) {}
+        R invoke(Args... args) override { return func(std::forward<Args>(args)...); }
+    };
+    std::unique_ptr<Concept> impl_;
+
+public:
+    MoveOnlyFunction() = default;
+    template <typename F>
+    MoveOnlyFunction(F&& f) : impl_(std::make_unique<Model<std::decay_t<F>>>(std::move(f))) {}
+    MoveOnlyFunction(MoveOnlyFunction&&) = default;
+    MoveOnlyFunction& operator=(MoveOnlyFunction&&) = default;
+    MoveOnlyFunction(const MoveOnlyFunction&) = delete;
+    MoveOnlyFunction& operator=(const MoveOnlyFunction&) = delete;
+
+    explicit operator bool() const { return impl_ != nullptr; }
+    R operator()(Args... args) { return impl_->invoke(std::forward<Args>(args)...); }
+};
+
 // Thread-safe message queue for cross-thread communication
 struct ThreadSafeQueue {
     std::mutex mutex;
-    std::queue<std::function<void()>> queue;
+    std::queue<MoveOnlyFunction<void()>> queue;
     
-    void push(std::function<void()> func) {
+    void push(MoveOnlyFunction<void()> func) {
         std::lock_guard<std::mutex> lock(mutex);
         queue.push(std::move(func));
     }
     
     void processAll() {
-        std::queue<std::function<void()>> localQueue;
+        std::queue<MoveOnlyFunction<void()>> localQueue;
         {
             std::lock_guard<std::mutex> lock(mutex);
             std::swap(localQueue, queue);
@@ -108,14 +141,13 @@ void GNSInternal::SteamNetConnectionStatusChangedCallback(SteamNetConnectionStat
     
     if (manager && manager->internal_) {
         // Queue the callback to be processed on the main thread
-        SteamNetConnectionStatusChangedCallback_t* pInfoCopy = 
-            new SteamNetConnectionStatusChangedCallback_t(*pInfo);
+        auto pInfoCopy = std::make_unique<SteamNetConnectionStatusChangedCallback_t>(*pInfo);
         
-        manager->internal_->callbackQueue.push([manager, pInfoCopy]() {
+        manager->internal_->callbackQueue.push([manager, pInfoCopy = std::move(pInfoCopy)]() mutable {
             if (manager->internal_) {
-                manager->internal_->onConnectionStatusChanged(pInfoCopy);
+                manager->internal_->onConnectionStatusChanged(pInfoCopy.get());
             }
-            delete pInfoCopy;
+            pInfoCopy.reset();
         });
     }
 }
