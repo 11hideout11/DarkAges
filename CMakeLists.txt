@@ -686,11 +686,13 @@ if(BUILD_TESTS AND TARGET Catch2::Catch2WithMain)
         src/server/tests/TestPacketValidator.cpp
         src/server/tests/TestProfiling.cpp
         src/server/tests/TestAntiCheat.cpp
+        src/server/tests/TestProtobufProtocol.cpp
     )
 
     # Conditionally include tests for optional features
     if(ENABLE_GNS AND GNS_FOUND)
         list(APPEND TEST_SOURCES src/server/tests/TestGNSIntegration.cpp)
+        list(APPEND TEST_SOURCES src/server/tests/TestGNSNetworkManager.cpp)
         message(STATUS "Including GNS integration tests")
     else()
         message(STATUS "Skipping GNS integration tests (GNS not available)")
