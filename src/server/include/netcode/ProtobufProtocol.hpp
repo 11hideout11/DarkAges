@@ -91,7 +91,8 @@ public:
     
     // Create a player death event
     static NetworkProto::ReliableEvent createPlayerDeathEvent(
-        uint32_t entityId
+        uint32_t victimEntityId,
+        uint32_t killerEntityId = 0
     );
     
     // Serialize event to binary

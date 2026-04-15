@@ -156,11 +156,13 @@ NetworkProto::ReliableEvent ProtobufProtocol::createDamageEvent(
 }
 
 NetworkProto::ReliableEvent ProtobufProtocol::createPlayerDeathEvent(
-    uint32_t entityId
+    uint32_t victimEntityId,
+    uint32_t killerEntityId
 ) {
     NetworkProto::ReliableEvent event;
     event.set_type(NetworkProto::ReliableEvent::PLAYER_DIED);
-    event.set_source_entity(entityId);
+    event.set_source_entity(killerEntityId);   // Who killed them (0 = NPC/environment)
+    event.set_target_entity(victimEntityId);   // Who died
     return event;
 }
 
