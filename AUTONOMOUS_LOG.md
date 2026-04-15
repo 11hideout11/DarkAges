@@ -2,6 +2,35 @@
 
 All autonomous improvements tracked here. Most recent first.
 
+
+---
+
+### ✅ 2026-04-16 — PlayerManager Unit Tests
+- **Task:** Add unit tests for PlayerManager
+- **Status:** SUCCESS
+- **Branch:** `feature/player-manager-tests`
+- **Changes:** 2 files, +501 lines. 15 test cases, 168 assertions covering register/unregister, lookup, lifecycle, state management
+- **Validation:** Build PASS, Tests PASS (9 suites)
+
+---
+
+### ✅ 2026-04-16 — ZoneHandoff Tests + Iterator Bugfix
+- **Task:** Add unit tests for ZoneHandoffController
+- **Status:** SUCCESS
+- **Branch:** `feature/zone-handoff-tests`
+- **Changes:** 2 files, +741/-20 lines. 13 test cases, 85 assertions. **Fixed real UB:** erase during range-for in update()
+- **Coverage:** Handoff phases, initiation, cancellation, timeouts, concurrent handoffs, statistics
+- **Validation:** Build PASS, Tests PASS (9 suites)
+
+---
+
+### ✅ 2026-04-16 — CrossZoneMessenger Unit Tests
+- **Task:** Add unit tests for CrossZoneMessenger
+- **Status:** SUCCESS
+- **Branch:** `feature/crosszone-messenger-tests`
+- **Changes:** 1 file, +695 lines. 15 test cases, 165 assertions covering serialization, message filtering, callbacks
+- **Validation:** Build PASS, Tests PASS (9 suites)
+
 ---
 
 ### ✅ 2026-04-16 — MetricsExporter Comprehensive Unit Tests
