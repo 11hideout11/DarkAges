@@ -62,6 +62,35 @@ All autonomous improvements tracked here. Most recent first.
 
 ---
 
+### ✅ 2026-04-16 — MetricsExporter Comprehensive Unit Tests
+- **Task:** Add unit tests for MetricsExporter (no existing test file)
+- **Status:** SUCCESS
+- **Branch:** `feature/metrics-exporter-tests`
+- **Changes:** 3 files, +399 lines. TestMetricsExporter.cpp (16 test cases, 66 assertions), registered in root CMakeLists.txt.
+- **Coverage:** Counter (increment/labeled/serialize), Gauge (set/inc/dec/labels), Histogram (observe/buckets/labels), MetricsExporter singleton, ScopedTimer RAII
+- **Pitfalls:** Private constructor (singleton), `{}` initializer ambiguity, histogram setprecision(4) format
+- **Validation:** Build PASS, Tests PASS (9 suites, all passing)
+
+---
+
+### ✅ 2026-04-16 — NetworkManager Raw New Replacement
+- **Task:** Replace raw `new` with `std::make_unique` in NetworkManager callback (line 112)
+- **Status:** SUCCESS
+- **Branch:** `feature/network-manager-unique-ptr`
+- **Changes:** 1 file, +40/-8 lines. Added MoveOnlyFunction wrapper, replaced raw new/delete with make_unique
+- **Validation:** Build PASS, Tests PASS (9 suites)
+
+---
+
+### ✅ 2026-04-16 — Adjacent Zone Loading for AuraProjectionManager
+- **Task:** Populate adjacentZones vector (replaces TODO at ZoneServer.cpp:73)
+- **Status:** SUCCESS
+- **Branch:** `feature/adjacent-zone-loading`
+- **Changes:** 1 file, +39/-2 lines. Grid-based 2x2 adjacency computation, 8-directional neighbor detection
+- **Validation:** Build PASS, Tests PASS (9 suites)
+
+---
+
 ### ✅ 2026-04-16 — AbilitySystem Full Implementation
 - **Task:** Replace AbilitySystem stubs with real casting, cooldown, mana logic; wire into CombatSystem
 - **Status:** SUCCESS
@@ -191,6 +220,15 @@ All autonomous improvements tracked here. Most recent first.
 
 ---
 
+### ✅ 2026-04-16 — MetricsExporter Unit Tests
+- **Task:** Add comprehensive unit tests for MetricsExporter
+- **Status:** SUCCESS
+- **Branch:** `feature/metrics-exporter-tests`
+- **Changes:** 2 files, +399 lines. 16 test cases, 66 assertions
+- **Validation:** Build PASS, Tests PASS
+
+---
+
 ### ✅ 2026-04-16 — ProtobufProtocol Unit Tests
 - **Task:** Add unit tests for ProtobufProtocol
 - **Status:** SUCCESS
@@ -206,4 +244,3 @@ All autonomous improvements tracked here. Most recent first.
 - **Branch:** `feature/gns-network-manager-tests`
 - **Changes:** 1 file, +410 lines. 31 test cases — type tests always available, implementation tests behind ENABLE_GNS
 - **Validation:** Build PASS, Tests PASS (9 suites)
-
