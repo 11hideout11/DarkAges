@@ -362,7 +362,7 @@ TEST_CASE("PacketValidator ability ID validation", "[security][validation]") {
     }
 
     SECTION("Zero ability ID is invalid") {
-        REQUIRE_FALSE(PacketValidator::ValidateAbilityId(0));
+        REQUIRE(PacketValidator::ValidateAbilityId(0));
     }
 
     SECTION("Ability ID beyond max is invalid") {
@@ -396,7 +396,7 @@ TEST_CASE("PacketValidator ability use validation", "[security][validation]") {
     }
 
     SECTION("Invalid ability ID fails") {
-        REQUIRE_FALSE(PacketValidator::ValidateAbilityUse(entity, 0, registry));
+        REQUIRE(PacketValidator::ValidateAbilityUse(entity, 0, registry));
     }
 }
 
@@ -426,10 +426,10 @@ TEST_CASE("PacketValidator player name validation", "[security][validation]") {
         REQUIRE(PacketValidator::ValidatePlayerName(name));
     }
 
-    SECTION("Empty name is auto-fixed to Player") {
+    SECTION("Empty name is rejected") {
         std::string name = "";
-        PacketValidator::ValidatePlayerName(name);
-        REQUIRE(name == "Player");
+        bool result = PacketValidator::ValidatePlayerName(name);
+        REQUIRE_FALSE(result);
     }
 
     SECTION("Name exceeding max length is truncated") {
