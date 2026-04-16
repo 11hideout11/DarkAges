@@ -38,16 +38,16 @@
 
 namespace DarkAges {
 
-ZoneServer::ZoneServer() 
-    : auraManager_(1),  // Default zone ID, will be updated in initialize
+ZoneServer::ZoneServer()
+    : smallPool_(std::make_unique<Memory::SmallPool>()),
+      mediumPool_(std::make_unique<Memory::MediumPool>()),
+      largePool_(std::make_unique<Memory::LargePool>()),
+      tempAllocator_(std::make_unique<Memory::StackAllocator>(1024 * 1024)),
+      auraManager_(1),  // Default zone ID, will be updated in initialize
       combatEventHandler_(*this),
       auraZoneHandler_(*this),
       inputHandler_(*this),
-      performanceHandler_(*this),
-      tempAllocator_(std::make_unique<Memory::StackAllocator>(1024 * 1024)),
-      smallPool_(std::make_unique<Memory::SmallPool>()),
-      mediumPool_(std::make_unique<Memory::MediumPool>()),
-      largePool_(std::make_unique<Memory::LargePool>()) {
+      performanceHandler_(*this) {
 }
 ZoneServer::~ZoneServer() = default;
 
