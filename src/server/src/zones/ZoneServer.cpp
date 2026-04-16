@@ -1033,8 +1033,6 @@ void ZoneServer::validateAndApplyInput(EntityID entity, const ClientInputPacket&
     auto result = movementSystem_.applyInput(registry_, entity, input.input, currentTimeMs);
     
     // [SECURITY_AGENT] Comprehensive anti-cheat validation
-    bool positionCorrected = false;
-    
     if (!result.valid) {
         // Basic movement validation failed (movement system level)
         std::cout << "[ZONE " << config_.zoneId << "] Movement validation failed: " 
@@ -1047,7 +1045,6 @@ void ZoneServer::validateAndApplyInput(EntityID entity, const ClientInputPacket&
         if (Velocity* vel = registry_.try_get<Velocity>(entity)) {
             *vel = result.correctedVelocity;
         }
-        positionCorrected = true;
     }
     
     // [SECURITY_AGENT] Advanced anti-cheat validation
@@ -1074,7 +1071,6 @@ void ZoneServer::validateAndApplyInput(EntityID entity, const ClientInputPacket&
             
             // Apply position correction from anti-cheat
             *newPos = cheatResult.correctedPosition;
-            positionCorrected = true;
             
             // Send position correction to client (server authority)
             auto connIt = entityToConnection_.find(entity);
