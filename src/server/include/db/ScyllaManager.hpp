@@ -1,5 +1,7 @@
 #pragma once
 #include "ecs/CoreTypes.hpp"
+#include "db/AntiCheatLogger.hpp"
+#include "db/CombatEventLogger.hpp"
 #include <string>
 #include <vector>
 #include <functional>
@@ -123,6 +125,10 @@ public:
 private:
     struct ScyllaInternal;
     std::unique_ptr<ScyllaInternal> internal_;
+    
+    // Extracted logging subsystems
+    std::unique_ptr<AntiCheatLogger> antiCheatLogger_;
+    std::unique_ptr<CombatEventLogger> combatEventLogger_;
     
     bool connected_{false};
     
