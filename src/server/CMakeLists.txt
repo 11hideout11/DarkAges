@@ -83,6 +83,8 @@ set(SERVER_SOURCES
     src/security/AntiCheat.cpp
     src/security/DDoSProtection.cpp
     src/security/PacketValidator.cpp
+    src/security/StatisticalDetector.cpp
+    src/security/PacketIntegrity.cpp
     src/monitoring/MetricsExporter.cpp
 )
 
@@ -142,6 +144,8 @@ set(SERVER_HEADERS
     include/security/DDoSProtection.hpp
     include/security/PacketValidator.hpp
     include/security/RateLimiter.hpp
+    include/security/StatisticalDetector.hpp
+    include/security/PacketIntegrity.hpp
     include/zones/InputHandler.hpp
     include/zones/PerformanceHandler.hpp
     include/zones/CombatEventHandler.hpp

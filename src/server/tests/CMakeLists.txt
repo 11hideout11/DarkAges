@@ -32,6 +32,8 @@ set(TEST_SOURCES
     TestDDoSProtection.cpp
     TestAntiCheat.cpp
     TestPacketValidator.cpp
+    TestStatisticalDetector.cpp
+    TestPacketIntegrity.cpp
     TestAuraZoneHandler.cpp
     TestCombatEventHandler.cpp
     TestRedisIntegration.cpp
@@ -73,6 +75,8 @@ set(TEST_SERVER_SOURCES
     ${CMAKE_SOURCE_DIR}/src/security/AntiCheat.cpp
     ${CMAKE_SOURCE_DIR}/src/security/DDoSProtection.cpp
     ${CMAKE_SOURCE_DIR}/src/security/PacketValidator.cpp
+    ${CMAKE_SOURCE_DIR}/src/security/StatisticalDetector.cpp
+    ${CMAKE_SOURCE_DIR}/src/security/PacketIntegrity.cpp
 )
 
 # Network manager: use stub if GNS not available

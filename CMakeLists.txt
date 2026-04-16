@@ -450,6 +450,8 @@ set(SERVER_SOURCES
     src/server/src/security/ConnectionThrottler.cpp
     src/server/src/security/TrafficAnalyzer.cpp
     src/server/src/security/PacketValidator.cpp
+    src/server/src/security/StatisticalDetector.cpp
+    src/server/src/security/PacketIntegrity.cpp
     src/server/src/profiling/PerformanceMonitor.cpp
 )
 
@@ -706,6 +708,8 @@ if(BUILD_TESTS AND TARGET Catch2::Catch2WithMain)
         src/server/tests/TestZoneOrchestrator.cpp
         src/server/tests/TestDDoSProtection.cpp
         src/server/tests/TestPacketValidator.cpp
+        src/server/tests/TestStatisticalDetector.cpp
+        src/server/tests/TestPacketIntegrity.cpp
         src/server/tests/TestProfiling.cpp
         src/server/tests/TestAntiCheat.cpp
         src/server/tests/TestMetricsExporter.cpp
