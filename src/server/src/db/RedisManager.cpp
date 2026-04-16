@@ -1,7 +1,13 @@
 // [DATABASE_AGENT] Redis hot-state cache implementation with connection pooling
 // WP-6-2: Implements <1ms latency, 10k ops/sec via connection pooling and pipelining
+// Facade: delegates player sessions to PlayerSessionManager, pub/sub to PubSubManager
 
 #include "db/RedisManager.hpp"
+#include "db/PlayerSessionManager.hpp"
+#include "db/PubSubManager.hpp"
+#include "db/ZoneManager.hpp"
+#include "db/StreamManager.hpp"
+#include "db/RedisInternal.hpp"
 #include "db/ConnectionPool.hpp"
 #include "Constants.hpp"
 #include <iostream>
@@ -24,249 +30,6 @@
 namespace DarkAges {
 
 // ============================================================================
-// Internal Implementation Structure
-// ============================================================================
-
-struct RedisInternal {
-    std::unique_ptr<ConnectionPool> pool;
-    std::string host;
-    uint16_t port{6379};
-    bool connected{false};
-    
-    // Async callback handling
-    struct PendingCallback {
-        std::function<void()> func;
-        std::chrono::steady_clock::time_point enqueueTime;
-    };
-    std::queue<PendingCallback> callbackQueue;
-    std::mutex callbackMutex;
-    
-    // Pub/Sub handling
-    struct Subscription {
-        std::string channel;
-        std::function<void(std::string_view, std::string_view)> callback;
-    };
-    std::vector<Subscription> subscriptions;
-    std::mutex subMutex;
-    
-    // Pub/Sub listener thread
-    #ifdef REDIS_AVAILABLE
-    redisContext* pubSubCtx{nullptr};
-    #endif
-    std::atomic<bool> pubSubRunning{false};
-    std::thread pubSubThread;
-    std::queue<std::pair<std::string, std::string>> messageQueue;
-    std::mutex messageMutex;
-    
-    // Latency tracking
-    std::queue<float> latencySamples;
-    std::mutex latencyMutex;
-    static constexpr size_t MAX_LATENCY_SAMPLES = 100;
-    
-    // Metrics
-    std::atomic<uint64_t> commandsSent_{0};
-    std::atomic<uint64_t> commandsCompleted_{0};
-    std::atomic<uint64_t> commandsFailed_{0};
-};
-
-// ============================================================================
-// Binary Serialization Helpers
-// ============================================================================
-
-// PlayerSession binary format:
-// playerId(8) + zoneId(4) + connectionId(4) + pos.x(4) + pos.y(4) + pos.z(4) + 
-// pos.timestamp(4) + health(4) + lastActivity(8) + username(32) = 76 bytes
-static constexpr size_t PLAYER_SESSION_SIZE = 76;
-
-static void WriteUint64(std::vector<uint8_t>& data, uint64_t value) {
-    data.push_back(static_cast<uint8_t>(value));
-    data.push_back(static_cast<uint8_t>(value >> 8));
-    data.push_back(static_cast<uint8_t>(value >> 16));
-    data.push_back(static_cast<uint8_t>(value >> 24));
-    data.push_back(static_cast<uint8_t>(value >> 32));
-    data.push_back(static_cast<uint8_t>(value >> 40));
-    data.push_back(static_cast<uint8_t>(value >> 48));
-    data.push_back(static_cast<uint8_t>(value >> 56));
-}
-
-static void WriteUint32(std::vector<uint8_t>& data, uint32_t value) {
-    data.push_back(static_cast<uint8_t>(value));
-    data.push_back(static_cast<uint8_t>(value >> 8));
-    data.push_back(static_cast<uint8_t>(value >> 16));
-    data.push_back(static_cast<uint8_t>(value >> 24));
-}
-
-static void WriteInt32(std::vector<uint8_t>& data, int32_t value) {
-    WriteUint32(data, static_cast<uint32_t>(value));
-}
-
-static uint64_t ReadUint64(const uint8_t* data) {
-    return static_cast<uint64_t>(data[0]) |
-           (static_cast<uint64_t>(data[1]) << 8) |
-           (static_cast<uint64_t>(data[2]) << 16) |
-           (static_cast<uint64_t>(data[3]) << 24) |
-           (static_cast<uint64_t>(data[4]) << 32) |
-           (static_cast<uint64_t>(data[5]) << 40) |
-           (static_cast<uint64_t>(data[6]) << 48) |
-           (static_cast<uint64_t>(data[7]) << 56);
-}
-
-static uint32_t ReadUint32(const uint8_t* data) {
-    return static_cast<uint32_t>(data[0]) |
-           (static_cast<uint32_t>(data[1]) << 8) |
-           (static_cast<uint32_t>(data[2]) << 16) |
-           (static_cast<uint32_t>(data[3]) << 24);
-}
-
-static int32_t ReadInt32(const uint8_t* data) {
-    return static_cast<int32_t>(ReadUint32(data));
-}
-
-static std::vector<uint8_t> SerializePlayerSession(const PlayerSession& session) {
-    std::vector<uint8_t> data;
-    data.reserve(PLAYER_SESSION_SIZE);
-    
-    // playerId (8 bytes)
-    WriteUint64(data, session.playerId);
-    
-    // zoneId (4 bytes)
-    WriteUint32(data, session.zoneId);
-    
-    // connectionId (4 bytes)
-    WriteUint32(data, session.connectionId);
-    
-    // position.x (4 bytes) - fixed point
-    WriteInt32(data, session.position.x);
-    
-    // position.y (4 bytes)
-    WriteInt32(data, session.position.y);
-    
-    // position.z (4 bytes)
-    WriteInt32(data, session.position.z);
-    
-    // position.timestamp_ms (4 bytes)
-    WriteUint32(data, session.position.timestamp_ms);
-    
-    // health (4 bytes)
-    WriteInt32(data, session.health);
-    
-    // lastActivity (8 bytes)
-    WriteUint64(data, session.lastActivity);
-    
-    // username (32 bytes, null-padded)
-    for (size_t i = 0; i < 32; ++i) {
-        data.push_back(i < 32 && session.username[i] != '\0' ? 
-                      static_cast<uint8_t>(session.username[i]) : 0);
-    }
-    
-    return data;
-}
-
-static bool DeserializePlayerSession(const uint8_t* data, size_t len, PlayerSession& session) {
-    if (len < PLAYER_SESSION_SIZE) {
-        return false;
-    }
-    
-    size_t offset = 0;
-    
-    // playerId
-    session.playerId = ReadUint64(data + offset);
-    offset += 8;
-    
-    // zoneId
-    session.zoneId = ReadUint32(data + offset);
-    offset += 4;
-    
-    // connectionId
-    session.connectionId = ReadUint32(data + offset);
-    offset += 4;
-    
-    // position.x
-    session.position.x = ReadInt32(data + offset);
-    offset += 4;
-    
-    // position.y
-    session.position.y = ReadInt32(data + offset);
-    offset += 4;
-    
-    // position.z
-    session.position.z = ReadInt32(data + offset);
-    offset += 4;
-    
-    // position.timestamp_ms
-    session.position.timestamp_ms = ReadUint32(data + offset);
-    offset += 4;
-    
-    // health
-    session.health = ReadInt32(data + offset);
-    offset += 4;
-    
-    // lastActivity
-    session.lastActivity = ReadUint64(data + offset);
-    offset += 8;
-    
-    // username (copy up to 31 chars, ensure null termination)
-    for (size_t i = 0; i < 31; ++i) {
-        session.username[i] = static_cast<char>(data[offset + i]);
-    }
-    session.username[31] = '\0';
-    
-    return true;
-}
-
-// Position binary format: x(4) + y(4) + z(4) + timestamp(4) = 16 bytes
-static constexpr size_t POSITION_SIZE = 16;
-
-static std::vector<uint8_t> SerializePosition(const Position& pos) {
-    std::vector<uint8_t> data;
-    data.reserve(POSITION_SIZE);
-    
-    WriteInt32(data, pos.x);
-    WriteInt32(data, pos.y);
-    WriteInt32(data, pos.z);
-    WriteUint32(data, pos.timestamp_ms);
-    
-    return data;
-}
-
-// ============================================================================
-// Pub/Sub Listener Thread
-// ============================================================================
-
-#ifdef REDIS_AVAILABLE
-static void PubSubListener(RedisInternal* internal) {
-    while (internal->pubSubRunning) {
-        redisReply* reply = nullptr;
-        
-        if (internal->pubSubCtx && redisGetReply(internal->pubSubCtx, (void**)&reply) == REDIS_OK) {
-            if (reply && reply->type == REDIS_REPLY_ARRAY && reply->elements >= 3) {
-                // Subscription message format: [message, channel, data]
-                std::string_view msgType(reply->element[0]->str, reply->element[0]->len);
-                if (msgType == "message" || msgType == "pmessage") {
-                    size_t channelIdx = (msgType == "pmessage") ? 2 : 1;
-                    size_t messageIdx = (msgType == "pmessage") ? 3 : 2;
-                    
-                    if (reply->elements > messageIdx) {
-                        std::string channel(reply->element[channelIdx]->str, reply->element[channelIdx]->len);
-                        std::string message(reply->element[messageIdx]->str, reply->element[messageIdx]->len);
-                        
-                        {
-                            std::lock_guard<std::mutex> lock(internal->messageMutex);
-                            internal->messageQueue.emplace(std::move(channel), std::move(message));
-                        }
-                    }
-                }
-            }
-            freeReplyObject(reply);
-        } else {
-            // Error or shutdown
-            std::this_thread::sleep_for(std::chrono::milliseconds(10));
-        }
-    }
-}
-#endif
-
-// ============================================================================
 // RedisManager Implementation
 // ============================================================================
 
@@ -274,7 +37,15 @@ RedisManager::RedisManager()
     : internal_(std::make_unique<RedisInternal>()) {}
 
 RedisManager::~RedisManager() {
-    shutdown();
+    // Explicitly clean up sub-managers while internal_ is still alive
+    // (they may reference internal_ or pool connections in their destructors)
+    sessionManager_.reset();
+    zoneManager_.reset();
+    streamManager_.reset();
+    #ifdef REDIS_AVAILABLE
+    pubSubManager_.reset();
+    #endif
+    // internal_ destroyed automatically after this
 }
 
 bool RedisManager::initialize(const std::string& host, uint16_t port) {
@@ -315,6 +86,15 @@ bool RedisManager::initialize(const std::string& host, uint16_t port) {
     #endif
     
     internal_->connected = true;
+    
+    // Create sub-managers
+    sessionManager_ = std::make_unique<PlayerSessionManager>(*this);
+    zoneManager_ = std::make_unique<ZoneManager>(*this, *internal_);
+    streamManager_ = std::make_unique<StreamManager>(*this, *internal_);
+    #ifdef REDIS_AVAILABLE
+    pubSubManager_ = std::make_unique<PubSubManager>(*this, *internal_);
+    #endif
+    
     return true;
 }
 
@@ -324,16 +104,6 @@ void RedisManager::shutdown() {
     std::cout << "[REDIS] Shutting down..." << std::endl;
     
     #ifdef REDIS_AVAILABLE
-    // Stop pub/sub thread
-    internal_->pubSubRunning = false;
-    if (internal_->pubSubThread.joinable()) {
-        internal_->pubSubThread.join();
-    }
-    if (internal_->pubSubCtx) {
-        redisFree(internal_->pubSubCtx);
-        internal_->pubSubCtx = nullptr;
-    }
-    
     // Shutdown connection pool
     if (internal_->pool) {
         internal_->pool->shutdown();
@@ -363,9 +133,17 @@ void RedisManager::update() {
         callbacks.pop();
     }
     
-    // Process pub/sub messages
-    processSubscriptions();
+    #ifdef REDIS_AVAILABLE
+    // Process pub/sub messages via PubSubManager
+    if (pubSubManager_) {
+        pubSubManager_->processSubscriptions();
+    }
+    #endif
 }
+
+// ============================================================================
+// Key-Value Operations (Core Redis operations - kept in facade)
+// ============================================================================
 
 void RedisManager::set(std::string_view key, std::string_view value,
                       uint32_t ttlSeconds, SetCallback callback) {
@@ -576,416 +354,80 @@ void RedisManager::del(std::string_view key, SetCallback callback) {
 }
 
 // ============================================================================
-// Player Session Operations
+// Player Session Operations - Delegated to PlayerSessionManager
 // ============================================================================
 
 void RedisManager::savePlayerSession(const PlayerSession& session, SetCallback callback) {
-    std::string key = RedisKeys::playerSession(session.playerId);
-    auto data = SerializePlayerSession(session);
-    
-    set(key, std::string_view(reinterpret_cast<const char*>(data.data()), data.size()),
-        Constants::REDIS_KEY_TTL_SECONDS, callback);
+    sessionManager_->savePlayerSession(session, callback);
 }
 
 void RedisManager::loadPlayerSession(uint64_t playerId, SessionCallback callback) {
-    std::string key = RedisKeys::playerSession(playerId);
-    
-    get(key, [playerId, callback](const AsyncResult<std::string>& result) {
-        AsyncResult<PlayerSession> sessionResult;
-        
-        if (!result.success) {
-            sessionResult.success = false;
-            sessionResult.error = result.error;
-        } else {
-            PlayerSession session;
-            session.playerId = playerId;
-            
-            if (DeserializePlayerSession(
-                    reinterpret_cast<const uint8_t*>(result.value.data()),
-                    result.value.size(), session)) {
-                sessionResult.success = true;
-                sessionResult.value = session;
-            } else {
-                sessionResult.success = false;
-                sessionResult.error = "Failed to deserialize session data";
-            }
-        }
-        
-        if (callback) callback(sessionResult);
-    });
+    sessionManager_->loadPlayerSession(playerId, callback);
 }
 
 void RedisManager::removePlayerSession(uint64_t playerId, SetCallback callback) {
-    del(RedisKeys::playerSession(playerId), callback);
+    sessionManager_->removePlayerSession(playerId, callback);
 }
 
 void RedisManager::updatePlayerPosition(uint64_t playerId, const Position& pos,
                                        uint32_t timestamp, SetCallback callback) {
-    (void)timestamp;  // Timestamp is included in serialized position
-    
-    std::string key = RedisKeys::playerPosition(playerId);
-    auto data = SerializePosition(pos);
-    
-    set(key, std::string_view(reinterpret_cast<const char*>(data.data()), data.size()),
-        Constants::REDIS_KEY_TTL_SECONDS, callback);
+    sessionManager_->updatePlayerPosition(playerId, pos, timestamp, callback);
 }
 
 // ============================================================================
-// Zone Operations
+// Zone Operations - Delegated to ZoneManager
 // ============================================================================
 
 void RedisManager::addPlayerToZone(uint32_t zoneId, uint64_t playerId, SetCallback callback) {
-    internal_->commandsSent_++;
-    
-    if (!internal_->connected) {
-        internal_->commandsFailed_++;
-        if (callback) {
-            std::lock_guard<std::mutex> lock(internal_->callbackMutex);
-            internal_->callbackQueue.push({[callback]() { callback(false); }, std::chrono::steady_clock::now()});
-        }
-        return;
-    }
-    
-    #ifdef REDIS_AVAILABLE
-    auto* ctx = internal_->pool->acquire();
-    if (!ctx) {
-        internal_->commandsFailed_++;
-        if (callback) {
-            std::lock_guard<std::mutex> lock(internal_->callbackMutex);
-            internal_->callbackQueue.push({[callback]() { callback(false); }, std::chrono::steady_clock::now()});
-        }
-        return;
-    }
-    
-    std::string key = RedisKeys::zonePlayers(zoneId);
-    redisReply* reply = (redisReply*)redisCommand(ctx, "SADD %s %llu",
-                                                  key.c_str(),
-                                                  static_cast<unsigned long long>(playerId));
-    bool success = (reply != nullptr && reply->type == REDIS_REPLY_INTEGER);
-    
-    if (reply) {
-        freeReplyObject(reply);
-    }
-    
-    internal_->pool->release(ctx);
-    
-    if (success) {
-        internal_->commandsCompleted_++;
-    } else {
-        internal_->commandsFailed_++;
-    }
-    
-    if (callback) {
-        std::lock_guard<std::mutex> lock(internal_->callbackMutex);
-        internal_->callbackQueue.push({[callback, success]() { callback(success); }, std::chrono::steady_clock::now()});
-    }
-    #else
-    (void)zoneId;
-    (void)playerId;
-    internal_->commandsCompleted_++;
-    if (callback) {
-        std::lock_guard<std::mutex> lock(internal_->callbackMutex);
-        internal_->callbackQueue.push({[callback]() { callback(true); }, std::chrono::steady_clock::now()});
-    }
-    #endif
+    zoneManager_->addPlayerToZone(zoneId, playerId, callback);
 }
 
 void RedisManager::removePlayerFromZone(uint32_t zoneId, uint64_t playerId, SetCallback callback) {
-    internal_->commandsSent_++;
-    
-    if (!internal_->connected) {
-        internal_->commandsFailed_++;
-        if (callback) {
-            std::lock_guard<std::mutex> lock(internal_->callbackMutex);
-            internal_->callbackQueue.push({[callback]() { callback(false); }, std::chrono::steady_clock::now()});
-        }
-        return;
-    }
-    
-    #ifdef REDIS_AVAILABLE
-    auto* ctx = internal_->pool->acquire();
-    if (!ctx) {
-        internal_->commandsFailed_++;
-        if (callback) {
-            std::lock_guard<std::mutex> lock(internal_->callbackMutex);
-            internal_->callbackQueue.push({[callback]() { callback(false); }, std::chrono::steady_clock::now()});
-        }
-        return;
-    }
-    
-    std::string key = RedisKeys::zonePlayers(zoneId);
-    redisReply* reply = (redisReply*)redisCommand(ctx, "SREM %s %llu",
-                                                  key.c_str(),
-                                                  static_cast<unsigned long long>(playerId));
-    bool success = (reply != nullptr && reply->type == REDIS_REPLY_INTEGER);
-    
-    if (reply) {
-        freeReplyObject(reply);
-    }
-    
-    internal_->pool->release(ctx);
-    
-    if (success) {
-        internal_->commandsCompleted_++;
-    } else {
-        internal_->commandsFailed_++;
-    }
-    
-    if (callback) {
-        std::lock_guard<std::mutex> lock(internal_->callbackMutex);
-        internal_->callbackQueue.push({[callback, success]() { callback(success); }, std::chrono::steady_clock::now()});
-    }
-    #else
-    (void)zoneId;
-    (void)playerId;
-    internal_->commandsCompleted_++;
-    if (callback) {
-        std::lock_guard<std::mutex> lock(internal_->callbackMutex);
-        internal_->callbackQueue.push({[callback]() { callback(true); }, std::chrono::steady_clock::now()});
-    }
-    #endif
+    zoneManager_->removePlayerFromZone(zoneId, playerId, callback);
 }
 
 void RedisManager::getZonePlayers(uint32_t zoneId, 
                                  std::function<void(const AsyncResult<std::vector<uint64_t>>&)> callback) {
-    internal_->commandsSent_++;
-    
-    if (!internal_->connected || !callback) {
-        internal_->commandsFailed_++;
-        if (callback) {
-            AsyncResult<std::vector<uint64_t>> result;
-            result.success = false;
-            result.error = "Not connected";
-            std::lock_guard<std::mutex> lock(internal_->callbackMutex);
-            internal_->callbackQueue.push({[callback, result]() { callback(result); }, std::chrono::steady_clock::now()});
-        }
-        return;
-    }
-    
-    #ifdef REDIS_AVAILABLE
-    auto* ctx = internal_->pool->acquire();
-    if (!ctx) {
-        internal_->commandsFailed_++;
-        AsyncResult<std::vector<uint64_t>> result;
-        result.success = false;
-        result.error = "Failed to acquire connection";
-        std::lock_guard<std::mutex> lock(internal_->callbackMutex);
-        internal_->callbackQueue.push({[callback, result]() { callback(result); }, std::chrono::steady_clock::now()});
-        return;
-    }
-    
-    std::string key = RedisKeys::zonePlayers(zoneId);
-    redisReply* reply = (redisReply*)redisCommand(ctx, "SMEMBERS %s", key.c_str());
-    
-    AsyncResult<std::vector<uint64_t>> result;
-    if (!reply) {
-        result.success = false;
-        result.error = "Command failed";
-        internal_->commandsFailed_++;
-    } else if (reply->type == REDIS_REPLY_ARRAY) {
-        result.success = true;
-        result.value.reserve(reply->elements);
-        for (size_t i = 0; i < reply->elements; ++i) {
-            if (reply->element[i]->type == REDIS_REPLY_STRING ||
-                reply->element[i]->type == REDIS_REPLY_INTEGER) {
-                uint64_t playerId = 0;
-                if (reply->element[i]->type == REDIS_REPLY_INTEGER) {
-                    playerId = static_cast<uint64_t>(reply->element[i]->integer);
-                } else {
-                    playerId = std::stoull(std::string(reply->element[i]->str, reply->element[i]->len));
-                }
-                result.value.push_back(playerId);
-            }
-        }
-        internal_->commandsCompleted_++;
-    } else {
-        result.success = false;
-        result.error = "Unexpected reply type";
-        internal_->commandsFailed_++;
-    }
-    
-    if (reply) {
-        freeReplyObject(reply);
-    }
-    
-    internal_->pool->release(ctx);
-    
-    std::lock_guard<std::mutex> lock(internal_->callbackMutex);
-    internal_->callbackQueue.push({[callback, result]() { callback(result); }, std::chrono::steady_clock::now()});
-    #else
-    (void)zoneId;
-    internal_->commandsCompleted_++;
-    AsyncResult<std::vector<uint64_t>> result;
-    result.success = true;
-    std::lock_guard<std::mutex> lock(internal_->callbackMutex);
-    internal_->callbackQueue.push({[callback, result]() { callback(result); }, std::chrono::steady_clock::now()});
-    #endif
+    zoneManager_->getZonePlayers(zoneId, std::move(callback));
 }
 
 // ============================================================================
-// Pub/Sub Operations
+// Pub/Sub Operations - Delegated to PubSubManager
 // ============================================================================
 
+#ifdef REDIS_AVAILABLE
+
 void RedisManager::publish(std::string_view channel, std::string_view message) {
-    if (!internal_->connected) return;
-    
-    internal_->commandsSent_++;
-    
-    #ifdef REDIS_AVAILABLE
-    auto* ctx = internal_->pool->acquire();
-    if (!ctx) {
-        internal_->commandsFailed_++;
-        return;
-    }
-    
-    redisReply* reply = (redisReply*)redisCommand(ctx, "PUBLISH %b %b",
-                                                  channel.data(), channel.size(),
-                                                  message.data(), message.size());
-    
-    if (reply) {
-        freeReplyObject(reply);
-        internal_->commandsCompleted_++;
-    } else {
-        internal_->commandsFailed_++;
-    }
-    
-    internal_->pool->release(ctx);
-    #else
-    (void)channel;
-    (void)message;
-    internal_->commandsCompleted_++;
-    #endif
+    pubSubManager_->publish(channel, message);
 }
 
 void RedisManager::subscribe(std::string_view channel,
                             std::function<void(std::string_view, std::string_view)> callback) {
-    if (!internal_->connected) return;
-    
-    {
-        std::lock_guard<std::mutex> lock(internal_->subMutex);
-        RedisInternal::Subscription sub;
-        sub.channel = std::string(channel);
-        sub.callback = std::move(callback);
-        internal_->subscriptions.push_back(std::move(sub));
-    }
-    
-    #ifdef REDIS_AVAILABLE
-    // Start pub/sub listener if not running
-    if (!internal_->pubSubRunning) {
-        internal_->pubSubRunning = true;
-        
-        // Create dedicated pub/sub connection
-        struct timeval timeout;
-        timeout.tv_sec = Constants::REDIS_CONNECTION_TIMEOUT_MS / 1000;
-        timeout.tv_usec = (Constants::REDIS_CONNECTION_TIMEOUT_MS % 1000) * 1000;
-        
-        internal_->pubSubCtx = redisConnectWithTimeout(internal_->host.c_str(), internal_->port, timeout);
-        if (internal_->pubSubCtx && !internal_->pubSubCtx->err) {
-            internal_->pubSubThread = std::thread(PubSubListener, internal_.get());
-        } else {
-            std::cerr << "[REDIS] Failed to create pub/sub connection" << std::endl;
-            internal_->pubSubRunning = false;
-            if (internal_->pubSubCtx) {
-                redisFree(internal_->pubSubCtx);
-                internal_->pubSubCtx = nullptr;
-            }
-        }
-    }
-    
-    // Subscribe to channel
-    if (internal_->pubSubCtx && !internal_->pubSubCtx->err) {
-        redisReply* reply = (redisReply*)redisCommand(internal_->pubSubCtx, "SUBSCRIBE %b",
-                                                      channel.data(), channel.size());
-        if (reply) {
-            freeReplyObject(reply);
-        }
-    }
-    #else
-    (void)channel;
-    #endif
+    pubSubManager_->subscribe(channel, std::move(callback));
 }
 
 void RedisManager::unsubscribe(std::string_view channel) {
-    if (!internal_->connected) return;
-    
-    {
-        std::lock_guard<std::mutex> lock(internal_->subMutex);
-        auto& subs = internal_->subscriptions;
-        subs.erase(std::remove_if(subs.begin(), subs.end(),
-            [channel](const auto& sub) { return sub.channel == channel; }), subs.end());
-    }
-    
-    #ifdef REDIS_AVAILABLE
-    if (internal_->pubSubCtx && !internal_->pubSubCtx->err) {
-        redisReply* reply = (redisReply*)redisCommand(internal_->pubSubCtx, "UNSUBSCRIBE %b",
-                                                      channel.data(), channel.size());
-        if (reply) {
-            freeReplyObject(reply);
-        }
-    }
-    #endif
-    
-    std::cout << "[REDIS] Unsubscribed from " << channel << std::endl;
+    pubSubManager_->unsubscribe(channel);
 }
 
 void RedisManager::processSubscriptions() {
-    if (!internal_->connected) return;
-    
-    // Process queued messages
-    std::queue<std::pair<std::string, std::string>> messages;
-    {
-        std::lock_guard<std::mutex> lock(internal_->messageMutex);
-        messages.swap(internal_->messageQueue);
-    }
-    
-    while (!messages.empty()) {
-        const auto& [channel, message] = messages.front();
-        
-        std::lock_guard<std::mutex> lock(internal_->subMutex);
-        for (const auto& sub : internal_->subscriptions) {
-            // Simple channel matching (exact match for now, could use pattern matching)
-            if (sub.channel == channel) {
-                sub.callback(channel, message);
-            }
-        }
-        
-        messages.pop();
-    }
+    pubSubManager_->processSubscriptions();
 }
 
 void RedisManager::publishToZone(uint32_t zoneId, const ZoneMessage& message) {
-    std::string channel = "zone:" + std::to_string(zoneId) + ":messages";
-    auto data = message.serialize();
-    publish(channel, std::string_view(reinterpret_cast<const char*>(data.data()), data.size()));
+    pubSubManager_->publishToZone(zoneId, message);
 }
 
 void RedisManager::broadcastToAllZones(const ZoneMessage& message) {
-    std::string channel = "zone:broadcast";
-    auto data = message.serialize();
-    publish(channel, std::string_view(reinterpret_cast<const char*>(data.data()), data.size()));
+    pubSubManager_->broadcastToAllZones(message);
 }
 
 void RedisManager::subscribeToZoneChannel(uint32_t myZoneId,
                                           std::function<void(const ZoneMessage&)> callback) {
-    std::string channel = "zone:" + std::to_string(myZoneId) + ":messages";
-    
-    subscribe(channel, [callback](std::string_view ch, std::string_view msg) {
-        std::vector<uint8_t> data(msg.begin(), msg.end());
-        auto message = ZoneMessage::deserialize(data);
-        if (message) {
-            callback(*message);
-        }
-    });
-    
-    // Also subscribe to broadcast channel
-    subscribe("zone:broadcast", [callback](std::string_view ch, std::string_view msg) {
-        std::vector<uint8_t> data(msg.begin(), msg.end());
-        auto message = ZoneMessage::deserialize(data);
-        if (message) {
-            callback(*message);
-        }
-    });
+    pubSubManager_->subscribeToZoneChannel(myZoneId, std::move(callback));
 }
+
+#endif // REDIS_AVAILABLE
 
 // ============================================================================
 // Metrics
@@ -1098,215 +540,14 @@ void RedisManager::pipelineSet(const std::vector<std::pair<std::string, std::str
 }
 
 // ============================================================================
-// ZoneMessage Serialization
-// ============================================================================
-
-std::vector<uint8_t> ZoneMessage::serialize() const {
-    std::vector<uint8_t> data;
-    
-    // Header: type(1) + source(4) + target(4) + timestamp(4) + sequence(4) + payload_size(4)
-    size_t headerSize = 1 + 4 + 4 + 4 + 4 + 4;
-    data.resize(headerSize + payload.size());
-    
-    size_t offset = 0;
-    data[offset++] = static_cast<uint8_t>(type);
-    
-    *reinterpret_cast<uint32_t*>(&data[offset]) = sourceZoneId;
-    offset += 4;
-    
-    *reinterpret_cast<uint32_t*>(&data[offset]) = targetZoneId;
-    offset += 4;
-    
-    *reinterpret_cast<uint32_t*>(&data[offset]) = timestamp;
-    offset += 4;
-    
-    *reinterpret_cast<uint32_t*>(&data[offset]) = sequence;
-    offset += 4;
-    
-    *reinterpret_cast<uint32_t*>(&data[offset]) = static_cast<uint32_t>(payload.size());
-    offset += 4;
-    
-    std::memcpy(&data[offset], payload.data(), payload.size());
-    
-    return data;
-}
-
-std::optional<ZoneMessage> ZoneMessage::deserialize(const std::vector<uint8_t>& data) {
-    if (data.size() < 21) {  // Minimum header size
-        return std::nullopt;
-    }
-    
-    ZoneMessage msg;
-    size_t offset = 0;
-    
-    msg.type = static_cast<ZoneMessageType>(data[offset++]);
-    
-    msg.sourceZoneId = *reinterpret_cast<const uint32_t*>(&data[offset]);
-    offset += 4;
-    
-    msg.targetZoneId = *reinterpret_cast<const uint32_t*>(&data[offset]);
-    offset += 4;
-    
-    msg.timestamp = *reinterpret_cast<const uint32_t*>(&data[offset]);
-    offset += 4;
-    
-    msg.sequence = *reinterpret_cast<const uint32_t*>(&data[offset]);
-    offset += 4;
-    
-    uint32_t payloadSize = *reinterpret_cast<const uint32_t*>(&data[offset]);
-    offset += 4;
-    
-    if (data.size() < offset + payloadSize) {
-        return std::nullopt;
-    }
-    
-    msg.payload.assign(data.begin() + offset, data.begin() + offset + payloadSize);
-    
-    return msg;
-}
-
-// ============================================================================
-// Redis Streams Implementation (Non-blocking alternative to Pub/Sub)
+// Redis Streams - Delegated to StreamManager
 // ============================================================================
 
 void RedisManager::xadd(std::string_view streamKey,
                         std::string_view id,
                         const std::unordered_map<std::string, std::string>& fields,
                         StreamAddCallback callback) {
-    internal_->commandsSent_++;
-    
-    if (!internal_->connected) {
-        internal_->commandsFailed_++;
-        if (callback) {
-            AsyncResult<std::string> result;
-            result.success = false;
-            result.error = "Not connected to Redis";
-            std::lock_guard<std::mutex> lock(internal_->callbackMutex);
-            internal_->callbackQueue.push({[callback, result]() { callback(result); }, 
-                                          std::chrono::steady_clock::now()});
-        }
-        return;
-    }
-    
-    if (fields.empty()) {
-        internal_->commandsFailed_++;
-        if (callback) {
-            AsyncResult<std::string> result;
-            result.success = false;
-            result.error = "At least one field-value pair required";
-            std::lock_guard<std::mutex> lock(internal_->callbackMutex);
-            internal_->callbackQueue.push({[callback, result]() { callback(result); }, 
-                                          std::chrono::steady_clock::now()});
-        }
-        return;
-    }
-    
-    #ifdef REDIS_AVAILABLE
-    auto start = std::chrono::high_resolution_clock::now();
-    
-    auto* ctx = internal_->pool->acquire();
-    if (!ctx) {
-        internal_->commandsFailed_++;
-        if (callback) {
-            AsyncResult<std::string> result;
-            result.success = false;
-            result.error = "Failed to acquire connection from pool";
-            std::lock_guard<std::mutex> lock(internal_->callbackMutex);
-            internal_->callbackQueue.push({[callback, result]() { callback(result); }, 
-                                          std::chrono::steady_clock::now()});
-        }
-        return;
-    }
-    
-    // Build XADD command with field-value pairs
-    // Format: XADD streamKey id field1 value1 field2 value2 ...
-    
-    // Use simple redisCommand for XADD since Redis expects specific format for *
-    std::string command = "XADD";
-    std::vector<const char*> argv;
-    std::vector<size_t> argvlen;
-    
-    argv.push_back(command.c_str());
-    argvlen.push_back(command.length());
-    
-    argv.push_back(streamKey.data());
-    argvlen.push_back(streamKey.size());
-    
-    argv.push_back(id.data());
-    argvlen.push_back(id.size());
-    
-    // Add field-value pairs
-    std::vector<std::string> fieldValues;
-    for (const auto& [field, value] : fields) {
-        fieldValues.push_back(field);
-        fieldValues.push_back(value);
-    }
-    
-    for (const auto& fv : fieldValues) {
-        argv.push_back(fv.c_str());
-        argvlen.push_back(fv.length());
-    }
-    
-    redisReply* reply = (redisReply*)redisCommandArgv(ctx, static_cast<int>(argv.size()), 
-                                                      argv.data(), argvlen.data());
-    
-    AsyncResult<std::string> result;
-    if (reply && reply->type == REDIS_REPLY_STRING) {
-        result.success = true;
-        result.value = std::string(reply->str, reply->len);
-        internal_->commandsCompleted_++;
-    } else {
-        result.success = false;
-        if (reply && reply->type == REDIS_REPLY_ERROR) {
-            result.error = std::string(reply->str, reply->len);
-        } else if (ctx->err) {
-            result.error = std::string(ctx->errstr);
-        } else {
-            result.error = "XADD command failed with unknown error";
-        }
-        internal_->commandsFailed_++;
-        
-        // Debug output
-        std::cerr << "[REDIS] XADD failed: " << result.error << std::endl;
-        if (reply) {
-            std::cerr << "[REDIS] Reply type: " << reply->type << std::endl;
-        }
-    }
-    
-    if (reply) {
-        freeReplyObject(reply);
-    }
-    
-    internal_->pool->release(ctx);
-    
-    // Track latency
-    auto end = std::chrono::high_resolution_clock::now();
-    float latencyMs = std::chrono::duration<float, std::milli>(end - start).count();
-    {
-        std::lock_guard<std::mutex> lock(internal_->latencyMutex);
-        internal_->latencySamples.push(latencyMs);
-        if (internal_->latencySamples.size() > RedisInternal::MAX_LATENCY_SAMPLES) {
-            internal_->latencySamples.pop();
-        }
-    }
-    
-    if (callback) {
-        std::lock_guard<std::mutex> lock(internal_->callbackMutex);
-        internal_->callbackQueue.push({[callback, result]() { callback(result); }, 
-                                      std::chrono::steady_clock::now()});
-    }
-    #else
-    // Stub implementation
-    internal_->commandsCompleted_++;
-    if (callback) {
-        AsyncResult<std::string> result;
-        result.success = true;
-        result.value = "0-0"; // Fake stream ID
-        std::lock_guard<std::mutex> lock(internal_->callbackMutex);
-        internal_->callbackQueue.push({[callback, result]() { callback(result); }, 
-                                      std::chrono::steady_clock::now()});
-    }
-    #endif
+    streamManager_->xadd(streamKey, id, fields, std::move(callback));
 }
 
 void RedisManager::xread(std::string_view streamKey,
@@ -1314,142 +555,7 @@ void RedisManager::xread(std::string_view streamKey,
                          StreamReadCallback callback,
                          uint32_t count,
                          uint32_t blockMs) {
-    if (!callback) return;
-    
-    internal_->commandsSent_++;
-    
-    if (!internal_->connected) {
-        internal_->commandsFailed_++;
-        AsyncResult<std::vector<StreamEntry>> result;
-        result.success = false;
-        result.error = "Not connected to Redis";
-        std::lock_guard<std::mutex> lock(internal_->callbackMutex);
-        internal_->callbackQueue.push({[callback, result]() { callback(result); }, 
-                                      std::chrono::steady_clock::now()});
-        return;
-    }
-    
-    #ifdef REDIS_AVAILABLE
-    auto start = std::chrono::high_resolution_clock::now();
-    
-    auto* ctx = internal_->pool->acquire();
-    if (!ctx) {
-        internal_->commandsFailed_++;
-        AsyncResult<std::vector<StreamEntry>> result;
-        result.success = false;
-        result.error = "Failed to acquire connection from pool";
-        std::lock_guard<std::mutex> lock(internal_->callbackMutex);
-        internal_->callbackQueue.push({[callback, result]() { callback(result); }, 
-                                      std::chrono::steady_clock::now()});
-        return;
-    }
-    
-    // Build XREAD command
-    // Format: XREAD [COUNT count] [BLOCK milliseconds] STREAMS key [key ...] id [id ...]
-    redisReply* reply;
-    if (blockMs > 0 && count > 0) {
-        reply = (redisReply*)redisCommand(ctx, "XREAD COUNT %u BLOCK %u STREAMS %b %b",
-                                          count, blockMs,
-                                          streamKey.data(), streamKey.size(),
-                                          lastId.data(), lastId.size());
-    } else if (count > 0) {
-        reply = (redisReply*)redisCommand(ctx, "XREAD COUNT %u STREAMS %b %b",
-                                          count,
-                                          streamKey.data(), streamKey.size(),
-                                          lastId.data(), lastId.size());
-    } else if (blockMs > 0) {
-        reply = (redisReply*)redisCommand(ctx, "XREAD BLOCK %u STREAMS %b %b",
-                                          blockMs,
-                                          streamKey.data(), streamKey.size(),
-                                          lastId.data(), lastId.size());
-    } else {
-        reply = (redisReply*)redisCommand(ctx, "XREAD STREAMS %b %b",
-                                          streamKey.data(), streamKey.size(),
-                                          lastId.data(), lastId.size());
-    }
-    
-    AsyncResult<std::vector<StreamEntry>> result;
-    
-    // XREAD returns array of [stream_name, [[id, [field, value, ...]], ...]]
-    if (reply && reply->type == REDIS_REPLY_ARRAY && reply->elements > 0) {
-        result.success = true;
-        
-        // reply->element[0] is the stream data
-        if (reply->element[0]->type == REDIS_REPLY_ARRAY && reply->element[0]->elements >= 2) {
-            // element[1] contains the entries
-            redisReply* entries = reply->element[0]->element[1];
-            
-            if (entries->type == REDIS_REPLY_ARRAY) {
-                for (size_t i = 0; i < entries->elements; ++i) {
-                    redisReply* entry = entries->element[i];
-                    
-                    // Each entry is [id, [field, value, field, value, ...]]
-                    if (entry->type == REDIS_REPLY_ARRAY && entry->elements >= 2) {
-                        StreamEntry streamEntry;
-                        
-                        // Entry ID
-                        if (entry->element[0]->type == REDIS_REPLY_STRING) {
-                            streamEntry.id = std::string(entry->element[0]->str, entry->element[0]->len);
-                        }
-                        
-                        // Field-value pairs
-                        redisReply* fieldValues = entry->element[1];
-                        if (fieldValues->type == REDIS_REPLY_ARRAY) {
-                            for (size_t j = 0; j + 1 < fieldValues->elements; j += 2) {
-                                std::string field(fieldValues->element[j]->str, fieldValues->element[j]->len);
-                                std::string value(fieldValues->element[j + 1]->str, fieldValues->element[j + 1]->len);
-                                streamEntry.fields[field] = value;
-                            }
-                        }
-                        
-                        result.value.push_back(std::move(streamEntry));
-                    }
-                }
-            }
-        }
-        
-        internal_->commandsCompleted_++;
-    } else if (reply && reply->type == REDIS_REPLY_NIL) {
-        // No new entries (expected with BLOCK timeout)
-        result.success = true;
-        result.value.clear();
-        internal_->commandsCompleted_++;
-    } else {
-        result.success = false;
-        result.error = reply && reply->str ? std::string(reply->str) : "XREAD command failed";
-        internal_->commandsFailed_++;
-    }
-    
-    if (reply) {
-        freeReplyObject(reply);
-    }
-    
-    internal_->pool->release(ctx);
-    
-    // Track latency
-    auto end = std::chrono::high_resolution_clock::now();
-    float latencyMs = std::chrono::duration<float, std::milli>(end - start).count();
-    {
-        std::lock_guard<std::mutex> lock(internal_->latencyMutex);
-        internal_->latencySamples.push(latencyMs);
-        if (internal_->latencySamples.size() > RedisInternal::MAX_LATENCY_SAMPLES) {
-            internal_->latencySamples.pop();
-        }
-    }
-    
-    std::lock_guard<std::mutex> lock(internal_->callbackMutex);
-    internal_->callbackQueue.push({[callback, result]() { callback(result); }, 
-                                  std::chrono::steady_clock::now()});
-    #else
-    // Stub implementation
-    internal_->commandsCompleted_++;
-    AsyncResult<std::vector<StreamEntry>> result;
-    result.success = true;
-    result.value.clear();
-    std::lock_guard<std::mutex> lock(internal_->callbackMutex);
-    internal_->callbackQueue.push({[callback, result]() { callback(result); }, 
-                                  std::chrono::steady_clock::now()});
-    #endif
+    streamManager_->xread(streamKey, lastId, std::move(callback), count, blockMs);
 }
 
 } // namespace DarkAges

@@ -44,6 +44,7 @@ struct ZoneMessage {
 
 // Manages Redis pub/sub operations for cross-zone communication
 // Extracted from RedisManager for cohesion - pub/sub, zone messaging, listener thread
+#ifdef REDIS_AVAILABLE
 class PubSubManager {
 public:
     explicit PubSubManager(RedisManager& redis, RedisInternal& internal);
@@ -72,5 +73,6 @@ private:
     RedisManager& redis_;
     RedisInternal& internal_;
 };
+#endif // REDIS_AVAILABLE
 
 } // namespace DarkAges

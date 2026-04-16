@@ -480,8 +480,14 @@ endif()
 
 # Database layer - conditional on hiredis
 if(HIREDIS_FOUND)
-    list(APPEND SERVER_SOURCES src/server/src/db/RedisManager.cpp src/server/src/db/ConnectionPool.cpp)
-    message(STATUS "RedisManager: Using hiredis implementation")
+    list(APPEND SERVER_SOURCES
+        src/server/src/db/RedisManager.cpp
+        src/server/src/db/ConnectionPool.cpp
+        src/server/src/db/PlayerSessionManager.cpp
+        src/server/src/db/PubSubManager.cpp
+        src/server/src/db/ZoneManager.cpp
+        src/server/src/db/StreamManager.cpp)
+    message(STATUS "RedisManager: Using hiredis implementation with extracted managers")
 else()
     list(APPEND SERVER_SOURCES src/server/src/db/RedisManager_stub.cpp)
     message(WARNING "RedisManager: Using stub implementation")

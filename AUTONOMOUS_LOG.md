@@ -312,3 +312,11 @@ All autonomous improvements tracked here. Most recent first.
 - **Branch:** `autonomous/scyllamanager-refactor`
 - **Changes:** 8 files, reduced ScyllaManager from 1105 → 791 lines (28% reduction). Extracted AntiCheatLogger (167 lines + stub), CombatEventLogger (654 lines + stub). All stub files created.
 - **Validation:** Build PASS, Tests PASS (200 cases, 190 passed, 1475 assertions)
+
+### ✅ 2026-04-15 21:04 UTC
+- **Task:** Remove unused variable `positionCorrected` in ZoneServer.cpp (fix -Wunused-but-set-variable warning)
+- **Status:** SUCCESS
+- **Branch:** `autonomous/redismanager-refactor-v2`
+- **Changes:** 1 file, -4 lines in `src/server/src/zones/ZoneServer.cpp`
+- **Tests:** 190 passed, 10 skipped (Redis unavailable), 1475 assertions
+

@@ -3,6 +3,8 @@
 #include "ecs/CoreTypes.hpp"
 #include "db/PlayerSessionManager.hpp"  // Provides PlayerSession, AsyncResult
 #include "db/PubSubManager.hpp"          // Provides ZoneMessageType, ZoneMessage
+#include "db/ZoneManager.hpp"            // Provides ZoneManager
+#include "db/StreamManager.hpp"          // Provides StreamEntry
 #include <string>
 #include <string_view>
 #include <functional>
@@ -19,8 +21,14 @@
 
 namespace DarkAges {
 
-// Forward declaration
+// Forward declarations
 struct RedisInternal;
+class PlayerSessionManager;
+class ZoneManager;
+class StreamManager;
+#ifdef REDIS_AVAILABLE
+class PubSubManager;
+#endif
 
 class RedisManager {
 public:
@@ -29,7 +37,7 @@ public:
     using SessionCallback = std::function<void(const AsyncResult<PlayerSession>& result)>;
 
     RedisManager();
-    ~RedisManager();
+    ~RedisManager();  // Defined in .cpp (needs full RedisInternal type)
     
     // Initialize connection (non-blocking)
     bool initialize(const std::string& host = "localhost", 
@@ -86,6 +94,7 @@ public:
     
     // === Pub/Sub (for cross-zone communication) ===
     
+    #ifdef REDIS_AVAILABLE
     // Publish message to channel
     void publish(std::string_view channel, std::string_view message);
     
@@ -104,17 +113,13 @@ public:
     void broadcastToAllZones(const ZoneMessage& message);
     void subscribeToZoneChannel(uint32_t myZoneId, 
                                 std::function<void(const ZoneMessage&)> callback);
+    #endif
     
     // === Streams (Non-blocking alternative to Pub/Sub) ===
     
-    // Stream entry (field-value pairs)
-    struct StreamEntry {
-        std::string id;  // Auto-generated or explicit ID
-        std::unordered_map<std::string, std::string> fields;
-    };
-    
-    using StreamAddCallback = std::function<void(const AsyncResult<std::string>& result)>;
-    using StreamReadCallback = std::function<void(const AsyncResult<std::vector<StreamEntry>>& result)>;
+    using StreamAddCallback = StreamManager::StreamAddCallback;
+    using StreamReadCallback = StreamManager::StreamReadCallback;
+    using StreamEntry = DarkAges::StreamEntry;
     
     // Add entry to stream (XADD)
     void xadd(std::string_view streamKey, 
@@ -142,15 +147,18 @@ public:
     [[nodiscard]] uint64_t getCommandsFailed() const;
     [[nodiscard]] float getAverageLatencyMs() const;
 
+    // Access internal state for sub-managers
+    RedisInternal& getInternal() { return *internal_; }
+
 private:
     std::unique_ptr<RedisInternal> internal_;
+    std::unique_ptr<PlayerSessionManager> sessionManager_;
+    std::unique_ptr<ZoneManager> zoneManager_;
+    std::unique_ptr<StreamManager> streamManager_;
+    #ifdef REDIS_AVAILABLE
+    std::unique_ptr<PubSubManager> pubSubManager_;
+    #endif
     bool connected_{false};
-    
-    // Metrics
-    uint64_t commandsSent_{0};
-    uint64_t commandsCompleted_{0};
-    uint64_t commandsFailed_{0};
-    float avgLatencyMs_{0.0f};
 };
 
 // [DATABASE_AGENT] Key naming conventions

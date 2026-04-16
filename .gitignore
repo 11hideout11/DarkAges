@@ -134,3 +134,8 @@ nul
 
 # Build artifacts (autonomous iteration)
 build_autonomous/
+build_verify/
+build_combined/
+build-check/
+build-verify/
+build_*/
