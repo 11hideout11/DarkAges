@@ -441,6 +441,8 @@ set(SERVER_SOURCES
     src/server/src/zones/CrossZoneMessenger.cpp
     src/server/src/zones/CombatEventHandler.cpp
     src/server/src/zones/AuraZoneHandler.cpp
+    src/server/src/zones/InputHandler.cpp
+    src/server/src/zones/PerformanceHandler.cpp
     src/server/src/security/AntiCheat.cpp
     src/server/src/security/MovementValidator.cpp
     src/server/src/security/ViolationTracker.cpp
@@ -711,6 +713,10 @@ if(BUILD_TESTS AND TARGET Catch2::Catch2WithMain)
         src/server/tests/TestZoneHandoff.cpp
         src/server/tests/TestCrossZoneMessenger.cpp
         src/server/tests/TestProtobufProtocol.cpp
+        src/server/tests/TestCombatEventHandler.cpp
+        src/server/tests/TestAuraZoneHandler.cpp
+        src/server/tests/TestMovementValidator.cpp
+        src/server/tests/TestSecuritySubsystems.cpp
     )
 
     # Conditionally include tests for optional features
