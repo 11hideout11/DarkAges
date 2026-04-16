@@ -73,6 +73,10 @@ set(SERVER_SOURCES
     src/zones/EntityMigration.cpp
     src/zones/CrossZoneMessenger.cpp
     src/zones/ZoneHandoff.cpp
+    src/zones/CombatEventHandler.cpp
+    src/zones/AuraZoneHandler.cpp
+    src/zones/InputHandler.cpp
+    src/zones/PerformanceHandler.cpp
     src/combat/PositionHistory.cpp
     src/combat/CombatSystem.cpp
     src/combat/LagCompensatedCombat.cpp
@@ -108,6 +112,10 @@ set(SERVER_HEADERS
     include/zones/EntityMigration.hpp
     include/zones/CrossZoneMessenger.hpp
     include/zones/ZoneHandoff.hpp
+    include/zones/CombatEventHandler.hpp
+    include/zones/AuraZoneHandler.hpp
+    include/zones/InputHandler.hpp
+    include/zones/PerformanceHandler.hpp
     include/combat/PositionHistory.hpp
     include/combat/CombatSystem.hpp
     include/combat/LagCompensatedCombat.hpp

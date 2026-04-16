@@ -14,6 +14,8 @@
 #include "zones/ReplicationOptimizer.hpp"
 #include "zones/CombatEventHandler.hpp"
 #include "zones/AuraZoneHandler.hpp"
+#include "zones/InputHandler.hpp"
+#include "zones/PerformanceHandler.hpp"
 #include "combat/PositionHistory.hpp"
 #include "combat/LagCompensatedCombat.hpp"
 #include "combat/CombatSystem.hpp"
@@ -148,6 +150,19 @@ public:
     // AOI debugging
     [[nodiscard]] AreaOfInterestSystem& getAOISystem() { return areaOfInterestSystem_; }
 
+    // [ZONE_AGENT] Accessors for extracted handler classes
+    [[nodiscard]] std::unordered_map<ConnectionID, EntityID>* getConnectionToEntityPtr() { return &connectionToEntity_; }
+    [[nodiscard]] std::unordered_map<EntityID, ConnectionID>* getEntityToConnectionPtr() { return &entityToConnection_; }
+    [[nodiscard]] TickMetrics& getMetricsRef() { return metrics_; }
+    [[nodiscard]] CombatSystem* getCombatSystemPtr() { return &combatSystem_; }
+    [[nodiscard]] LagCompensator* getLagCompensatorPtr() { return &lagCompensator_; }
+    [[nodiscard]] MovementSystem& getMovementSystemRef() { return movementSystem_; }
+    [[nodiscard]] Security::AntiCheatSystem& getAntiCheatRef() { return antiCheat_; }
+    [[nodiscard]] bool isQoSDegraded() const { return qosDegraded_; }
+    void setQoSDegraded(bool degraded) { qosDegraded_ = degraded; }
+    void setReducedUpdateRate(uint32_t rate) { reducedUpdateRate_ = rate; }
+    [[nodiscard]] ReplicationOptimizer& getReplicationOptimizerRef() { return replicationOptimizer_; }
+
 private:
     // System update phases
     void updateNetwork();
@@ -159,11 +174,7 @@ private:
     // Client connection handlers
     void onClientConnected(ConnectionID connectionId);
     void onClientDisconnected(ConnectionID connectionId);
-    void onClientInput(const ClientInputPacket& input);
-    
-    // Anti-cheat processing with server authority
-    void validateAndApplyInput(EntityID entity, const ClientInputPacket& input);
-    
+
     // [SECURITY_AGENT] Setup anti-cheat callbacks
     void initializeAntiCheat();
     
@@ -172,8 +183,7 @@ private:
     void onPlayerBanned(uint64_t playerId, const char* reason, uint32_t durationMinutes);
     void onPlayerKicked(uint64_t playerId, const char* reason);
     
-    // [PHASE 3C] Combat processing with lag compensation
-    void processAttackInput(EntityID entity, const ClientInputPacket& input);
+    // [PHASE 3C] Combat processing with lag compensation (delegated to InputHandler)
     
     // Combat processing
     void processCombat();
@@ -181,13 +191,8 @@ private:
     void sendCombatEvent(EntityID attacker, EntityID target, int16_t damage, const Position& location);
     void logCombatEvent(const HitResult& hit, EntityID attacker, EntityID target);
     
-    // Performance monitoring
-    void checkPerformanceBudgets(uint64_t tickTimeUs);
-    void activateQoSDegradation();
-    
-    // [DEVOPS_AGENT] Metrics collection
-    void updateNetworkMetrics(Monitoring::MetricsExporter& metrics, const std::string& zoneIdStr);
-    
+    // Performance monitoring (delegated to PerformanceHandler)
+
     // Save player state to database
     void savePlayerState(EntityID entity);
 
@@ -294,6 +299,12 @@ private:
 
     // [ZONE_AGENT] Aura and zone migration handling
     AuraZoneHandler auraZoneHandler_;
+
+    // [ZONE_AGENT] Input validation and processing
+    InputHandler inputHandler_;
+
+    // [ZONE_AGENT] Performance monitoring and QoS
+    PerformanceHandler performanceHandler_;
 
     // Entity migration manager
     std::unique_ptr<EntityMigrationManager> migrationManager_;

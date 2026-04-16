@@ -320,3 +320,22 @@ All autonomous improvements tracked here. Most recent first.
 - **Changes:** 1 file, -4 lines in `src/server/src/zones/ZoneServer.cpp`
 - **Tests:** 190 passed, 10 skipped (Redis unavailable), 1475 assertions
 
+
+---
+
+### ✅ 2026-04-16 — ZoneServer Refactoring: Extract InputHandler + PerformanceHandler + 4 Test Suites
+- **Task:** Continue ZoneServer decomposition (1805→~1447 lines) and add test coverage for extracted handler classes
+- **Status:** SUCCESS (3 parallel agents + manual fixups)
+- **Branch:** `autonomous/zoneserver-handler-tests`
+- **Changes:** 12 files, +2698/-358 lines.
+  - **InputHandler.hpp/cpp** (287+48 lines): onClientInput, validateAndApplyInput, processAttackInput
+  - **PerformanceHandler.hpp/cpp** (118+39 lines): checkPerformanceBudgets, updateNetworkMetrics, activateQoSDegradation
+  - **TestCombatEventHandler.cpp** (480 lines): death handling, respawn queue, combat events, attack input
+  - **TestAuraZoneHandler.cpp** (536 lines): aura sync, zone transitions, migration, handoff callbacks
+  - **TestMovementValidator.cpp** (456 lines): speed/teleport/fly/noclip detection, position bounds
+  - **TestSecuritySubsystems.cpp** (675 lines): ViolationTracker, ConnectionThrottler, TrafficAnalyzer, InputValidator, CircuitBreaker
+- **Pitfall:** Root CMakeLists.txt SERVER_SOURCES must be kept in sync with src/server/CMakeLists.txt — new files were only added to the latter, causing link failures.
+- **Pitfall:** Test CMakeLists.txt (src/server/tests/) is from old build system — root CMakeLists.txt TEST_SOURCES is what actually builds darkages_tests.
+- **Validation:** Build PASS, Tests PASS — **254 test cases, 244 passed, 10 skipped, 1710 assertions all passing**
+- **Test growth:** 200 cases / 1475 assertions → 254 cases / 1710 assertions (+54 cases, +235 assertions)
+
