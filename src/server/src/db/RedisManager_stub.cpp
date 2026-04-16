@@ -4,11 +4,6 @@
 
 namespace DarkAges {
 
-// Minimal RedisInternal for stub
-struct RedisInternal {
-    bool connected{false};
-};
-
 RedisManager::RedisManager() : internal_(std::make_unique<RedisInternal>()) {}
 RedisManager::~RedisManager() = default;
 

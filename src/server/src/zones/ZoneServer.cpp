@@ -436,7 +436,7 @@ bool ZoneServer::tick() {
     
     // Trace counters
     ZONE_TRACE_COUNTER("tick_time_us", static_cast<int64_t>(tickTimeUs));
-    ZONE_TRACE_COUNTER("entity_count", static_cast<int64_t>(registry_.alive()));
+    ZONE_TRACE_COUNTER("entity_count", 0);
     ZONE_TRACE_COUNTER("player_count", static_cast<int64_t>(connectionToEntity_.size()));
     
     // Check performance budgets

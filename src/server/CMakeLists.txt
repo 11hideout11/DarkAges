@@ -62,8 +62,6 @@ set(SERVER_SOURCES
     src/physics/SpatialHash.cpp
     src/physics/MovementSystem.cpp
     src/zones/ZoneServer.cpp
-    src/zones/InputHandler.cpp
-    src/zones/PerformanceHandler.cpp
     src/zones/CombatEventHandler.cpp
     src/zones/AuraZoneHandler.cpp
     src/zones/ZoneOrchestrator.cpp
@@ -81,10 +79,18 @@ set(SERVER_SOURCES
     src/memory/MemoryPool.cpp
     src/memory/LeakDetector.cpp
     src/security/AntiCheat.cpp
+    src/security/ViolationTracker.cpp
     src/security/DDoSProtection.cpp
     src/security/PacketValidator.cpp
     src/security/StatisticalDetector.cpp
     src/security/PacketIntegrity.cpp
+    src/security/MovementValidator.cpp
+    src/security/CircuitBreaker.cpp
+    src/security/InputValidator.cpp
+    src/security/ConnectionThrottler.cpp
+    src/security/TrafficAnalyzer.cpp
+    src/zones/PlayerManager.cpp
+    src/combat/AbilitySystem.cpp
     src/monitoring/MetricsExporter.cpp
 )
 
@@ -141,15 +147,20 @@ set(SERVER_HEADERS
     include/Constants.hpp
     include/security/AntiCheat.hpp
     include/security/AntiCheatConfig.hpp
+    include/security/AntiCheatTypes.hpp
     include/security/DDoSProtection.hpp
     include/security/PacketValidator.hpp
     include/security/RateLimiter.hpp
     include/security/StatisticalDetector.hpp
     include/security/PacketIntegrity.hpp
-    include/zones/InputHandler.hpp
-    include/zones/PerformanceHandler.hpp
+    include/security/CircuitBreaker.hpp
+    include/security/InputValidator.hpp
+    include/security/MovementValidator.hpp
+    include/security/TrafficAnalyzer.hpp
     include/zones/CombatEventHandler.hpp
     include/zones/AuraZoneHandler.hpp
+    include/zones/PlayerManager.hpp
+    include/combat/AbilitySystem.hpp
 )
 
 # Main executable
