@@ -410,3 +410,18 @@ All autonomous improvements tracked here. Most recent first.
   3. TestViolationTracker.cpp (0 → 19 tests): profile management, behavior tracking, severity enforcement (kick/ban/info), callbacks, manual enforcement, statistics, config
   4. Fixed Position helpers in tests to use FLOAT_TO_FIXED (Position stores raw fixed-point, not world units)
   5. Corrected darkades-codebase-conventions skill — Position stores raw fixed-point values, not world units as previously documented
+
+### ✅ 2026-04-17 12:00 UTC — PR Merge + ConnectionPool Tests + ConnectionThrottler Fix
+- **Task:** Resume autonomous orchestration — merge pending PRs, dispatch test coverage tasks
+- **Status:** SUCCESS
+- **PRs merged:**
+  - PR #7: CircuitBreaker unit tests (21 test cases, 348 lines) — rebased onto main
+  - PR #8: PositionHistory (22 tests) + ViolationTracker (21 tests) — rebased, kept PR #7's CircuitBreaker version
+  - PR #9 (implicit): ConnectionPool tests (7 cases, ~72 assertions) + RateLimiter/ConnectionThrottler fix
+- **Build:** PASS
+- **Tests:** PASS (409 cases, 392 passed, 17 skipped, 2752 assertions)
+- **Key fixes:**
+  - RateLimiter.hpp: Restored missing class declarations (AdaptiveRateLimiter, ConnectionThrottler, etc.)
+  - ConnectionThrottler.cpp: Removed duplicate constructor definition, fixed member calls
+  - RedisManager_stub.cpp: Expanded RedisInternal struct for ZoneManager compatibility
+- **Branch cleanup:** Merged 3 autonomous branches into main
