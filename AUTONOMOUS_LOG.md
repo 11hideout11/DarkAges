@@ -3,6 +3,25 @@
 All autonomous improvements tracked here. Most recent first.
 
 
+### ✅ 2026-04-17 — Test Coverage: PositionHistory, CircuitBreaker, ViolationTracker
+- **Task:** Add unit tests for previously untested components
+- **Status:** SUCCESS
+- **Changes:** 3 new test files + 1 bugfix:
+  - `TestPositionHistory.cpp` (529 lines, 25 test cases, 115 assertions)
+    - PositionHistory: record, circular eviction, time-based eviction, binary search, interpolation, clear
+    - LagCompensator: record, retrieve, validateHit (within/outside radius), missing history, rewind limit
+  - `TestCircuitBreaker.cpp` (246 lines, 15 test cases, 46 assertions)
+    - State machine: CLOSED, OPEN, HALF_OPEN transitions
+    - forceState() fix: reset lastFailureTime so OPEN state correctly rejects requests immediately
+  - `TestViolationTracker.cpp` (283 lines, 20 test cases, 51 assertions)
+    - Profile management: create, retrieve, remove
+    - Statistics: incrementDetections, getDetectionCount, resetStatistics
+    - Callbacks: onCheatDetected, onPlayerBanned, onPlayerKicked
+    - Severity handling: CRITICAL kicks, BAN bans, INFO just logs
+  - Fixed: `CircuitBreaker.cpp` - forceState(OPEN) now resets lastFailureTime so allowRequest() correctly returns false
+- **Validation:** Build PASS, Tests PASS (344 test cases, 332 passed, 10 skipped, 2355 assertions, 0 failures)
+- **Coverage increased:** 23 -> 20 untested source files
+
 ### ✅ 2026-04-17 — Branch Cleanup + MovementValidator Tests
 - **Task:** Review all PRs, merge unmerged work, clean up stale branches
 - **Status:** SUCCESS

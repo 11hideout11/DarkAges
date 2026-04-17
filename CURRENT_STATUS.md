@@ -1,10 +1,10 @@
 # DarkAges MMO - Current Status (Single Source of Truth)
 
-**Last Updated:** 2026-04-16  
-**Phase:** 8 - Production Hardening (Week 1 of 8)  
-**Server:** ✅ Operational (60Hz tick rate, 326KB binary)  
-**Build:** ✅ PASS (April 16 - CMake, 185 tests)  
-**Testing:** ✅ Three-tier infrastructure operational  
+|**Last Updated:** 2026-04-17  
+|**Phase:** 8 - Production Hardening (Week 1 of 8)  
+|**Server:** ✅ Operational (60Hz tick rate, 326KB binary)  
+|**Build:** ✅ PASS (April 17 - CMake, 344 tests)  
+|**Testing:** ✅ Three-tier infrastructure operational - 332 passed, 10 skipped, 2355 assertions
 
 ---
 
@@ -144,7 +144,7 @@ Week 8:   Final validation, production readiness assessment
 | 2026-02-02 | **Documentation consolidation**: Archived 3 outdated status files, fixed MASTER_TASK_TRACKER summary, created docs/DOCUMENT_INDEX.md | Antigravity |
 | 2026-04-16 | Build FIXED: 7 missing source files, EnTT 3.13 compatibility, 185 tests green | Hermes |
 | 2026-04-16 | WP-8-2 Security Audit: Merged to PR #5, all security tests passing | Hermes |
-| 2026-04-16 | WP-8-5 STARTED: Documentation cleanup, CURRENT_STATUS.md updated | Hermes |
+| 2026-04-17 | Test coverage expansion: PositionHistory, CircuitBreaker, ViolationTracker (+57 test cases, +174 assertions) | Hermes |
 
 
 ---
