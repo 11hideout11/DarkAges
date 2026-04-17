@@ -441,8 +441,6 @@ set(SERVER_SOURCES
     src/server/src/zones/CrossZoneMessenger.cpp
     src/server/src/zones/CombatEventHandler.cpp
     src/server/src/zones/AuraZoneHandler.cpp
-    src/server/src/zones/InputHandler.cpp
-    src/server/src/zones/PerformanceHandler.cpp
     src/server/src/security/AntiCheat.cpp
     src/server/src/security/MovementValidator.cpp
     src/server/src/security/ViolationTracker.cpp
@@ -451,8 +449,6 @@ set(SERVER_SOURCES
     src/server/src/security/InputValidator.cpp
     src/server/src/security/ConnectionThrottler.cpp
     src/server/src/security/TrafficAnalyzer.cpp
-    src/server/src/security/PacketIntegrity.cpp
-    src/server/src/security/RateLimiter.cpp
     src/server/src/security/PacketValidator.cpp
     src/server/src/security/StatisticalDetector.cpp
     src/server/src/security/PacketIntegrity.cpp
@@ -736,8 +732,7 @@ if(BUILD_TESTS AND TARGET Catch2::Catch2WithMain)
         src/server/tests/TestTrafficAnalyzer.cpp
         src/server/tests/TestConnectionPool.cpp
         src/server/tests/TestStreamManager.cpp
-        src/server/tests/TestPubSubManager.cpp
-        src/server/tests/TestZoneMessage.cpp
+        src/server/tests/TestZoneManager.cpp
     )
 
     # Conditionally include tests for optional features

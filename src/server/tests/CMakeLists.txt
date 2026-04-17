@@ -36,14 +36,6 @@ set(TEST_SOURCES
     TestAuraZoneHandler.cpp
     TestCombatEventHandler.cpp
     TestRedisIntegration.cpp
-    TestCombatEventHandler.cpp
-    TestAuraZoneHandler.cpp
-    TestSecuritySubsystems.cpp
-    TestPacketIntegrity.cpp
-    TestRateLimiter.cpp
-    TestZoneManager.cpp
-    TestStreamManager.cpp
-    TestPlayerSessionManager.cpp
     BenchmarkRedis.cpp
     TestPositionHistory.cpp
     TestCircuitBreaker.cpp
@@ -53,7 +45,7 @@ set(TEST_SOURCES
     TestTrafficAnalyzer.cpp
     TestConnectionPool.cpp
     TestStreamManager.cpp
-    TestZoneMessage.cpp
+    TestZoneManager.cpp
 )
 
 # Conditional test sources based on dependencies
@@ -81,12 +73,6 @@ set(TEST_SERVER_SOURCES
     ${CMAKE_SOURCE_DIR}/src/zones/AreaOfInterest.cpp
     ${CMAKE_SOURCE_DIR}/src/zones/AuraProjection.cpp
     ${CMAKE_SOURCE_DIR}/src/zones/EntityMigration.cpp
-    ${CMAKE_SOURCE_DIR}/src/zones/CrossZoneMessenger.cpp
-    ${CMAKE_SOURCE_DIR}/src/zones/PlayerManager.cpp
-    ${CMAKE_SOURCE_DIR}/src/zones/CombatEventHandler.cpp
-    ${CMAKE_SOURCE_DIR}/src/zones/AuraZoneHandler.cpp
-    ${CMAKE_SOURCE_DIR}/src/zones/InputHandler.cpp
-    ${CMAKE_SOURCE_DIR}/src/zones/PerformanceHandler.cpp
     ${CMAKE_SOURCE_DIR}/src/combat/PositionHistory.cpp
     ${CMAKE_SOURCE_DIR}/src/combat/CombatSystem.cpp
     ${CMAKE_SOURCE_DIR}/src/combat/LagCompensatedCombat.cpp
