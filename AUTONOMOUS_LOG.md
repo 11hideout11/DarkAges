@@ -384,3 +384,16 @@ All autonomous improvements tracked here. Most recent first.
   - Full lifecycle CLOSED → OPEN → HALF_OPEN → CLOSED
   - Thread safety (basic concurrent access)
 - **Also merged:** Test coverage branch (InputValidator, RateLimiter, TrafficAnalyzer tests from PR#6)
+
+### ✅ 2026-04-17 10:29 UTC
+- **Task:** Fill empty test stubs — CircuitBreaker, PositionHistory, ViolationTracker
+- **Branch:** autonomous/20260417-empty-test-stubs
+- **Build:** PASS
+- **Tests:** PASS (384 cases, 2645 assertions — +57 new test cases)
+- **PR:** https://github.com/Aycrith/DarkAges/pull/8
+- **Changes:**
+  1. TestCircuitBreaker.cpp (0 → 16 tests): state machine transitions, forceState, custom config, edge cases, full lifecycle
+  2. TestPositionHistory.cpp (0 → 22 tests): PositionHistory buffer ops, exact/interpolated lookup, time window, eviction; LagCompensator record/retrieve, multi-entity, remove, validateHit
+  3. TestViolationTracker.cpp (0 → 19 tests): profile management, behavior tracking, severity enforcement (kick/ban/info), callbacks, manual enforcement, statistics, config
+  4. Fixed Position helpers in tests to use FLOAT_TO_FIXED (Position stores raw fixed-point, not world units)
+  5. Corrected darkades-codebase-conventions skill — Position stores raw fixed-point values, not world units as previously documented
