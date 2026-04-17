@@ -44,6 +44,7 @@ set(TEST_SOURCES
     TestInputValidator.cpp
     TestRateLimiter.cpp
     TestConnectionThrottler.cpp
+    TestCoreTypes.cpp
     TestTrafficAnalyzer.cpp
     TestConnectionPool.cpp
     TestStreamManager.cpp

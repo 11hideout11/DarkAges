@@ -731,6 +731,7 @@ if(BUILD_TESTS AND TARGET Catch2::Catch2WithMain)
         src/server/tests/TestInputValidator.cpp
         src/server/tests/TestRateLimiter.cpp
         src/server/tests/TestConnectionThrottler.cpp
+        src/server/tests/TestCoreTypes.cpp
         src/server/tests/TestTrafficAnalyzer.cpp
         src/server/tests/TestConnectionPool.cpp
         src/server/tests/TestStreamManager.cpp
