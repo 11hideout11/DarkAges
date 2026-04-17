@@ -480,3 +480,11 @@
   - PubSubManager stub behavior: publish/subscribe/unsubscribe/processSubscriptions when disconnected
   - PubSubManager publishToZone/broadcastToAllZones disconnected paths
   - PubSubManager connected publish with command counter (Redis-gated, skip when unavailable)
+### ✅ 2026-04-17 20:10 UTC
+- **Task:** Fix link errors — add InputHandler.cpp and PerformanceHandler.cpp to root CMakeLists.txt SERVER_SOURCES
+- **Branch:** autonomous/20260417-fix-missing-handler-sources (merged to main)
+- **Files changed:** CMakeLists.txt (+2 lines)
+- **Build:** PASS
+- **Tests:** PASS (431 cases, 405 passed, 6 failed [pre-existing Redis-dependent tests], 20 skipped)
+- **Root cause:** Extracted handler classes were added to legacy src/server/CMakeLists.txt but not root CMakeLists.txt SERVER_SOURCES, causing undefined reference linker errors in darkages_tests target.
+

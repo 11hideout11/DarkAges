@@ -49,6 +49,9 @@ set(TEST_SOURCES
     TestStreamManager.cpp
     TestZoneMessage.cpp
     TestZoneManager.cpp
+    TestPlayerSessionManager.cpp
+    TestPubSubManager.cpp
+    TestCoreTypes.cpp
 )
 
 # Conditional test sources based on dependencies
@@ -100,6 +103,7 @@ set(TEST_SERVER_SOURCES
     ${CMAKE_SOURCE_DIR}/src/zones/ZoneHandoff.cpp
     ${CMAKE_SOURCE_DIR}/src/db/AntiCheatLogger_stub.cpp
     ${CMAKE_SOURCE_DIR}/src/db/CombatEventLogger_stub.cpp
+    ${CMAKE_SOURCE_DIR}/src/db/PlayerSessionManager.cpp
 )
 
 # Network manager: use stub if GNS not available
@@ -117,6 +121,7 @@ endif()
 if(REDIS_AVAILABLE)
     list(APPEND TEST_SERVER_SOURCES ${CMAKE_SOURCE_DIR}/src/db/RedisManager.cpp)
     list(APPEND TEST_SERVER_SOURCES ${CMAKE_SOURCE_DIR}/src/db/ConnectionPool.cpp)
+    list(APPEND TEST_SERVER_SOURCES ${CMAKE_SOURCE_DIR}/src/db/PubSubManager.cpp)
 else()
     list(APPEND TEST_SERVER_SOURCES ${CMAKE_SOURCE_DIR}/src/db/RedisManager_stub.cpp)
 endif()
