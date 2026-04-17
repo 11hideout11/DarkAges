@@ -710,6 +710,7 @@ if(BUILD_TESTS AND TARGET Catch2::Catch2WithMain)
         src/server/tests/TestEntityMigration.cpp
         src/server/tests/TestZoneOrchestrator.cpp
         src/server/tests/TestDDoSProtection.cpp
+        src/server/tests/TestMovementValidator.cpp
         src/server/tests/TestPacketValidator.cpp
         src/server/tests/TestStatisticalDetector.cpp
         src/server/tests/TestPacketIntegrity.cpp
