@@ -320,3 +320,17 @@ All autonomous improvements tracked here. Most recent first.
 - **Changes:** 1 file, -4 lines in `src/server/src/zones/ZoneServer.cpp`
 - **Tests:** 190 passed, 10 skipped (Redis unavailable), 1475 assertions
 
+
+### ✅ 2026-04-17 05:25 UTC
+- **Task:** Fix Linux build — protobuf guard mismatch + duplicate stub symbols
+- **Branch:** autonomous/20260417-fix-proto-guard
+- **Build:** PASS
+- **Tests:** PASS (263 cases, 2091 assertions)
+- **PR:** Pushed directly to main (commit 38a5675)
+- **Changes:**
+  1. CMakeLists.txt: Changed `ENABLE_PROTOBUF=1` to `DARKAGES_HAS_PROTOBUF=1` (source code checks `#ifdef DARKAGES_HAS_PROTOBUF`)
+  2. ScyllaManager_stub.cpp: Removed duplicate CombatEventLogger/AntiCheatLogger stub implementations (kept only in dedicated *_stub.cpp files)
+  3. Created ZoneMessage.cpp: Moved serialize/deserialize from PubSubManager.cpp (only compiled with Redis) to always-compiled file
+  4. Added ZoneMessage.cpp to SERVER_SOURCES (always compiled, no Redis dependency)
+  5. Fixed stub isConnected() to return false (correct semantics for unavailable services)
+- **Pushed:** 2026-04-17 by Hermes (manual session — gh auth restored)
