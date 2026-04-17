@@ -49,8 +49,22 @@ void RedisManager::publish(std::string_view, std::string_view) {}
 void RedisManager::subscribe(std::string_view, std::function<void(std::string_view, std::string_view)>) {}
 
 // Stub streams
-void RedisManager::xadd(std::string_view, std::string_view, const std::unordered_map<std::string, std::string>&, StreamAddCallback) {}
-void RedisManager::xread(std::string_view, std::string_view, StreamReadCallback, uint32_t, uint32_t) {}
+void RedisManager::xadd(std::string_view, std::string_view, const std::unordered_map<std::string, std::string>&, StreamAddCallback callback) {
+    if (callback) {
+        AsyncResult<std::string> result;
+        result.success = false;
+        result.error = "Not connected to Redis";
+        callback(result);
+    }
+}
+void RedisManager::xread(std::string_view, std::string_view, StreamReadCallback callback, uint32_t, uint32_t) {
+    if (callback) {
+        AsyncResult<std::vector<StreamEntry>> result;
+        result.success = false;
+        result.error = "Not connected to Redis";
+        callback(result);
+    }
+}
 
 // Stub pipeline
 void RedisManager::pipelineSet(const std::vector<std::pair<std::string, std::string>>&, uint32_t, SetCallback) {}

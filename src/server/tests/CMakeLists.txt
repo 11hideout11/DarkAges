@@ -44,6 +44,7 @@ set(TEST_SOURCES
     TestRateLimiter.cpp
     TestTrafficAnalyzer.cpp
     TestConnectionPool.cpp
+    TestStreamManager.cpp
 )
 
 # Conditional test sources based on dependencies
@@ -115,6 +116,10 @@ if(REDIS_AVAILABLE)
 else()
     list(APPEND TEST_SERVER_SOURCES ${CMAKE_SOURCE_DIR}/src/db/RedisManager_stub.cpp)
 endif()
+
+# ZoneManager and StreamManager always compiled (have #else stub branches)
+list(APPEND TEST_SERVER_SOURCES ${CMAKE_SOURCE_DIR}/src/db/ZoneManager.cpp)
+list(APPEND TEST_SERVER_SOURCES ${CMAKE_SOURCE_DIR}/src/db/StreamManager.cpp)
 
 # Scylla: always use stub
 list(APPEND TEST_SERVER_SOURCES ${CMAKE_SOURCE_DIR}/src/db/ScyllaManager_stub.cpp)
