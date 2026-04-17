@@ -720,6 +720,7 @@ if(BUILD_TESTS AND TARGET Catch2::Catch2WithMain)
         src/server/tests/TestStatisticalDetector.cpp
         src/server/tests/TestPacketIntegrity.cpp
         src/server/tests/TestProfiling.cpp
+        src/server/tests/TestPerformanceMonitor.cpp
         src/server/tests/TestAntiCheat.cpp
         src/server/tests/TestMetricsExporter.cpp
         src/server/tests/TestPlayerManager.cpp
@@ -731,6 +732,7 @@ if(BUILD_TESTS AND TARGET Catch2::Catch2WithMain)
         src/server/tests/TestViolationTracker.cpp
         src/server/tests/TestInputValidator.cpp
         src/server/tests/TestRateLimiter.cpp
+        src/server/tests/TestConnectionThrottler.cpp
         src/server/tests/TestTrafficAnalyzer.cpp
         src/server/tests/TestConnectionPool.cpp
         src/server/tests/TestStreamManager.cpp
