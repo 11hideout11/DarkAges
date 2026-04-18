@@ -488,3 +488,13 @@
 - **Tests:** PASS (431 cases, 405 passed, 6 failed [pre-existing Redis-dependent tests], 20 skipped)
 - **Root cause:** Extracted handler classes were added to legacy src/server/CMakeLists.txt but not root CMakeLists.txt SERVER_SOURCES, causing undefined reference linker errors in darkages_tests target.
 
+
+### ✅ 2026-04-17 13:49 UTC
+- **Task:** Add StreamManager unit tests (XADD/XREAD stub + connected behavior)
+- **Branch:** autonomous/20260417-streammanager-tests → merged to main
+- **Changes:** New `src/server/tests/TestStreamManager.cpp` (308 lines, 14 test cases), added to both CMakeLists.txt
+- **Build:** PASS
+- **Tests:** PASS — 333 cases, 311 passed, 22 skipped, 0 failed, 2053 assertions
+- **Test growth:** 319 cases / 2040 assertions → 333 cases / 2053 assertions (+14 cases, +13 assertions)
+- **PR:** Not pushed (auth token expired)
+- **Coverage:** Disconnected xadd/xread error callbacks, null callback safety, metrics tracking (commandsSent/Failed/Completed), connected xadd with auto/explicit IDs, connected xread, multi-field operations
