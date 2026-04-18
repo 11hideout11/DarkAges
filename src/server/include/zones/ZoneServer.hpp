@@ -16,6 +16,7 @@
 #include "zones/AuraZoneHandler.hpp"
 #include "zones/InputHandler.hpp"
 #include "zones/PerformanceHandler.hpp"
+#include "zones/AntiCheatHandler.hpp"
 #include "combat/PositionHistory.hpp"
 #include "combat/LagCompensatedCombat.hpp"
 #include "combat/CombatSystem.hpp"
@@ -175,13 +176,7 @@ private:
     void onClientConnected(ConnectionID connectionId);
     void onClientDisconnected(ConnectionID connectionId);
 
-    // [SECURITY_AGENT] Setup anti-cheat callbacks
-    void initializeAntiCheat();
-    
-    // [SECURITY_AGENT] Handle cheat detection
-    void onCheatDetected(uint64_t playerId, const Security::CheatDetectionResult& result);
-    void onPlayerBanned(uint64_t playerId, const char* reason, uint32_t durationMinutes);
-    void onPlayerKicked(uint64_t playerId, const char* reason);
+    // [SECURITY_AGENT] Anti-cheat event handling delegated to AntiCheatHandler
     
     // [PHASE 3C] Combat processing with lag compensation (delegated to InputHandler)
     
@@ -306,6 +301,9 @@ private:
 
     // [ZONE_AGENT] Performance monitoring and QoS
     PerformanceHandler performanceHandler_;
+
+    // [ZONE_AGENT] Anti-cheat initialization and event handling
+    AntiCheatHandler antiCheatHandler_;
 
     // Entity migration manager
     std::unique_ptr<EntityMigrationManager> migrationManager_;
