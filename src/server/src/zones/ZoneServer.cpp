@@ -49,7 +49,8 @@ ZoneServer::ZoneServer()
       combatEventHandler_(*this),
       auraZoneHandler_(*this),
       inputHandler_(*this),
-      performanceHandler_(*this) {
+      performanceHandler_(*this),
+      antiCheatHandler_(*this) {
 }
 ZoneServer::~ZoneServer() = default;
 
@@ -133,8 +134,13 @@ bool ZoneServer::initialize(const ZoneConfig& config) {
         combatEventHandler_.sendCombatEvent(attacker, target, damage, location);
     });
     
-    // [SECURITY_AGENT] Initialize anti-cheat system
-    initializeAntiCheat();
+    // [ZONE_AGENT] Initialize anti-cheat handler
+    antiCheatHandler_.setConnectionMappings(&connectionToEntity_, &entityToConnection_);
+    antiCheatHandler_.setNetwork(network_.get());
+    antiCheatHandler_.setRedis(redis_.get());
+    antiCheatHandler_.setScylla(scylla_.get());
+    antiCheatHandler_.setAntiCheat(&antiCheat_);
+    antiCheatHandler_.initialize();
     
     // [ZONE_AGENT] Set up extracted handler references
     combatEventHandler_.setNetwork(network_.get());
@@ -1001,128 +1007,7 @@ void ZoneServer::onClientDisconnected(ConnectionID connectionId) {
 
 // Input handling delegated to InputHandler (see InputHandler.cpp)
 
-// [SECURITY_AGENT] Initialize anti-cheat system and callbacks
-void ZoneServer::initializeAntiCheat() {
-    if (!antiCheat_.initialize()) {
-        std::cerr << "[ZONE " << config_.zoneId << "] Failed to initialize anti-cheat system!" << std::endl;
-        return;
-    }
-    
-    // Set spatial hash for no-clip collision detection
-    antiCheat_.setSpatialHash(&spatialHash_);
-    
-    // Set up cheat detection callback
-    antiCheat_.setOnCheatDetected([this](uint64_t playerId, 
-                                          const Security::CheatDetectionResult& result) {
-        onCheatDetected(playerId, result);
-    });
-    
-    // Set up ban callback
-    antiCheat_.setOnPlayerBanned([this](uint64_t playerId, const char* reason, 
-                                         uint32_t durationMinutes) {
-        onPlayerBanned(playerId, reason, durationMinutes);
-    });
-    
-    // Set up kick callback
-    antiCheat_.setOnPlayerKicked([this](uint64_t playerId, const char* reason) {
-        onPlayerKicked(playerId, reason);
-    });
-    
-    std::cout << "[ZONE " << config_.zoneId << "] Anti-cheat system initialized" << std::endl;
-}
-
-// [SECURITY_AGENT] Handle cheat detection event
-void ZoneServer::onCheatDetected(uint64_t playerId, const Security::CheatDetectionResult& result) {
-    // [DEVOPS_AGENT] Track anti-cheat violations in Prometheus
-    auto& metrics = Monitoring::MetricsExporter::Instance();
-    std::string zoneIdStr = std::to_string(config_.zoneId);
-    const char* cheatTypeStr = Security::cheatTypeToString(result.type);
-    const char* severityStr = result.severity == Security::ViolationSeverity::CRITICAL ? "critical" : 
-                              result.severity == Security::ViolationSeverity::SUSPICIOUS ? "suspicious" : "minor";
-    std::unordered_map<std::string, std::string> violationLabels = {
-        {"zone_id", zoneIdStr},
-        {"cheat_type", cheatTypeStr},
-        {"severity", severityStr}
-    };
-    metrics.AntiCheatViolationsTotal().Increment(1.0, violationLabels);
-    
-    // Log to ScyllaDB for analytics and review
-    if (scylla_ && scylla_->isConnected()) {
-        AntiCheatEvent event;
-        event.eventId = static_cast<uint64_t>(playerId) * 100000 + currentTick_;
-        event.timestamp = currentTick_ * 16 / 1000;  // Convert ticks to seconds
-        event.zoneId = config_.zoneId;
-        event.playerId = playerId;
-        event.cheatType = cheatTypeStr;
-        event.severity = severityStr;
-        event.description = result.description;
-        event.confidence = result.confidence;
-        event.serverTick = currentTick_;
-        event.position = {0, 0, 0};
-
-        for (const auto& [connId, entityId] : connectionToEntity_) {
-            if (const PlayerInfo* info = registry_.try_get<PlayerInfo>(entityId)) {
-                if (info->playerId == playerId) {
-                    if (const Position* pos = registry_.try_get<Position>(entityId)) {
-                        event.position = *pos;
-                    }
-                    break;
-                }
-            }
-        }
-
-        scylla_->logAntiCheatEvent(event, nullptr);
-    } else if (scylla_) {
-        std::cerr << "[ANTICHEAT] ScyllaDB not connected, cannot log violation for player " << playerId << std::endl;
-    }
-    
-    // Could also notify monitoring systems, Discord webhooks, etc.
-    if (result.severity == Security::ViolationSeverity::SUSPICIOUS) {
-        // Flag for admin review but don't take action yet
-        std::cout << "[ANTICHEAT] Player " << playerId << " flagged for review: " 
-                  << result.description << std::endl;
-    }
-}
-
-// [SECURITY_AGENT] Handle player ban event
-void ZoneServer::onPlayerBanned(uint64_t playerId, const char* reason, uint32_t durationMinutes) {
-    // Persist ban to Redis if connected
-    if (redis_ && redis_->isConnected()) {
-        std::string key = "ban:" + std::to_string(playerId);
-        std::string value = std::string(reason) + "|" + std::to_string(durationMinutes);
-        redis_->set(key, value, durationMinutes * 60, nullptr);
-    }
-    
-    // Kick any connected sessions for this player
-    for (const auto& [connId, entityId] : connectionToEntity_) {
-        if (const PlayerInfo* info = registry_.try_get<PlayerInfo>(entityId)) {
-            if (info->playerId == playerId) {
-                network_->disconnect(connId, reason);
-                break;
-            }
-        }
-    }
-    
-    // Log ban event
-    std::cout << "[ANTICHEAT] Player " << playerId << " banned for " 
-              << durationMinutes << " minutes: " << reason << std::endl;
-}
-
-// [SECURITY_AGENT] Handle player kick event
-void ZoneServer::onPlayerKicked(uint64_t playerId, const char* reason) {
-    // Find and kick the player
-    for (const auto& [connId, entityId] : connectionToEntity_) {
-        if (const PlayerInfo* info = registry_.try_get<PlayerInfo>(entityId)) {
-            if (info->playerId == playerId) {
-                network_->disconnect(connId, reason);
-                break;
-            }
-        }
-    }
-    
-    // Log kick event
-    std::cout << "[ANTICHEAT] Player " << playerId << " kicked: " << reason << std::endl;
-}
+// Anti-cheat initialization and event handling delegated to AntiCheatHandler (see AntiCheatHandler.cpp)
 
 void ZoneServer::processAttackInput(EntityID entity, const ClientInputPacket& input) {
     // Build attack input from client data
