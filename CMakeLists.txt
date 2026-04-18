@@ -716,6 +716,7 @@ if(BUILD_TESTS AND TARGET Catch2::Catch2WithMain)
         src/server/tests/TestAuraZoneHandler.cpp
         src/server/tests/TestEntityMigration.cpp
         src/server/tests/TestZoneOrchestrator.cpp
+        src/server/tests/TestZoneServer.cpp
         src/server/tests/TestDDoSProtection.cpp
         src/server/tests/TestMovementValidator.cpp
         src/server/tests/TestPacketValidator.cpp

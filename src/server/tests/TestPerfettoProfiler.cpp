@@ -332,7 +332,7 @@ TEST_CASE("PerformanceCounter zero division protection", "[perfetto]") {
 
 TEST_CASE("PerfettoProfiler high-frequency event recording", "[perfetto]") {
     PerfettoProfiler& profiler = PerfettoProfiler::instance();
-    profiler.resetCounters();  // Clean slate
+    profiler.clearCounters();  // Clean slate (removes all counters)
     profiler.initialize("/tmp/test_buffer_growth.perfetto");
     
     // Record many events to test buffer

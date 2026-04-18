@@ -1,6 +1,13 @@
 # DarkAges MMO - Current Status (Single Source of Truth)
 
-|**Last Updated:** 2026-04-17  
+|**Last Updated:** 2026-04-17
+
+**Today's Activity:**
+- PRs #13, #14 merged (ZoneMessage, ZoneManager tests)
+- PR #15 merged (PerformanceMonitor, ConnectionThrottler tests)
+- PR #16 open (CoreTypes tests - 43 test cases, 108 assertions)
+- 14 stale branches cleaned up (6 remote, 8 local)
+- Main now at 8f64acc (merged PRs 13-15)  
 |**Phase:** 8 - Production Hardening (Week 1 of 8)  
 |**Server:** ✅ Operational (60Hz tick rate, 326KB binary)  
 |**Build:** ✅ PASS (April 17 - CMake, 344 tests)  
