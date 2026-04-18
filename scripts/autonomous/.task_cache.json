@@ -1,17 +1,7 @@
 {
-  "timestamp": 1776549991.991934,
-  "git_head": "78abe14081f66819e18bdc223b8d06a220128f15",
+  "timestamp": 1776553037.1593719,
+  "git_head": "563f27760fe7bc9e7441f4c826f218b40adf5836",
   "tasks": [
-    {
-      "priority": "P1",
-      "category": "test",
-      "title": "Add tests for PooledAllocator",
-      "description": "Header has 124 lines but no corresponding test file",
-      "files": [
-        "src/server/include/memory/PooledAllocator.hpp"
-      ],
-      "estimated_hours": 1.5
-    },
     {
       "priority": "P1",
       "category": "test",
