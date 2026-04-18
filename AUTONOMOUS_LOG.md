@@ -1,5 +1,18 @@
 # DarkAges Autonomous Iteration Log
 
+### ✅ 2026-04-18 18:10 UTC — Add tests for PooledAllocator
+- **Task:** Add tests for PooledAllocator (header without test file)
+- **Branch:** main (direct commit)
+- **Build:** PASS
+- **Tests:** PASS (20 test cases, 144 assertions — all pass)
+- **Changes:**
+  - New file: `src/server/tests/TestPooledAllocator.cpp` with 20 test cases covering:
+    basic allocation, block size overflow, construct/destroy, pool stats,
+    rebind, comparison operators, exception handling, STL containers,
+    move semantics, convenience aliases
+  - CMakeLists.txt (root): add TestPooledAllocator.cpp to TEST_SOURCES
+  - CMakeLists.txt (legacy): add TestPooledAllocator.cpp
+
 ### ✅ 2026-04-18 14:05 UTC — Add tests for CombatEventLogger
 - **Task:** Add tests for CombatEventLogger (no test file existed)
 - **Branch:** autonomous/20260418-combat-event-logger-tests
