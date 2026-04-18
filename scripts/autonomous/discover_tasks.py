@@ -190,7 +190,17 @@ def main():
     # Check cache first
     cache = load_cache()
     if cache.get("tasks"):
-        print(json.dumps(cache["tasks"], indent=2))
+        if "--json" in sys.argv:
+            print(json.dumps(cache["tasks"], indent=2))
+        else:
+            tasks = cache["tasks"]
+            print(f"=== DarkAges Task Queue ({len(tasks)} tasks) [cached] ===\n")
+            for i, task in enumerate(tasks, 1):
+                print(f"{i}. [{task['priority']}] [~{task['estimated_hours']}h] [{task['category']}]")
+                print(f"   {task['title']}")
+                print(f"   {', '.join(task['files'])}")
+                print(f"   {task['description']}")
+                print()
         return
 
     # Discover tasks
