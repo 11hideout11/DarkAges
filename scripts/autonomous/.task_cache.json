@@ -1,0 +1,36 @@
+{
+  "timestamp": 1776537724.51952,
+  "git_head": "3884191d50e6d48099ae87a5461f5943e423dd26",
+  "tasks": [
+    {
+      "priority": "P2",
+      "category": "test",
+      "title": "Add tests for LeakDetector",
+      "description": "No test file found for src/server/src/memory/LeakDetector.cpp",
+      "files": [
+        "src/server/src/memory/LeakDetector.cpp"
+      ],
+      "estimated_hours": 1.0
+    },
+    {
+      "priority": "P2",
+      "category": "test",
+      "title": "Add tests for ZoneServer",
+      "description": "No test file found for src/server/src/zones/ZoneServer.cpp",
+      "files": [
+        "src/server/src/zones/ZoneServer.cpp"
+      ],
+      "estimated_hours": 1.0
+    },
+    {
+      "priority": "P3",
+      "category": "refactor",
+      "title": "Refactor ZoneServer.cpp (1480 lines)",
+      "description": "File is 1480 lines \u2014 consider extracting cohesive subsystems",
+      "files": [
+        "src/server/src/zones/ZoneServer.cpp"
+      ],
+      "estimated_hours": 3.0
+    }
+  ]
+}

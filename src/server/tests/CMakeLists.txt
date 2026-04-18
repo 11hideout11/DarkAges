@@ -27,6 +27,7 @@ set(TEST_SOURCES
     TestZoneOrchestrator.cpp
     TestEntityMigration.cpp
     TestMemoryPool.cpp
+    TestLeakDetector.cpp
     TestProfiling.cpp
     TestPerformanceMonitor.cpp
     TestPerfettoProfiler.cpp

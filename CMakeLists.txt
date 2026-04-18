@@ -702,6 +702,7 @@ if(BUILD_TESTS AND TARGET Catch2::Catch2WithMain)
         src/server/tests/TestSpatialHash.cpp
         src/server/tests/TestMovementSystem.cpp
         src/server/tests/TestMemoryPool.cpp
+        src/server/tests/TestLeakDetector.cpp
         # src/server/tests/TestNetworkProtocol.cpp  # Temporarily disabled - missing protocol implementations
         src/server/tests/TestAreaOfInterest.cpp
         src/server/tests/TestReplicationOptimizer.cpp
