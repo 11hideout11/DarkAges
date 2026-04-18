@@ -28,12 +28,28 @@ class Task:
     estimated_hours: float
 
 
+def get_git_head() -> str:
+    """Get current git HEAD hash for cache invalidation."""
+    try:
+        result = subprocess.run(
+            ["git", "rev-parse", "HEAD"],
+            capture_output=True, text=True, timeout=5,
+            cwd=str(PROJECT_ROOT)
+        )
+        return result.stdout.strip()
+    except Exception:
+        return "unknown"
+
+
 def load_cache() -> dict:
-    """Load cached task discovery results if fresh."""
+    """Load cached task discovery results if fresh and git state matches."""
     if CACHE_FILE.exists():
         try:
             import time
             data = json.loads(CACHE_FILE.read_text())
+            # Invalidate if git HEAD changed (tasks may have been completed)
+            if data.get("git_head") != get_git_head():
+                return {}
             if time.time() - data.get("timestamp", 0) < CACHE_TTL_SECONDS:
                 return data
         except (json.JSONDecodeError, KeyError):
@@ -46,6 +62,7 @@ def save_cache(tasks: List[dict]):
     import time
     CACHE_FILE.write_text(json.dumps({
         "timestamp": time.time(),
+        "git_head": get_git_head(),
         "tasks": tasks
     }, indent=2))
 
