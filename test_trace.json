@@ -1,0 +1,8 @@
+{
+  "displayTimeUnit": "ms",
+  "systemTraceEvents": "SystemTraceData",
+  "traceEvents": [
+    {"name": "test_scope", "cat": "physics", "ph": "B", "ts": 1776550125512611, "pid": 1, "tid": 2},
+    {"name": "test_scope", "cat": "physics", "ph": "E", "ts": 1776550125512839, "pid": 1, "tid": 2}
+  ]
+}
