@@ -1,0 +1,134 @@
+{
+  "timestamp": "2026-04-19 22:24 UTC",
+  "summary": {
+    "total_checks": 7,
+    "passed": 7,
+    "failed": 0,
+    "load_tests_passed": true
+  },
+  "benchmarks": [
+    {
+      "name": "spatial_insert_1000",
+      "mean": 740.577,
+      "unit": "us",
+      "stddev": 0.0
+    },
+    {
+      "name": "spatial_query_1000_radius50",
+      "mean": 12.3243,
+      "unit": "us",
+      "stddev": 0.0
+    },
+    {
+      "name": "combat_damage_100",
+      "mean": 4.30921,
+      "unit": "us",
+      "stddev": 0.0
+    },
+    {
+      "name": "movement_500",
+      "mean": 1.62311,
+      "unit": "ms",
+      "stddev": 0.0
+    },
+    {
+      "name": "aoi_query_200_radius200",
+      "mean": 137.625,
+      "unit": "us",
+      "stddev": 0.0
+    },
+    {
+      "name": "entt_create_1000",
+      "mean": 3.06614,
+      "unit": "ms",
+      "stddev": 0.0
+    },
+    {
+      "name": "entt_iterate_1000",
+      "mean": 296.8,
+      "unit": "us",
+      "stddev": 0.0
+    },
+    {
+      "name": "entt_destroy_1000",
+      "mean": 3.701,
+      "unit": "ms",
+      "stddev": 0.0
+    }
+  ],
+  "load_tests": [
+    {
+      "tick_ms": 0.00528,
+      "entities": 50
+    },
+    {
+      "tick_ms": 0.00407,
+      "entities": 200
+    },
+    {
+      "tick_ms": 0.00627,
+      "entities": 400
+    }
+  ],
+  "budget_checks": [
+    {
+      "name": "spatial_insert_1000",
+      "type": "benchmark",
+      "measured": 0.741,
+      "budget": 5.0,
+      "unit": "ms",
+      "passed": true
+    },
+    {
+      "name": "combat_damage_100",
+      "type": "benchmark",
+      "measured": 0.004,
+      "budget": 5.0,
+      "unit": "ms",
+      "passed": true
+    },
+    {
+      "name": "movement_500",
+      "type": "benchmark",
+      "measured": 1.623,
+      "budget": 16.0,
+      "unit": "ms",
+      "passed": true
+    },
+    {
+      "name": "entt_iterate_1000",
+      "type": "benchmark",
+      "measured": 0.297,
+      "budget": 1.0,
+      "unit": "ms",
+      "passed": true
+    },
+    {
+      "name": "50_entities_tick",
+      "type": "load_test",
+      "measured": 0.005,
+      "budget": 16.0,
+      "unit": "ms",
+      "category": "light",
+      "passed": true
+    },
+    {
+      "name": "200_entities_tick",
+      "type": "load_test",
+      "measured": 0.004,
+      "budget": 16.0,
+      "unit": "ms",
+      "category": "medium",
+      "passed": true
+    },
+    {
+      "name": "400_entities_tick",
+      "type": "load_test",
+      "measured": 0.006,
+      "budget": 20.0,
+      "unit": "ms",
+      "category": "heavy",
+      "passed": true
+    }
+  ]
+}

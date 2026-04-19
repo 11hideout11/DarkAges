@@ -757,6 +757,7 @@ if(BUILD_TESTS AND TARGET Catch2::Catch2WithMain)
         src/server/tests/TestRedisInternal.cpp
         src/server/tests/TestZoneDefinition.cpp
         src/server/tests/BenchmarkTick.cpp
+        src/server/tests/TestLoadTesting.cpp
     )
 
     # Conditionally include tests for optional features
