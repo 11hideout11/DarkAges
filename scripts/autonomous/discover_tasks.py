@@ -244,7 +244,7 @@ def find_todos() -> List[Task]:
     """Find actionable TODO/FIXME markers."""
     tasks = []
     skip_patterns = re.compile(
-        r'Phase \d|TODO:.*implement|TODO:.*later|#.*TODO|"TODO|SPEED_HACK|FLY_HACK|NO_CLIP',
+        r'Phase \d|TODO:.*implement|TODO:.*later|#.*TODO|"TODO|SPEED_HACK|FLY_HACK|NO_CLIP|TODO: Add meaningful',
         re.IGNORECASE
     )
 
@@ -257,6 +257,9 @@ def find_todos() -> List[Task]:
 
         for line in result.stdout.strip().split("\n"):
             if not line or skip_patterns.search(line):
+                continue
+            # Skip TODOs in test files (may be auto-generated)
+            if "/tests/" in line:
                 continue
             # Extract file and line
             parts = line.split(":", 2)

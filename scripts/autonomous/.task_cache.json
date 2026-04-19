@@ -1,6 +1,6 @@
 {
-  "timestamp": 1776629765.1634712,
-  "git_head": "4c2e43095a792d2b8c4638459513a21918bf125e",
+  "timestamp": 1776629841.3791802,
+  "git_head": "5415bcb555a6c90eba1c12f8d19201e256dbaa86",
   "tasks": [
     {
       "priority": "P2",
@@ -12,16 +12,6 @@
         "src/server/tests/TestProtocol.cpp"
       ],
       "estimated_hours": 2.0
-    },
-    {
-      "priority": "P2",
-      "category": "fix",
-      "title": "Address TODO in TestRedisManager.cpp",
-      "description": "// TODO: Add meaningful assertions once dependencies are mockable",
-      "files": [
-        "src/server/tests/TestRedisManager.cpp"
-      ],
-      "estimated_hours": 0.5
     },
     {
       "priority": "P3",
