@@ -1,5 +1,20 @@
 # DarkAges Autonomous Iteration Log
 
+### ✅ 2026-04-19 19:30 UTC — Expand test coverage for zone/combat subsystems
+- **Task:** Expand test coverage for ZoneServer, LagCompensatedCombat, ZoneOrchestrator, EntityMigration
+- **Branch:** main (direct commit)
+- **Build:** PASS
+- **Tests:** PASS (11 test suites, all passing)
+- **Changes:**
+  - ZoneServer: 19 → 29 tests (53% increase) — tick safety, getCurrentTimeMs, setReducedUpdateRate, ECS registry entity ops, SnapshotHistory, ClientSnapshotState, spatial hash integration, QoS toggle, TickMetrics overflow, ZoneConfig edge cases
+  - LagCompensatedCombat: 7 → 8 tests — rapid attack sequence with zero RTT, self-attack
+  - ZoneOrchestrator: 11 → 14 tests — player movement between zones, statistics tracking, invalid position lookup
+  - EntityMigration: 8 → 12 tests — duplicate migration prevention, stats tracking, zone port lookup, EntitySnapshot serialization roundtrip
+  - AGENTS.md: Updated to 864 tests/67 files/52K LOC, added EnTT version-specific test pitfalls
+  - TASK_QUEUE.md: Updated with completed tasks, Phase 9 status, next phases roadmap
+- **Note:** Discovered EnTT API differences — `registry.has()` → `all_of()`, no `view.size()`, no `alive()`, entity enum can't compare with int. Documented in AGENTS.md.
+- **Validation:** Build PASS, Tests PASS (864 test cases total)
+
 ### ✅ 2026-04-18 19:07 UTC — Add tests for FixedVector
 - **Task:** Add tests for FixedVector (header has 130 lines but no test file)
 - **Branch:** autonomous/20260418-fixedvector-tests → main (merge)
