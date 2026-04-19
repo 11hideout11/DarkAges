@@ -1,5 +1,17 @@
 # DarkAges Autonomous Iteration Log
 
+### ✅ 2026-04-18 19:07 UTC — Add tests for FixedVector
+- **Task:** Add tests for FixedVector (header has 130 lines but no test file)
+- **Branch:** autonomous/20260418-fixedvector-tests → main (merge)
+- **Build:** PASS
+- **Tests:** PASS (11 test cases, 66 assertions — all pass)
+- **Changes:**
+  - New file: `src/server/tests/TestFixedVector.cpp` with 11 test cases covering:
+    basic operations (push_back, pop_back, clear, resize), capacity exceeded handling,
+    emplace_back for move-only types, find and erase operations, move semantics,
+    iterator usage, data() pointer access, const correctness, large data types
+  - CMakeLists.txt (root): add TestFixedVector.cpp to TEST_SOURCES (line 721)
+
 ### ✅ 2026-04-18 18:10 UTC — Add tests for PooledAllocator
 - **Task:** Add tests for PooledAllocator (header without test file)
 - **Branch:** main (direct commit)
