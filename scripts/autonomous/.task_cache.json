@@ -1,37 +1,7 @@
 {
-  "timestamp": 1776558202.7133014,
-  "git_head": "48e2b6a866f03fa4941a1a4f99d1f6d2be93e5c3",
+  "timestamp": 1776619893.6983333,
+  "git_head": "4d0fc1322a455d97772e4d5dc78472020b388bb1",
   "tasks": [
-    {
-      "priority": "P1",
-      "category": "test",
-      "title": "Add tests for AntiCheatTypes",
-      "description": "Header has 152 lines but no corresponding test file",
-      "files": [
-        "src/server/include/security/AntiCheatTypes.hpp"
-      ],
-      "estimated_hours": 1.5
-    },
-    {
-      "priority": "P1",
-      "category": "test",
-      "title": "Add tests for AntiCheatConfig",
-      "description": "Header has 187 lines but no corresponding test file",
-      "files": [
-        "src/server/include/security/AntiCheatConfig.hpp"
-      ],
-      "estimated_hours": 1.5
-    },
-    {
-      "priority": "P2",
-      "category": "test",
-      "title": "Add tests for NetworkManager",
-      "description": "No test file found for src/server/src/netcode/NetworkManager.cpp",
-      "files": [
-        "src/server/src/netcode/NetworkManager.cpp"
-      ],
-      "estimated_hours": 1.0
-    },
     {
       "priority": "P2",
       "category": "test",
