@@ -61,17 +61,17 @@ namespace DarkAges {
 std::vector<uint8_t> EntitySnapshot::serialize() const {
     std::vector<uint8_t> data;
     data.reserve(160);  // Pre-allocate approximate size
-    
+
     // Helper lambda for writing values
     auto writeBytes = [&data](const void* src, size_t size) {
         const uint8_t* bytes = static_cast<const uint8_t*>(src);
         data.insert(data.end(), bytes, bytes + size);
     };
-    
+
     // Magic number for validation (4 bytes: "DAES" = DarkAges Entity Snapshot)
     const uint32_t magic = 0x53454144;  // "DAES" in little-endian
     writeBytes(&magic, sizeof(uint32_t));
-    
+
     // Header section
     writeBytes(&entity, sizeof(EntityID));
     writeBytes(&playerId, sizeof(uint64_t));
@@ -80,22 +80,22 @@ std::vector<uint8_t> EntitySnapshot::serialize() const {
     writeBytes(&timestamp, sizeof(uint32_t));
     writeBytes(&sequence, sizeof(uint32_t));
     writeBytes(&connectionId, sizeof(uint32_t));
-    
+
     // Position
     writeBytes(&position.x, sizeof(Constants::Fixed));
     writeBytes(&position.y, sizeof(Constants::Fixed));
     writeBytes(&position.z, sizeof(Constants::Fixed));
     writeBytes(&position.timestamp_ms, sizeof(uint32_t));
-    
+
     // Velocity
     writeBytes(&velocity.dx, sizeof(Constants::Fixed));
     writeBytes(&velocity.dy, sizeof(Constants::Fixed));
     writeBytes(&velocity.dz, sizeof(Constants::Fixed));
-    
+
     // Rotation
     writeBytes(&rotation.yaw, sizeof(float));
     writeBytes(&rotation.pitch, sizeof(float));
-    
+
     // CombatState
     writeBytes(&combat.health, sizeof(int16_t));
     writeBytes(&combat.maxHealth, sizeof(int16_t));
@@ -105,14 +105,14 @@ std::vector<uint8_t> EntitySnapshot::serialize() const {
     writeBytes(&combat.lastAttackTime, sizeof(uint32_t));
     writeBytes(&combat.isDead, sizeof(bool));
     data.push_back(0);  // padding
-    
+
     // NetworkState
     writeBytes(&network.lastInputSequence, sizeof(uint32_t));
     writeBytes(&network.lastInputTime, sizeof(uint32_t));
     writeBytes(&network.rttMs, sizeof(uint32_t));
     writeBytes(&network.packetLoss, sizeof(float));
     writeBytes(&network.snapshotSequence, sizeof(uint32_t));
-    
+
     // InputState (as bytes for packing)
     uint8_t inputFlags = (lastInput.forward << 0) |
                          (lastInput.backward << 1) |
@@ -127,7 +127,7 @@ std::vector<uint8_t> EntitySnapshot::serialize() const {
     writeBytes(&lastInput.pitch, sizeof(float));
     writeBytes(&lastInput.sequence, sizeof(uint32_t));
     writeBytes(&lastInput.timestamp_ms, sizeof(uint32_t));
-    
+
     // AntiCheatState
     writeBytes(&antiCheat.lastValidPosition.x, sizeof(Constants::Fixed));
     writeBytes(&antiCheat.lastValidPosition.y, sizeof(Constants::Fixed));
@@ -138,7 +138,7 @@ std::vector<uint8_t> EntitySnapshot::serialize() const {
     writeBytes(&antiCheat.maxRecordedSpeed, sizeof(float));
     writeBytes(&antiCheat.inputCount, sizeof(uint32_t));
     writeBytes(&antiCheat.inputWindowStart, sizeof(uint32_t));
-    
+
     return data;
 }
 
@@ -146,10 +146,10 @@ std::optional<EntitySnapshot> EntitySnapshot::deserialize(const std::vector<uint
     if (data.size() < 104) {  // Minimum expected size (including 4-byte magic)
         return std::nullopt;
     }
-    
+
     EntitySnapshot snapshot;
     size_t offset = 0;
-    
+
     auto readBytes = [&data, &offset](void* dest, size_t size) -> bool {
         if (offset + size > data.size()) {
             return false;
@@ -158,14 +158,14 @@ std::optional<EntitySnapshot> EntitySnapshot::deserialize(const std::vector<uint
         offset += size;
         return true;
     };
-    
+
     // Check magic number (4 bytes: "DAES" = 0x53454144)
     uint32_t magic = 0;
     if (!readBytes(&magic, sizeof(uint32_t))) return std::nullopt;
     if (magic != 0x53454144) {
         return std::nullopt;  // Invalid magic number
     }
-    
+
     // Header section
     if (!readBytes(&snapshot.entity, sizeof(EntityID))) return std::nullopt;
     if (!readBytes(&snapshot.playerId, sizeof(uint64_t))) return std::nullopt;
@@ -174,22 +174,22 @@ std::optional<EntitySnapshot> EntitySnapshot::deserialize(const std::vector<uint
     if (!readBytes(&snapshot.timestamp, sizeof(uint32_t))) return std::nullopt;
     if (!readBytes(&snapshot.sequence, sizeof(uint32_t))) return std::nullopt;
     if (!readBytes(&snapshot.connectionId, sizeof(uint32_t))) return std::nullopt;
-    
+
     // Position
     if (!readBytes(&snapshot.position.x, sizeof(Constants::Fixed))) return std::nullopt;
     if (!readBytes(&snapshot.position.y, sizeof(Constants::Fixed))) return std::nullopt;
     if (!readBytes(&snapshot.position.z, sizeof(Constants::Fixed))) return std::nullopt;
     if (!readBytes(&snapshot.position.timestamp_ms, sizeof(uint32_t))) return std::nullopt;
-    
+
     // Velocity
     if (!readBytes(&snapshot.velocity.dx, sizeof(Constants::Fixed))) return std::nullopt;
     if (!readBytes(&snapshot.velocity.dy, sizeof(Constants::Fixed))) return std::nullopt;
     if (!readBytes(&snapshot.velocity.dz, sizeof(Constants::Fixed))) return std::nullopt;
-    
+
     // Rotation
     if (!readBytes(&snapshot.rotation.yaw, sizeof(float))) return std::nullopt;
     if (!readBytes(&snapshot.rotation.pitch, sizeof(float))) return std::nullopt;
-    
+
     // CombatState
     if (!readBytes(&snapshot.combat.health, sizeof(int16_t))) return std::nullopt;
     if (!readBytes(&snapshot.combat.maxHealth, sizeof(int16_t))) return std::nullopt;
@@ -199,14 +199,14 @@ std::optional<EntitySnapshot> EntitySnapshot::deserialize(const std::vector<uint
     if (!readBytes(&snapshot.combat.lastAttackTime, sizeof(uint32_t))) return std::nullopt;
     if (!readBytes(&snapshot.combat.isDead, sizeof(bool))) return std::nullopt;
     offset++;  // Skip padding
-    
+
     // NetworkState
     if (!readBytes(&snapshot.network.lastInputSequence, sizeof(uint32_t))) return std::nullopt;
     if (!readBytes(&snapshot.network.lastInputTime, sizeof(uint32_t))) return std::nullopt;
     if (!readBytes(&snapshot.network.rttMs, sizeof(uint32_t))) return std::nullopt;
     if (!readBytes(&snapshot.network.packetLoss, sizeof(float))) return std::nullopt;
     if (!readBytes(&snapshot.network.snapshotSequence, sizeof(uint32_t))) return std::nullopt;
-    
+
     // InputState
     if (offset >= data.size()) return std::nullopt;
     uint8_t inputFlags = data[offset++];
@@ -218,12 +218,12 @@ std::optional<EntitySnapshot> EntitySnapshot::deserialize(const std::vector<uint
     snapshot.lastInput.attack = (inputFlags >> 5) & 1;
     snapshot.lastInput.block = (inputFlags >> 6) & 1;
     snapshot.lastInput.sprint = (inputFlags >> 7) & 1;
-    
+
     if (!readBytes(&snapshot.lastInput.yaw, sizeof(float))) return std::nullopt;
     if (!readBytes(&snapshot.lastInput.pitch, sizeof(float))) return std::nullopt;
     if (!readBytes(&snapshot.lastInput.sequence, sizeof(uint32_t))) return std::nullopt;
     if (!readBytes(&snapshot.lastInput.timestamp_ms, sizeof(uint32_t))) return std::nullopt;
-    
+
     // AntiCheatState
     if (!readBytes(&snapshot.antiCheat.lastValidPosition.x, sizeof(Constants::Fixed))) return std::nullopt;
     if (!readBytes(&snapshot.antiCheat.lastValidPosition.y, sizeof(Constants::Fixed))) return std::nullopt;
@@ -234,7 +234,7 @@ std::optional<EntitySnapshot> EntitySnapshot::deserialize(const std::vector<uint
     if (!readBytes(&snapshot.antiCheat.maxRecordedSpeed, sizeof(float))) return std::nullopt;
     if (!readBytes(&snapshot.antiCheat.inputCount, sizeof(uint32_t))) return std::nullopt;
     if (!readBytes(&snapshot.antiCheat.inputWindowStart, sizeof(uint32_t))) return std::nullopt;
-    
+
     return snapshot;
 }
 
@@ -250,21 +250,21 @@ bool EntityMigrationManager::initiateMigration(EntityID entity, uint32_t targetZ
                                                MigrationCallback callback) {
     // Check if entity exists in registry first
     if (!registry.valid(entity)) {
-        std::cerr << "[MIGRATION] Entity " << static_cast<uint32_t>(entity) 
+        std::cerr << "[MIGRATION] Entity " << static_cast<uint32_t>(entity)
                   << " does not exist in registry" << std::endl;
         return false;
     }
-    
+
     // Check if already migrating
     if (isMigrating(entity)) {
-        std::cerr << "[MIGRATION] Entity " << static_cast<uint32_t>(entity) 
+        std::cerr << "[MIGRATION] Entity " << static_cast<uint32_t>(entity)
                   << " is already migrating" << std::endl;
         return false;
     }
-    
+
     // Capture entity state
     auto snapshot = captureEntityState(entity, registry, targetZoneId);
-    
+
     // Create active migration record
     ActiveMigration migration;
     migration.entity = entity;
@@ -278,30 +278,30 @@ bool EntityMigrationManager::initiateMigration(EntityID entity, uint32_t targetZ
     migration.snapshot = std::move(snapshot);
     migration.onSuccess = nullptr;
     migration.onFailure = nullptr;
-    
+
     if (callback) {
         migration.onSuccess = [callback, entity]() { callback(entity, true); };
         migration.onFailure = [callback, entity](const std::string&) { callback(entity, false); };
     }
-    
+
     activeMigrations_[entity] = std::move(migration);
-    
+
     // Send migration request to target zone
     sendMigrationData(targetZoneId, activeMigrations_[entity].snapshot);
-    
+
     // Note: stats_.totalMigrations is updated on completion/failure, not on start
-    
+
     std::cout << "[MIGRATION] Started migration of entity " << static_cast<uint32_t>(entity)
               << " to zone " << targetZoneId << std::endl;
-    
+
     return true;
 }
 
 void EntityMigrationManager::onMigrationRequestReceived(const EntitySnapshot& snapshot) {
-    std::cout << "[MIGRATION] Received migration request for entity " 
-              << static_cast<uint32_t>(snapshot.entity) 
+    std::cout << "[MIGRATION] Received migration request for entity "
+              << static_cast<uint32_t>(snapshot.entity)
               << " from zone " << snapshot.sourceZoneId << std::endl;
-    
+
     // This is called on the target zone when a migration request arrives
     // The target zone should create the entity and acknowledge
 }
@@ -311,12 +311,12 @@ void EntityMigrationManager::onMigrationStateUpdate(EntityID entity, uint32_t fr
                                                     const std::vector<uint8_t>& data) {
     (void)fromZoneId;
     (void)data;
-    
+
     auto it = activeMigrations_.find(entity);
     if (it == activeMigrations_.end()) {
         return;
     }
-    
+
     transitionState(entity, newState);
 }
 
@@ -324,16 +324,16 @@ void EntityMigrationManager::update(Registry& registry, uint32_t currentTimeMs) 
     // Process all active migrations
     std::vector<EntityID> completed;
     std::vector<std::pair<EntityID, std::string>> failed;  // entity + reason
-    
+
     for (auto& [entity, migration] : activeMigrations_) {
         // Check for timeout (startTime is UINT32_MAX until first update)
-        if (migration.startTime != UINT32_MAX && 
+        if (migration.startTime != UINT32_MAX &&
             (currentTimeMs - migration.startTime) > migration.timeoutMs) {
             stats_.timeoutCount++;
             failed.push_back({entity, "Migration timed out"});
             continue;
         }
-        
+
         // Process based on state
         switch (migration.state) {
             case MigrationState::PREPARING:
@@ -358,7 +358,7 @@ void EntityMigrationManager::update(Registry& registry, uint32_t currentTimeMs) 
                 break;
         }
     }
-    
+
     // Clean up completed migrations
     for (EntityID entity : completed) {
         auto it = activeMigrations_.find(entity);
@@ -370,7 +370,7 @@ void EntityMigrationManager::update(Registry& registry, uint32_t currentTimeMs) 
             cleanupMigration(entity);
         }
     }
-    
+
     // Handle failures (timeouts and cancellations)
     for (const auto& [entity, reason] : failed) {
         onFailed(entity, reason);
@@ -394,11 +394,11 @@ bool EntityMigrationManager::cancelMigration(EntityID entity) {
     if (it == activeMigrations_.end()) {
         return false;
     }
-    
+
     // Mark as cancelled - will be processed in update()
     it->second.state = MigrationState::FAILED;
     stats_.cancelledMigrations++;
-    
+
     // Note: migration record stays until update() processes it
     // Callback will be invoked in update() when processing FAILED state
     return true;
@@ -409,23 +409,23 @@ void EntityMigrationManager::transitionState(EntityID entity, MigrationState new
     if (it == activeMigrations_.end()) {
         return;
     }
-    
+
     it->second.state = newState;
-    
+
     // Notify target zone of state change
     sendStateUpdate(it->second.targetZoneId, entity, newState, {});
 }
 
 void EntityMigrationManager::onPreparing(EntityID entity, Registry& registry, uint32_t currentTimeMs) {
     (void)registry;
-    
+
     auto it = activeMigrations_.find(entity);
     if (it == activeMigrations_.end()) return;
-    
+
     if (it->second.startTime == UINT32_MAX) {
         it->second.startTime = currentTimeMs;
     }
-    
+
     // Move to transferring immediately (in real impl, could do validation here)
     transitionState(entity, MigrationState::TRANSFERRING);
 }
@@ -433,7 +433,7 @@ void EntityMigrationManager::onPreparing(EntityID entity, Registry& registry, ui
 void EntityMigrationManager::onTransferring(EntityID entity, Registry& registry, uint32_t currentTimeMs) {
     (void)registry;
     (void)currentTimeMs;
-    
+
     // Data already sent in initiateMigration, wait for target zone acknowledgment
     // For now, simulate acknowledgment after one tick
     transitionState(entity, MigrationState::SYNCING);
@@ -442,7 +442,7 @@ void EntityMigrationManager::onTransferring(EntityID entity, Registry& registry,
 void EntityMigrationManager::onSyncing(EntityID entity, Registry& registry, uint32_t currentTimeMs) {
     (void)registry;
     (void)currentTimeMs;
-    
+
     // Both zones have the entity, syncing state
     // For now, complete immediately
     transitionState(entity, MigrationState::COMPLETING);
@@ -451,13 +451,13 @@ void EntityMigrationManager::onSyncing(EntityID entity, Registry& registry, uint
 void EntityMigrationManager::onCompleting(EntityID entity, Registry& registry, uint32_t currentTimeMs) {
     (void)registry;
     (void)currentTimeMs;
-    
+
     auto it = activeMigrations_.find(entity);
     if (it == activeMigrations_.end()) return;
-    
+
     // Final handoff - notify target zone we're done
     broadcastMigrationComplete(myZoneId_, it->second.targetZoneId, entity, it->second.playerId);
-    
+
     transitionState(entity, MigrationState::COMPLETED);
 }
 
@@ -466,21 +466,21 @@ void EntityMigrationManager::onCompleted(EntityID entity, Registry& registry) {
     if (registry.valid(entity)) {
         registry.destroy(entity);
     }
-    
+
     stats_.successfulMigrations++;
 }
 
 void EntityMigrationManager::onFailed(EntityID entity, const std::string& reason) {
-    std::cerr << "[MIGRATION] Failed for entity " << static_cast<uint32_t>(entity) 
+    std::cerr << "[MIGRATION] Failed for entity " << static_cast<uint32_t>(entity)
               << ": " << reason << std::endl;
-    
+
     auto it = activeMigrations_.find(entity);
     if (it != activeMigrations_.end()) {
         if (it->second.onFailure) {
             it->second.onFailure(reason);
         }
     }
-    
+
     stats_.failedMigrations++;
     cleanupMigration(entity);
 }
@@ -493,11 +493,11 @@ EntitySnapshot EntityMigrationManager::captureEntityState(EntityID entity, Regis
     snapshot.sourceZoneId = myZoneId_;
     snapshot.timestamp = 0;  // Will be set by caller
     snapshot.sequence = migrationSequence_;
-    
+
     if (!registry.valid(entity)) {
         return snapshot;
     }
-    
+
     // Copy all component data
     if (registry.all_of<Position>(entity)) {
         snapshot.position = registry.get<Position>(entity);
@@ -525,14 +525,14 @@ EntitySnapshot EntityMigrationManager::captureEntityState(EntityID entity, Regis
         snapshot.playerId = playerInfo.playerId;
         snapshot.connectionId = playerInfo.connectionId;
     }
-    
+
     return snapshot;
 }
 
 EntityID EntityMigrationManager::restoreEntityState(const EntitySnapshot& snapshot, Registry& registry) {
     // Create new entity
     EntityID newEntity = registry.create();
-    
+
     // Restore all components
     registry.emplace<Position>(newEntity, snapshot.position);
     registry.emplace<Velocity>(newEntity, snapshot.velocity);
@@ -541,7 +541,7 @@ EntityID EntityMigrationManager::restoreEntityState(const EntitySnapshot& snapsh
     registry.emplace<NetworkState>(newEntity, snapshot.network);
     registry.emplace<InputState>(newEntity, snapshot.lastInput);
     registry.emplace<AntiCheatState>(newEntity, snapshot.antiCheat);
-    
+
     if (snapshot.playerId != 0) {
         PlayerInfo info;
         info.playerId = snapshot.playerId;
@@ -551,20 +551,20 @@ EntityID EntityMigrationManager::restoreEntityState(const EntitySnapshot& snapsh
     } else {
         registry.emplace<NPCTag>(newEntity);
     }
-    
-    std::cout << "[MIGRATION] Restored entity " << static_cast<uint32_t>(newEntity) 
+
+    std::cout << "[MIGRATION] Restored entity " << static_cast<uint32_t>(newEntity)
               << " from zone " << snapshot.sourceZoneId << std::endl;
-    
+
     return newEntity;
 }
 
 void EntityMigrationManager::sendMigrationData(uint32_t targetZoneId, const EntitySnapshot& snapshot) {
     (void)targetZoneId;
     (void)snapshot;
-    
+
     // In real implementation with CrossZoneMessenger:
     // crossZoneMessenger_->sendMigrationRequest(targetZoneId, snapshot);
-    
+
     std::cout << "[MIGRATION] Sending migration data to zone " << targetZoneId << std::endl;
 }
 
@@ -574,7 +574,7 @@ void EntityMigrationManager::sendStateUpdate(uint32_t targetZoneId, EntityID ent
     (void)entity;
     (void)state;
     (void)data;
-    
+
     // In real implementation with CrossZoneMessenger:
     // crossZoneMessenger_->sendMigrationState(targetZoneId, entity, state, data);
 }
@@ -585,7 +585,7 @@ void EntityMigrationManager::broadcastMigrationComplete(uint32_t sourceZoneId, u
     (void)targetZoneId;
     (void)entity;
     (void)playerId;
-    
+
     // In real implementation with CrossZoneMessenger:
     // crossZoneMessenger_->sendMigrationComplete(targetZoneId, entity, playerId);
 }
@@ -607,13 +607,13 @@ void EntityMigrationManager::updateStats(uint32_t migrationTimeMs, bool success)
     if (success) {
         // Update average
         if (stats_.successfulMigrations > 0) {
-            stats_.avgMigrationTimeMs = 
-                (stats_.avgMigrationTimeMs * (stats_.successfulMigrations - 1) + migrationTimeMs) 
+            stats_.avgMigrationTimeMs =
+                (stats_.avgMigrationTimeMs * (stats_.successfulMigrations - 1) + migrationTimeMs)
                 / stats_.successfulMigrations;
         } else {
             stats_.avgMigrationTimeMs = migrationTimeMs;
         }
-        
+
         if (migrationTimeMs > stats_.maxMigrationTimeMs) {
             stats_.maxMigrationTimeMs = migrationTimeMs;
         }
