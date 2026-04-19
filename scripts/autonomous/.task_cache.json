@@ -1,57 +1,7 @@
 {
-  "timestamp": 1776619893.6983333,
-  "git_head": "4d0fc1322a455d97772e4d5dc78472020b388bb1",
+  "timestamp": 1776628302.7324111,
+  "git_head": "047612e642db5e7f247c36a3bf94761ed65f372b",
   "tasks": [
-    {
-      "priority": "P2",
-      "category": "test",
-      "title": "Add tests for Protocol",
-      "description": "No test file found for src/server/src/netcode/Protocol.cpp",
-      "files": [
-        "src/server/src/netcode/Protocol.cpp"
-      ],
-      "estimated_hours": 1.0
-    },
-    {
-      "priority": "P2",
-      "category": "test",
-      "title": "Add tests for Constants",
-      "description": "Header has 168 lines but no corresponding test file",
-      "files": [
-        "src/server/include/Constants.hpp"
-      ],
-      "estimated_hours": 1.5
-    },
-    {
-      "priority": "P2",
-      "category": "test",
-      "title": "Add tests for RedisManager",
-      "description": "Header has 185 lines but no corresponding test file",
-      "files": [
-        "src/server/include/db/RedisManager.hpp"
-      ],
-      "estimated_hours": 1.5
-    },
-    {
-      "priority": "P2",
-      "category": "test",
-      "title": "Add tests for RedisInternal",
-      "description": "Header has 68 lines but no corresponding test file",
-      "files": [
-        "src/server/include/db/RedisInternal.hpp"
-      ],
-      "estimated_hours": 1.5
-    },
-    {
-      "priority": "P2",
-      "category": "test",
-      "title": "Add tests for ZoneDefinition",
-      "description": "Header has 78 lines but no corresponding test file",
-      "files": [
-        "src/server/include/zones/ZoneDefinition.hpp"
-      ],
-      "estimated_hours": 1.5
-    },
     {
       "priority": "P3",
       "category": "refactor",
