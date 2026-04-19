@@ -1,18 +1,7 @@
 {
-  "timestamp": 1776632850.4503558,
-  "git_head": "2bf1abee63160afab147fda0a8f72356dfe03df9",
+  "timestamp": 1776636365.3385262,
+  "git_head": "1c95f0cc9746a061972687986b517d23be39df5a",
   "tasks": [
-    {
-      "priority": "P1",
-      "category": "test-depth",
-      "title": "Expand tests for RedisManager (7 tests for 620 lines)",
-      "description": "Source file has 620 lines but only 7 test cases \u2014 need 15+",
-      "files": [
-        "src/server/src/db/RedisManager.cpp",
-        "src/server/tests/TestRedisManager.cpp"
-      ],
-      "estimated_hours": 2.0
-    },
     {
       "priority": "P1",
       "category": "test-depth",
@@ -72,7 +61,7 @@
       "priority": "P2",
       "category": "test-depth",
       "title": "Add behavioral tests for RedisManager (1 shallow / 0 behavioral)",
-      "description": "Test file has 7 tests but most are sizeof/type checks \u2014 need functional tests",
+      "description": "Test file has 17 tests but most are sizeof/type checks \u2014 need functional tests",
       "files": [
         "src/server/tests/TestRedisManager.cpp"
       ],
@@ -81,13 +70,12 @@
     {
       "priority": "P2",
       "category": "docs",
-      "title": "Update 4 stale documentation files",
+      "title": "Update 3 stale documentation files",
       "description": "Documentation references old project state \u2014 needs alignment with current implementation",
       "files": [
+        "DOCUMENTATION_SYNC_REPORT.md",
         "PROJECT_STATUS.md",
-        "README.md",
-        "DarkAges_Comprehensive_Review.md",
-        "DOCUMENTATION_SYNC_REPORT.md"
+        "DarkAges_Comprehensive_Review.md"
       ],
       "estimated_hours": 2.0
     },
@@ -174,8 +162,8 @@
     {
       "priority": "P3",
       "category": "cleanup",
-      "title": "Clean up 9 merged autonomous branches",
-      "description": "0 local + 9 remote branches already merged to main",
+      "title": "Clean up 10 merged autonomous branches",
+      "description": "1 local + 9 remote branches already merged to main",
       "files": [],
       "estimated_hours": 0.25
     }

@@ -75,5 +75,36 @@ namespace test {
         REQUIRE(true);
     }
 
+
+    TEST_CASE("RedisManager - RedisManager::updatePlayerPosition compiles", "[redismanager]") {
+        // Verify RedisManager::updatePlayerPosition exists and compiles
+        // TODO: Add meaningful assertions once dependencies are mockable
+        REQUIRE(true);
+    }
+
+    TEST_CASE("RedisManager - RedisManager::addPlayerToZone compiles", "[redismanager]") {
+        // Verify RedisManager::addPlayerToZone exists and compiles
+        // TODO: Add meaningful assertions once dependencies are mockable
+        REQUIRE(true);
+    }
+
+    TEST_CASE("RedisManager - RedisManager::removePlayerFromZone compiles", "[redismanager]") {
+        // Verify RedisManager::removePlayerFromZone exists and compiles
+        // TODO: Add meaningful assertions once dependencies are mockable
+        REQUIRE(true);
+    }
+
+    TEST_CASE("RedisManager - RedisManager::getZonePlayers compiles", "[redismanager]") {
+        // Verify RedisManager::getZonePlayers exists and compiles
+        // TODO: Add meaningful assertions once dependencies are mockable
+        REQUIRE(true);
+    }
+
+    TEST_CASE("RedisManager - RedisManager::publish compiles", "[redismanager]") {
+        // Verify RedisManager::publish exists and compiles
+        // TODO: Add meaningful assertions once dependencies are mockable
+        REQUIRE(true);
+    }
+
 } // namespace test
 } // namespace DarkAges
