@@ -1,18 +1,7 @@
 {
-  "timestamp": 1776629606.466738,
-  "git_head": "7ad591a3b25704d0f5b54df1393cc7d07d63c6fb",
+  "timestamp": 1776629765.1634712,
+  "git_head": "4c2e43095a792d2b8c4638459513a21918bf125e",
   "tasks": [
-    {
-      "priority": "P1",
-      "category": "test-depth",
-      "title": "Expand tests for RedisManager (2 tests for 620 lines)",
-      "description": "Source file has 620 lines but only 2 test cases \u2014 need 5+",
-      "files": [
-        "src/server/src/db/RedisManager.cpp",
-        "src/server/tests/TestRedisManager.cpp"
-      ],
-      "estimated_hours": 2.0
-    },
     {
       "priority": "P2",
       "category": "test-depth",
@@ -23,6 +12,16 @@
         "src/server/tests/TestProtocol.cpp"
       ],
       "estimated_hours": 2.0
+    },
+    {
+      "priority": "P2",
+      "category": "fix",
+      "title": "Address TODO in TestRedisManager.cpp",
+      "description": "// TODO: Add meaningful assertions once dependencies are mockable",
+      "files": [
+        "src/server/tests/TestRedisManager.cpp"
+      ],
+      "estimated_hours": 0.5
     },
     {
       "priority": "P3",
