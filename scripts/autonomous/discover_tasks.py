@@ -277,6 +277,87 @@ def find_todos() -> List[Task]:
     return tasks
 
 
+def find_shallow_tests() -> List[Task]:
+    """Find test files with too few test cases for the size/complexity of the source."""
+    tasks = []
+    test_dir = SRC_DIR / "server" / "tests"
+
+    if not test_dir.exists():
+        return tasks
+
+    for test_file in test_dir.glob("Test*.cpp"):
+        content = test_file.read_text()
+        test_count = len(re.findall(r'TEST_CASE\s*\(', content))
+        base = test_file.stem.replace("Test", "")
+
+        # Find corresponding source file
+        src_file = None
+        for ext in ["*.cpp", "*.hpp"]:
+            for f in SRC_DIR.rglob(ext):
+                if "tests" in str(f):
+                    continue
+                if f.stem == base:
+                    src_file = f
+                    break
+            if src_file:
+                break
+
+        if not src_file:
+            continue
+
+        src_lines = len(src_file.read_text().splitlines())
+
+        # Skip stubs
+        if "stub" in src_file.name.lower():
+            continue
+
+        # Thresholds: source > 300 lines needs at least 5 tests, > 500 needs 10
+        min_tests = 5 if src_lines > 500 else (3 if src_lines > 300 else 0)
+        if min_tests == 0:
+            continue
+
+        if test_count < min_tests:
+            # Prioritize: db and security are P1, others P2
+            if any(k in str(src_file) for k in ["/db/", "/security/"]):
+                priority = "P1"
+            elif src_lines > 800:
+                priority = "P1"
+            else:
+                priority = "P2"
+
+            tasks.append(Task(
+                priority=priority,
+                category="test-depth",
+                title=f"Expand tests for {base} ({test_count} tests for {src_lines} lines)",
+                description=f"Source file has {src_lines} lines but only {test_count} test cases — need {min_tests}+",
+                files=[str(src_file.relative_to(PROJECT_ROOT)), str(test_file.relative_to(PROJECT_ROOT))],
+                estimated_hours=2.0
+            ))
+
+    return tasks
+
+
+def find_include_deps() -> List[Task]:
+    """Find headers with excessive includes that could be forward-declared."""
+    tasks = []
+    for f in SRC_DIR.rglob("*.hpp"):
+        content = f.read_text()
+        includes = len(re.findall(r'^\s*#include\s', content, re.MULTILINE))
+        lines = len(content.splitlines())
+
+        if includes > 15 and lines > 100:
+            tasks.append(Task(
+                priority="P3",
+                category="refactor",
+                title=f"Reduce includes in {f.name} ({includes} includes)",
+                description=f"Header has {includes} #include directives — consider forward declarations",
+                files=[str(f.relative_to(PROJECT_ROOT))],
+                estimated_hours=1.0
+            ))
+
+    return tasks
+
+
 def main():
     import sys
 
@@ -300,7 +381,9 @@ def main():
     all_tasks = []
     all_tasks.extend(find_missing_tests())
     all_tasks.extend(find_missing_header_tests())
+    all_tasks.extend(find_shallow_tests())
     all_tasks.extend(find_large_files())
+    all_tasks.extend(find_include_deps())
     all_tasks.extend(find_todos())
 
     # Deduplicate by title

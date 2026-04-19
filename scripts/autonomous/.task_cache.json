@@ -1,7 +1,29 @@
 {
-  "timestamp": 1776629132.8488781,
-  "git_head": "930dff5b0ba61a4a8ab738c8e540dc7e23a00c20",
+  "timestamp": 1776629606.466738,
+  "git_head": "7ad591a3b25704d0f5b54df1393cc7d07d63c6fb",
   "tasks": [
+    {
+      "priority": "P1",
+      "category": "test-depth",
+      "title": "Expand tests for RedisManager (2 tests for 620 lines)",
+      "description": "Source file has 620 lines but only 2 test cases \u2014 need 5+",
+      "files": [
+        "src/server/src/db/RedisManager.cpp",
+        "src/server/tests/TestRedisManager.cpp"
+      ],
+      "estimated_hours": 2.0
+    },
+    {
+      "priority": "P2",
+      "category": "test-depth",
+      "title": "Expand tests for Protocol (2 tests for 330 lines)",
+      "description": "Source file has 330 lines but only 2 test cases \u2014 need 3+",
+      "files": [
+        "src/server/src/netcode/Protocol.cpp",
+        "src/server/tests/TestProtocol.cpp"
+      ],
+      "estimated_hours": 2.0
+    },
     {
       "priority": "P3",
       "category": "refactor",
@@ -71,6 +93,16 @@
         "src/server/src/netcode/NetworkManager.cpp"
       ],
       "estimated_hours": 3.0
+    },
+    {
+      "priority": "P3",
+      "category": "refactor",
+      "title": "Reduce includes in ZoneServer.hpp (36 includes)",
+      "description": "Header has 36 #include directives \u2014 consider forward declarations",
+      "files": [
+        "src/server/include/zones/ZoneServer.hpp"
+      ],
+      "estimated_hours": 1.0
     }
   ]
 }
