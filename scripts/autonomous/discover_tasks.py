@@ -314,9 +314,14 @@ def find_shallow_tests() -> List[Task]:
         if "stub" in src_file.name.lower():
             continue
 
-        # Thresholds: source > 300 lines needs at least 5 tests, > 500 needs 10
-        min_tests = 5 if src_lines > 500 else (3 if src_lines > 300 else 0)
-        if min_tests == 0:
+        # Tightened thresholds: ratio-based, not just count
+        # Large files (>500 lines) need at least 1 test per 40 source lines
+        # Medium files (>300 lines) need at least 1 test per 50 source lines
+        if src_lines > 500:
+            min_tests = max(8, src_lines // 40)
+        elif src_lines > 300:
+            min_tests = max(5, src_lines // 50)
+        else:
             continue
 
         if test_count < min_tests:
@@ -336,6 +341,134 @@ def find_shallow_tests() -> List[Task]:
                 files=[str(src_file.relative_to(PROJECT_ROOT)), str(test_file.relative_to(PROJECT_ROOT))],
                 estimated_hours=2.0
             ))
+
+    return tasks
+
+
+def find_only_shallow_tests() -> List[Task]:
+    """Find test files that only have sizeof/type checks, no behavioral testing."""
+    tasks = []
+    test_dir = SRC_DIR / "server" / "tests"
+
+    if not test_dir.exists():
+        return tasks
+
+    sizeof_only_patterns = [
+        r'sizeof\s*\(',
+        r'SECTION\s*\(\s*"sizeof',
+        r'SECTION\s*\(\s*"members',
+        r'SECTION\s*\(\s*"defaults',
+        r'CHECK\s*\(\s*sizeof',
+    ]
+    behavioral_patterns = [
+        r'CHECK\s*\(.+\s*==\s*[^0-9]',  # CHECK with non-constant
+        r'CHECK\s*\(.+\s*[<>]',  # CHECK with comparison
+        r'REQUIRE\s*\(.+\s*==\s*[^0-9]',
+        r'registry\.',
+        r'\.update\s*\(',
+        r'\.process\s*\(',
+        r'\.validate\s*\(',
+        r'\.calculate\s*\(',
+    ]
+
+    for test_file in test_dir.glob("Test*.cpp"):
+        content = test_file.read_text()
+        test_count = len(re.findall(r'TEST_CASE\s*\(', content))
+
+        if test_count < 3:
+            continue
+
+        # Count sizeof-only patterns
+        sizeof_count = sum(len(re.findall(p, content)) for p in sizeof_only_patterns)
+        behavioral_count = sum(len(re.findall(p, content)) for p in behavioral_patterns)
+
+        total_checks = sizeof_count + behavioral_count
+        if total_checks == 0:
+            continue
+
+        # If >60% of assertions are sizeof/type checks, flag it
+        if sizeof_count > 0 and sizeof_count / (sizeof_count + behavioral_count) > 0.6 and test_count > 5:
+            base = test_file.stem.replace("Test", "")
+            tasks.append(Task(
+                priority="P2",
+                category="test-depth",
+                title=f"Add behavioral tests for {base} ({sizeof_count} shallow / {behavioral_count} behavioral)",
+                description=f"Test file has {test_count} tests but most are sizeof/type checks — need functional tests",
+                files=[str(test_file.relative_to(PROJECT_ROOT))],
+                estimated_hours=3.0
+            ))
+
+    return tasks
+
+
+def find_stale_branches() -> List[Task]:
+    """Find autonomous branches that are fully merged and can be cleaned up."""
+    tasks = []
+    try:
+        # Get local autonomous branches
+        result = subprocess.run(
+            ["git", "branch", "--merged", "main", "--list", "autonomous/*"],
+            capture_output=True, text=True, timeout=10,
+            cwd=str(PROJECT_ROOT)
+        )
+        merged_local = [b.strip() for b in result.stdout.strip().split("\n") if b.strip()]
+
+        # Get remote autonomous branches (already merged)
+        result2 = subprocess.run(
+            ["git", "branch", "-r", "--merged", "main", "--list", "origin/autonomous/*"],
+            capture_output=True, text=True, timeout=10,
+            cwd=str(PROJECT_ROOT)
+        )
+        merged_remote = [b.strip() for b in result2.stdout.strip().split("\n") if b.strip()]
+
+        total = len(merged_local) + len(merged_remote)
+        if total > 0:
+            tasks.append(Task(
+                priority="P3",
+                category="cleanup",
+                title=f"Clean up {total} merged autonomous branches",
+                description=f"{len(merged_local)} local + {len(merged_remote)} remote branches already merged to main",
+                files=[],
+                estimated_hours=0.25
+            ))
+    except (subprocess.TimeoutExpired, FileNotFoundError):
+        pass
+
+    return tasks
+
+
+def find_doc_drift() -> List[Task]:
+    """Find documentation files that may be out of date."""
+    tasks = []
+    docs_dir = PROJECT_ROOT / "docs"
+    root_dir = PROJECT_ROOT
+
+    # Check for docs that reference Phase 6/7 planning as future work
+    stale_phrases = [
+        (r'Phase 8.*Week 1', "Phase 8 planning docs reference Week 1 as current"),
+        (r'IN PROGRESS.*Day 1/14', "Status docs still show Day 1/14 progress"),
+        (r'Stub.*operational', "Integration status still shows stubs"),
+    ]
+
+    stale_files = set()
+    for phrase, desc in stale_phrases:
+        for md_file in list(docs_dir.glob("*.md")) + list(root_dir.glob("*.md")):
+            try:
+                content = md_file.read_text()
+                if re.search(phrase, content, re.IGNORECASE):
+                    stale_files.add(str(md_file.relative_to(PROJECT_ROOT)))
+            except (UnicodeDecodeError, PermissionError):
+                continue
+
+    if stale_files:
+        tasks.append(Task(
+            priority="P2",
+            category="docs",
+            title=f"Update {len(stale_files)} stale documentation files",
+            description="Documentation references old project state — needs alignment with current implementation",
+            files=list(stale_files)[:10],
+            estimated_hours=2.0
+        ))
 
     return tasks
 
@@ -385,9 +518,12 @@ def main():
     all_tasks.extend(find_missing_tests())
     all_tasks.extend(find_missing_header_tests())
     all_tasks.extend(find_shallow_tests())
+    all_tasks.extend(find_only_shallow_tests())
     all_tasks.extend(find_large_files())
     all_tasks.extend(find_include_deps())
     all_tasks.extend(find_todos())
+    all_tasks.extend(find_stale_branches())
+    all_tasks.extend(find_doc_drift())
 
     # Deduplicate by title
     seen = set()

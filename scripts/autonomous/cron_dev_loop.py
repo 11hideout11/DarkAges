@@ -430,6 +430,37 @@ def implement_test_depth_task(task):
 
     return True, f"Added {len(new_tests)} test cases to {Path(test_file).name} for {basename}"
 
+def implement_cleanup_task(task):
+    """Clean up merged autonomous branches."""
+    # Delete local merged branches
+    code, out, err = run(["git", "-C", str(REPO), "branch", "--merged", "main",
+                          "--list", "autonomous/*"])
+    local_deleted = 0
+    for branch in out.strip().split("\n"):
+        branch = branch.strip()
+        if branch:
+            run(["git", "-C", str(REPO), "branch", "-d", branch])
+            local_deleted += 1
+
+    # Delete remote merged branches
+    code, out, err = run(["git", "-C", str(REPO), "branch", "-r", "--merged", "main",
+                          "--list", "origin/autonomous/*"])
+    remote_deleted = 0
+    for branch in out.strip().split("\n"):
+        branch = branch.strip()
+        if not branch:
+            continue
+        # branch looks like "origin/autonomous/20260419-something"
+        local_name = branch.replace("origin/", "")
+        run(["git", "-C", str(REPO), "push", "origin", "--delete", local_name])
+        run(["git", "-C", str(REPO), "branch", "-dr", branch])
+        remote_deleted += 1
+
+    total = local_deleted + remote_deleted
+    if total == 0:
+        return False, "No merged branches to clean up"
+    return True, f"Cleaned up {local_deleted} local + {remote_deleted} remote merged branches"
+
 def run_once():
     """Run one iteration of the dev loop. Returns result string."""
     start_time = time.time()
@@ -472,7 +503,7 @@ def run_once():
     
     # 3. Pick highest priority task (P1 > P2 > P3, then test > refactor)
     priority_order = {"P1": 0, "P2": 1, "P3": 2}
-    category_order = {"test": 0, "test-depth": 1, "fix": 2, "refactor": 3, "feature": 4}
+    category_order = {"test": 0, "test-depth": 1, "fix": 2, "docs": 3, "cleanup": 4, "refactor": 5, "feature": 6}
     tasks.sort(key=lambda t: (
         priority_order.get(t.get("priority", "P3"), 3),
         category_order.get(t.get("category", "refactor"), 4)
@@ -499,6 +530,10 @@ def run_once():
             ok, desc = implement_refactor_task(candidate)
         elif category == "fix":
             ok, desc = False, "Fix tasks need manual review — skipping for safety"
+        elif category == "docs":
+            ok, desc = False, "Documentation updates need manual review — skipping"
+        elif category == "cleanup":
+            ok, desc = implement_cleanup_task(candidate)
         else:
             ok, desc = False, f"Category '{category}' not supported"
         
