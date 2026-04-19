@@ -3,7 +3,7 @@
 #include <catch2/catch_test_macros.hpp>
 #include "../include/netcode/Protocol.hpp"
 
-namespace darkages {
+namespace DarkAges {
 namespace test {
 
 
@@ -15,4 +15,4 @@ namespace test {
     }
 
 } // namespace test
-} // namespace darkages
+} // namespace DarkAges

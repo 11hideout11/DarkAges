@@ -753,6 +753,9 @@ if(BUILD_TESTS AND TARGET Catch2::Catch2WithMain)
         src/server/tests/TestProtocol.cpp
         src/server/tests/TestConstants.cpp
         src/server/tests/TestNetworkManager.cpp
+        src/server/tests/TestRedisManager.cpp
+        src/server/tests/TestRedisInternal.cpp
+        src/server/tests/TestZoneDefinition.cpp
     )
 
     # Conditionally include tests for optional features

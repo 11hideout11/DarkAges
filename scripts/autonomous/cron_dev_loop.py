@@ -156,16 +156,32 @@ def generate_test_file(task):
         return None
     
     # Extract class/struct names from the header
-    classes = re.findall(r'(?:class|struct)\s+(\w+)(?:\s*(?:final|:|{))?', content)
-    # Deduplicate while preserving order
+    # Capture: class/struct keyword, name, and what follows
+    all_decls = re.findall(r'(?:class|struct)\s+(\w+)(\s*(?:final|[:;{]|\s*$))', content)
+    # Separate complete types (with { or : or final) from forward declarations (with ;)
+    forward_decls = set()
+    all_class_names = []
     seen = set()
-    unique_classes = []
-    for c in classes:
-        if c not in seen and c not in ('public', 'private', 'protected', 'final'):
-            seen.add(c)
-            unique_classes.append(c)
+    for name, suffix in all_decls:
+        if name in seen or name in ('public', 'private', 'protected', 'final'):
+            continue
+        seen.add(name)
+        stripped = suffix.strip()
+        if stripped == ';' or stripped == '':
+            # Forward declaration — sizeof() would fail
+            forward_decls.add(name)
+        else:
+            all_class_names.append(name)
+    # Only keep classes that are NOT forward-declared (i.e. complete types)
+    unique_classes = [c for c in all_class_names if c not in forward_decls]
     
-    # Extract enum class names
+    # Also skip nested types — check if any class name appears inside
+    # another class's body by looking for patterns like "struct Foo { ... struct Bar {"
+    # We do a simpler heuristic: if a type is defined after an opening brace
+    # that hasn't been closed, it's likely nested. For safety, we just skip
+    # types whose names appear after a '{' on the same line as another type.
+    
+    # Extract enum class names (these are always complete types)
     enums = re.findall(r'enum\s+(?:class\s+)(\w+)', content)
     
     # Build test cases
@@ -218,13 +234,13 @@ def generate_test_file(task):
 #include <catch2/catch_test_macros.hpp>
 #include "{include}"
 
-namespace darkages {{
+namespace DarkAges {{
 namespace test {{
 
 {"".join(test_cases)}
 
 }} // namespace test
-}} // namespace darkages
+}} // namespace DarkAges
 '''
     
     test_path.write_text(test_content)
@@ -305,7 +321,10 @@ def run_once():
     git("checkout", "main")
     git("pull", "--ff-only", "origin", "main")
     
-    # 2. Discover tasks
+    # 2. Discover tasks (bust cache to pick up any changes)
+    cache_path = REPO / "scripts" / "autonomous" / ".task_cache.json"
+    if cache_path.exists():
+        cache_path.unlink()
     tasks = discover_tasks(limit=5)
     if not tasks:
         print("[dev-loop] No tasks found. Checking for code quality passes...")

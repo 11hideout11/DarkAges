@@ -4,7 +4,7 @@
 
 using namespace DarkAges;
 
-namespace darkages {
+namespace DarkAges {
 namespace test {
 
     TEST_CASE("NetworkManager - header compiles", "[networkmanager]") {
@@ -28,4 +28,4 @@ namespace test {
     }
 
 } // namespace test
-} // namespace darkages
+} // namespace DarkAges
