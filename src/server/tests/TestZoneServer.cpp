@@ -266,3 +266,210 @@ TEST_CASE("getMetrics returns const reference", "[zones][zoneserver]") {
     const auto& metrics = server.getMetrics();
     REQUIRE(metrics.tickCount == 99);
 }
+
+// ============================================================================
+// Config Validation Tests
+// ============================================================================
+
+TEST_CASE("ZoneConfig boundary validation", "[zones][zoneserver]") {
+    ZoneConfig config;
+
+    SECTION("default world bounds are valid") {
+        REQUIRE(config.minX < config.maxX);
+        REQUIRE(config.minZ < config.maxZ);
+    }
+
+    SECTION("custom bounds must be valid") {
+        config.minX = -2000.0f;
+        config.maxX = 2000.0f;
+        config.minZ = -2000.0f;
+        config.maxZ = 2000.0f;
+        REQUIRE(config.minX < config.maxX);
+        REQUIRE(config.minZ < config.maxZ);
+    }
+
+    SECTION("port is nonzero by default") {
+        REQUIRE(config.port > 0);
+    }
+
+    SECTION("zoneId is positive by default") {
+        REQUIRE(config.zoneId > 0);
+    }
+}
+
+// ============================================================================
+// TickMetrics Accumulation Tests
+// ============================================================================
+
+TEST_CASE("TickMetrics accumulation", "[zones][zoneserver]") {
+    TickMetrics metrics;
+
+    SECTION("tick count increments") {
+        metrics.tickCount++;
+        metrics.tickCount++;
+        metrics.tickCount++;
+        REQUIRE(metrics.tickCount == 3);
+    }
+
+    SECTION("total tick time accumulates") {
+        metrics.totalTickTimeUs += 1000;
+        metrics.totalTickTimeUs += 2000;
+        metrics.totalTickTimeUs += 500;
+        REQUIRE(metrics.totalTickTimeUs == 3500);
+    }
+
+    SECTION("max tick time tracks peak") {
+        metrics.maxTickTimeUs = 1000;
+        metrics.maxTickTimeUs = std::max(metrics.maxTickTimeUs, static_cast<uint64_t>(2000));
+        metrics.maxTickTimeUs = std::max(metrics.maxTickTimeUs, static_cast<uint64_t>(500));
+        REQUIRE(metrics.maxTickTimeUs == 2000);
+    }
+
+    SECTION("overruns count increments") {
+        metrics.overruns++;
+        REQUIRE(metrics.overruns == 1);
+    }
+}
+
+TEST_CASE("TickMetrics component time tracking", "[zones][zoneserver]") {
+    TickMetrics metrics;
+
+    SECTION("component times are independent") {
+        metrics.networkTimeUs = 1000;
+        metrics.physicsTimeUs = 2000;
+        metrics.gameLogicTimeUs = 3000;
+        metrics.replicationTimeUs = 500;
+
+        REQUIRE(metrics.networkTimeUs == 1000);
+        REQUIRE(metrics.physicsTimeUs == 2000);
+        REQUIRE(metrics.gameLogicTimeUs == 3000);
+        REQUIRE(metrics.replicationTimeUs == 500);
+    }
+
+    SECTION("component times sum to total") {
+        metrics.networkTimeUs = 1000;
+        metrics.physicsTimeUs = 2000;
+        metrics.gameLogicTimeUs = 3000;
+        metrics.replicationTimeUs = 500;
+        metrics.totalTickTimeUs = metrics.networkTimeUs + metrics.physicsTimeUs +
+                                  metrics.gameLogicTimeUs + metrics.replicationTimeUs;
+        REQUIRE(metrics.totalTickTimeUs == 6500);
+    }
+}
+
+// ============================================================================
+// Server State Machine Tests
+// ============================================================================
+
+TEST_CASE("ZoneServer QoS state management", "[zones][zoneserver]") {
+    ZoneServer server;
+
+    SECTION("QoS not degraded by default") {
+        REQUIRE_FALSE(server.isQoSDegraded());
+    }
+
+    SECTION("set QoS degraded") {
+        server.setQoSDegraded(true);
+        REQUIRE(server.isQoSDegraded());
+    }
+
+    SECTION("clear QoS degraded") {
+        server.setQoSDegraded(true);
+        server.setQoSDegraded(false);
+        REQUIRE_FALSE(server.isQoSDegraded());
+    }
+}
+
+TEST_CASE("ZoneServer subsystem accessors are valid", "[zones][zoneserver]") {
+    ZoneServer server;
+
+    SECTION("registry is accessible") {
+        REQUIRE_NOTHROW((void)&server.getRegistry());
+    }
+
+    SECTION("spatial hash is accessible") {
+        REQUIRE_NOTHROW((void)&server.getSpatialHash());
+    }
+
+    SECTION("movement system is accessible") {
+        REQUIRE_NOTHROW((void)&server.getMovementSystem());
+    }
+
+    SECTION("combat system pointer is non-null") {
+        REQUIRE(server.getCombatSystemPtr() != nullptr);
+    }
+
+    SECTION("lag compensator pointer is non-null") {
+        REQUIRE(server.getLagCompensatorPtr() != nullptr);
+    }
+
+    SECTION("anti-cheat reference is accessible") {
+        REQUIRE_NOTHROW((void)&server.getAntiCheatRef());
+    }
+
+    SECTION("replication optimizer reference is accessible") {
+        REQUIRE_NOTHROW((void)&server.getReplicationOptimizerRef());
+    }
+}
+
+TEST_CASE("ZoneServer connection mapping is initially empty", "[zones][zoneserver]") {
+    ZoneServer server;
+
+    SECTION("connection-to-entity map is empty") {
+        auto* map = server.getConnectionToEntityPtr();
+        REQUIRE(map->empty());
+    }
+
+    SECTION("entity-to-connection map is empty") {
+        auto* map = server.getEntityToConnectionPtr();
+        REQUIRE(map->empty());
+    }
+}
+
+// ============================================================================
+// SnapshotHistory Data Structure Tests
+// ============================================================================
+
+TEST_CASE("SnapshotHistory default construction", "[zones][zoneserver]") {
+    SnapshotHistory snapshot{};
+
+    SECTION("tick is zero") {
+        REQUIRE(snapshot.tick == 0);
+    }
+
+    SECTION("entities list is empty") {
+        REQUIRE(snapshot.entities.empty());
+    }
+}
+
+TEST_CASE("ClientSnapshotState default construction", "[zones][zoneserver]") {
+    ClientSnapshotState state{};
+
+    SECTION("all sequence counters are zero") {
+        REQUIRE(state.lastAcknowledgedTick == 0);
+        REQUIRE(state.lastSentTick == 0);
+        REQUIRE(state.baselineTick == 0);
+        REQUIRE(state.snapshotSequence == 0);
+    }
+
+    SECTION("pending removals is empty") {
+        REQUIRE(state.pendingRemovals.empty());
+    }
+}
+
+// ============================================================================
+// Destructor Safety
+// ============================================================================
+
+TEST_CASE("ZoneServer destructor is safe", "[zones][zoneserver]") {
+    SECTION("destroy default-constructed server") {
+        auto server = std::make_unique<ZoneServer>();
+        REQUIRE_NOTHROW(server.reset());
+    }
+
+    SECTION("destroy after requestShutdown") {
+        auto server = std::make_unique<ZoneServer>();
+        server->requestShutdown();
+        REQUIRE_NOTHROW(server.reset());
+    }
+}

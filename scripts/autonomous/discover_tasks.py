@@ -224,13 +224,28 @@ def find_large_files() -> List[Task]:
             if "tests" in str(f) or "proto" in str(f):
                 continue
             try:
-                lines = len(f.read_text().splitlines())
-                if lines > 500:
+                content = f.read_text()
+                lines = content.splitlines()
+
+                # Only flag if there's actual cleanup potential:
+                # 1. Has trailing whitespace
+                has_trailing_ws = any(line != line.rstrip() for line in lines)
+                # 2. Has 4+ consecutive blank lines
+                import re as _re
+                has_excessive_blanks = bool(_re.search(r'\n{4,}', content))
+                # 3. Doesn't end with newline
+                missing_trailing_nl = not content.endswith('\n')
+
+                if not (has_trailing_ws or has_excessive_blanks or missing_trailing_nl):
+                    continue  # File is already clean, skip
+
+                line_count = len(lines)
+                if line_count > 500:
                     tasks.append(Task(
-                        priority="P3" if lines < 1500 else "P2",
+                        priority="P3" if line_count < 1500 else "P2",
                         category="refactor",
-                        title=f"Refactor {f.name} ({lines} lines)",
-                        description=f"File is {lines} lines — consider extracting cohesive subsystems",
+                        title=f"Refactor {f.name} ({line_count} lines)",
+                        description=f"File is {line_count} lines with cleanup potential",
                         files=[str(f.relative_to(PROJECT_ROOT))],
                         estimated_hours=3.0
                     ))
