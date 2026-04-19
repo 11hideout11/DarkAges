@@ -728,6 +728,8 @@ if(BUILD_TESTS AND TARGET Catch2::Catch2WithMain)
         src/server/tests/TestPerformanceMonitor.cpp
         src/server/tests/TestAntiCheat.cpp
         src/server/tests/TestAntiCheatConfig.cpp
+        src/server/tests/TestAntiCheatHandler.cpp
+        src/server/tests/TestAntiCheatLogger.cpp
         src/server/tests/TestInputHandler.cpp
         src/server/tests/TestMetricsExporter.cpp
         src/server/tests/TestPlayerManager.cpp

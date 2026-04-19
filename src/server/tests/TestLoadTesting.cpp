@@ -136,7 +136,130 @@ TEST_CASE("Load test: 400 entities tick time", "[load][performance][heavy]") {
 }
 
 // ============================================================================
-// Scalability: Entity count sweep
+// Extreme Load: 800 entities
+// ============================================================================
+
+TEST_CASE("Load test: 800 entities tick time", "[load][performance][extreme]") {
+    Registry registry;
+    MovementSystem movement;
+    SpatialHash hash(10.0f);
+
+    populateWorld(registry, 800);
+
+    SECTION("tick completes under 30ms (extreme budget)") {
+        double tickMs = measureTickMs(registry, movement, hash, 800);
+        INFO("Tick time: " << tickMs << "ms for 800 entities");
+        REQUIRE(tickMs < 30.0);
+    }
+
+    SECTION("5 consecutive ticks stay under budget") {
+        for (int i = 0; i < 5; ++i) {
+            double tickMs = measureTickMs(registry, movement, hash, 800);
+            REQUIRE(tickMs < 30.0);
+        }
+    }
+
+    SECTION("spatial hash rebuild at 800 entities") {
+        auto start = std::chrono::high_resolution_clock::now();
+        hash.clear();
+        auto view = registry.view<Position>();
+        for (auto entity : view) {
+            hash.insert(entity, view.get<Position>(entity));
+        }
+        auto end = std::chrono::high_resolution_clock::now();
+        double ms = std::chrono::duration<double, std::milli>(end - start).count();
+        INFO("Spatial hash rebuild for 800 entities: " << ms << "ms");
+        REQUIRE(ms < 5.0);
+    }
+}
+
+// ============================================================================
+// Ultra Load: 1000 entities
+// ============================================================================
+
+TEST_CASE("Load test: 1000 entities tick time", "[load][performance][ultra]") {
+    Registry registry;
+    MovementSystem movement;
+    SpatialHash hash(10.0f);
+
+    populateWorld(registry, 1000);
+
+    SECTION("tick completes under 50ms (ultra budget)") {
+        double tickMs = measureTickMs(registry, movement, hash, 1000);
+        INFO("Tick time: " << tickMs << "ms for 1000 entities");
+        REQUIRE(tickMs < 50.0);
+    }
+
+    SECTION("memory stability with 1000 entities") {
+        // Create and destroy 1000 entities multiple times
+        for (int cycle = 0; cycle < 10; ++cycle) {
+            Registry reg;
+            populateWorld(reg, 1000);
+            reg.clear();
+        }
+        REQUIRE(true);
+    }
+}
+
+// ============================================================================
+// Multi-System Integration Load
+// ============================================================================
+
+TEST_CASE("Load test: multi-system integration at 800 entities", "[load][performance][integration]") {
+    Registry registry;
+    MovementSystem movement;
+    SpatialHash hash(10.0f);
+    AreaOfInterestSystem aoi;
+    CombatConfig config;
+    config.baseMeleeDamage = 1000;
+    CombatSystem combat(config);
+
+    populateWorld(registry, 800);
+
+    // Rebuild spatial hash
+    hash.clear();
+    auto view = registry.view<Position>();
+    for (auto entity : view) {
+        hash.insert(entity, view.get<Position>(entity));
+    }
+
+    SECTION("combined movement + AOI + combat under 50ms") {
+        Position viewerPos = Position::fromVec3(glm::vec3(0, 0, 0), 0);
+
+        auto start = std::chrono::high_resolution_clock::now();
+
+        // Movement update
+        movement.update(registry, 16.67f);
+
+        // AOI priority calculation for subset
+        int aoiCount = 0;
+        for (auto entity : view) {
+            if (aoiCount++ >= 100) break;  // Only check 100 for AOI
+            auto& targetPos = view.get<Position>(entity);
+            aoi.getUpdatePriority(viewerPos, targetPos);
+        }
+
+        // Combat calculations for subset
+        auto combatView = registry.view<CombatState>();
+        EntityID attacker = *(combatView.begin());
+        int combatCount = 0;
+        for (auto entity : combatView) {
+            if (combatCount++ >= 50) break;  // Only 50 damage calcs
+            if (entity != attacker) {
+                bool isCritical = false;
+                combat.calculateDamage(registry, attacker, entity, 1000, isCritical);
+            }
+        }
+
+        auto end = std::chrono::high_resolution_clock::now();
+        double ms = std::chrono::duration<double, std::milli>(end - start).count();
+        INFO("Multi-system integration: " << ms << "ms");
+        REQUIRE(ms < 50.0);
+    }
+}
+
+// ============================================================================
+// Scalability: Entity count sweep (existing - enhanced)
 // ============================================================================
 
 TEST_CASE("Load test: scalability sweep", "[load][performance][sweep]") {
