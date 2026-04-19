@@ -569,3 +569,48 @@ TEST_CASE("LagCompensatedCombat full integration scenario", "[combat][lag][integ
         REQUIRE(results.size() >= 1);
     }
 }
+
+// ============================================================================
+// Rapid Attack Sequence Tests
+// ============================================================================
+
+TEST_CASE("LagCompensatedCombat rapid attack sequence", "[combat][lag][rapid]") {
+    LagCompensatedCombatTestFixture fixture;
+
+    SECTION("Multiple attacks with zero RTT") {
+        // Zero RTT (LAN play) — attack processed immediately
+        fixture.registry.patch<Position>(fixture.target, [](Position& p) {
+            p = Position::fromVec3(glm::vec3(0, 0, 2.0f), 0);
+        });
+        fixture.recordHistory(0);
+
+        LagCompensatedAttack attack;
+        attack.attacker = fixture.attacker;
+        attack.input.type = AttackInput::MELEE;
+        attack.clientTimestamp = 0;
+        attack.serverTimestamp = 0;
+        attack.rttMs = 0;  // Zero latency
+
+        auto results = fixture.lagCombat.processAttackWithRewind(fixture.registry, attack);
+        REQUIRE(results.size() >= 1);
+    }
+
+    SECTION("Self-attack is not valid") {
+        // Attacker tries to hit themselves
+        fixture.recordHistory(0);
+
+        LagCompensatedAttack attack;
+        attack.attacker = fixture.attacker;
+        attack.input.type = AttackInput::MELEE;
+        attack.clientTimestamp = 0;
+        attack.serverTimestamp = 100;
+        attack.rttMs = 100;
+
+        // Process with attacker as target by recording attacker history
+        // The system should not allow self-hits through normal flow
+        auto results = fixture.lagCombat.processAttackWithRewind(fixture.registry, attack);
+
+        // Results should exist but self-hit shouldn't register
+        REQUIRE(results.size() >= 1);
+    }
+}

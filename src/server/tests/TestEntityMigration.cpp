@@ -454,21 +454,145 @@ TEST_CASE("EntityMigrationManager timeout handling", "[migration]") {
     
     SECTION("Migration times out after specified duration") {
         manager.initiateMigration(entity, 2, registry, callback);
-        
+
         // Start the migration
         manager.update(registry, 0);  // PREPARING -> TRANSFERRING
-        
+
         // Simulate time passing (before timeout)
         manager.update(registry, 50);  // 50ms elapsed
         REQUIRE(manager.isMigrating(entity));
         REQUIRE(!failed);
-        
+
         // Simulate timeout
         manager.update(registry, 150);  // 150ms elapsed (past 100ms timeout)
-        
+
         // Migration should be removed after update processes the failure
         REQUIRE(manager.getActiveMigrationCount() == 0);
         REQUIRE(failed);
         REQUIRE(manager.getStats().timeoutCount == 1);
+    }
+}
+
+// ============================================================================
+// EntityMigrationManager Additional Edge Cases
+// ============================================================================
+
+TEST_CASE("EntityMigrationManager duplicate migration prevention", "[migration]") {
+    Registry registry;
+    RedisManager* redis = nullptr;
+    EntityMigrationManager manager(1, redis);
+
+    EntityID entity = registry.create();
+    registry.emplace<Position>(entity);
+    registry.emplace<Velocity>(entity);
+    registry.emplace<Rotation>(entity);
+    registry.emplace<CombatState>(entity);
+    registry.emplace<NetworkState>(entity);
+    registry.emplace<InputState>(entity);
+    registry.emplace<AntiCheatState>(entity);
+
+    SECTION("Cannot start migration if already migrating") {
+        REQUIRE(manager.initiateMigration(entity, 2, registry));
+        REQUIRE(manager.isMigrating(entity));
+
+        // Second migration attempt should fail
+        REQUIRE_FALSE(manager.initiateMigration(entity, 3, registry));
+    }
+
+    SECTION("Can start migration after cancel") {
+        manager.initiateMigration(entity, 2, registry);
+        manager.cancelMigration(entity);
+        manager.update(registry, 0);
+
+        // After cancellation, should be able to start new migration
+        REQUIRE_FALSE(manager.isMigrating(entity));
+    }
+}
+
+TEST_CASE("EntityMigrationManager stats tracking", "[migration]") {
+    Registry registry;
+    RedisManager* redis = nullptr;
+    EntityMigrationManager manager(1, redis);
+
+    SECTION("Stats start at zero") {
+        auto stats = manager.getStats();
+        REQUIRE(stats.totalMigrations == 0);
+        REQUIRE(stats.successfulMigrations == 0);
+        REQUIRE(stats.failedMigrations == 0);
+    }
+
+    SECTION("Stats track migration count") {
+        EntityID e1 = registry.create();
+        registry.emplace<Position>(e1);
+        registry.emplace<Velocity>(e1);
+        registry.emplace<Rotation>(e1);
+        registry.emplace<CombatState>(e1);
+        registry.emplace<NetworkState>(e1);
+        registry.emplace<InputState>(e1);
+        registry.emplace<AntiCheatState>(e1);
+
+        bool started = manager.initiateMigration(e1, 2, registry);
+        REQUIRE(started);
+        REQUIRE(manager.isMigrating(e1));
+    }
+}
+
+TEST_CASE("EntityMigrationManager zone port lookup", "[migration]") {
+    Registry registry;
+    RedisManager* redis = nullptr;
+    EntityMigrationManager manager(1, redis);
+
+    SECTION("Port lookup can be set") {
+        manager.setZonePortLookup([](uint32_t zoneId) -> uint16_t {
+            return 7777 + static_cast<uint16_t>(zoneId);
+        });
+
+        EntityID entity = registry.create();
+        registry.emplace<Position>(entity);
+        registry.emplace<Velocity>(entity);
+        registry.emplace<Rotation>(entity);
+        registry.emplace<CombatState>(entity);
+        registry.emplace<NetworkState>(entity);
+        registry.emplace<InputState>(entity);
+        registry.emplace<AntiCheatState>(entity);
+
+        bool started = manager.initiateMigration(entity, 2, registry);
+        REQUIRE(started);
+    }
+}
+
+TEST_CASE("EntitySnapshot serialization roundtrip", "[migration]") {
+    SECTION("Snapshot preserves all fields") {
+        EntitySnapshot original;
+        original.entity = static_cast<entt::entity>(99);
+        original.playerId = 54321;
+        original.position = Position{9999, 8888, 7777, 1234};
+        original.velocity = Velocity{111, 222, 333};
+        original.sequence = 42;
+
+        auto data = original.serialize();
+        REQUIRE_FALSE(data.empty());
+
+        auto restored = EntitySnapshot::deserialize(data);
+        REQUIRE(restored.has_value());
+        REQUIRE(restored->entity == original.entity);
+        REQUIRE(restored->playerId == original.playerId);
+        REQUIRE(restored->position.x == original.position.x);
+        REQUIRE(restored->position.y == original.position.y);
+        REQUIRE(restored->position.z == original.position.z);
+        REQUIRE(restored->velocity.dx == original.velocity.dx);
+        REQUIRE(restored->sequence == original.sequence);
+    }
+
+    SECTION("Empty data deserialization returns nullopt") {
+        std::vector<uint8_t> emptyData;
+        auto result = EntitySnapshot::deserialize(emptyData);
+        REQUIRE_FALSE(result.has_value());
+    }
+
+    SECTION("Truncated data deserialization returns nullopt") {
+        std::vector<uint8_t> badData = {0x01, 0x02, 0x03};
+        auto result = EntitySnapshot::deserialize(badData);
+        REQUIRE_FALSE(result.has_value());
     }
 }

@@ -1,37 +1,15 @@
 {
-  "timestamp": 1776632850.4503558,
-  "git_head": "2bf1abee63160afab147fda0a8f72356dfe03df9",
+  "timestamp": 1776637514.1077507,
+  "git_head": "9ad6a08bcf452a9056e6792c6cf2bdcf0575a874",
   "tasks": [
     {
       "priority": "P1",
       "category": "test-depth",
-      "title": "Expand tests for RedisManager (7 tests for 620 lines)",
-      "description": "Source file has 620 lines but only 7 test cases \u2014 need 15+",
-      "files": [
-        "src/server/src/db/RedisManager.cpp",
-        "src/server/tests/TestRedisManager.cpp"
-      ],
-      "estimated_hours": 2.0
-    },
-    {
-      "priority": "P1",
-      "category": "test-depth",
-      "title": "Expand tests for ZoneServer (10 tests for 1104 lines)",
-      "description": "Source file has 1104 lines but only 10 test cases \u2014 need 27+",
+      "title": "Expand tests for ZoneServer (19 tests for 1104 lines)",
+      "description": "Source file has 1104 lines but only 19 test cases \u2014 need 27+",
       "files": [
         "src/server/src/zones/ZoneServer.cpp",
         "src/server/tests/TestZoneServer.cpp"
-      ],
-      "estimated_hours": 2.0
-    },
-    {
-      "priority": "P1",
-      "category": "test-depth",
-      "title": "Expand tests for ScyllaManager (7 tests for 791 lines)",
-      "description": "Source file has 791 lines but only 7 test cases \u2014 need 19+",
-      "files": [
-        "src/server/src/db/ScyllaManager.cpp",
-        "src/server/tests/TestScyllaManager.cpp"
       ],
       "estimated_hours": 2.0
     },
@@ -70,96 +48,16 @@
     },
     {
       "priority": "P2",
-      "category": "test-depth",
-      "title": "Add behavioral tests for RedisManager (1 shallow / 0 behavioral)",
-      "description": "Test file has 7 tests but most are sizeof/type checks \u2014 need functional tests",
-      "files": [
-        "src/server/tests/TestRedisManager.cpp"
-      ],
-      "estimated_hours": 3.0
-    },
-    {
-      "priority": "P2",
       "category": "docs",
       "title": "Update 4 stale documentation files",
       "description": "Documentation references old project state \u2014 needs alignment with current implementation",
       "files": [
-        "PROJECT_STATUS.md",
+        "DOCUMENTATION_SYNC_REPORT.md",
         "README.md",
-        "DarkAges_Comprehensive_Review.md",
-        "DOCUMENTATION_SYNC_REPORT.md"
+        "PROJECT_STATUS.md",
+        "DarkAges_Comprehensive_Review.md"
       ],
       "estimated_hours": 2.0
-    },
-    {
-      "priority": "P3",
-      "category": "refactor",
-      "title": "Refactor RedisManager.cpp (620 lines)",
-      "description": "File is 620 lines \u2014 consider extracting cohesive subsystems",
-      "files": [
-        "src/server/src/db/RedisManager.cpp"
-      ],
-      "estimated_hours": 3.0
-    },
-    {
-      "priority": "P3",
-      "category": "refactor",
-      "title": "Refactor CombatEventLogger.cpp (654 lines)",
-      "description": "File is 654 lines \u2014 consider extracting cohesive subsystems",
-      "files": [
-        "src/server/src/db/CombatEventLogger.cpp"
-      ],
-      "estimated_hours": 3.0
-    },
-    {
-      "priority": "P3",
-      "category": "refactor",
-      "title": "Refactor ScyllaManager.cpp (791 lines)",
-      "description": "File is 791 lines \u2014 consider extracting cohesive subsystems",
-      "files": [
-        "src/server/src/db/ScyllaManager.cpp"
-      ],
-      "estimated_hours": 3.0
-    },
-    {
-      "priority": "P3",
-      "category": "refactor",
-      "title": "Refactor ZoneOrchestrator.cpp (587 lines)",
-      "description": "File is 587 lines \u2014 consider extracting cohesive subsystems",
-      "files": [
-        "src/server/src/zones/ZoneOrchestrator.cpp"
-      ],
-      "estimated_hours": 3.0
-    },
-    {
-      "priority": "P3",
-      "category": "refactor",
-      "title": "Refactor ZoneServer.cpp (1104 lines)",
-      "description": "File is 1104 lines \u2014 consider extracting cohesive subsystems",
-      "files": [
-        "src/server/src/zones/ZoneServer.cpp"
-      ],
-      "estimated_hours": 3.0
-    },
-    {
-      "priority": "P3",
-      "category": "refactor",
-      "title": "Refactor EntityMigration.cpp (623 lines)",
-      "description": "File is 623 lines \u2014 consider extracting cohesive subsystems",
-      "files": [
-        "src/server/src/zones/EntityMigration.cpp"
-      ],
-      "estimated_hours": 3.0
-    },
-    {
-      "priority": "P3",
-      "category": "refactor",
-      "title": "Refactor NetworkManager.cpp (782 lines)",
-      "description": "File is 782 lines \u2014 consider extracting cohesive subsystems",
-      "files": [
-        "src/server/src/netcode/NetworkManager.cpp"
-      ],
-      "estimated_hours": 3.0
     },
     {
       "priority": "P3",
@@ -174,8 +72,8 @@
     {
       "priority": "P3",
       "category": "cleanup",
-      "title": "Clean up 9 merged autonomous branches",
-      "description": "0 local + 9 remote branches already merged to main",
+      "title": "Clean up 2 merged autonomous branches",
+      "description": "1 local + 1 remote branches already merged to main",
       "files": [],
       "estimated_hours": 0.25
     }
