@@ -760,3 +760,16 @@
   - phase9_report.py: automated performance report runner
   - Cleaned up 8 stale remote tracking branches
 - **Metrics:** 67 test files, 846 test cases, 3971 assertions
+
+
+### 2026-04-20 00:45 UTC
+- **Task:** NPC respawn system + zone auto-population
+- **Branch:** main (direct commit)
+- **Build:** PASS
+- **Tests:** PASS (833 test cases, 4865 assertions)
+- **Changes:**
+  - NPCs respawn at spawn point with configurable delay (NPCStats.respawnTimeMs)
+  - AI state fully reset on respawn (Idle behavior, no target, cleared timers)
+  - ZoneConfig.autoPopulateNPCs: auto-spawn NPCs on zone init
+  - Configurable: count, spawn radius, base level/damage, XP reward
+  - Level variation across spawned NPCs
