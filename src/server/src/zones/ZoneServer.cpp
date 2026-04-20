@@ -202,6 +202,61 @@ bool ZoneServer::initialize(const ZoneConfig& config) {
     inputHandler_.setMovementSystem(&movementSystem_);
     inputHandler_.setNetwork(network_.get());
     inputHandler_.setCombatEventHandler(&combatEventHandler_);
+    inputHandler_.setAbilitySystem(&abilitySystem_);
+
+    // [GAMEPLAY_AGENT] Initialize item system with default item database
+    itemSystem_.initializeDefaults();
+
+    // [GAMEPLAY_AGENT] Register starter abilities
+    {
+        AbilityDefinition fireball;
+        fireball.abilityId = 1;
+        fireball.name = "Fireball";
+        fireball.cooldownMs = 3000;
+        fireball.manaCost = 15;
+        fireball.range = 20.0f;
+        fireball.effectType = AbilityEffectType::Damage;
+        abilitySystem_.registerAbility(1, fireball);
+
+        AbilityDefinition heal;
+        heal.abilityId = 2;
+        heal.name = "Heal";
+        heal.cooldownMs = 5000;
+        heal.manaCost = 20;
+        heal.range = 15.0f;
+        heal.effectType = AbilityEffectType::Heal;
+        abilitySystem_.registerAbility(2, heal);
+
+        AbilityDefinition powerStrike;
+        powerStrike.abilityId = 3;
+        powerStrike.name = "Power Strike";
+        powerStrike.cooldownMs = 2000;
+        powerStrike.manaCost = 10;
+        powerStrike.range = 3.0f;
+        powerStrike.effectType = AbilityEffectType::Damage;
+        abilitySystem_.registerAbility(3, powerStrike);
+    }
+
+    // [GAMEPLAY_AGENT] Wire loot pickup into inventory
+    lootSystem_.setLootPickupCallback([this](EntityID player, uint32_t itemId,
+                                              uint32_t quantity, float gold) {
+        // Add items to player inventory
+        if (itemId > 0) {
+            uint32_t overflow = itemSystem_.addToInventory(registry_, player, itemId, quantity);
+            if (overflow > 0) {
+                std::cout << "[LOOT] Player " << static_cast<uint32_t>(player)
+                          << " inventory full — " << overflow << " items lost" << std::endl;
+            }
+        }
+        // Add gold
+        if (gold > 0.0f) {
+            if (!registry_.all_of<Inventory>(player)) {
+                registry_.emplace<Inventory>(player);
+            }
+            Inventory& inv = registry_.get<Inventory>(player);
+            inv.gold += gold;
+        }
+    });
 
     // [ZONE_AGENT] Initialize performance handler
     performanceHandler_.setNetwork(network_.get());
@@ -798,6 +853,9 @@ void ZoneServer::onClientConnected(ConnectionID connectionId) {
         spawnPos
     );
 
+    // [GAMEPLAY_AGENT] Give player their starter kit (inventory, abilities, gear)
+    itemSystem_.giveStarterKit(registry_, entity);
+
     std::cout << "[ZONE " << config_.zoneId << "] Spawned entity " << static_cast<uint32_t>(entity)
               << " for connection " << connectionId << std::endl;
 }
@@ -1054,12 +1112,123 @@ void ZoneServer::populateNPCs() {
             level = static_cast<uint8_t>(std::min<uint32_t>(level + 1, level + config_.npcCount / 4));
         }
 
-        spawnNPC(spawnPos, level, config_.npcBaseDamage,
-                 15.0f,   // aggroRange
-                 30.0f,   // leashRange
-                 2.0f,    // attackRange
-                 config_.npcXpReward,
-                 10000);  // respawnTimeMs
+        // Determine archetype based on position in the spawn list
+        // Distribution: 60% melee, 20% ranged, 15% caster, 5% boss
+        NPCArchetype archetype;
+        float roll = static_cast<float>(std::rand()) / RAND_MAX;
+        if (roll < 0.60f) {
+            archetype = NPCArchetype::Melee;
+        } else if (roll < 0.80f) {
+            archetype = NPCArchetype::Ranged;
+        } else if (roll < 0.95f) {
+            archetype = NPCArchetype::Caster;
+        } else {
+            archetype = NPCArchetype::Boss;
+        }
+
+        // Configure based on archetype
+        float aggroRange = 15.0f;
+        float leashRange = 30.0f;
+        float attackRange = 2.0f;
+        float preferredRange = 2.0f;
+        float retreatRange = 0.0f;
+        uint16_t baseDamage = config_.npcBaseDamage;
+        float fleeHP = 20.0f;
+        uint32_t xpReward = config_.npcXpReward;
+
+        switch (archetype) {
+            case NPCArchetype::Melee:
+                // Standard melee config (already set as defaults)
+                break;
+
+            case NPCArchetype::Ranged:
+                attackRange = 20.0f;
+                preferredRange = 15.0f;
+                retreatRange = 5.0f;
+                baseDamage = static_cast<uint16_t>(baseDamage * 0.8f);
+                xpReward = static_cast<uint32_t>(xpReward * 1.2f);
+                break;
+
+            case NPCArchetype::Caster:
+                attackRange = 25.0f;
+                preferredRange = 18.0f;
+                retreatRange = 8.0f;
+                baseDamage = static_cast<uint16_t>(baseDamage * 0.6f);
+                fleeHP = 15.0f;
+                xpReward = static_cast<uint32_t>(xpReward * 1.5f);
+                break;
+
+            case NPCArchetype::Boss:
+                aggroRange = 25.0f;
+                leashRange = 50.0f;
+                baseDamage = static_cast<uint16_t>(baseDamage * 2.0f);
+                fleeHP = 5.0f;  // Bosses rarely flee
+                xpReward = static_cast<uint32_t>(xpReward * 5.0f);
+                level = static_cast<uint8_t>(level + 5); // Bosses are higher level
+                break;
+        }
+
+        EntityID npc = spawnNPC(spawnPos, level, baseDamage,
+                 aggroRange, leashRange, attackRange,
+                 xpReward, 10000);
+
+        // Apply archetype-specific configuration to spawned NPC
+        if (auto* ai = registry_.try_get<NPCAIState>(npc)) {
+            ai->preferredRange = preferredRange;
+            ai->retreatRange = retreatRange;
+            ai->fleeHealthPercent = fleeHP;
+        }
+        if (auto* stats = registry_.try_get<NPCStats>(npc)) {
+            stats->archetype = archetype;
+
+            // Scale health for bosses and casters
+            if (auto* combat = registry_.try_get<CombatState>(npc)) {
+                switch (archetype) {
+                    case NPCArchetype::Boss:
+                        combat->maxHealth = static_cast<int16_t>(combat->maxHealth * 5);
+                        combat->health = combat->maxHealth;
+                        break;
+                    case NPCArchetype::Caster:
+                        combat->maxHealth = static_cast<int16_t>(combat->maxHealth * 0.7f);
+                        combat->health = combat->maxHealth;
+                        break;
+                    default:
+                        break;
+                }
+            }
+        }
+
+        // Add loot tables to NPCs
+        if (!registry_.all_of<LootTable>(npc)) {
+            LootTable loot;
+            // Basic loot: always drop gold
+            loot.goldDropMin = 1.0f;
+            loot.goldDropMax = 5.0f * level;
+
+            // Add item drops based on archetype
+            if (archetype == NPCArchetype::Boss) {
+                // Bosses drop better loot
+                loot.entries[0] = LootEntry{3, 1, 1, 0.3f};   // Iron Longsword (30%)
+                loot.entries[1] = LootEntry{8, 1, 1, 0.2f};   // Lucky Amulet (20%)
+                loot.entries[2] = LootEntry{22, 1, 3, 0.5f};  // Ancient Relic Shard (50%)
+                loot.entries[3] = LootEntry{30, 1, 1, 0.05f}; // Vorpal Blade (5%)
+                loot.count = 4;
+                loot.goldDropMin = 50.0f;
+                loot.goldDropMax = 200.0f;
+            } else if (archetype == NPCArchetype::Caster) {
+                loot.entries[0] = LootEntry{11, 1, 3, 0.4f};  // Mana Potion (40%)
+                loot.entries[1] = LootEntry{4, 1, 1, 0.1f};   // Flame Staff (10%)
+                loot.count = 2;
+            } else {
+                // Melee/Ranged: common drops
+                loot.entries[0] = LootEntry{10, 1, 2, 0.3f};  // Health Potion (30%)
+                loot.entries[1] = LootEntry{20, 1, 1, 0.2f};  // Wolf Pelt (20%)
+                loot.entries[2] = LootEntry{21, 1, 2, 0.15f}; // Iron Ore (15%)
+                loot.count = 3;
+            }
+
+            registry_.emplace<LootTable>(npc, loot);
+        }
     }
 
     std::cout << "[ZONE " << config_.zoneId << "] Populated " << config_.npcCount

@@ -12,6 +12,7 @@ class ZoneServer;
 class PlayerManager;
 class MovementSystem;
 class CombatEventHandler;
+class AbilitySystem;
 
 // Handles client input validation, anti-cheat enforcement, and attack processing.
 // Extracted from ZoneServer to reduce monolithic file size.
@@ -26,6 +27,7 @@ public:
     void setMovementSystem(MovementSystem* ms) { movementSystem_ = ms; }
     void setNetwork(NetworkManager* network) { network_ = network; }
     void setCombatEventHandler(CombatEventHandler* handler) { combatEventHandler_ = handler; }
+    void setAbilitySystem(AbilitySystem* as) { abilitySystem_ = as; }
 
     // Process incoming client input (routing entry point)
     void onClientInput(const ClientInputPacket& input);
@@ -36,6 +38,9 @@ public:
     // Process attack input with lag compensation
     void processAttackInput(EntityID entity, const ClientInputPacket& input);
 
+    // Process ability cast from player loadout
+    void processAbilityInput(EntityID entity, const ClientInputPacket& input);
+
 private:
     ZoneServer& server_;
     PlayerManager* playerManager_{nullptr};
@@ -43,6 +48,7 @@ private:
     MovementSystem* movementSystem_{nullptr};
     NetworkManager* network_{nullptr};
     CombatEventHandler* combatEventHandler_{nullptr};
+    AbilitySystem* abilitySystem_{nullptr};
 };
 
 } // namespace DarkAges

@@ -24,6 +24,8 @@
 #include "combat/ProjectileSystem.hpp"
 #include "combat/NPCAISystem.hpp"
 #include "combat/ExperienceSystem.hpp"
+#include "combat/AbilitySystem.hpp"
+#include "combat/ItemSystem.hpp"
 #include "security/AntiCheat.hpp"
 #include "profiling/PerfettoProfiler.hpp"
 #include "profiling/PerformanceMonitor.hpp"
@@ -181,6 +183,8 @@ public:
     [[nodiscard]] NPCAISystem& getNPCAISystem() { return npcAISystem_; }
     [[nodiscard]] ExperienceSystem& getExperienceSystem() { return experienceSystem_; }
     [[nodiscard]] LootSystem& getLootSystem() { return lootSystem_; }
+    [[nodiscard]] AbilitySystem& getAbilitySystem() { return abilitySystem_; }
+    [[nodiscard]] ItemSystem& getItemSystem() { return itemSystem_; }
     [[nodiscard]] LagCompensator* getLagCompensatorPtr() { return &lagCompensator_; }
     [[nodiscard]] MovementSystem& getMovementSystemRef() { return movementSystem_; }
     [[nodiscard]] Security::AntiCheatSystem& getAntiCheatRef() { return antiCheat_; }
@@ -241,6 +245,8 @@ private:
     NPCAISystem npcAISystem_;
     ExperienceSystem experienceSystem_;
     LootSystem lootSystem_;
+    AbilitySystem abilitySystem_;
+    ItemSystem itemSystem_;
     LagCompensator lagCompensator_;
 
     // [SECURITY_AGENT] Anti-cheat system

@@ -5,6 +5,7 @@
 #include "zones/ZoneServer.hpp"
 #include "zones/PlayerManager.hpp"
 #include "zones/CombatEventHandler.hpp"
+#include "combat/AbilitySystem.hpp"
 #include "netcode/NetworkManager.hpp"
 #include "netcode/ProtobufProtocol.hpp"
 #include "security/AntiCheat.hpp"
@@ -164,8 +165,12 @@ void InputHandler::validateAndApplyInput(EntityID entity, const ClientInputPacke
         netState->lastInputTime = input.receiveTimeMs;
     }
 
-    // [PHASE 3C] Process attack input with lag compensation and combat validation
-    if (input.input.attack) {
+    // [PHASE 3C] Process combat input — ability cast or melee attack
+    if (input.input.abilitySlot > 0) {
+        // Player is casting an ability from their loadout
+        processAbilityInput(entity, input);
+    } else if (input.input.attack) {
+        // Standard melee attack
         if (combatEventHandler_) {
             combatEventHandler_->processAttackInput(entity, input);
         }
@@ -280,6 +285,83 @@ void InputHandler::processAttackInput(EntityID entity, const ClientInputPacket& 
             }
 
             // [DATABASE_AGENT] Log combat event for analytics
+        }
+    }
+}
+
+void InputHandler::processAbilityInput(EntityID entity, const ClientInputPacket& input) {
+    auto& registry = server_.getRegistry();
+    uint32_t currentTimeMs = server_.getCurrentTimeMs();
+
+    // Get the ability from the player's loadout
+    const AbilityLoadout* loadout = registry.try_get<AbilityLoadout>(entity);
+    if (!loadout) {
+        return; // Player has no abilities
+    }
+
+    uint8_t slot = input.input.abilitySlot;
+    if (slot == 0 || slot > MAX_ABILITY_SLOTS) {
+        return; // Invalid slot
+    }
+
+    uint32_t abilityId = loadout->getAbilityInSlot(slot);
+    if (abilityId == 0) {
+        return; // No ability in this slot
+    }
+
+    if (!abilitySystem_) {
+        return; // No ability system
+    }
+
+    // Get the ability definition
+    const AbilityDefinition* ability = abilitySystem_->getAbility(abilityId);
+    if (!ability) {
+        return;
+    }
+
+    // Determine target — use targetEntity from input, or self-target for heals
+    EntityID target = entt::null;
+    if (input.input.targetEntity > 0) {
+        // Look up target entity (it's a raw entity ID from the client)
+        EntityID targetEntity = static_cast<EntityID>(input.input.targetEntity);
+        if (registry.valid(targetEntity)) {
+            target = targetEntity;
+        }
+    }
+
+    // Self-target for heal abilities if no target specified
+    if (target == entt::null && ability->effectType == AbilityEffectType::Heal) {
+        target = entity;
+    }
+
+    if (target == entt::null) {
+        return; // Need a target
+    }
+
+    // Cast the ability
+    bool success = abilitySystem_->castAbility(registry, entity, target, *ability, currentTimeMs);
+
+    if (success) {
+        std::cout << "[ZONE " << server_.getConfig().zoneId << "] Entity "
+                  << static_cast<uint32_t>(entity) << " cast ability '"
+                  << ability->name << "' on entity "
+                  << static_cast<uint32_t>(target) << std::endl;
+
+        // Send ability cast event to relevant clients
+        if (network_) {
+            auto* entityToConnection = server_.getEntityToConnectionPtr();
+            auto connIt = entityToConnection->find(entity);
+            if (connIt != entityToConnection->end()) {
+                // Notify attacker of successful cast
+                auto castEvent = Netcode::ProtobufProtocol::createDamageEvent(
+                    static_cast<uint32_t>(entity),
+                    static_cast<uint32_t>(target),
+                    0  // Ability cast, not direct damage
+                );
+                castEvent.set_timestamp(currentTimeMs);
+                auto eventData = Netcode::ProtobufProtocol::serializeEvent(castEvent);
+                network_->sendEvent(connIt->second, eventData);
+            }
         }
     }
 }

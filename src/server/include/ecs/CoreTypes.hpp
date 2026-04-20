@@ -109,6 +109,7 @@ struct InputState {
     uint32_t sequence{0};      // Monotonic counter for reconciliation
     uint32_t timestamp_ms{0};  // Client send time
     uint32_t targetEntity{0};  // Target entity ID for abilities/combat
+    uint8_t abilitySlot{0};    // 0=melee attack, 1-4=ability slot cast
     
     // Initialize all bits to 0
     InputState() : forward(0), backward(0), left(0), right(0), 
@@ -286,6 +287,14 @@ struct Mana {
      Dead = 5       // Waiting for respawn
  };
 
+ // NPC combat archetype — determines behavior and combat style
+ enum class NPCArchetype : uint8_t {
+     Melee   = 0,  // Close-range fighter, chases and attacks in melee
+     Ranged  = 1,  // Keeps distance, attacks from range
+     Caster  = 2,  // Uses abilities (AoE, debuffs), lower HP
+     Boss    = 3   // Elite mob, high stats, multiple abilities
+ };
+
  // NPC AI state — controls behavior tree
  struct NPCAIState {
      NPCBehavior behavior{NPCBehavior::Idle};
@@ -295,10 +304,13 @@ struct Mana {
      float attackRange{2.0f};                  // Meters — melee range
      float fleeHealthPercent{20.0f};           // Flee below this HP%
      float wanderRadius{10.0f};               // Meters — wander from spawn
+     float preferredRange{2.0f};              // Preferred engagement distance (ranged/caster)
+     float retreatRange{0.0f};                // Back away if closer than this (ranged/caster)
      uint32_t behaviorTimerMs{0};             // Time in current behavior (ms)
      uint32_t attackCooldownMs{1500};          // Attack interval
      uint32_t lastAttackTimeMs{0};            // Last attack timestamp
      uint32_t wanderCooldownMs{3000};          // Min idle before wandering
+     uint32_t lastAbilityTimeMs{0};            // Last special ability use
      Position spawnPoint{0, 0, 0, 0};         // Original spawn position
  };
 
@@ -309,6 +321,7 @@ struct Mana {
      float attackSpeed{1.0f};                 // Attacks per second
      uint32_t xpReward{50};                   // XP given to killer
      uint32_t respawnTimeMs{10000};           // Respawn delay (10s default)
+     NPCArchetype archetype{NPCArchetype::Melee}; // Combat archetype
  };
 
  // Loot table entry
@@ -381,9 +394,226 @@ struct Mana {
      static CollisionLayer makeProjectile(EntityID owner = entt::null) {
          return CollisionLayer{CollisionLayerMask::PROJECTILE, CollisionLayerMask::PROJECTILE_DEFAULT, owner};
      }
-     static CollisionLayer makeStatic() {
-         return CollisionLayer{CollisionLayerMask::STATIC, CollisionLayerMask::STATIC_DEFAULT, entt::null};
-     }
- };
+    static CollisionLayer makeStatic() {
+        return CollisionLayer{CollisionLayerMask::STATIC, CollisionLayerMask::STATIC_DEFAULT, entt::null};
+    }
+};
 
- } // namespace DarkAges
+// ============================================================================
+// NPC ARCHETYPE CONFIG
+// ============================================================================
+
+// Archetype-specific NPC configuration
+struct NPCArchetypeConfig {
+    NPCArchetype archetype{NPCArchetype::Melee};
+    float preferredRange{2.0f};       // Preferred engagement distance
+    float retreatRange{1.5f};         // Back away if target closer than this (ranged/caster)
+    float attackRange{20.0f};         // Max attack range (ranged/caster = 20, melee = 2)
+    uint32_t abilityCooldownMs{3000}; // Special ability cooldown
+    float abilityChance{0.3f};        // Chance per attack to use special ability
+    int16_t healthScalePercent{100};  // HP multiplier vs base (boss = 500, caster = 70)
+    int16_t damageScalePercent{100};  // Damage multiplier vs base (boss = 200, ranged = 80)
+};
+
+// ============================================================================
+// ITEM SYSTEM
+// ============================================================================
+
+// Item rarity tiers
+enum class ItemRarity : uint8_t {
+    Common    = 0,
+    Uncommon  = 1,
+    Rare      = 2,
+    Epic      = 3,
+    Legendary = 4
+};
+
+// Item type categories
+enum class ItemType : uint8_t {
+    Weapon    = 0,  // Increases damage
+    Armor     = 1,  // Increases defense/HP
+    Accessory = 2,  // Utility bonuses
+    Consumable = 3, // Potions, food (single use)
+    Material  = 4,  // Crafting components
+    Quest     = 5   // Quest items
+};
+
+// Equipment slot
+enum class EquipSlot : uint8_t {
+    None       = 0,
+    MainHand   = 1,
+    OffHand    = 2,
+    Head       = 3,
+    Chest      = 4,
+    Legs       = 5,
+    Feet       = 6,
+    Ring       = 7,
+    Amulet     = 8
+};
+
+// Stat modifiers an item can grant
+struct ItemStats {
+    int16_t damageBonus{0};       // Flat damage increase
+    int16_t healthBonus{0};       // Flat HP increase
+    int16_t manaBonus{0};         // Flat mana increase
+    float speedBonus{0.0f};       // Movement speed multiplier
+    float critChanceBonus{0.0f};  // Critical hit chance bonus
+};
+
+// Item definition — describes an item type
+struct ItemDefinition {
+    uint32_t itemId{0};
+    char name[48]{0};
+    char description[128]{0};
+    ItemType type{ItemType::Material};
+    ItemRarity rarity{ItemRarity::Common};
+    EquipSlot equipSlot{EquipSlot::None};
+    ItemStats stats{};
+    uint32_t maxStackSize{1};     // How many per inventory slot
+    uint32_t buyPrice{0};         // Vendor buy price (gold)
+    uint32_t sellPrice{0};        // Vendor sell price (gold)
+    bool tradable{true};
+    uint32_t requiredLevel{1};    // Minimum level to use
+};
+
+// Inventory slot — one item stack
+struct InventorySlot {
+    uint32_t itemId{0};
+    uint32_t quantity{0};
+
+    bool isEmpty() const { return quantity == 0 || itemId == 0; }
+};
+
+// Player inventory component
+static constexpr uint32_t INVENTORY_SIZE = 24;
+struct Inventory {
+    InventorySlot slots[INVENTORY_SIZE];
+    float gold{0.0f};
+    uint32_t slotCount{INVENTORY_SIZE}; // Active slots (can be expanded)
+
+    // Find first empty slot, returns -1 if full
+    int32_t findEmptySlot() const {
+        for (uint32_t i = 0; i < slotCount; ++i) {
+            if (slots[i].isEmpty()) return static_cast<int32_t>(i);
+        }
+        return -1;
+    }
+
+    // Find slot with same item and room to stack
+    int32_t findStackableSlot(uint32_t itemId, uint32_t maxStack) const {
+        for (uint32_t i = 0; i < slotCount; ++i) {
+            if (slots[i].itemId == itemId && slots[i].quantity < maxStack) {
+                return static_cast<int32_t>(i);
+            }
+        }
+        return -1;
+    }
+
+    // Add item to inventory, returns quantity that couldn't fit (0 = all fit)
+    uint32_t addItem(uint32_t itemId, uint32_t quantity, uint32_t maxStackSize) {
+        uint32_t remaining = quantity;
+
+        // Try stacking first
+        while (remaining > 0) {
+            int32_t stackSlot = findStackableSlot(itemId, maxStackSize);
+            if (stackSlot < 0) break;
+            uint32_t canAdd = maxStackSize - slots[stackSlot].quantity;
+            uint32_t toAdd = std::min(remaining, canAdd);
+            slots[stackSlot].quantity += toAdd;
+            remaining -= toAdd;
+        }
+
+        // Fill empty slots
+        while (remaining > 0) {
+            int32_t emptySlot = findEmptySlot();
+            if (emptySlot < 0) break; // Inventory full
+            uint32_t toAdd = std::min(remaining, maxStackSize);
+            slots[emptySlot].itemId = itemId;
+            slots[emptySlot].quantity = toAdd;
+            remaining -= toAdd;
+        }
+
+        return remaining; // 0 = success
+    }
+
+    // Remove items from inventory, returns true if successful
+    bool removeItem(uint32_t itemId, uint32_t quantity) {
+        // Count total available
+        uint32_t total = 0;
+        for (uint32_t i = 0; i < slotCount; ++i) {
+            if (slots[i].itemId == itemId) {
+                total += slots[i].quantity;
+            }
+        }
+        if (total < quantity) return false;
+
+        // Remove from slots
+        uint32_t remaining = quantity;
+        for (uint32_t i = 0; i < slotCount && remaining > 0; ++i) {
+            if (slots[i].itemId == itemId) {
+                uint32_t toRemove = std::min(remaining, slots[i].quantity);
+                slots[i].quantity -= toRemove;
+                remaining -= toRemove;
+                if (slots[i].quantity == 0) {
+                    slots[i].itemId = 0;
+                }
+            }
+        }
+        return true;
+    }
+
+    // Count total quantity of an item
+    uint32_t countItem(uint32_t itemId) const {
+        uint32_t total = 0;
+        for (uint32_t i = 0; i < slotCount; ++i) {
+            if (slots[i].itemId == itemId) {
+                total += slots[i].quantity;
+            }
+        }
+        return total;
+    }
+};
+
+// Equipped items component — what a player is wearing
+struct Equipment {
+    uint32_t mainHand{0};
+    uint32_t offHand{0};
+    uint32_t head{0};
+    uint32_t chest{0};
+    uint32_t legs{0};
+    uint32_t feet{0};
+    uint32_t ring{0};
+    uint32_t amulet{0};
+
+    // Equip item to slot, returns previously equipped item (0 = empty slot)
+    uint32_t equip(EquipSlot slot, uint32_t itemId) {
+        uint32_t* target = nullptr;
+        switch (slot) {
+            case EquipSlot::MainHand: target = &mainHand; break;
+            case EquipSlot::OffHand:  target = &offHand; break;
+            case EquipSlot::Head:     target = &head; break;
+            case EquipSlot::Chest:    target = &chest; break;
+            case EquipSlot::Legs:     target = &legs; break;
+            case EquipSlot::Feet:     target = &feet; break;
+            case EquipSlot::Ring:     target = &ring; break;
+            case EquipSlot::Amulet:   target = &amulet; break;
+            default: return 0;
+        }
+        uint32_t old = *target;
+        *target = itemId;
+        return old;
+    }
+};
+
+// Player ability loadout — what abilities they have slotted
+static constexpr uint32_t MAX_ABILITY_SLOTS = 4;
+struct AbilityLoadout {
+    uint32_t abilityIds[MAX_ABILITY_SLOTS]{0, 0, 0, 0};
+
+    uint32_t getAbilityInSlot(uint8_t slot) const {
+        if (slot == 0 || slot > MAX_ABILITY_SLOTS) return 0;
+        return abilityIds[slot - 1]; // slot is 1-indexed
+    }
+};
+
+} // namespace DarkAges
