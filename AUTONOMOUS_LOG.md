@@ -716,20 +716,26 @@
 - **Change:** Added 5 test cases to TestProtocol.cpp for Protocol
 
 
-<<<<<<< HEAD
 ### 2026-04-19 22:06 UTC
 - **Task:** Expand tests for RedisManager (12 tests for 620 lines)
 - **Branch:** autonomous/20260419-expand-tests-for-redismanager-12-tests-f (merged to main)
 - **Build:** PASS
 - **Tests:** PASS (1222 test cases, 7645 assertions)
-=======
-### 2026-04-19 21:08 UTC
-- **Task:** Expand tests for RedisManager (7 tests for 620 lines)
-- **Branch:** autonomous/20260419-expand-tests-for-redismanager-7-tests-fo (merged to main)
-- **Build:** PASS
-- **Tests:** PASS (1212 test cases, 7635 assertions)
->>>>>>> autonomous/20260419-expand-tests-for-zoneserver-10-tests-for
 - **Change:** Added 5 test cases to TestRedisManager.cpp for RedisManager
+
+
+### 2026-04-20 00:30 UTC
+- **Task:** Implement NPC AI system, loot drops, and experience/progression
+- **Branch:** main (direct commit)
+- **Build:** PASS
+- **Tests:** PASS (833 test cases, 4865 assertions)
+- **Changes:**
+  - NPCAISystem: 6-state behavior tree (Idle/Wander/Chase/Attack/Flee/Dead)
+  - LootSystem: weighted drops, ownership-based pickup, auto-despawn
+  - ExperienceSystem: kill XP, scaling level formula, stat points per level
+  - ZoneServer: spawnNPC(), death callback wiring, PlayerProgression on players
+  - 30 new tests (61 assertions) covering AI, XP, loot, integration
+  - CoreTypes.hpp: NPCAIState, NPCStats, LootTable, PlayerProgression, LootDropData components
 
 
 ### 2026-04-19 22:07 UTC
