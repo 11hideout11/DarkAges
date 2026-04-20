@@ -126,7 +126,14 @@ bool ZoneServer::initialize(const ZoneConfig& config) {
 
     // Set up combat callbacks - delegate to CombatEventHandler
     combatSystem_.setOnDeath([this](EntityID victim, EntityID killer) {
+        // Handle death via CombatEventHandler (respawn, logging, etc.)
         combatEventHandler_.onEntityDied(victim, killer);
+
+        // [GAMEPLAY_AGENT] Award XP to killer if victim is an NPC
+        experienceSystem_.awardKillXP(registry_, killer, victim);
+
+        // [GAMEPLAY_AGENT] Generate loot drops if victim has a loot table
+        lootSystem_.generateLoot(registry_, victim, killer);
     });
 
     combatSystem_.setOnDamage([this](EntityID attacker, EntityID target,
@@ -149,6 +156,26 @@ bool ZoneServer::initialize(const ZoneConfig& config) {
     projectileSystem_.setDamageCallback([this](Registry& reg, EntityID target, EntityID attacker,
                                                 int16_t damage, uint32_t timeMs) -> bool {
         return combatSystem_.applyDamage(reg, target, attacker, damage, timeMs);
+    });
+
+    // [GAMEPLAY_AGENT] Wire NPC AI system with combat system and damage callback
+    npcAISystem_.setCombatSystem(&combatSystem_);
+    npcAISystem_.setDamageCallback([this](EntityID npc, EntityID target, int16_t damage) {
+        Position loc{0, 0, 0, 0};
+        if (const auto* pos = registry_.try_get<Position>(target)) {
+            loc = *pos;
+        }
+        combatEventHandler_.sendCombatEvent(npc, target, damage, loc);
+    });
+
+    // [GAMEPLAY_AGENT] Wire loot system callbacks for logging
+    lootSystem_.setLootDropCallback([this](EntityID lootEntity, uint32_t itemId,
+                                            uint32_t quantity, float gold) {
+        // Loot dropped — could send notification to nearby players
+    });
+    lootSystem_.setLootPickupCallback([this](EntityID player, uint32_t itemId,
+                                              uint32_t quantity, float gold) {
+        // Loot picked up — could send notification
     });
 
     // [ZONE_AGENT] Initialize anti-cheat handler
@@ -552,6 +579,9 @@ void ZoneServer::updatePhysics() {
     // [COMBAT_AGENT] Update projectiles — move, check collisions, expire
     projectileSystem_.update(registry_, currentTimeMs);
 
+    // [GAMEPLAY_AGENT] Update NPC AI — behavior tree tick
+    npcAISystem_.update(registry_, currentTimeMs);
+
     auto elapsed = std::chrono::steady_clock::now() - start;
     metrics_.physicsTimeUs += std::chrono::duration_cast<std::chrono::microseconds>(elapsed).count();
 }
@@ -571,6 +601,9 @@ void ZoneServer::updateGameLogic() {
 
     // [COMBAT_AGENT] Update status effects (buffs, debuffs, DoTs, HoTs, CC)
     statusEffectSystem_.update(registry_, getCurrentTimeMs());
+
+    // [GAMEPLAY_AGENT] Update loot system — despawn expired loot
+    lootSystem_.update(registry_, getCurrentTimeMs());
 
     // Process pending respawns
     combatEventHandler_.processRespawns();
@@ -929,9 +962,65 @@ EntityID ZoneServer::spawnPlayer(ConnectionID connectionId, uint64_t playerId,
 
     registry_.emplace<PlayerTag>(entity);
 
+    // [GAMEPLAY_AGENT] Initialize player progression
+    registry_.emplace<PlayerProgression>(entity);
+
     // Update mappings
     connectionToEntity_[connectionId] = entity;
     entityToConnection_[entity] = connectionId;
+
+    return entity;
+}
+
+EntityID ZoneServer::spawnNPC(const Position& spawnPos, uint8_t level, uint16_t baseDamage,
+                               float aggroRange, float leashRange, float attackRange,
+                               uint32_t xpReward, uint32_t respawnTimeMs) {
+    EntityID entity = registry_.create();
+
+    // Core components
+    registry_.emplace<Position>(entity, spawnPos);
+    registry_.emplace<Velocity>(entity);
+    registry_.emplace<Rotation>(entity);
+    registry_.emplace<BoundingVolume>(entity);
+
+    // Combat state — scaled by level
+    CombatState combat;
+    combat.health = static_cast<int16_t>(1000 + (level - 1) * 200);
+    combat.maxHealth = combat.health;
+    combat.classType = 0;
+    registry_.emplace<CombatState>(entity, combat);
+
+    // Mana (NPCs don't use mana but the component is expected by some systems)
+    Mana mana;
+    mana.current = 0;
+    mana.max = 0;
+    mana.regenerationRate = 0;
+    registry_.emplace<Mana>(entity, mana);
+
+    // NPC tag
+    registry_.emplace<NPCTag>(entity);
+
+    // Collision layer
+    registry_.emplace<CollisionLayer>(entity, CollisionLayer::makeNPC());
+
+    // NPC AI state
+    NPCAIState ai;
+    ai.aggroRange = aggroRange;
+    ai.leashRange = leashRange;
+    ai.attackRange = attackRange;
+    ai.spawnPoint = spawnPos;
+    ai.attackCooldownMs = 1500;
+    ai.wanderCooldownMs = 3000;
+    registry_.emplace<NPCAIState>(entity, ai);
+
+    // NPC stats
+    NPCStats stats;
+    stats.level = level;
+    stats.baseDamage = baseDamage;
+    stats.attackSpeed = 1.0f;
+    stats.xpReward = xpReward;
+    stats.respawnTimeMs = respawnTimeMs;
+    registry_.emplace<NPCStats>(entity, stats);
 
     return entity;
 }

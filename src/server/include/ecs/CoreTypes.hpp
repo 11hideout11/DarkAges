@@ -273,6 +273,80 @@ struct Mana {
  struct StaticTag {};      // Entity is static world geometry
 
  // ============================================================================
+ // NPC AI COMPONENTS
+ // ============================================================================
+
+ // AI behavior states for NPCs
+ enum class NPCBehavior : uint8_t {
+     Idle = 0,      // Standing still, scanning for targets
+     Wander = 1,    // Random movement within leash radius
+     Chase = 2,     // Pursuing a target
+     Attack = 3,    // Engaging target in melee
+     Flee = 4,      // Running away at low health
+     Dead = 5       // Waiting for respawn
+ };
+
+ // NPC AI state — controls behavior tree
+ struct NPCAIState {
+     NPCBehavior behavior{NPCBehavior::Idle};
+     EntityID target{entt::null};              // Current aggro target
+     float aggroRange{15.0f};                  // Meters — detect players
+     float leashRange{30.0f};                  // Meters — return to spawn if exceeded
+     float attackRange{2.0f};                  // Meters — melee range
+     float fleeHealthPercent{20.0f};           // Flee below this HP%
+     float wanderRadius{10.0f};               // Meters — wander from spawn
+     uint32_t behaviorTimerMs{0};             // Time in current behavior (ms)
+     uint32_t attackCooldownMs{1500};          // Attack interval
+     uint32_t lastAttackTimeMs{0};            // Last attack timestamp
+     uint32_t wanderCooldownMs{3000};          // Min idle before wandering
+     Position spawnPoint{0, 0, 0, 0};         // Original spawn position
+ };
+
+ // NPC stat modifiers for different mob types
+ struct NPCStats {
+     uint8_t level{1};
+     uint16_t baseDamage{10};                 // Base melee damage
+     float attackSpeed{1.0f};                 // Attacks per second
+     uint32_t xpReward{50};                   // XP given to killer
+     uint32_t respawnTimeMs{10000};           // Respawn delay (10s default)
+ };
+
+ // Loot table entry
+ struct LootEntry {
+     uint32_t itemId{0};
+     uint32_t minQuantity{1};
+     uint32_t maxQuantity{1};
+     float dropChance{1.0f};                  // 0.0 to 1.0
+ };
+
+ // Loot table attached to NPC
+ static constexpr uint32_t MAX_LOOT_ENTRIES = 8;
+ struct LootTable {
+     LootEntry entries[MAX_LOOT_ENTRIES];
+     uint32_t count{0};
+     float goldDropMin{0.0f};
+     float goldDropMax{0.0f};
+ };
+
+ // Player experience / progression
+ struct PlayerProgression {
+     uint32_t level{1};
+     uint64_t currentXP{0};
+     uint64_t xpToNextLevel{100};             // XP needed for next level
+     uint32_t statPoints{0};                  // Unspent stat points
+ };
+
+ // Dropped loot entity tag (for items on the ground)
+ struct LootDropTag {};                       // Entity is a dropped item
+ struct LootDropData {
+     uint32_t itemId{0};
+     uint32_t quantity{1};
+     float goldAmount{0.0f};
+     EntityID ownerPlayer{entt::null};        // Who can pick it up (null = anyone)
+     uint32_t despawnTimeMs{0};               // When this loot despawns
+ };
+
+ // ============================================================================
  // COLLISION LAYERS
  // ============================================================================
 

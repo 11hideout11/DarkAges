@@ -853,3 +853,59 @@ TEST_CASE("ZoneConfig with extreme bounds", "[zones][zoneserver]") {
         REQUIRE(config.port == 65535);
     }
 }
+
+    TEST_CASE("ZoneServer initialize/shutdown lifecycle", "[zoneserver]") {
+        ZoneServer obj;
+
+        SECTION("initialize returns true") {
+            REQUIRE(obj.initialize(ZoneConfig{}));
+        }
+
+        SECTION("shutdown before init is safe") {
+            REQUIRE_NOTHROW(obj.requestShutdown());
+        }
+
+        SECTION("double initialize is safe") {
+            REQUIRE(obj.initialize(ZoneConfig{}));
+            REQUIRE_NOTHROW(obj.initialize(ZoneConfig{}));
+        }
+
+        SECTION("shutdown after init is safe") {
+            obj.initialize(ZoneConfig{});
+            REQUIRE_NOTHROW(obj.requestShutdown());
+        }
+    }
+
+    TEST_CASE("ZoneServer update is safe without connection", "[zoneserver]") {
+        ZoneServer obj;
+
+        SECTION("update before init is safe") {
+            REQUIRE_NOTHROW(obj.tick());
+        }
+
+        SECTION("repeated updates are safe") {
+            obj.initialize(ZoneConfig{});
+            for (int i = 0; i < 10; ++i) {
+                obj.tick();
+            }
+        }
+    }
+
+    TEST_CASE("ZoneServer initialize is safe to call", "[zoneserver]") {
+        ZoneServer obj;
+        obj.initialize(ZoneConfig{});
+        REQUIRE_NOTHROW(obj.initialize(ZoneConfig{}));
+    }
+
+    TEST_CASE("ZoneServer run is safe to call", "[zoneserver]") {
+        ZoneServer obj;
+        obj.initialize(ZoneConfig{});
+        REQUIRE_NOTHROW(obj.run());
+    }
+
+    TEST_CASE("ZoneServer setupSignalHandlers is safe to call", "[zoneserver]") {
+        ZoneServer obj;
+        obj.initialize(ZoneConfig{});
+        REQUIRE_NOTHROW(obj.setupSignalHandlers());
+    }
+

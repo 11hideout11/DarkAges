@@ -22,6 +22,8 @@
 #include "combat/CombatSystem.hpp"
 #include "combat/StatusEffectSystem.hpp"
 #include "combat/ProjectileSystem.hpp"
+#include "combat/NPCAISystem.hpp"
+#include "combat/ExperienceSystem.hpp"
 #include "security/AntiCheat.hpp"
 #include "profiling/PerfettoProfiler.hpp"
 #include "profiling/PerformanceMonitor.hpp"
@@ -147,6 +149,11 @@ public:
     EntityID spawnPlayer(ConnectionID connectionId, uint64_t playerId,
                         const std::string& username, const Position& spawnPos);
 
+    // Spawn NPC entity
+    EntityID spawnNPC(const Position& spawnPos, uint8_t level, uint16_t baseDamage,
+                      float aggroRange, float leashRange, float attackRange,
+                      uint32_t xpReward, uint32_t respawnTimeMs);
+
     // Despawn entity
     void despawnEntity(EntityID entity);
 
@@ -160,6 +167,9 @@ public:
     [[nodiscard]] CombatSystem* getCombatSystemPtr() { return &combatSystem_; }
     [[nodiscard]] StatusEffectSystem& getStatusEffectSystem() { return statusEffectSystem_; }
     [[nodiscard]] ProjectileSystem& getProjectileSystem() { return projectileSystem_; }
+    [[nodiscard]] NPCAISystem& getNPCAISystem() { return npcAISystem_; }
+    [[nodiscard]] ExperienceSystem& getExperienceSystem() { return experienceSystem_; }
+    [[nodiscard]] LootSystem& getLootSystem() { return lootSystem_; }
     [[nodiscard]] LagCompensator* getLagCompensatorPtr() { return &lagCompensator_; }
     [[nodiscard]] MovementSystem& getMovementSystemRef() { return movementSystem_; }
     [[nodiscard]] Security::AntiCheatSystem& getAntiCheatRef() { return antiCheat_; }
@@ -167,6 +177,9 @@ public:
     void setQoSDegraded(bool degraded) { qosDegraded_ = degraded; }
     void setReducedUpdateRate(uint32_t rate) { reducedUpdateRate_ = rate; }
     [[nodiscard]] ReplicationOptimizer& getReplicationOptimizerRef() { return replicationOptimizer_; }
+
+    // Signal handling setup
+    void setupSignalHandlers();
 
 private:
     // System update phases
@@ -214,6 +227,9 @@ private:
     ManaRegenSystem manaRegenSystem_;
     StatusEffectSystem statusEffectSystem_;
     ProjectileSystem projectileSystem_;
+    NPCAISystem npcAISystem_;
+    ExperienceSystem experienceSystem_;
+    LootSystem lootSystem_;
     LagCompensator lagCompensator_;
 
     // [SECURITY_AGENT] Anti-cheat system
@@ -226,9 +242,6 @@ private:
     std::atomic<bool> running_{false};
     std::atomic<bool> shutdownRequested_{false};
     uint32_t currentTick_{0};
-
-    // Signal handling setup
-    void setupSignalHandlers();
 
     // Graceful shutdown implementation
     void shutdown();
