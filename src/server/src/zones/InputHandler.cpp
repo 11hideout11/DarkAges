@@ -7,6 +7,7 @@
 #include "zones/CombatEventHandler.hpp"
 #include "combat/AbilitySystem.hpp"
 #include "combat/ItemSystem.hpp"
+#include "combat/ChatSystem.hpp"
 #include "netcode/NetworkManager.hpp"
 #include "netcode/ProtobufProtocol.hpp"
 #include "security/AntiCheat.hpp"
@@ -401,6 +402,27 @@ void InputHandler::processItemUseInput(EntityID entity, const ClientInputPacket&
                 auto eventData = Netcode::ProtobufProtocol::serializeEvent(updateEvent);
                 network_->sendEvent(connIt->second, eventData);
             }
+        }
+    }
+}
+
+void InputHandler::processChatInput(EntityID entity, ChatChannel channel,
+                                     const char* chatContent, uint32_t currentTimeMs,
+                                     uint32_t targetId) {
+    if (!chatSystem_) return;
+
+    auto& registry = server_.getRegistry();
+
+    // Delegate to ChatSystem for validation, rate limiting, and routing
+    bool sent = chatSystem_->sendMessage(registry, entity, channel,
+                                          chatContent, currentTimeMs, targetId);
+
+    if (!sent) {
+        // Could be rate limited, muted, or invalid content
+        // Send a system message to inform the player
+        if (channel == ChatChannel::Local || channel == ChatChannel::Global) {
+            chatSystem_->sendSystemMessage(registry, entity,
+                "Message not delivered (rate limited or muted).", currentTimeMs);
         }
     }
 }

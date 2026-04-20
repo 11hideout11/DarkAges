@@ -14,6 +14,7 @@ class MovementSystem;
 class CombatEventHandler;
 class AbilitySystem;
 class ItemSystem;
+class ChatSystem;
 
 // Handles client input validation, anti-cheat enforcement, and attack processing.
 // Extracted from ZoneServer to reduce monolithic file size.
@@ -30,6 +31,7 @@ public:
     void setCombatEventHandler(CombatEventHandler* handler) { combatEventHandler_ = handler; }
     void setAbilitySystem(AbilitySystem* as) { abilitySystem_ = as; }
     void setItemSystem(ItemSystem* is) { itemSystem_ = is; }
+    void setChatSystem(ChatSystem* cs) { chatSystem_ = cs; }
 
     // Process incoming client input (routing entry point)
     void onClientInput(const ClientInputPacket& input);
@@ -46,6 +48,11 @@ public:
     // Process item use from inventory slot
     void processItemUseInput(EntityID entity, const ClientInputPacket& input);
 
+    // Process chat message from player
+    // chatContent is the message text (passed separately from InputState)
+    void processChatInput(EntityID entity, ChatChannel channel, const char* chatContent,
+                          uint32_t currentTimeMs, uint32_t targetId = 0);
+
 private:
     ZoneServer& server_;
     PlayerManager* playerManager_{nullptr};
@@ -55,6 +62,7 @@ private:
     CombatEventHandler* combatEventHandler_{nullptr};
     AbilitySystem* abilitySystem_{nullptr};
     ItemSystem* itemSystem_{nullptr};
+    ChatSystem* chatSystem_{nullptr};
 };
 
 } // namespace DarkAges

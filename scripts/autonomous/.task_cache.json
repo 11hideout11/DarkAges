@@ -1,12 +1,12 @@
 {
-  "timestamp": 1776693963.8379493,
-  "git_head": "7627127d03b6046e0cfab9a363e147376c3d7ccd",
+  "timestamp": 1776698421.7437422,
+  "git_head": "98325349e08ed550767c8d668c411d79bf6c5a9b",
   "tasks": [
     {
       "priority": "P1",
       "category": "test-depth",
-      "title": "Expand tests for ZoneServer (34 tests for 1429 lines)",
-      "description": "Source file has 1429 lines but only 34 test cases \u2014 need 35+",
+      "title": "Expand tests for ZoneServer (34 tests for 1460 lines)",
+      "description": "Source file has 1460 lines but only 34 test cases \u2014 need 36+",
       "files": [
         "src/server/src/zones/ZoneServer.cpp",
         "src/server/tests/TestZoneServer.cpp"
@@ -28,8 +28,8 @@
     {
       "priority": "P3",
       "category": "refactor",
-      "title": "Reduce includes in ZoneServer.hpp (42 includes)",
-      "description": "Header has 42 #include directives \u2014 consider forward declarations",
+      "title": "Reduce includes in ZoneServer.hpp (44 includes)",
+      "description": "Header has 44 #include directives \u2014 consider forward declarations",
       "files": [
         "src/server/include/zones/ZoneServer.hpp"
       ],

@@ -210,6 +210,7 @@ bool ZoneServer::initialize(const ZoneConfig& config) {
     inputHandler_.setCombatEventHandler(&combatEventHandler_);
     inputHandler_.setAbilitySystem(&abilitySystem_);
     inputHandler_.setItemSystem(&itemSystem_);
+    inputHandler_.setChatSystem(&chatSystem_);
 
     // [GAMEPLAY_AGENT] Initialize item system with default item database
     itemSystem_.initializeDefaults();
@@ -217,6 +218,12 @@ bool ZoneServer::initialize(const ZoneConfig& config) {
     // [GAMEPLAY_AGENT] Initialize quest system with default quests
     questSystem_.initializeDefaults();
     questSystem_.setItemSystem(&itemSystem_);
+
+    // [GAMEPLAY_AGENT] Initialize chat system with connection lookup
+    chatSystem_.setConnectionLookupCallback([this](EntityID entity) -> ConnectionID {
+        auto it = entityToConnection_.find(entity);
+        return (it != entityToConnection_.end()) ? it->second : 0;
+    });
 
     // [GAMEPLAY_AGENT] Wire level-up into quest tracking
     experienceSystem_.setLevelUpCallback([this](EntityID player, uint32_t newLevel) {
@@ -1049,6 +1056,9 @@ EntityID ZoneServer::spawnPlayer(ConnectionID connectionId, uint64_t playerId,
 
     // [GAMEPLAY_AGENT] Initialize player progression
     registry_.emplace<PlayerProgression>(entity);
+
+    // [GAMEPLAY_AGENT] Initialize chat state
+    registry_.emplace<ChatComponent>(entity);
 
     // Update mappings
     connectionToEntity_[connectionId] = entity;

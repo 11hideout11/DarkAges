@@ -57,6 +57,7 @@ set(TEST_SOURCES
     TestPubSubManager.cpp
     TestCoreTypes.cpp
     TestQuestSystem.cpp
+    TestChatSystem.cpp
 )
 
 # Conditional test sources based on dependencies
@@ -104,6 +105,7 @@ set(TEST_SERVER_SOURCES
     ${CMAKE_SOURCE_DIR}/src/combat/AbilitySystem.cpp
     ${CMAKE_SOURCE_DIR}/src/combat/ItemSystem.cpp
     ${CMAKE_SOURCE_DIR}/src/combat/QuestSystem.cpp
+    ${CMAKE_SOURCE_DIR}/src/combat/ChatSystem.cpp
     ${CMAKE_SOURCE_DIR}/src/zones/InputHandler.cpp
     ${CMAKE_SOURCE_DIR}/src/monitoring/MetricsExporter.cpp
     ${CMAKE_SOURCE_DIR}/src/profiling/PerformanceMonitor.cpp

@@ -111,6 +111,7 @@ struct InputState {
     uint32_t targetEntity{0};  // Target entity ID for abilities/combat
     uint8_t abilitySlot{0};    // 0=melee attack, 1-4=ability slot cast
     uint8_t itemSlot{0};       // 0=no item use, 1-24=inventory slot to consume
+    uint8_t chatChannel{0};    // 0=no chat, 1=local, 2=global, 3=whisper, 4=party, 5=guild
 
     // Initialize all bits to 0
     InputState() : forward(0), backward(0), left(0), right(0),
@@ -752,6 +753,63 @@ struct QuestLog {
         }
         return false;
     }
+};
+
+// ============================================================================
+// CHAT SYSTEM
+// ============================================================================
+
+// Chat channel types — determines message routing and visibility
+enum class ChatChannel : uint8_t {
+    System  = 0,  // Server-to-player notifications (no player sender)
+    Local   = 1,  // Zone-only broadcast (visible to nearby players)
+    Global  = 2,  // All connected players across all zones
+    Whisper = 3,  // Direct message between two players
+    Party   = 4,  // Party/group members only
+    Guild   = 5   // Guild members only
+};
+
+// Chat message — fixed-size for cache efficiency
+static constexpr uint32_t CHAT_MESSAGE_MAX_LEN = 256;
+static constexpr uint32_t CHAT_SENDER_NAME_MAX = 32;
+
+struct ChatMessage {
+    uint32_t messageId{0};                          // Unique message ID (monotonic)
+    ChatChannel channel{ChatChannel::Local};        // Channel this message was sent on
+    uint32_t senderId{0};                           // Player ID of sender (0 for system)
+    uint32_t targetId{0};                           // Target player ID (whisper only)
+    uint32_t timestampMs{0};                        // Server timestamp
+    char senderName[CHAT_SENDER_NAME_MAX]{0};       // Display name of sender
+    char content[CHAT_MESSAGE_MAX_LEN]{0};          // Message text
+};
+
+// Per-player chat state
+static constexpr uint32_t CHAT_HISTORY_SIZE = 50;   // Recent messages to keep
+
+struct ChatComponent {
+    ChatMessage recentMessages[CHAT_HISTORY_SIZE];
+    uint32_t messageCount{0};                       // Total messages received
+    uint32_t lastMessageTimeMs{0};                  // Last time player sent a message
+    uint8_t messagesThisWindow{0};                  // Rate limit counter
+    uint32_t rateWindowStartMs{0};                  // Start of current rate window
+    bool muted{false};                              // Player is muted
+
+    // Add message to history (ring buffer)
+    void addMessage(const ChatMessage& msg) {
+        uint32_t idx = messageCount % CHAT_HISTORY_SIZE;
+        recentMessages[idx] = msg;
+        messageCount++;
+    }
+};
+
+// Chat system configuration
+struct ChatConfig {
+    uint32_t maxMessagesPerWindow{5};     // Max messages per rate window
+    uint32_t rateWindowMs{10000};         // Rate window duration (10 seconds)
+    uint32_t whisperRangeLevelDiff{0};    // Max level diff for whispers (0 = unlimited)
+    float localChatRange{50.0f};          // Range in meters for local chat
+    bool globalChatEnabled{true};         // Whether global chat is active
+    bool systemMessagesEnabled{true};     // Whether system messages are active
 };
 
 } // namespace DarkAges
