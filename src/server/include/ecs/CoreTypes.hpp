@@ -25,7 +25,7 @@ struct Position {
     Constants::Fixed y{0};
     Constants::Fixed z{0};
     uint32_t timestamp_ms{0};  // Server tick timestamp
-    
+
     // Helper methods for float conversion
     [[nodiscard]] glm::vec3 toVec3() const {
         return glm::vec3(
@@ -34,7 +34,7 @@ struct Position {
             z * Constants::FIXED_TO_FLOAT
         );
     }
-    
+
     static Position fromVec3(const glm::vec3& v, uint32_t timestamp = 0) {
         return Position{
             static_cast<Constants::Fixed>(v.x * Constants::FLOAT_TO_FIXED),
@@ -43,7 +43,7 @@ struct Position {
             timestamp
         };
     }
-    
+
     // Distance squared (for performance - avoid sqrt when possible)
     [[nodiscard]] Constants::Fixed distanceSqTo(const Position& other) const {
         const Constants::Fixed dx = x - other.x;
@@ -63,14 +63,14 @@ struct Velocity {
     Constants::Fixed dx{0};
     Constants::Fixed dy{0};
     Constants::Fixed dz{0};
-    
+
     [[nodiscard]] float speed() const {
         float fx = dx * Constants::FIXED_TO_FLOAT;
         float fy = dy * Constants::FIXED_TO_FLOAT;
         float fz = dz * Constants::FIXED_TO_FLOAT;
         return std::sqrt(fx * fx + fy * fy + fz * fz);
     }
-    
+
     [[nodiscard]] float speedSq() const {
         float fx = dx * Constants::FIXED_TO_FLOAT;
         float fy = dy * Constants::FIXED_TO_FLOAT;
@@ -100,26 +100,26 @@ struct InputState {
     uint8_t attack : 1;
     uint8_t block : 1;
     uint8_t sprint : 1;
-    
+
     // Camera rotation
     float yaw{0.0f};
     float pitch{0.0f};
-    
+
     // Networking metadata
     uint32_t sequence{0};      // Monotonic counter for reconciliation
     uint32_t timestamp_ms{0};  // Client send time
     uint32_t targetEntity{0};  // Target entity ID for abilities/combat
     uint8_t abilitySlot{0};    // 0=melee attack, 1-4=ability slot cast
-    
+
     // Initialize all bits to 0
-    InputState() : forward(0), backward(0), left(0), right(0), 
+    InputState() : forward(0), backward(0), left(0), right(0),
                    jump(0), attack(0), block(0), sprint(0) {}
-    
+
     // Helper to check if any movement input is active
     [[nodiscard]] bool hasMovementInput() const {
         return forward || backward || left || right;
     }
-    
+
     // Get input direction vector (normalized, before rotation)
     [[nodiscard]] glm::vec3 getInputDirection() const {
         glm::vec3 dir(0.0f);
@@ -127,7 +127,7 @@ struct InputState {
         if (backward) dir.z += 1.0f;
         if (left)     dir.x -= 1.0f;
         if (right)    dir.x += 1.0f;
-        
+
         if (glm::length(dir) > 0.0f) {
             dir = glm::normalize(dir);
         }
@@ -148,7 +148,7 @@ struct CombatState {
     EntityID lastAttacker{entt::null};
     uint32_t lastAttackTime{0};
     bool isDead{false};
-    
+
     [[nodiscard]] float healthPercent() const {
         return static_cast<float>(health) / static_cast<float>(maxHealth) * 100.0f;
     }
@@ -169,7 +169,7 @@ struct SpatialCell {
 struct BoundingVolume {
     float radius{0.5f};      // Cylinder radius
     float height{1.8f};      // Cylinder height
-    
+
     [[nodiscard]] bool intersects(const Position& posA, const Position& posB) const {
         // 2D circle intersection (XZ plane)
         float dx = (posA.x - posB.x) * Constants::FIXED_TO_FLOAT;

@@ -1,6 +1,6 @@
 {
-  "timestamp": 1776675161.080395,
-  "git_head": "f0e956bcc376051aca52918df3f322eb4855666d",
+  "timestamp": 1776688438.118358,
+  "git_head": "f7635adaba7f9c1f40cee1f123e3c3d3da4a7845",
   "tasks": [
     {
       "priority": "P1",
@@ -19,31 +19,11 @@
       "title": "Update 3 stale documentation files",
       "description": "Documentation references old project state \u2014 needs alignment with current implementation",
       "files": [
-        "DOCUMENTATION_SYNC_REPORT.md",
         "DarkAges_Comprehensive_Review.md",
-        "PROJECT_STATUS.md"
+        "PROJECT_STATUS.md",
+        "DOCUMENTATION_SYNC_REPORT.md"
       ],
       "estimated_hours": 2.0
-    },
-    {
-      "priority": "P3",
-      "category": "refactor",
-      "title": "Refactor CombatSystem.cpp (547 lines)",
-      "description": "File is 547 lines with cleanup potential",
-      "files": [
-        "src/server/src/combat/CombatSystem.cpp"
-      ],
-      "estimated_hours": 3.0
-    },
-    {
-      "priority": "P3",
-      "category": "refactor",
-      "title": "Refactor CoreTypes.hpp (619 lines)",
-      "description": "File is 619 lines with cleanup potential",
-      "files": [
-        "src/server/include/ecs/CoreTypes.hpp"
-      ],
-      "estimated_hours": 3.0
     },
     {
       "priority": "P3",
