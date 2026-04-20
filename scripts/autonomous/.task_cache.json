@@ -1,45 +1,22 @@
 {
-  "timestamp": 1776637514.1077507,
-  "git_head": "9ad6a08bcf452a9056e6792c6cf2bdcf0575a874",
+  "timestamp": 1776647149.043628,
+  "git_head": "8fc9811cf938c1af6aff39d95dae4b5dcce11c44",
   "tasks": [
     {
-      "priority": "P1",
-      "category": "test-depth",
-      "title": "Expand tests for ZoneServer (19 tests for 1104 lines)",
-      "description": "Source file has 1104 lines but only 19 test cases \u2014 need 27+",
+      "priority": "P2",
+      "category": "test",
+      "title": "Add tests for StatusEffectSystem",
+      "description": "No test file found for src/server/src/combat/StatusEffectSystem.cpp",
       "files": [
-        "src/server/src/zones/ZoneServer.cpp",
-        "src/server/tests/TestZoneServer.cpp"
+        "src/server/src/combat/StatusEffectSystem.cpp"
       ],
-      "estimated_hours": 2.0
+      "estimated_hours": 1.0
     },
     {
       "priority": "P2",
       "category": "test-depth",
-      "title": "Expand tests for LagCompensatedCombat (7 tests for 433 lines)",
-      "description": "Source file has 433 lines but only 7 test cases \u2014 need 8+",
-      "files": [
-        "src/server/src/combat/LagCompensatedCombat.cpp",
-        "src/server/tests/TestLagCompensatedCombat.cpp"
-      ],
-      "estimated_hours": 2.0
-    },
-    {
-      "priority": "P2",
-      "category": "test-depth",
-      "title": "Expand tests for ZoneOrchestrator (11 tests for 587 lines)",
-      "description": "Source file has 587 lines but only 11 test cases \u2014 need 14+",
-      "files": [
-        "src/server/src/zones/ZoneOrchestrator.cpp",
-        "src/server/tests/TestZoneOrchestrator.cpp"
-      ],
-      "estimated_hours": 2.0
-    },
-    {
-      "priority": "P2",
-      "category": "test-depth",
-      "title": "Expand tests for EntityMigration (8 tests for 623 lines)",
-      "description": "Source file has 623 lines but only 8 test cases \u2014 need 15+",
+      "title": "Expand tests for EntityMigration (12 tests for 623 lines)",
+      "description": "Source file has 623 lines but only 12 test cases \u2014 need 15+",
       "files": [
         "src/server/src/zones/EntityMigration.cpp",
         "src/server/tests/TestEntityMigration.cpp"
@@ -49,12 +26,11 @@
     {
       "priority": "P2",
       "category": "docs",
-      "title": "Update 4 stale documentation files",
+      "title": "Update 3 stale documentation files",
       "description": "Documentation references old project state \u2014 needs alignment with current implementation",
       "files": [
-        "DOCUMENTATION_SYNC_REPORT.md",
-        "README.md",
         "PROJECT_STATUS.md",
+        "DOCUMENTATION_SYNC_REPORT.md",
         "DarkAges_Comprehensive_Review.md"
       ],
       "estimated_hours": 2.0
@@ -62,20 +38,12 @@
     {
       "priority": "P3",
       "category": "refactor",
-      "title": "Reduce includes in ZoneServer.hpp (36 includes)",
-      "description": "Header has 36 #include directives \u2014 consider forward declarations",
+      "title": "Reduce includes in ZoneServer.hpp (37 includes)",
+      "description": "Header has 37 #include directives \u2014 consider forward declarations",
       "files": [
         "src/server/include/zones/ZoneServer.hpp"
       ],
       "estimated_hours": 1.0
-    },
-    {
-      "priority": "P3",
-      "category": "cleanup",
-      "title": "Clean up 2 merged autonomous branches",
-      "description": "1 local + 1 remote branches already merged to main",
-      "files": [],
-      "estimated_hours": 0.25
     }
   ]
 }

@@ -20,6 +20,7 @@
 #include "combat/PositionHistory.hpp"
 #include "combat/LagCompensatedCombat.hpp"
 #include "combat/CombatSystem.hpp"
+#include "combat/StatusEffectSystem.hpp"
 #include "security/AntiCheat.hpp"
 #include "profiling/PerfettoProfiler.hpp"
 #include "profiling/PerformanceMonitor.hpp"
@@ -156,6 +157,7 @@ public:
     [[nodiscard]] std::unordered_map<EntityID, ConnectionID>* getEntityToConnectionPtr() { return &entityToConnection_; }
     [[nodiscard]] TickMetrics& getMetricsRef() { return metrics_; }
     [[nodiscard]] CombatSystem* getCombatSystemPtr() { return &combatSystem_; }
+    [[nodiscard]] StatusEffectSystem& getStatusEffectSystem() { return statusEffectSystem_; }
     [[nodiscard]] LagCompensator* getLagCompensatorPtr() { return &lagCompensator_; }
     [[nodiscard]] MovementSystem& getMovementSystemRef() { return movementSystem_; }
     [[nodiscard]] Security::AntiCheatSystem& getAntiCheatRef() { return antiCheat_; }
@@ -207,6 +209,7 @@ private:
     ReplicationOptimizer replicationOptimizer_;
     CombatSystem combatSystem_;
     HealthRegenSystem healthRegenSystem_;
+    StatusEffectSystem statusEffectSystem_;
     LagCompensator lagCompensator_;
 
     // [SECURITY_AGENT] Anti-cheat system

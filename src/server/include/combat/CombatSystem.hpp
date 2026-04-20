@@ -111,6 +111,9 @@ public:
     void setOnDeath(DeathCallback callback) { onDeath_ = std::move(callback); }
     void setOnDamage(DamageCallback callback) { onDamage_ = std::move(callback); }
     
+    // Wire status effect system into the ability system
+    void setStatusEffectSystem(StatusEffectSystem* ses) { abilitySystem_.setStatusEffectSystem(ses); }
+    
     // Death handling
     void killEntity(Registry& registry, EntityID victim, EntityID killer);
     void respawnEntity(Registry& registry, EntityID entity, const Position& spawnPos);

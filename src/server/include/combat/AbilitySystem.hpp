@@ -52,6 +52,8 @@ struct AbilityDefinition {
 // ============================================================================
 
 // [COMBAT_AGENT] Ability casting system
+class StatusEffectSystem;  // Forward declaration
+
 class AbilitySystem {
 public:
     AbilitySystem() = default;
@@ -65,6 +67,9 @@ public:
 
     void registerAbility(uint32_t abilityId, const AbilityDefinition& ability);
 
+    // Set the status effect system for Buff/Debuff/Status abilities
+    void setStatusEffectSystem(StatusEffectSystem* ses) { statusEffectSystem_ = ses; }
+
 private:
     bool isInRange(Registry& registry, EntityID caster, EntityID target, float range) const;
 
@@ -75,6 +80,7 @@ private:
                            const AbilityDefinition& ability, uint32_t currentTimeMs);
 
     std::vector<std::pair<uint32_t, AbilityDefinition>> abilities_;
+    StatusEffectSystem* statusEffectSystem_{nullptr};
 };
 
 } // namespace DarkAges

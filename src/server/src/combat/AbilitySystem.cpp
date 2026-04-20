@@ -1,4 +1,5 @@
 #include "combat/AbilitySystem.hpp"
+#include "combat/StatusEffectSystem.hpp"
 #include "ecs/CoreTypes.hpp"
 #include <entt/entt.hpp>
 #include <cmath>
@@ -150,6 +151,55 @@ void AbilitySystem::applyAbilityEffect(Registry& registry, EntityID caster, Enti
                 if (targetCombat->health > targetCombat->maxHealth) {
                     targetCombat->health = targetCombat->maxHealth;
                 }
+            }
+            break;
+        }
+        case AbilityEffectType::Buff: {
+            // Apply a positive stat buff via StatusEffectSystem
+            if (statusEffectSystem_) {
+                StatusEffect effect;
+                effect.templateId = ability.abilityId;
+                effect.type = StatusEffectType::Buff;
+                effect.statType = StatType::AttackDamage;  // Default: damage buff
+                effect.durationMs = ability.cooldownMs * 2;  // Duration scales with cooldown
+                effect.modifierPercent = 0.2f;  // +20% damage
+                effect.maxStacks = 3;
+                effect.source = caster;
+                effect.name = ability.name.empty() ? "Buff" : ability.name;
+                effect.debuff = false;
+                statusEffectSystem_->applyEffect(registry, target, effect, currentTimeMs);
+            }
+            break;
+        }
+        case AbilityEffectType::Debuff: {
+            // Apply a negative stat debuff via StatusEffectSystem
+            if (statusEffectSystem_) {
+                StatusEffect effect;
+                effect.templateId = ability.abilityId;
+                effect.type = StatusEffectType::Debuff;
+                effect.statType = StatType::MovementSpeed;  // Default: slow
+                effect.durationMs = ability.cooldownMs;
+                effect.modifierPercent = -0.3f;  // -30% speed
+                effect.maxStacks = 1;
+                effect.source = caster;
+                effect.name = ability.name.empty() ? "Debuff" : ability.name;
+                effect.debuff = true;
+                statusEffectSystem_->applyEffect(registry, target, effect, currentTimeMs);
+            }
+            break;
+        }
+        case AbilityEffectType::Status: {
+            // Apply a crowd control status effect
+            if (statusEffectSystem_) {
+                StatusEffect effect;
+                effect.templateId = ability.abilityId;
+                effect.type = StatusEffectType::Stun;  // Default: stun
+                effect.durationMs = ability.cooldownMs / 2;  // Short CC
+                effect.maxStacks = 1;
+                effect.source = caster;
+                effect.name = ability.name.empty() ? "Stun" : ability.name;
+                effect.debuff = true;
+                statusEffectSystem_->applyEffect(registry, target, effect, currentTimeMs);
             }
             break;
         }

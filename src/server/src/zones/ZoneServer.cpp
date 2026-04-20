@@ -134,6 +134,9 @@ bool ZoneServer::initialize(const ZoneConfig& config) {
         combatEventHandler_.sendCombatEvent(attacker, target, damage, location);
     });
 
+    // [COMBAT_AGENT] Wire status effect system into combat system for Buff/Debuff/Status abilities
+    combatSystem_.setStatusEffectSystem(&statusEffectSystem_);
+
     // [ZONE_AGENT] Initialize anti-cheat handler
     antiCheatHandler_.setConnectionMappings(&connectionToEntity_, &entityToConnection_);
     antiCheatHandler_.setNetwork(network_.get());
@@ -545,6 +548,9 @@ void ZoneServer::updateGameLogic() {
 
     // Health regeneration
     healthRegenSystem_.update(registry_, getCurrentTimeMs());
+
+    // [COMBAT_AGENT] Update status effects (buffs, debuffs, DoTs, HoTs, CC)
+    statusEffectSystem_.update(registry_, getCurrentTimeMs());
 
     // Process pending respawns
     combatEventHandler_.processRespawns();
