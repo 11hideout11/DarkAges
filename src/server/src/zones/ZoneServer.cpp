@@ -225,6 +225,11 @@ bool ZoneServer::initialize(const ZoneConfig& config) {
         return (it != entityToConnection_.end()) ? it->second : 0;
     });
 
+    // [GAMEPLAY_AGENT] Initialize crafting system
+    craftingSystem_.initializeDefaults();
+    craftingSystem_.setItemSystem(&itemSystem_);
+    inputHandler_.setCraftingSystem(&craftingSystem_);
+
     // [GAMEPLAY_AGENT] Wire level-up into quest tracking
     experienceSystem_.setLevelUpCallback([this](EntityID player, uint32_t newLevel) {
         questSystem_.onLevelUp(registry_, player, newLevel);
@@ -883,6 +888,9 @@ void ZoneServer::onClientConnected(ConnectionID connectionId) {
 
     // [GAMEPLAY_AGENT] Give player their starter quests
     questSystem_.giveStarterQuests(registry_, entity, getCurrentTimeMs());
+
+    // [GAMEPLAY_AGENT] Give player starter crafting recipes
+    craftingSystem_.giveStarterRecipes(registry_, entity);
 
     std::cout << "[ZONE " << config_.zoneId << "] Spawned entity " << static_cast<uint32_t>(entity)
               << " for connection " << connectionId << std::endl;

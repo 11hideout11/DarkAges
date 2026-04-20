@@ -8,6 +8,7 @@
 #include "combat/AbilitySystem.hpp"
 #include "combat/ItemSystem.hpp"
 #include "combat/ChatSystem.hpp"
+#include "combat/CraftingSystem.hpp"
 #include "netcode/NetworkManager.hpp"
 #include "netcode/ProtobufProtocol.hpp"
 #include "security/AntiCheat.hpp"
@@ -179,6 +180,11 @@ void InputHandler::validateAndApplyInput(EntityID entity, const ClientInputPacke
         if (combatEventHandler_) {
             combatEventHandler_->processAttackInput(entity, input);
         }
+    }
+
+    // Process crafting request (can happen alongside other actions)
+    if (input.input.craftingRecipeId > 0) {
+        processCraftingInput(entity, input.input.craftingRecipeId, currentTimeMs);
     }
 }
 
@@ -423,6 +429,36 @@ void InputHandler::processChatInput(EntityID entity, ChatChannel channel,
         if (channel == ChatChannel::Local || channel == ChatChannel::Global) {
             chatSystem_->sendSystemMessage(registry, entity,
                 "Message not delivered (rate limited or muted).", currentTimeMs);
+        }
+    }
+}
+
+void InputHandler::processCraftingInput(EntityID entity, uint32_t recipeId,
+                                         uint32_t currentTimeMs) {
+    if (!craftingSystem_) return;
+
+    auto& registry = server_.getRegistry();
+
+    bool success = craftingSystem_->startCraft(registry, entity, recipeId, currentTimeMs);
+
+    if (success) {
+        const CraftingRecipe* recipe = craftingSystem_->getRecipe(recipeId);
+        if (recipe && recipe->craftTimeMs == 0) {
+            // Instant craft — send state update
+            if (network_) {
+                auto* entityToConnection = server_.getEntityToConnectionPtr();
+                auto connIt = entityToConnection->find(entity);
+                if (connIt != entityToConnection->end()) {
+                    auto craftEvent = Netcode::ProtobufProtocol::createDamageEvent(
+                        static_cast<uint32_t>(entity),
+                        static_cast<uint32_t>(entity),
+                        0  // Signals state update
+                    );
+                    craftEvent.set_timestamp(currentTimeMs);
+                    auto eventData = Netcode::ProtobufProtocol::serializeEvent(craftEvent);
+                    network_->sendEvent(connIt->second, eventData);
+                }
+            }
         }
     }
 }

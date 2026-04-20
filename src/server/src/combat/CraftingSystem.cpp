@@ -1,95 +1,39 @@
+// Crafting System implementation
+// Manages recipe registry, material consumption, and item production
+
 #include "combat/CraftingSystem.hpp"
 #include "combat/ItemSystem.hpp"
-#include "ecs/CoreTypes.hpp"
+#include "ecs/Components.hpp"
+#include <iostream>
+#include <algorithm>
+#include <cstring>
 
 namespace DarkAges {
 
-// ============================================================================
-// Recipe Registry
-// ============================================================================
-
 void CraftingSystem::registerRecipe(const CraftingRecipe& recipe) {
-    if (recipes_.size() >= MAX_RECIPES) return;
+    if (recipes_.size() >= MAX_RECIPES) {
+        std::cerr << "[CRAFTING] Recipe registry full, cannot register recipe "
+                  << recipe.recipeId << std::endl;
+        return;
+    }
+
+    // Check for duplicate IDs
+    for (const auto& r : recipes_) {
+        if (r.recipeId == recipe.recipeId) {
+            std::cerr << "[CRAFTING] Duplicate recipe ID: " << recipe.recipeId << std::endl;
+            return;
+        }
+    }
+
     recipes_.push_back(recipe);
 }
 
 const CraftingRecipe* CraftingSystem::getRecipe(uint32_t recipeId) const {
-    for (const auto& recipe : recipes_) {
-        if (recipe.recipeId == recipeId) return &recipe;
+    for (const auto& r : recipes_) {
+        if (r.recipeId == recipeId) return &r;
     }
     return nullptr;
 }
-
-// ============================================================================
-// Crafting Actions
-// ============================================================================
-
-bool CraftingSystem::startCraft(Registry& registry, EntityID player,
-                                uint32_t recipeId, uint32_t currentTimeMs) {
-    const CraftingRecipe* recipe = getRecipe(recipeId);
-    if (!recipe) return false;
-
-    if (!canCraft(registry, player, recipeId)) return false;
-
-    // Consume materials and gold
-    if (!consumeMaterials(registry, player, recipeId)) return false;
-
-    // Grant craft start callback
-    if (craftStartCallback_) {
-        craftStartCallback_(player, recipeId, recipe->craftTimeMs);
-    }
-
-    // Get or create crafting component
-    CraftingComponent& cc = registry.emplace_or_replace<CraftingComponent>(player);
-    cc.startCraft(recipeId, currentTimeMs);
-
-    // Instant craft: complete immediately
-    if (recipe->craftTimeMs == 0) {
-        grantOutput(registry, player, *recipe);
-        cc.finishCraft();
-        if (craftCompleteCallback_) {
-            craftCompleteCallback_(player, recipeId,
-                                    recipe->outputItemId, recipe->outputQuantity);
-        }
-        return true;
-    }
-
-    return true;
-}
-
-bool CraftingSystem::cancelCraft(Registry& registry, EntityID player) {
-    CraftingComponent* cc = registry.try_get<CraftingComponent>(player);
-    if (!cc || !cc->isCrafting()) return false;
-    cc->cancelCraft();
-    return true;
-}
-
-bool CraftingSystem::updateCraft(Registry& registry, EntityID player,
-                                 uint32_t currentTimeMs) {
-    CraftingComponent* cc = registry.try_get<CraftingComponent>(player);
-    if (!cc || !cc->isCrafting()) return false;
-
-    const CraftingRecipe* recipe = getRecipe(cc->currentRecipeId);
-    if (!recipe) return false;
-
-    // Check if craft time has elapsed
-    uint32_t elapsed = currentTimeMs - cc->craftStartTimeMs;
-    if (elapsed < recipe->craftTimeMs) return false;
-
-    // Craft complete
-    grantOutput(registry, player, *recipe);
-    cc->finishCraft();
-
-    if (craftCompleteCallback_) {
-        craftCompleteCallback_(player, recipe->recipeId,
-                                recipe->outputItemId, recipe->outputQuantity);
-    }
-    return true;
-}
-
-// ============================================================================
-// Validation
-// ============================================================================
 
 bool CraftingSystem::canCraft(const Registry& registry, EntityID player,
                                uint32_t recipeId) const {
@@ -120,8 +64,7 @@ bool CraftingSystem::canCraft(const Registry& registry, EntityID player,
     return true;
 }
 
-bool CraftingSystem::hasRequiredMaterials(const Registry& registry,
-                                           EntityID player,
+bool CraftingSystem::hasRequiredMaterials(const Registry& registry, EntityID player,
                                            uint32_t recipeId) const {
     const CraftingRecipe* recipe = getRecipe(recipeId);
     if (!recipe) return false;
@@ -129,193 +72,140 @@ bool CraftingSystem::hasRequiredMaterials(const Registry& registry,
     if (!itemSystem_) return false;
 
     for (uint32_t i = 0; i < recipe->ingredientCount; ++i) {
-        const CraftingIngredient& ing = recipe->ingredients[i];
-        if (!itemSystem_->hasInInventory(registry, player, ing.itemId, ing.quantity)) {
-            return false;
-        }
+        const auto& ingredient = recipe->ingredients[i];
+        uint32_t has = itemSystem_->countInInventory(registry, player, ingredient.itemId);
+        if (has < ingredient.quantity) return false;
     }
+
     return true;
 }
 
-bool CraftingSystem::hasRequiredGold(const Registry& registry,
-                                      EntityID player,
+bool CraftingSystem::hasRequiredGold(const Registry& registry, EntityID player,
                                       uint32_t recipeId) const {
     const CraftingRecipe* recipe = getRecipe(recipeId);
     if (!recipe) return false;
-
     if (recipe->goldCost == 0) return true;
 
     const Inventory* inv = registry.try_get<Inventory>(player);
     if (!inv) return false;
+
     return inv->gold >= static_cast<float>(recipe->goldCost);
 }
 
-// ============================================================================
-// Starter Recipes
-// ============================================================================
+bool CraftingSystem::startCraft(Registry& registry, EntityID player,
+                                 uint32_t recipeId, uint32_t currentTimeMs) {
+    if (!canCraft(registry, player, recipeId)) return false;
 
-void CraftingSystem::giveStarterRecipes(Registry& registry, EntityID player) {
-    // Ensure crafting component exists
-    CraftingComponent& cc = registry.emplace_or_replace<CraftingComponent>(player);
-    (void)cc; // Mark as used (component auto-initialized)
+    const CraftingRecipe* recipe = getRecipe(recipeId);
+
+    // Consume materials
+    if (!consumeMaterials(registry, player, recipeId)) return false;
+
+    // Ensure CraftingComponent exists BEFORE grantOutput (which may invalidate pointers)
+    if (!registry.all_of<CraftingComponent>(player)) {
+        registry.emplace<CraftingComponent>(player);
+    }
+
+    // Instant craft — complete immediately
+    if (recipe->craftTimeMs == 0) {
+        grantOutput(registry, player, *recipe);
+
+        // Re-fetch component after grantOutput (pointer may be stale)
+        CraftingComponent& crafting = registry.get<CraftingComponent>(player);
+        crafting.finishCraft();
+
+        std::cout << "[CRAFTING] Player " << static_cast<uint32_t>(player)
+                  << " crafted " << recipe->outputQuantity << "x '" << recipe->name
+                  << "' (instant)" << std::endl;
+
+        if (craftCompleteCallback_) {
+            craftCompleteCallback_(player, recipeId, recipe->outputItemId,
+                                    recipe->outputQuantity);
+        }
+        return true;
+    }
+
+    // Timed craft — start progress (component already exists from above)
+    CraftingComponent& crafting = registry.get<CraftingComponent>(player);
+    crafting.startCraft(recipeId, currentTimeMs);
+
+    std::cout << "[CRAFTING] Player " << static_cast<uint32_t>(player)
+              << " started crafting '" << recipe->name << "' ("
+              << recipe->craftTimeMs << "ms)" << std::endl;
+
+    if (craftStartCallback_) {
+        craftStartCallback_(player, recipeId, recipe->craftTimeMs);
+    }
+
+    return true;
 }
 
-// ============================================================================
-// Default Recipe Database
-// ============================================================================
+bool CraftingSystem::cancelCraft(Registry& registry, EntityID player) {
+    CraftingComponent* crafting = registry.try_get<CraftingComponent>(player);
+    if (!crafting || !crafting->isCrafting()) return false;
 
-void CraftingSystem::initializeDefaults() {
-    recipes_.clear();
+    uint32_t recipeId = crafting->currentRecipeId;
+    crafting->cancelCraft();
 
-    // Basic Weapon recipe: Iron Ingot + Oak Wood -> Iron Sword
-    {
-        CraftingRecipe r;
-        r.recipeId = 1;
-        snprintf(r.name, sizeof(r.name), "Iron Sword");
-        snprintf(r.description, sizeof(r.description), "Forge an iron sword from raw materials.");
-        r.outputItemId = 101;
-        r.outputQuantity = 1;
-        r.ingredients[0] = {1001, 2}; // Iron Ingot x2
-        r.ingredients[1] = {1002, 1}; // Oak Wood x1
-        r.ingredientCount = 2;
-        r.requiredLevel = 1;
-        r.requiredProfessionLevel = 1;
-        r.craftTimeMs = 5000;
-        r.goldCost = 50;
-        registerRecipe(r);
-    }
+    std::cout << "[CRAFTING] Player " << static_cast<uint32_t>(player)
+              << " cancelled craft (recipe " << recipeId << ") — materials lost"
+              << std::endl;
 
-    // Health Potion recipe: Herb + Empty Vial -> Health Potion
-    {
-        CraftingRecipe r;
-        r.recipeId = 2;
-        snprintf(r.name, sizeof(r.name), "Health Potion");
-        snprintf(r.description, sizeof(r.description), "Brew a health potion from herbs.");
-        r.outputItemId = 201;
-        r.outputQuantity = 1;
-        r.ingredients[0] = {1003, 1}; // Herb x1
-        r.ingredients[1] = {1004, 1}; // Empty Vial x1
-        r.ingredientCount = 2;
-        r.requiredLevel = 1;
-        r.requiredProfessionLevel = 1;
-        r.craftTimeMs = 0; // Instant
-        r.goldCost = 10;
-        registerRecipe(r);
-    }
-
-    // Mana Potion recipe: Blue Mushroom + Empty Vial -> Mana Potion
-    {
-        CraftingRecipe r;
-        r.recipeId = 3;
-        snprintf(r.name, sizeof(r.name), "Mana Potion");
-        snprintf(r.description, sizeof(r.description), "Brew a mana potion from mystical ingredients.");
-        r.outputItemId = 202;
-        r.outputQuantity = 1;
-        r.ingredients[0] = {1005, 1}; // Blue Mushroom x1
-        r.ingredients[1] = {1004, 1}; // Empty Vial x1
-        r.ingredientCount = 2;
-        r.requiredLevel = 1;
-        r.requiredProfessionLevel = 1;
-        r.craftTimeMs = 0; // Instant
-        r.goldCost = 15;
-        registerRecipe(r);
-    }
-
-    // Iron Ingot: Iron Ore x2 -> Iron Ingot
-    {
-        CraftingRecipe r;
-        r.recipeId = 4;
-        snprintf(r.name, sizeof(r.name), "Iron Ingot");
-        snprintf(r.description, sizeof(r.description), "Smelt iron ore into a usable ingot.");
-        r.outputItemId = 1001;
-        r.outputQuantity = 1;
-        r.ingredients[0] = {1006, 2}; // Iron Ore x2
-        r.ingredientCount = 1;
-        r.requiredLevel = 1;
-        r.requiredProfessionLevel = 0;
-        r.craftTimeMs = 3000;
-        r.goldCost = 5;
-        registerRecipe(r);
-    }
-
-    // Leather Armor: Raw Hide x3 -> Leather Armor
-    {
-        CraftingRecipe r;
-        r.recipeId = 5;
-        snprintf(r.name, sizeof(r.name), "Leather Armor");
-        snprintf(r.description, sizeof(r.description), "Craft leather armor from raw hides.");
-        r.outputItemId = 102;
-        r.outputQuantity = 1;
-        r.ingredients[0] = {1007, 3}; // Raw Hide x3
-        r.ingredientCount = 1;
-        r.requiredLevel = 3;
-        r.requiredProfessionLevel = 2;
-        r.craftTimeMs = 8000;
-        r.goldCost = 100;
-        registerRecipe(r);
-    }
-
-    // Magic Scroll: Parchment + Blue Mushroom -> Magic Scroll
-    {
-        CraftingRecipe r;
-        r.recipeId = 6;
-        snprintf(r.name, sizeof(r.name), "Magic Scroll");
-        snprintf(r.description, sizeof(r.description), "Inscribe a magic scroll with mystical power.");
-        r.outputItemId = 203;
-        r.outputQuantity = 1;
-        r.ingredients[0] = {1008, 1}; // Parchment x1
-        r.ingredients[1] = {1005, 1}; // Blue Mushroom x1
-        r.ingredientCount = 2;
-        r.requiredLevel = 5;
-        r.requiredProfessionLevel = 3;
-        r.craftTimeMs = 10000;
-        r.goldCost = 75;
-        registerRecipe(r);
-    }
-
-    // Enchanted Ring: Silver Ring + Gemstone -> Enchanted Ring
-    {
-        CraftingRecipe r;
-        r.recipeId = 7;
-        snprintf(r.name, sizeof(r.name), "Enchanted Ring");
-        snprintf(r.description, sizeof(r.description), "Forge an enchanted ring with magical properties.");
-        r.outputItemId = 103;
-        r.outputQuantity = 1;
-        r.ingredients[0] = {1009, 1}; // Silver Ring x1
-        r.ingredients[1] = {1010, 1}; // Gemstone x1
-        r.ingredientCount = 2;
-        r.requiredLevel = 10;
-        r.requiredProfessionLevel = 5;
-        r.craftTimeMs = 15000;
-        r.goldCost = 200;
-        registerRecipe(r);
-    }
+    return true;
 }
 
-// ============================================================================
-// Private Helpers
-// ============================================================================
+bool CraftingSystem::updateCraft(Registry& registry, EntityID player,
+                                  uint32_t currentTimeMs) {
+    CraftingComponent* crafting = registry.try_get<CraftingComponent>(player);
+    if (!crafting || !crafting->isCrafting()) return false;
+
+    const CraftingRecipe* recipe = getRecipe(crafting->currentRecipeId);
+    if (!recipe) {
+        // Recipe was removed — cancel
+        crafting->cancelCraft();
+        return false;
+    }
+
+    uint32_t elapsed = currentTimeMs - crafting->craftStartTimeMs;
+    if (elapsed < recipe->craftTimeMs) return false; // Still crafting
+
+    // Craft complete!
+    uint32_t recipeId = crafting->currentRecipeId;
+    crafting->finishCraft();
+    grantOutput(registry, player, *recipe);
+
+    std::cout << "[CRAFTING] Player " << static_cast<uint32_t>(player)
+              << " completed crafting " << recipe->outputQuantity << "x '"
+              << recipe->name << "'" << std::endl;
+
+    if (craftCompleteCallback_) {
+        craftCompleteCallback_(player, recipeId, recipe->outputItemId,
+                                recipe->outputQuantity);
+    }
+
+    return true;
+}
 
 bool CraftingSystem::consumeMaterials(Registry& registry, EntityID player,
                                        uint32_t recipeId) {
     const CraftingRecipe* recipe = getRecipe(recipeId);
-    if (!recipe) return false;
+    if (!recipe || !itemSystem_) return false;
 
-    if (!itemSystem_) return false;
-
-    // Consume each ingredient
+    // Consume ingredients
     for (uint32_t i = 0; i < recipe->ingredientCount; ++i) {
-        const CraftingIngredient& ing = recipe->ingredients[i];
-        if (!itemSystem_->removeFromInventory(registry, player, ing.itemId, ing.quantity)) {
+        const auto& ingredient = recipe->ingredients[i];
+        if (!itemSystem_->removeFromInventory(registry, player,
+                                               ingredient.itemId, ingredient.quantity)) {
+            std::cerr << "[CRAFTING] Failed to consume material item "
+                      << ingredient.itemId << " x" << ingredient.quantity << std::endl;
             return false;
         }
     }
 
-    // Consume gold if needed
+    // Consume gold
     if (recipe->goldCost > 0) {
         Inventory* inv = registry.try_get<Inventory>(player);
-        if (!inv) return false;
-        if (inv->gold < static_cast<float>(recipe->goldCost)) return false;
+        if (!inv || inv->gold < static_cast<float>(recipe->goldCost)) return false;
         inv->gold -= static_cast<float>(recipe->goldCost);
     }
 
@@ -324,26 +214,135 @@ bool CraftingSystem::consumeMaterials(Registry& registry, EntityID player,
 
 void CraftingSystem::grantOutput(Registry& registry, EntityID player,
                                   const CraftingRecipe& recipe) {
-    if (!itemSystem_) return;
+    if (itemSystem_) {
+        itemSystem_->addToInventory(registry, player,
+                                     recipe.outputItemId, recipe.outputQuantity);
+    }
 
-    // Add crafted item to inventory
-    itemSystem_->addToInventory(registry, player,
-                                  recipe.outputItemId, recipe.outputQuantity);
+    // Award profession XP (10 XP per craft + 5 per ingredient)
+    // Use registry.get (not try_get) since component must exist by now
+    if (registry.all_of<CraftingComponent>(player)) {
+        CraftingComponent& crafting = registry.get<CraftingComponent>(player);
+        uint64_t xpGain = 10 + (recipe.ingredientCount * 5);
+        crafting.professionXP += xpGain;
 
-    // Award profession XP (simplified: 10 XP per craft)
-    CraftingComponent* cc = registry.try_get<CraftingComponent>(player);
-    if (cc) {
-        cc->professionXP += 10;
-
-        // Level up profession every 100 XP
-        constexpr uint64_t XP_PER_LEVEL = 100;
-        while (cc->professionXP >= XP_PER_LEVEL) {
-            cc->professionXP -= XP_PER_LEVEL;
-            if (cc->professionLevel < 255) {
-                cc->professionLevel++;
-            }
+        // Level up: every 100 XP * current level
+        uint64_t xpNeeded = 100 * (static_cast<uint64_t>(crafting.professionLevel) + 1);
+        if (crafting.professionXP >= xpNeeded && crafting.professionLevel < 255) {
+            crafting.professionLevel++;
+            crafting.professionXP -= xpNeeded;
+            std::cout << "[CRAFTING] Player " << static_cast<uint32_t>(player)
+                      << " profession leveled up to " << static_cast<int>(crafting.professionLevel)
+                      << std::endl;
         }
     }
+}
+
+void CraftingSystem::giveStarterRecipes(Registry& registry, EntityID player) {
+    // Ensure player has a CraftingComponent
+    if (!registry.try_get<CraftingComponent>(player)) {
+        registry.emplace<CraftingComponent>(player);
+    }
+}
+
+void CraftingSystem::initializeDefaults() {
+    recipes_.clear();
+
+    // --- Starter Recipes ---
+
+    // Recipe 1: Iron Sword (2x Iron Ore + 1x Wolf Pelt -> Iron Sword)
+    {
+        CraftingRecipe recipe{};
+        recipe.recipeId = 1;
+        std::strncpy(recipe.name, "Forge Iron Sword", sizeof(recipe.name) - 1);
+        std::strncpy(recipe.description, "Smelt iron ore into a sturdy blade.",
+                      sizeof(recipe.description) - 1);
+        recipe.outputItemId = 10;     // Iron Sword (from ItemSystem defaults)
+        recipe.outputQuantity = 1;
+        recipe.ingredients[0] = {21, 2}; // 2x Iron Ore
+        recipe.ingredients[1] = {20, 1}; // 1x Wolf Pelt (leather grip)
+        recipe.ingredientCount = 2;
+        recipe.requiredLevel = 1;
+        recipe.craftTimeMs = 3000;    // 3 seconds
+        recipe.goldCost = 10;
+        registerRecipe(recipe);
+    }
+
+    // Recipe 2: Healing Potion (1x Wolf Pelt + 1x Iron Ore -> Healing Potion x2)
+    {
+        CraftingRecipe recipe{};
+        recipe.recipeId = 2;
+        std::strncpy(recipe.name, "Brew Healing Potion", sizeof(recipe.name) - 1);
+        std::strncpy(recipe.description, "Combine natural ingredients into a restorative brew.",
+                      sizeof(recipe.description) - 1);
+        recipe.outputItemId = 1;      // Healing Potion (from ItemSystem defaults)
+        recipe.outputQuantity = 2;    // Produces 2 potions
+        recipe.ingredients[0] = {20, 1}; // 1x Wolf Pelt
+        recipe.ingredients[1] = {21, 1}; // 1x Iron Ore (as alchemical base)
+        recipe.ingredientCount = 2;
+        recipe.requiredLevel = 1;
+        recipe.craftTimeMs = 2000;    // 2 seconds
+        recipe.goldCost = 5;
+        registerRecipe(recipe);
+    }
+
+    // Recipe 3: Reinforced Armor (3x Iron Ore + 1x Wolf Pelt -> Iron Chestplate)
+    {
+        CraftingRecipe recipe{};
+        recipe.recipeId = 3;
+        std::strncpy(recipe.name, "Forge Iron Chestplate", sizeof(recipe.name) - 1);
+        std::strncpy(recipe.description, "Hammer iron plates into protective armor.",
+                      sizeof(recipe.description) - 1);
+        recipe.outputItemId = 11;     // Iron Chestplate (from ItemSystem defaults)
+        recipe.outputQuantity = 1;
+        recipe.ingredients[0] = {21, 3}; // 3x Iron Ore
+        recipe.ingredients[1] = {20, 1}; // 1x Wolf Pelt (leather straps)
+        recipe.ingredientCount = 2;
+        recipe.requiredLevel = 5;
+        recipe.requiredProfessionLevel = 2;
+        recipe.craftTimeMs = 5000;    // 5 seconds
+        recipe.goldCost = 25;
+        registerRecipe(recipe);
+    }
+
+    // Recipe 4: Mana Potion (instant, cheap)
+    {
+        CraftingRecipe recipe{};
+        recipe.recipeId = 4;
+        std::strncpy(recipe.name, "Brew Mana Potion", sizeof(recipe.name) - 1);
+        std::strncpy(recipe.description, "Distill raw materials into a mana-restoring elixir.",
+                      sizeof(recipe.description) - 1);
+        recipe.outputItemId = 2;      // Mana Potion (from ItemSystem defaults)
+        recipe.outputQuantity = 1;
+        recipe.ingredients[0] = {21, 1}; // 1x Iron Ore
+        recipe.ingredientCount = 1;
+        recipe.requiredLevel = 1;
+        recipe.craftTimeMs = 0;       // Instant
+        recipe.goldCost = 3;
+        registerRecipe(recipe);
+    }
+
+    // Recipe 5: Legendary Forge (Ancient Relic + 5x Iron Ore -> Relic Blade)
+    {
+        CraftingRecipe recipe{};
+        recipe.recipeId = 5;
+        std::strncpy(recipe.name, "Forge Relic Blade", sizeof(recipe.name) - 1);
+        std::strncpy(recipe.description, "Infuse ancient power into a masterwork weapon.",
+                      sizeof(recipe.description) - 1);
+        recipe.outputItemId = 30;     // Vorpal Blade (legendary)
+        recipe.outputQuantity = 1;
+        recipe.ingredients[0] = {22, 1}; // 1x Ancient Relic Shard
+        recipe.ingredients[1] = {21, 5}; // 5x Iron Ore
+        recipe.ingredientCount = 2;
+        recipe.requiredLevel = 20;
+        recipe.requiredProfessionLevel = 5;
+        recipe.craftTimeMs = 10000;   // 10 seconds
+        recipe.goldCost = 500;
+        recipe.discovered = false;    // Hidden until learned
+        registerRecipe(recipe);
+    }
+
+    std::cout << "[CRAFTING] Initialized " << recipes_.size() << " crafting recipes" << std::endl;
 }
 
 } // namespace DarkAges

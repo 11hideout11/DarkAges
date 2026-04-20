@@ -482,6 +482,20 @@ void ItemSystem::initializeDefaults() {
         item.tradable = false;
         registerItem(item);
     }
+    {
+        ItemDefinition item{};
+        item.itemId = 23;
+        std::strncpy(item.name, "Dragon Scale", sizeof(item.name) - 1);
+        std::strncpy(item.description, "A rare scale from an ancient dragon.", sizeof(item.description) - 1);
+        item.type = ItemType::Material;
+        item.rarity = ItemRarity::Legendary;
+        item.maxStackSize = 10;
+        item.buyPrice = 2000;
+        item.sellPrice = 500;
+        item.requiredLevel = 20;
+        item.tradable = true;
+        registerItem(item);
+    }
 
     // --- Legendary ---
     {

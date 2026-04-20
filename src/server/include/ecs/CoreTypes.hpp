@@ -112,6 +112,7 @@ struct InputState {
     uint8_t abilitySlot{0};    // 0=melee attack, 1-4=ability slot cast
     uint8_t itemSlot{0};       // 0=no item use, 1-24=inventory slot to consume
     uint8_t chatChannel{0};    // 0=no chat, 1=local, 2=global, 3=whisper, 4=party, 5=guild
+    uint32_t craftingRecipeId{0}; // 0=no craft, >0=recipe ID to craft
 
     // Initialize all bits to 0
     InputState() : forward(0), backward(0), left(0), right(0),
@@ -810,6 +811,63 @@ struct ChatConfig {
     float localChatRange{50.0f};          // Range in meters for local chat
     bool globalChatEnabled{true};         // Whether global chat is active
     bool systemMessagesEnabled{true};     // Whether system messages are active
+};
+
+// ============================================================================
+// CRAFTING SYSTEM
+// ============================================================================
+
+// A single ingredient required for a recipe
+struct CraftingIngredient {
+    uint32_t itemId{0};          // Item required
+    uint32_t quantity{1};        // How many needed
+};
+
+// Maximum ingredients per recipe
+static constexpr uint32_t MAX_CRAFTING_INGREDIENTS = 6;
+
+// Crafting recipe definition
+struct CraftingRecipe {
+    uint32_t recipeId{0};
+    char name[48]{0};
+    char description[128]{0};
+    uint32_t outputItemId{0};           // Item produced
+    uint32_t outputQuantity{1};         // How many produced
+    CraftingIngredient ingredients[MAX_CRAFTING_INGREDIENTS];
+    uint32_t ingredientCount{0};
+    uint32_t requiredLevel{1};          // Player level required
+    uint32_t requiredProfessionLevel{0}; // Profession skill level required (0 = none)
+    uint32_t craftTimeMs{0};            // Time to craft in ms (0 = instant)
+    uint32_t goldCost{0};               // Gold required to craft
+    uint32_t xpReward{10};              // Profession XP awarded on craft completion
+    bool discovered{true};              // Whether recipe shows in UI (false = hidden until learned)
+};
+
+// Per-player crafting state
+struct CraftingComponent {
+    uint32_t currentRecipeId{0};        // Recipe being crafted (0 = idle)
+    uint32_t craftStartTimeMs{0};       // When crafting started
+    uint32_t craftCount{0};             // Total items crafted lifetime
+    uint8_t professionLevel{0};         // Crafting profession level
+    uint64_t professionXP{0};           // Profession experience points
+
+    bool isCrafting() const { return currentRecipeId != 0; }
+
+    void startCraft(uint32_t recipeId, uint32_t currentTimeMs) {
+        currentRecipeId = recipeId;
+        craftStartTimeMs = currentTimeMs;
+    }
+
+    void finishCraft() {
+        currentRecipeId = 0;
+        craftStartTimeMs = 0;
+        craftCount++;
+    }
+
+    void cancelCraft() {
+        currentRecipeId = 0;
+        craftStartTimeMs = 0;
+    }
 };
 
 } // namespace DarkAges

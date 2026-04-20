@@ -552,6 +552,12 @@ def main():
     priority_order = {"P0": 0, "P1": 1, "P2": 2, "P3": 3}
     unique_tasks.sort(key=lambda t: priority_order.get(t.priority, 99))
 
+    # Filter out tasks from build/_deps directories (third-party code)
+    DEP_PATTERNS = ('_deps', 'build_tmp', 'build_psm', 'build_verify',
+                    'build_validate', 'build_test', 'build_autonomous')
+    unique_tasks = [t for t in unique_tasks
+                    if not any(p in str(t.files) for p in DEP_PATTERNS)]
+
     task_dicts = [asdict(t) for t in unique_tasks]
     save_cache(task_dicts)
 

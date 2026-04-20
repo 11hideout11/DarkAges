@@ -222,9 +222,12 @@ def generate_test_file(task):
     # Headers are at:    src/server/include/Xxx.hpp or src/server/include/subdir/Xxx.hpp
     # So from tests/ to include/ is just ../include/
     inc_source = header_for_content if header_for_content != source_file else source_file
-    if "include" in inc_source:
+    if "include/" in inc_source:
         # e.g. src/server/include/foo/Bar.hpp -> ../include/foo/Bar.hpp
-        include = f'../include/{inc_source.split("include/")[1]}'
+        parts = inc_source.split("include/", 1)
+        if len(parts) < 2:
+            return None
+        include = f'../include/{parts[1]}'
     else:
         # .cpp with no header found — skip (shouldn't happen after header lookup)
         return None
