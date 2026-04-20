@@ -21,13 +21,13 @@ CombatSystem::CombatSystem(const CombatConfig& config) : config_(config) {}
 HitResult CombatSystem::processAttack(Registry& registry, EntityID attacker,
                                      const AttackInput& input, uint32_t currentTimeMs) {
     HitResult result;
-    
+
     // Check if can attack
     if (!canAttack(registry, attacker, currentTimeMs)) {
         result.hitType = "cooldown";
         return result;
     }
-    
+
     // Process based on type
     switch (input.type) {
         case AttackInput::MELEE:
@@ -54,7 +54,7 @@ HitResult CombatSystem::processAttack(Registry& registry, EntityID attacker,
                     result.target = target;
                     result.damageDealt = static_cast<int16_t>(ability->manaCost * 10);
                     result.hitType = "ability";
-                    
+
                     if (const Position* pos = registry.try_get<Position>(target)) {
                         result.hitLocation = *pos;
                     }
@@ -67,119 +67,119 @@ HitResult CombatSystem::processAttack(Registry& registry, EntityID attacker,
             break;
         }
     }
-    
+
     // Update attack cooldown
     if (CombatState* combat = registry.try_get<CombatState>(attacker)) {
         combat->lastAttackTime = currentTimeMs;
     }
-    
+
     return result;
 }
 
 HitResult CombatSystem::performMeleeAttack(Registry& registry, EntityID attacker,
                                           uint32_t currentTimeMs) {
     HitResult result;
-    
+
     // Find all valid targets in melee range
     auto targets = findMeleeTargets(registry, attacker);
-    
+
     if (targets.empty()) {
         result.hitType = "miss";
         return result;
     }
-    
+
     // Hit the closest target
     // For now, hit the first valid target (already sorted by distance in findMeleeTargets)
     for (EntityID target : targets) {
         bool isCritical = false;
-        int16_t damage = calculateDamage(registry, attacker, target, 
+        int16_t damage = calculateDamage(registry, attacker, target,
                                         config_.baseMeleeDamage, isCritical);
-        
+
         if (applyDamage(registry, target, attacker, damage, currentTimeMs)) {
             result.hit = true;
             result.target = target;
             result.damageDealt = damage;
             result.isCritical = isCritical;
             result.hitType = "melee";
-            
+
             if (const Position* pos = registry.try_get<Position>(target)) {
                 result.hitLocation = *pos;
             }
-            
+
             // Callback
             if (onDamage_) {
                 onDamage_(attacker, target, damage, result.hitLocation);
             }
-            
+
             break;  // Melee hits one target
         }
     }
-    
+
     return result;
 }
 
 HitResult CombatSystem::performRangedAttack(Registry& registry, EntityID attacker,
                                            const glm::vec3& aimDir, uint32_t currentTimeMs) {
     HitResult result;
-    
+
     const Position* attackerPos = registry.try_get<Position>(attacker);
     const Rotation* attackerRot = registry.try_get<Rotation>(attacker);
-    
+
     if (!attackerPos || !attackerRot) {
         result.hitType = "miss";
         return result;
     }
-    
+
     glm::vec3 forward = getForwardVector(attackerRot->yaw);
-    
+
     auto view = registry.view<Position, CombatState>();
-    
+
     EntityID closestTarget = entt::null;
     float closestDist = 50.0f * 50.0f;
-    
+
     view.each([&](EntityID target, const Position& targetPos, const CombatState& targetCombat) {
         if (target == attacker) return;
         if (targetCombat.isDead) return;
         if (!canDamage(registry, attacker, target)) return;
-        
+
         float dx = (targetPos.x - attackerPos->x) * Constants::FIXED_TO_FLOAT;
         float dy = (targetPos.y - attackerPos->y) * Constants::FIXED_TO_FLOAT;
         float dz = (targetPos.z - attackerPos->z) * Constants::FIXED_TO_FLOAT;
         float distSq = dx*dx + dy*dy + dz*dz;
-        
+
         if (distSq > 50.0f * 50.0f) return;
-        
+
         glm::vec3 toTarget(dx, dy, dz);
         float toTargetLen = std::sqrt(distSq);
         if (toTargetLen < 0.001f) return;
-        
+
         glm::vec3 toTargetNorm = toTarget / toTargetLen;
         float dotProduct = glm::dot(forward, toTargetNorm);
-        
+
         if (dotProduct <= 0.0f) return;
-        
+
         if (distSq < closestDist) {
             closestDist = distSq;
             closestTarget = target;
         }
     });
-    
+
     if (closestTarget != entt::null) {
         bool isCritical = false;
         int16_t damage = calculateDamage(registry, attacker, closestTarget,
                                          config_.baseRangedDamage, isCritical);
-        
+
         if (applyDamage(registry, closestTarget, attacker, damage, currentTimeMs)) {
             result.hit = true;
             result.target = closestTarget;
             result.damageDealt = damage;
             result.isCritical = isCritical;
             result.hitType = "ranged";
-            
+
             if (const Position* pos = registry.try_get<Position>(closestTarget)) {
                 result.hitLocation = *pos;
             }
-            
+
             if (onDamage_) {
                 onDamage_(attacker, closestTarget, damage, result.hitLocation);
             }
@@ -189,7 +189,7 @@ HitResult CombatSystem::performRangedAttack(Registry& registry, EntityID attacke
     } else {
         result.hitType = "miss";
     }
-    
+
     return result;
 }
 
@@ -199,7 +199,7 @@ bool CombatSystem::applyDamage(Registry& registry, EntityID target, EntityID att
     if (!combat) {
         return false;
     }
-    
+
     // Check if already dead
     if (combat->isDead) {
         return false;
@@ -220,21 +220,21 @@ bool CombatSystem::applyDamage(Registry& registry, EntityID target, EntityID att
         }
         return true;
     }
-    
+
     // Apply remaining damage
     combat->health -= remainingDamage;
     combat->lastAttacker = attacker;
-    
+
     // Clamp to zero
     if (combat->health < 0) {
         combat->health = 0;
     }
-    
+
     // Check for death
     if (combat->health == 0) {
         killEntity(registry, target, attacker);
     }
-    
+
     return true;
 }
 
@@ -243,7 +243,7 @@ bool CombatSystem::applyHeal(Registry& registry, EntityID target, int16_t amount
     if (!combat || combat->isDead) {
         return false;
     }
-    
+
     float healAmount = static_cast<float>(amount);
 
     // Apply healing modifier from status effects (HoT buffs increase healing received)
@@ -253,12 +253,12 @@ bool CombatSystem::applyHeal(Registry& registry, EntityID target, int16_t amount
     }
 
     combat->health += static_cast<int16_t>(healAmount);
-    
+
     // Clamp to max
     if (combat->health > combat->maxHealth) {
         combat->health = combat->maxHealth;
     }
-    
+
     return true;
 }
 
@@ -267,7 +267,7 @@ bool CombatSystem::canAttack(Registry& registry, EntityID attacker, uint32_t cur
     if (!combat) {
         return false;
     }
-    
+
     // Can't attack while dead
     if (combat->isDead) {
         return false;
@@ -280,13 +280,13 @@ bool CombatSystem::canAttack(Registry& registry, EntityID attacker, uint32_t cur
             return false;
         }
     }
-    
+
     // Check cooldown
     // lastAttackTime == 0 means never attacked, allow first attack
     if (combat->lastAttackTime == 0) {
         return true;
     }
-    
+
     uint32_t timeSinceLastAttack = currentTimeMs - combat->lastAttackTime;
 
     // Apply attack speed modifier from status effects
@@ -302,18 +302,18 @@ bool CombatSystem::canAttack(Registry& registry, EntityID attacker, uint32_t cur
     if (timeSinceLastAttack < effectiveCooldown) {
         return false;
     }
-    
+
     return true;
 }
 
 void CombatSystem::killEntity(Registry& registry, EntityID victim, EntityID killer) {
     CombatState* combat = registry.try_get<CombatState>(victim);
     if (!combat) return;
-    
+
     combat->isDead = true;
     combat->health = 0;
     combat->lastAttacker = killer;
-    
+
     // Callback
     if (onDeath_) {
         onDeath_(victim, killer);
@@ -323,15 +323,15 @@ void CombatSystem::killEntity(Registry& registry, EntityID victim, EntityID kill
 void CombatSystem::respawnEntity(Registry& registry, EntityID entity, const Position& spawnPos) {
     CombatState* combat = registry.try_get<CombatState>(entity);
     if (!combat) return;
-    
+
     combat->isDead = false;
     combat->health = combat->maxHealth;
     combat->lastAttacker = entt::null;
-    
+
     if (Position* pos = registry.try_get<Position>(entity)) {
         *pos = spawnPos;
     }
-    
+
     if (Velocity* vel = registry.try_get<Velocity>(entity)) {
         *vel = Velocity{};  // Zero velocity
     }
@@ -339,33 +339,33 @@ void CombatSystem::respawnEntity(Registry& registry, EntityID entity, const Posi
 
 std::vector<EntityID> CombatSystem::findMeleeTargets(Registry& registry, EntityID attacker) {
     std::vector<EntityID> targets;
-    
+
     const Position* attackerPos = registry.try_get<Position>(attacker);
     const Rotation* attackerRot = registry.try_get<Rotation>(attacker);
-    
+
     if (!attackerPos || !attackerRot) {
         return targets;
     }
-    
+
     // Get all entities with combat state
     auto view = registry.view<Position, CombatState>();
-    
+
     view.each([&](EntityID target, const Position& targetPos, const CombatState& targetCombat) {
         // Skip self
         if (target == attacker) return;
-        
+
         // Skip dead targets
         if (targetCombat.isDead) return;
-        
+
         // Check team
         if (!canDamage(registry, attacker, target)) return;
-        
+
         // Check range
         if (isInMeleeRange(registry, attacker, target)) {
             targets.push_back(target);
         }
     });
-    
+
     return targets;
 }
 
@@ -373,27 +373,27 @@ bool CombatSystem::isInMeleeRange(Registry& registry, EntityID attacker, EntityI
     const Position* attackerPos = registry.try_get<Position>(attacker);
     const Rotation* attackerRot = registry.try_get<Rotation>(attacker);
     const Position* targetPos = registry.try_get<Position>(target);
-    
+
     if (!attackerPos || !attackerRot || !targetPos) {
         return false;
     }
-    
+
     // Calculate distance using fixed-point arithmetic
     float dx = (targetPos->x - attackerPos->x) * Constants::FIXED_TO_FLOAT;
     float dy = (targetPos->y - attackerPos->y) * Constants::FIXED_TO_FLOAT;
     float dz = (targetPos->z - attackerPos->z) * Constants::FIXED_TO_FLOAT;
     float distSq = dx*dx + dy*dy + dz*dz;
     float maxRangeSq = config_.meleeRange * config_.meleeRange;
-    
+
     if (distSq > maxRangeSq) {
         return false;
     }
-    
+
     // Check angle (must be in front)
     // Only check horizontal angle (XZ plane) for melee
     glm::vec3 attackerForward = getForwardVector(attackerRot->yaw);
     glm::vec3 toTarget(dx, 0.0f, dz);
-    
+
     float toTargetLen = std::sqrt(dx*dx + dz*dz);
     if (toTargetLen > 0.001f) {
         toTarget /= toTargetLen;
@@ -401,12 +401,12 @@ bool CombatSystem::isInMeleeRange(Registry& registry, EntityID attacker, EntityI
         // Clamp to avoid acos domain errors
         dotProduct = std::clamp(dotProduct, -1.0f, 1.0f);
         float angle = std::acos(dotProduct) * 180.0f / 3.14159265359f;
-        
+
         if (angle > config_.meleeAngle / 2.0f) {
             return false;
         }
     }
-    
+
     return true;
 }
 
@@ -414,40 +414,40 @@ bool CombatSystem::canDamage(Registry& registry, EntityID attacker, EntityID tar
     if (config_.allowFriendlyFire) {
         return true;
     }
-    
+
     const CombatState* attackerCombat = registry.try_get<CombatState>(attacker);
     const CombatState* targetCombat = registry.try_get<CombatState>(target);
-    
+
     if (!attackerCombat || !targetCombat) {
         return true;  // No team info = can damage (default)
     }
-    
+
     // Same team = can't damage (unless friendly fire enabled)
     // Team 0 is "no team" / free-for-all
     if (attackerCombat->teamId == 0 || targetCombat->teamId == 0) {
         return true;
     }
-    
+
     return attackerCombat->teamId != targetCombat->teamId;
 }
 
 int16_t CombatSystem::calculateDamage(Registry& registry, EntityID attacker, EntityID target,
                                      int16_t baseDamage, bool& outCritical) const {
     outCritical = false;
-    
+
     // Damage variance (±10% by default)
     float minVariance = 1.0f - (config_.damageVariance / 100.0f);
     float maxVariance = 1.0f + (config_.damageVariance / 100.0f);
     float varianceRange = maxVariance - minVariance;
     float variance = minVariance + (static_cast<float>(rand()) / RAND_MAX) * varianceRange;
-    
+
     // Critical hit
     int critRoll = rand() % 100;
     if (critRoll < config_.criticalChance) {
         outCritical = true;
         variance *= config_.criticalMultiplier / 100.0f;
     }
-    
+
     float finalDamage = static_cast<float>(baseDamage) * variance;
 
     // Apply attacker's damage multiplier from status effects (buffs/debuffs)
@@ -462,14 +462,14 @@ int16_t CombatSystem::calculateDamage(Registry& registry, EntityID attacker, Ent
         // Higher armor = less damage (armorMultiplier > 1 means more armor = less damage taken)
         finalDamage /= targetMods.armorMultiplier;
     }
-    
+
     int16_t result = static_cast<int16_t>(finalDamage);
-    
+
     // Ensure minimum damage of 1
     if (result < 1) {
         result = 1;
     }
-    
+
     return result;
 }
 
@@ -491,9 +491,9 @@ void HealthRegenSystem::update(Registry& registry, uint32_t currentTimeMs) {
     if (currentTimeMs - lastRegenTime_ < REGEN_INTERVAL_MS) {
         return;
     }
-    
+
     lastRegenTime_ = currentTimeMs;
-    
+
     auto view = registry.view<CombatState>();
     view.each([&](EntityID entity, CombatState& combat) {
         // Regen if not dead and not full health
