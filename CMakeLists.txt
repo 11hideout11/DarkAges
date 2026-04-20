@@ -429,6 +429,7 @@ set(SERVER_SOURCES
     src/server/src/combat/CombatSystem.cpp
     src/server/src/combat/AbilitySystem.cpp
     src/server/src/combat/StatusEffectSystem.cpp
+    src/server/src/combat/ProjectileSystem.cpp
     src/server/src/combat/PositionHistory.cpp
     src/server/src/combat/LagCompensatedCombat.cpp
     src/server/src/zones/AreaOfInterest.cpp
@@ -762,6 +763,7 @@ if(BUILD_TESTS AND TARGET Catch2::Catch2WithMain)
         src/server/tests/BenchmarkTick.cpp
         src/server/tests/TestLoadTesting.cpp
         src/server/tests/TestStatusEffectSystem.cpp
+        src/server/tests/TestStatusEffectCombatIntegration.cpp
     )
 
     # Conditionally include tests for optional features

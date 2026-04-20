@@ -137,6 +137,20 @@ bool ZoneServer::initialize(const ZoneConfig& config) {
     // [COMBAT_AGENT] Wire status effect system into combat system for Buff/Debuff/Status abilities
     combatSystem_.setStatusEffectSystem(&statusEffectSystem_);
 
+    // [PHYSICS_AGENT] Wire status effect system into movement system for crowd control
+    movementSystem_.setStatusEffectSystem(&statusEffectSystem_);
+
+    // [COMBAT_AGENT] Wire status effect system into regen systems
+    healthRegenSystem_.setStatusEffectSystem(&statusEffectSystem_);
+    manaRegenSystem_.setStatusEffectSystem(&statusEffectSystem_);
+
+    // [COMBAT_AGENT] Initialize projectile system with spatial hash and damage callback
+    projectileSystem_.setSpatialHash(&spatialHash_);
+    projectileSystem_.setDamageCallback([this](Registry& reg, EntityID target, EntityID attacker,
+                                                int16_t damage, uint32_t timeMs) -> bool {
+        return combatSystem_.applyDamage(reg, target, attacker, damage, timeMs);
+    });
+
     // [ZONE_AGENT] Initialize anti-cheat handler
     antiCheatHandler_.setConnectionMappings(&connectionToEntity_, &entityToConnection_);
     antiCheatHandler_.setNetwork(network_.get());
@@ -535,6 +549,9 @@ void ZoneServer::updatePhysics() {
     // This enables server-side rewind hit validation for combat
     lagCompensator_.updateAllEntities(registry_, currentTimeMs);
 
+    // [COMBAT_AGENT] Update projectiles — move, check collisions, expire
+    projectileSystem_.update(registry_, currentTimeMs);
+
     auto elapsed = std::chrono::steady_clock::now() - start;
     metrics_.physicsTimeUs += std::chrono::duration_cast<std::chrono::microseconds>(elapsed).count();
 }
@@ -548,6 +565,9 @@ void ZoneServer::updateGameLogic() {
 
     // Health regeneration
     healthRegenSystem_.update(registry_, getCurrentTimeMs());
+
+    // Mana regeneration
+    manaRegenSystem_.update(registry_, getCurrentTimeMs());
 
     // [COMBAT_AGENT] Update status effects (buffs, debuffs, DoTs, HoTs, CC)
     statusEffectSystem_.update(registry_, getCurrentTimeMs());

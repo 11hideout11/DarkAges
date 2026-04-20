@@ -21,6 +21,7 @@
 #include "combat/LagCompensatedCombat.hpp"
 #include "combat/CombatSystem.hpp"
 #include "combat/StatusEffectSystem.hpp"
+#include "combat/ProjectileSystem.hpp"
 #include "security/AntiCheat.hpp"
 #include "profiling/PerfettoProfiler.hpp"
 #include "profiling/PerformanceMonitor.hpp"
@@ -158,6 +159,7 @@ public:
     [[nodiscard]] TickMetrics& getMetricsRef() { return metrics_; }
     [[nodiscard]] CombatSystem* getCombatSystemPtr() { return &combatSystem_; }
     [[nodiscard]] StatusEffectSystem& getStatusEffectSystem() { return statusEffectSystem_; }
+    [[nodiscard]] ProjectileSystem& getProjectileSystem() { return projectileSystem_; }
     [[nodiscard]] LagCompensator* getLagCompensatorPtr() { return &lagCompensator_; }
     [[nodiscard]] MovementSystem& getMovementSystemRef() { return movementSystem_; }
     [[nodiscard]] Security::AntiCheatSystem& getAntiCheatRef() { return antiCheat_; }
@@ -209,7 +211,9 @@ private:
     ReplicationOptimizer replicationOptimizer_;
     CombatSystem combatSystem_;
     HealthRegenSystem healthRegenSystem_;
+    ManaRegenSystem manaRegenSystem_;
     StatusEffectSystem statusEffectSystem_;
+    ProjectileSystem projectileSystem_;
     LagCompensator lagCompensator_;
 
     // [SECURITY_AGENT] Anti-cheat system

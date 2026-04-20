@@ -9,6 +9,8 @@
 
 namespace DarkAges {
 
+class StatusEffectSystem;  // Forward declaration
+
 class MovementSystem {
 public:
     static constexpr float MAX_SPEED = Constants::MAX_PLAYER_SPEED;
@@ -48,6 +50,9 @@ public:
     void resolveSoftCollision(Position& posA, const Position& posB, 
                              float radiusA, float radiusB);
 
+    // Set the status effect system for crowd control checks
+    void setStatusEffectSystem(StatusEffectSystem* ses) { statusEffectSystem_ = ses; }
+
 private:
     // Apply physics step based on input
     void processPhysics(Velocity& vel, const InputState& input);
@@ -57,6 +62,8 @@ private:
     
     // Apply ground friction/deceleration
     void applyFriction(Velocity& vel, bool hasInput);
+
+    StatusEffectSystem* statusEffectSystem_{nullptr};
 };
 
 // [SECURITY_AGENT] Anti-cheat movement validator

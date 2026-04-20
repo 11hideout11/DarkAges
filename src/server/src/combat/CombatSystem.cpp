@@ -37,6 +37,14 @@ HitResult CombatSystem::processAttack(Registry& registry, EntityID attacker,
             result = performRangedAttack(registry, attacker, input.aimDirection, currentTimeMs);
             break;
         case AttackInput::ABILITY: {
+            // Check crowd control (stun/silence block abilities)
+            if (statusEffectSystem_) {
+                const auto& mods = statusEffectSystem_->getModifiers(registry, attacker);
+                if (mods.stunned || mods.silenced) {
+                    result.hitType = "crowd_controlled";
+                    return result;
+                }
+            }
             const AbilityDefinition* ability = abilitySystem_.getAbility(input.abilityId);
             if (ability && input.targetEntity != 0) {
                 EntityID target = static_cast<EntityID>(input.targetEntity);
@@ -196,9 +204,25 @@ bool CombatSystem::applyDamage(Registry& registry, EntityID target, EntityID att
     if (combat->isDead) {
         return false;
     }
+
+    // Absorb damage through shields (StatusEffectSystem)
+    int16_t remainingDamage = damage;
+    if (statusEffectSystem_) {
+        remainingDamage = statusEffectSystem_->absorbDamage(registry, target, damage);
+    }
+
+    // If shield absorbed all damage, the hit still "connects" but no HP is lost
+    if (remainingDamage <= 0) {
+        // Hit registered (shield absorbed it)
+        if (onDamage_) {
+            const Position* pos = registry.try_get<Position>(target);
+            onDamage_(attacker, target, 0, pos ? *pos : Position{});
+        }
+        return true;
+    }
     
-    // Apply damage
-    combat->health -= damage;
+    // Apply remaining damage
+    combat->health -= remainingDamage;
     combat->lastAttacker = attacker;
     
     // Clamp to zero
@@ -220,7 +244,15 @@ bool CombatSystem::applyHeal(Registry& registry, EntityID target, int16_t amount
         return false;
     }
     
-    combat->health += amount;
+    float healAmount = static_cast<float>(amount);
+
+    // Apply healing modifier from status effects (HoT buffs increase healing received)
+    if (statusEffectSystem_) {
+        const auto& mods = statusEffectSystem_->getModifiers(registry, target);
+        healAmount *= mods.healthRegenMultiplier;
+    }
+
+    combat->health += static_cast<int16_t>(healAmount);
     
     // Clamp to max
     if (combat->health > combat->maxHealth) {
@@ -240,6 +272,14 @@ bool CombatSystem::canAttack(Registry& registry, EntityID attacker, uint32_t cur
     if (combat->isDead) {
         return false;
     }
+
+    // Check crowd control (stun prevents all actions, silence prevents abilities)
+    if (statusEffectSystem_) {
+        const auto& mods = statusEffectSystem_->getModifiers(registry, attacker);
+        if (mods.stunned) {
+            return false;
+        }
+    }
     
     // Check cooldown
     // lastAttackTime == 0 means never attacked, allow first attack
@@ -248,7 +288,18 @@ bool CombatSystem::canAttack(Registry& registry, EntityID attacker, uint32_t cur
     }
     
     uint32_t timeSinceLastAttack = currentTimeMs - combat->lastAttackTime;
-    if (timeSinceLastAttack < config_.attackCooldownMs) {
+
+    // Apply attack speed modifier from status effects
+    uint32_t effectiveCooldown = config_.attackCooldownMs;
+    if (statusEffectSystem_) {
+        const auto& mods = statusEffectSystem_->getModifiers(registry, attacker);
+        if (mods.attackSpeedMultiplier != 1.0f) {
+            // Higher attack speed = lower cooldown
+            effectiveCooldown = static_cast<uint32_t>(config_.attackCooldownMs / mods.attackSpeedMultiplier);
+        }
+    }
+
+    if (timeSinceLastAttack < effectiveCooldown) {
         return false;
     }
     
@@ -397,14 +448,29 @@ int16_t CombatSystem::calculateDamage(Registry& registry, EntityID attacker, Ent
         variance *= config_.criticalMultiplier / 100.0f;
     }
     
-    int16_t finalDamage = static_cast<int16_t>(baseDamage * variance);
-    
-    // Ensure minimum damage of 1
-    if (finalDamage < 1) {
-        finalDamage = 1;
+    float finalDamage = static_cast<float>(baseDamage) * variance;
+
+    // Apply attacker's damage multiplier from status effects (buffs/debuffs)
+    if (statusEffectSystem_) {
+        const auto& attackerMods = statusEffectSystem_->getModifiers(registry, attacker);
+        finalDamage *= attackerMods.damageMultiplier;
+    }
+
+    // Apply target's armor multiplier from status effects
+    if (statusEffectSystem_) {
+        const auto& targetMods = statusEffectSystem_->getModifiers(registry, target);
+        // Higher armor = less damage (armorMultiplier > 1 means more armor = less damage taken)
+        finalDamage /= targetMods.armorMultiplier;
     }
     
-    return finalDamage;
+    int16_t result = static_cast<int16_t>(finalDamage);
+    
+    // Ensure minimum damage of 1
+    if (result < 1) {
+        result = 1;
+    }
+    
+    return result;
 }
 
 glm::vec3 CombatSystem::getForwardVector(float yaw) const {
@@ -429,12 +495,50 @@ void HealthRegenSystem::update(Registry& registry, uint32_t currentTimeMs) {
     lastRegenTime_ = currentTimeMs;
     
     auto view = registry.view<CombatState>();
-    view.each([](CombatState& combat) {
+    view.each([&](EntityID entity, CombatState& combat) {
         // Regen if not dead and not full health
         if (!combat.isDead && combat.health < combat.maxHealth) {
-            combat.health += REGEN_AMOUNT;
+            float amount = static_cast<float>(REGEN_AMOUNT);
+
+            // Apply health regen multiplier from status effects
+            if (statusEffectSystem_) {
+                const auto& mods = statusEffectSystem_->getModifiers(registry, entity);
+                amount *= mods.healthRegenMultiplier;
+            }
+
+            combat.health += static_cast<int16_t>(amount);
             if (combat.health > combat.maxHealth) {
                 combat.health = combat.maxHealth;
+            }
+        }
+    });
+}
+
+// ============================================================================
+// ManaRegenSystem Implementation
+// ============================================================================
+
+void ManaRegenSystem::update(Registry& registry, uint32_t currentTimeMs) {
+    if (currentTimeMs - lastRegenTime_ < REGEN_INTERVAL_MS) {
+        return;
+    }
+
+    lastRegenTime_ = currentTimeMs;
+
+    auto view = registry.view<Mana>();
+    view.each([&](EntityID entity, Mana& mana) {
+        if (mana.current < mana.max) {
+            float regen = mana.regenerationRate;
+
+            // Apply mana regen multiplier from status effects
+            if (statusEffectSystem_) {
+                const auto& mods = statusEffectSystem_->getModifiers(registry, entity);
+                regen *= mods.manaRegenMultiplier;
+            }
+
+            mana.current += regen;
+            if (mana.current > mana.max) {
+                mana.current = mana.max;
             }
         }
     });

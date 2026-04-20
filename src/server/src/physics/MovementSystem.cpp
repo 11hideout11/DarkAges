@@ -2,6 +2,7 @@
 // Server-authoritative movement with client prediction reconciliation
 
 #include "physics/MovementSystem.hpp"
+#include "combat/StatusEffectSystem.hpp"
 #include <cmath>
 #include <algorithm>
 #include <cstdint>
@@ -16,8 +17,32 @@ namespace DarkAges {
 void MovementSystem::update(Registry& registry, uint32_t currentTimeMs) {
     auto view = registry.view<Position, Velocity, InputState>();
     
-    view.each([&](Position& pos, Velocity& vel, InputState& input) {
+    view.each([&](EntityID entity, Position& pos, Velocity& vel, InputState& input) {
+        // Check crowd control - stunned/rooted entities can't move
+        const ActiveStatusEffects* active = registry.try_get<ActiveStatusEffects>(entity);
+        if (active && !active->canMove()) {
+            // Zero out velocity for CC'd entities
+            vel.dx = 0;
+            vel.dy = 0;
+            vel.dz = 0;
+            return;
+        }
+
+        // Get speed multiplier from status effects
+        float speedMult = 1.0f;
+        if (active) {
+            speedMult = active->computedMods.speedMultiplier;
+        }
+
         processPhysics(vel, input);
+
+        // Apply speed multiplier to velocity after physics
+        if (speedMult != 1.0f) {
+            vel.dx = static_cast<Constants::Fixed>(vel.dx * speedMult);
+            vel.dy = static_cast<Constants::Fixed>(vel.dy * speedMult);
+            vel.dz = static_cast<Constants::Fixed>(vel.dz * speedMult);
+        }
+
         integrate(pos, vel);
         pos.timestamp_ms = currentTimeMs;
     });
@@ -39,11 +64,32 @@ MovementSystem::MovementResult MovementSystem::applyInput(Registry& registry,
         return result;
     }
     
+    // Check crowd control
+    const ActiveStatusEffects* active = registry.try_get<ActiveStatusEffects>(entity);
+    if (active && !active->canMove()) {
+        result.valid = true;
+        result.correctedPosition = *pos;
+        result.correctedVelocity = *vel;
+        // CC'd entities don't move, but it's not a "violation"
+        return result;
+    }
+    
     // Store old position for validation
     Position oldPos = *pos;
     
     // Apply physics
     processPhysics(*vel, input);
+
+    // Apply speed modifier from status effects
+    float speedMult = 1.0f;
+    if (active) {
+        speedMult = active->computedMods.speedMultiplier;
+    }
+    if (speedMult != 1.0f) {
+        vel->dx = static_cast<Constants::Fixed>(vel->dx * speedMult);
+        vel->dz = static_cast<Constants::Fixed>(vel->dz * speedMult);
+    }
+
     integrate(*pos, *vel);
     
     // Clamp to world bounds
@@ -54,6 +100,10 @@ MovementSystem::MovementResult MovementSystem::applyInput(Registry& registry,
     if (dtMs == 0) dtMs = static_cast<uint32_t>(DT * 1000);
     
     float maxSpeed = MAX_SPEED * (input.sprint ? SPRINT_MULT : 1.0f);
+    // Account for speed modifiers in validation
+    if (active) {
+        maxSpeed *= active->computedMods.speedMultiplier;
+    }
     
     if (!validateMovement(oldPos, *pos, dtMs, maxSpeed)) {
         result.valid = false;

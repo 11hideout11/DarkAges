@@ -4,6 +4,7 @@
 #include "physics/SpatialHash.hpp"
 #include "combat/PositionHistory.hpp"
 #include "combat/AbilitySystem.hpp"
+#include "combat/StatusEffectSystem.hpp"
 #include <functional>
 #include <vector>
 #include <glm/glm.hpp>
@@ -111,8 +112,14 @@ public:
     void setOnDeath(DeathCallback callback) { onDeath_ = std::move(callback); }
     void setOnDamage(DamageCallback callback) { onDamage_ = std::move(callback); }
     
-    // Wire status effect system into the ability system
-    void setStatusEffectSystem(StatusEffectSystem* ses) { abilitySystem_.setStatusEffectSystem(ses); }
+    // Wire status effect system into both combat and ability systems
+    void setStatusEffectSystem(StatusEffectSystem* ses) {
+        statusEffectSystem_ = ses;
+        abilitySystem_.setStatusEffectSystem(ses);
+    }
+
+    // Get the status effect system (may be nullptr)
+    [[nodiscard]] StatusEffectSystem* getStatusEffectSystem() const { return statusEffectSystem_; }
     
     // Death handling
     void killEntity(Registry& registry, EntityID victim, EntityID killer);
@@ -149,6 +156,7 @@ private:
     DeathCallback onDeath_;
     DamageCallback onDamage_;
     AbilitySystem abilitySystem_;
+    StatusEffectSystem* statusEffectSystem_{nullptr};
 };
 
 // ============================================================================
@@ -163,8 +171,27 @@ public:
     
     void update(Registry& registry, uint32_t currentTimeMs);
 
+    // Set status effect system for regen modifier integration
+    void setStatusEffectSystem(StatusEffectSystem* ses) { statusEffectSystem_ = ses; }
+
 private:
     uint32_t lastRegenTime_{0};
+    StatusEffectSystem* statusEffectSystem_{nullptr};
+};
+
+// [COMBAT_AGENT] Mana regeneration system
+class ManaRegenSystem {
+public:
+    static constexpr uint32_t REGEN_INTERVAL_MS = 1000;  // 1 second tick
+
+    void update(Registry& registry, uint32_t currentTimeMs);
+
+    // Set status effect system for regen modifier integration
+    void setStatusEffectSystem(StatusEffectSystem* ses) { statusEffectSystem_ = ses; }
+
+private:
+    uint32_t lastRegenTime_{0};
+    StatusEffectSystem* statusEffectSystem_{nullptr};
 };
 
 } // namespace DarkAges
