@@ -257,3 +257,73 @@ TEST_CASE("MovementValidator anti-cheat", "[movement][anticheat]") {
         REQUIRE_FALSE(validator.shouldKick(cheatState));
     }
 }
+
+    TEST_CASE("MovementSystem default construction", "[movementsystem]") {
+        MovementSystem obj;
+        SECTION("object is constructible") {
+            REQUIRE(sizeof(MovementSystem) > 0);
+        }
+    }
+
+    TEST_CASE("MovementSystem update is safe to call", "[movementsystem]") {
+        MovementSystem obj;
+        Registry registry;
+        EntityID entity = registry.create();
+        registry.emplace<Position>(entity, Position::fromVec3(glm::vec3(0,0,0), 0));
+        registry.emplace<Velocity>(entity);
+        registry.emplace<InputState>(entity);
+        REQUIRE_NOTHROW(obj.update(registry, 0));
+    }
+
+    TEST_CASE("MovementSystem applyInput is safe to call", "[movementsystem]") {
+        MovementSystem obj;
+        Registry registry;
+        EntityID entity = registry.create();
+        registry.emplace<Position>(entity, Position::fromVec3(glm::vec3(0,0,0), 0));
+        registry.emplace<Velocity>(entity);
+        InputState input;
+        input.forward = 1;
+        REQUIRE_NOTHROW(obj.applyInput(registry, entity, input, 16));
+    }
+
+    TEST_CASE("MovementSystem validateMovement is safe to call", "[movementsystem]") {
+        MovementSystem obj;
+        Position a = Position::fromVec3(glm::vec3(0,0,0), 0);
+        Position b = Position::fromVec3(glm::vec3(1,0,0), 100);
+        REQUIRE_NOTHROW(obj.validateMovement(a, b, 100, Constants::MAX_PLAYER_SPEED));
+    }
+
+    TEST_CASE("MovementSystem clampPositionToWorldBounds is safe to call", "[movementsystem]") {
+        MovementSystem obj;
+        Position pos = Position::fromVec3(glm::vec3(999999, 0, 999999), 0);
+        REQUIRE_NOTHROW(obj.clampPositionToWorldBounds(pos));
+    }
+
+    TEST_CASE("MovementSystem calculateMaxDistance is safe to call", "[movementsystem]") {
+        MovementSystem obj;
+        REQUIRE_NOTHROW(obj.calculateMaxDistance(Constants::MAX_PLAYER_SPEED, 1000));
+        REQUIRE(obj.calculateMaxDistance(Constants::MAX_PLAYER_SPEED, 1000) > 0.0f);
+    }
+
+    TEST_CASE("MovementSystem setStatusEffectSystem is safe to call", "[movementsystem]") {
+        MovementSystem obj;
+        REQUIRE_NOTHROW(obj.setStatusEffectSystem(nullptr));
+    }
+
+    TEST_CASE("MovementSystem destructor is safe", "[movementsystem]") {
+        SECTION("destroy default constructed") {
+            auto obj = std::make_unique<MovementSystem>();
+            REQUIRE_NOTHROW(obj.reset());
+        }
+        SECTION("destroy after use") {
+            auto obj = std::make_unique<MovementSystem>();
+            Registry registry;
+            EntityID entity = registry.create();
+            registry.emplace<Position>(entity, Position::fromVec3(glm::vec3(0,0,0), 0));
+            registry.emplace<Velocity>(entity);
+            registry.emplace<InputState>(entity);
+            obj->update(registry, 0);
+            REQUIRE_NOTHROW(obj.reset());
+        }
+    }
+
