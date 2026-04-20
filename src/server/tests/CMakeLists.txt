@@ -56,6 +56,7 @@ set(TEST_SOURCES
     TestPlayerSessionManager.cpp
     TestPubSubManager.cpp
     TestCoreTypes.cpp
+    TestQuestSystem.cpp
 )
 
 # Conditional test sources based on dependencies
@@ -101,6 +102,9 @@ set(TEST_SERVER_SOURCES
     ${CMAKE_SOURCE_DIR}/src/security/TrafficAnalyzer.cpp
     ${CMAKE_SOURCE_DIR}/src/zones/PlayerManager.cpp
     ${CMAKE_SOURCE_DIR}/src/combat/AbilitySystem.cpp
+    ${CMAKE_SOURCE_DIR}/src/combat/ItemSystem.cpp
+    ${CMAKE_SOURCE_DIR}/src/combat/QuestSystem.cpp
+    ${CMAKE_SOURCE_DIR}/src/zones/InputHandler.cpp
     ${CMAKE_SOURCE_DIR}/src/monitoring/MetricsExporter.cpp
     ${CMAKE_SOURCE_DIR}/src/profiling/PerformanceMonitor.cpp
     ${CMAKE_SOURCE_DIR}/src/profiling/PerfettoProfiler_stub.cpp

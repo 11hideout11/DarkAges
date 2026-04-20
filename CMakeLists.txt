@@ -433,6 +433,7 @@ set(SERVER_SOURCES
     src/server/src/combat/NPCAISystem.cpp
     src/server/src/combat/ExperienceSystem.cpp
     src/server/src/combat/ItemSystem.cpp
+    src/server/src/combat/QuestSystem.cpp
     src/server/src/combat/PositionHistory.cpp
     src/server/src/combat/LagCompensatedCombat.cpp
     src/server/src/zones/AreaOfInterest.cpp
@@ -770,6 +771,7 @@ if(BUILD_TESTS AND TARGET Catch2::Catch2WithMain)
         src/server/tests/TestStatusEffectCombatIntegration.cpp
         src/server/tests/TestExperienceSystem.cpp
         src/server/tests/TestItemSystem.cpp
+        src/server/tests/TestQuestSystem.cpp
     )
 
     # Conditionally include tests for optional features

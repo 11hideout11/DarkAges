@@ -134,6 +134,12 @@ bool ZoneServer::initialize(const ZoneConfig& config) {
 
         // [GAMEPLAY_AGENT] Generate loot drops if victim has a loot table
         lootSystem_.generateLoot(registry_, victim, killer);
+
+        // [GAMEPLAY_AGENT] Track kill for quest objectives
+        if (const NPCStats* stats = registry_.try_get<NPCStats>(victim)) {
+            questSystem_.onNPCKilled(registry_, killer,
+                                     static_cast<uint32_t>(stats->archetype));
+        }
     });
 
     combatSystem_.setOnDamage([this](EntityID attacker, EntityID target,
@@ -203,9 +209,19 @@ bool ZoneServer::initialize(const ZoneConfig& config) {
     inputHandler_.setNetwork(network_.get());
     inputHandler_.setCombatEventHandler(&combatEventHandler_);
     inputHandler_.setAbilitySystem(&abilitySystem_);
+    inputHandler_.setItemSystem(&itemSystem_);
 
     // [GAMEPLAY_AGENT] Initialize item system with default item database
     itemSystem_.initializeDefaults();
+
+    // [GAMEPLAY_AGENT] Initialize quest system with default quests
+    questSystem_.initializeDefaults();
+    questSystem_.setItemSystem(&itemSystem_);
+
+    // [GAMEPLAY_AGENT] Wire level-up into quest tracking
+    experienceSystem_.setLevelUpCallback([this](EntityID player, uint32_t newLevel) {
+        questSystem_.onLevelUp(registry_, player, newLevel);
+    });
 
     // [GAMEPLAY_AGENT] Register starter abilities
     {
@@ -247,6 +263,8 @@ bool ZoneServer::initialize(const ZoneConfig& config) {
                 std::cout << "[LOOT] Player " << static_cast<uint32_t>(player)
                           << " inventory full — " << overflow << " items lost" << std::endl;
             }
+            // Track item collection for quest objectives
+            questSystem_.onItemCollected(registry_, player, itemId, quantity);
         }
         // Add gold
         if (gold > 0.0f) {
@@ -855,6 +873,9 @@ void ZoneServer::onClientConnected(ConnectionID connectionId) {
 
     // [GAMEPLAY_AGENT] Give player their starter kit (inventory, abilities, gear)
     itemSystem_.giveStarterKit(registry_, entity);
+
+    // [GAMEPLAY_AGENT] Give player their starter quests
+    questSystem_.giveStarterQuests(registry_, entity, getCurrentTimeMs());
 
     std::cout << "[ZONE " << config_.zoneId << "] Spawned entity " << static_cast<uint32_t>(entity)
               << " for connection " << connectionId << std::endl;

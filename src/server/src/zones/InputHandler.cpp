@@ -6,6 +6,7 @@
 #include "zones/PlayerManager.hpp"
 #include "zones/CombatEventHandler.hpp"
 #include "combat/AbilitySystem.hpp"
+#include "combat/ItemSystem.hpp"
 #include "netcode/NetworkManager.hpp"
 #include "netcode/ProtobufProtocol.hpp"
 #include "security/AntiCheat.hpp"
@@ -165,10 +166,13 @@ void InputHandler::validateAndApplyInput(EntityID entity, const ClientInputPacke
         netState->lastInputTime = input.receiveTimeMs;
     }
 
-    // [PHASE 3C] Process combat input — ability cast or melee attack
+    // [PHASE 3C] Process combat input — ability cast, item use, or melee attack
     if (input.input.abilitySlot > 0) {
         // Player is casting an ability from their loadout
         processAbilityInput(entity, input);
+    } else if (input.input.itemSlot > 0) {
+        // Player is using an item from their inventory
+        processItemUseInput(entity, input);
     } else if (input.input.attack) {
         // Standard melee attack
         if (combatEventHandler_) {
@@ -360,6 +364,41 @@ void InputHandler::processAbilityInput(EntityID entity, const ClientInputPacket&
                 );
                 castEvent.set_timestamp(currentTimeMs);
                 auto eventData = Netcode::ProtobufProtocol::serializeEvent(castEvent);
+                network_->sendEvent(connIt->second, eventData);
+            }
+        }
+    }
+}
+
+void InputHandler::processItemUseInput(EntityID entity, const ClientInputPacket& input) {
+    auto& registry = server_.getRegistry();
+
+    if (!itemSystem_) return;
+
+    uint8_t slot = input.input.itemSlot;
+    if (slot == 0 || slot > INVENTORY_SIZE) return;
+
+    // Use the item from the inventory slot
+    bool success = itemSystem_->useItem(registry, entity, slot);
+
+    if (success) {
+        std::cout << "[ZONE " << server_.getConfig().zoneId << "] Entity "
+                  << static_cast<uint32_t>(entity) << " used item from slot "
+                  << static_cast<int>(slot) << std::endl;
+
+        // Send health/mana update to the player
+        if (network_) {
+            auto* entityToConnection = server_.getEntityToConnectionPtr();
+            auto connIt = entityToConnection->find(entity);
+            if (connIt != entityToConnection->end()) {
+                // Send a damage event with 0 damage to signal a state update
+                auto updateEvent = Netcode::ProtobufProtocol::createDamageEvent(
+                    static_cast<uint32_t>(entity),
+                    static_cast<uint32_t>(entity),
+                    0  // Self-targeted, no damage — signals item use
+                );
+                updateEvent.set_timestamp(server_.getCurrentTimeMs());
+                auto eventData = Netcode::ProtobufProtocol::serializeEvent(updateEvent);
                 network_->sendEvent(connIt->second, eventData);
             }
         }
