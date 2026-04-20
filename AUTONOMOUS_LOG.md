@@ -1,4 +1,22 @@
 
+### ✅ 2026-04-20 — Crafting System Implementation
+- **Task:** Implement crafting system — recipe registry, material consumption, item production, profession leveling
+- **Branch:** main (direct commit)
+- **Build:** PASS
+- **Tests:** PASS (917 test cases, 5286 assertions — 35 new crafting tests)
+- **Changes:**
+  - `CoreTypes.hpp`: Added `CraftingIngredient`, `CraftingRecipe`, `CraftingComponent` types; added `craftingRecipeId` to `InputState`
+  - `CraftingSystem.hpp` (NEW): Recipe registry, start/cancel/update craft, validation, callbacks
+  - `CraftingSystem.cpp` (NEW, ~270 lines): Full crafting implementation — material consumption, instant/timed crafting, profession XP + leveling, 5 default recipes
+  - `InputHandler.hpp/.cpp`: Added `setCraftingSystem`, `processCraftingInput` — routes crafting from player input pipeline
+  - `ZoneServer.hpp/.cpp`: CraftingSystem member, initialization, wiring, starter recipes on player connect
+  - `CMakeLists.txt`: Added CraftingSystem.cpp, TestCraftingSystem.cpp
+  - `TestCraftingSystem.cpp` (NEW, 786 lines, 35 test cases): Comprehensive tests covering type construction, recipe registry, validation (materials/gold/level/profession level/already crafting), instant crafting, timed crafting (start/complete/cancel), callbacks, profession XP/leveling, multi-ingredient recipes, edge cases, hidden recipes
+  - `AGENTS.md`: Updated to 917 tests/5286 assertions/72 test files
+- **Pitfalls:** EnTT pointer invalidation — `registry.emplace<T>()` can invalidate existing pointers to component T. Fixed by re-fetching component after `grantOutput` calls. Also: `countInInventory` takes 3 params (registry, entity, itemId), not 4.
+- **Recipes:** Iron Sword (2x Iron Ore + Wolf Pelt, 3s), Healing Potion (Wolf Pelt + Iron Ore, 2s), Iron Chestplate (3x Iron Ore + Wolf Pelt, 5s, prof lvl 2), Mana Potion (1x Iron Ore, instant), Relic Blade (Ancient Relic + 5x Iron Ore, 10s, prof lvl 5, hidden)
+- **Validation:** Build PASS, Tests PASS (917 cases, 5286 assertions, 0 failures)
+
 ### ⏭️ 2026-04-20 17:11 UTC — Deep iteration: No additional tasks (queue exhausted)
 - **Result:** 3 iterations checked — no additional implementable tasks
 - **Task Cache:** Only 3 tasks available (P1: ZoneServer tests exist, P2: docs need manual review, P3: refactor risky)

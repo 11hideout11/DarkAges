@@ -1,12 +1,12 @@
 {
-  "timestamp": 1776698421.7437422,
-  "git_head": "98325349e08ed550767c8d668c411d79bf6c5a9b",
+  "timestamp": 1776705195.4238849,
+  "git_head": "b655257cae7882a3a64355e64057f53dbba677a9",
   "tasks": [
     {
       "priority": "P1",
       "category": "test-depth",
-      "title": "Expand tests for ZoneServer (34 tests for 1460 lines)",
-      "description": "Source file has 1460 lines but only 34 test cases \u2014 need 36+",
+      "title": "Expand tests for ZoneServer (34 tests for 1468 lines)",
+      "description": "Source file has 1468 lines but only 34 test cases \u2014 need 36+",
       "files": [
         "src/server/src/zones/ZoneServer.cpp",
         "src/server/tests/TestZoneServer.cpp"
@@ -19,17 +19,17 @@
       "title": "Update 3 stale documentation files",
       "description": "Documentation references old project state \u2014 needs alignment with current implementation",
       "files": [
-        "DOCUMENTATION_SYNC_REPORT.md",
         "DarkAges_Comprehensive_Review.md",
-        "PROJECT_STATUS.md"
+        "PROJECT_STATUS.md",
+        "DOCUMENTATION_SYNC_REPORT.md"
       ],
       "estimated_hours": 2.0
     },
     {
       "priority": "P3",
       "category": "refactor",
-      "title": "Reduce includes in ZoneServer.hpp (44 includes)",
-      "description": "Header has 44 #include directives \u2014 consider forward declarations",
+      "title": "Reduce includes in ZoneServer.hpp (45 includes)",
+      "description": "Header has 45 #include directives \u2014 consider forward declarations",
       "files": [
         "src/server/include/zones/ZoneServer.hpp"
       ],
