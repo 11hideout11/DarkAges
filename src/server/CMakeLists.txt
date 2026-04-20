@@ -95,6 +95,7 @@ set(SERVER_SOURCES
     src/security/TrafficAnalyzer.cpp
     src/zones/PlayerManager.cpp
     src/combat/AbilitySystem.cpp
+    src/combat/CraftingSystem.cpp
     src/combat/ChatSystem.cpp
     src/monitoring/MetricsExporter.cpp
 )
@@ -170,6 +171,7 @@ set(SERVER_HEADERS
     include/zones/AuraZoneHandler.hpp
     include/zones/PlayerManager.hpp
     include/combat/AbilitySystem.hpp
+    include/combat/CraftingSystem.hpp
     include/combat/ChatSystem.hpp
 )
 

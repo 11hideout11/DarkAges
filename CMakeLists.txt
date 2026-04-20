@@ -428,6 +428,7 @@ set(SERVER_SOURCES
     src/server/src/memory/LeakDetector.cpp
     src/server/src/combat/CombatSystem.cpp
     src/server/src/combat/AbilitySystem.cpp
+    src/server/src/combat/CraftingSystem.cpp
     src/server/src/combat/StatusEffectSystem.cpp
     src/server/src/combat/ProjectileSystem.cpp
     src/server/src/combat/NPCAISystem.cpp
@@ -435,6 +436,7 @@ set(SERVER_SOURCES
     src/server/src/combat/ItemSystem.cpp
     src/server/src/combat/QuestSystem.cpp
     src/server/src/combat/ChatSystem.cpp
+    src/server/src/combat/CraftingSystem.cpp
     src/server/src/combat/PositionHistory.cpp
     src/server/src/combat/LagCompensatedCombat.cpp
     src/server/src/zones/AreaOfInterest.cpp
@@ -774,6 +776,7 @@ if(BUILD_TESTS AND TARGET Catch2::Catch2WithMain)
         src/server/tests/TestItemSystem.cpp
         src/server/tests/TestQuestSystem.cpp
         src/server/tests/TestChatSystem.cpp
+        src/server/tests/TestCraftingSystem.cpp
     )
 
     # Conditionally include tests for optional features
