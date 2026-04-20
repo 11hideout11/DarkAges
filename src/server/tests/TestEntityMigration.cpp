@@ -5,9 +5,11 @@
 #include "zones/EntityMigration.hpp"
 #include "ecs/CoreTypes.hpp"
 #include "Constants.hpp"
+#include "db/RedisManager.hpp"
 #include <cstddef>
 #include <cstdint>
 #include <vector>
+#include <memory>
 
 using namespace DarkAges;
 
@@ -596,3 +598,44 @@ TEST_CASE("EntitySnapshot serialization roundtrip", "[migration]") {
         REQUIRE_FALSE(result.has_value());
     }
 }
+
+    TEST_CASE("EntityMigrationManager construction with valid dependencies", "[entitymigration]") {
+        RedisManager redis;
+        auto manager = std::make_unique<EntityMigrationManager>(1, &redis);
+
+        SECTION("object is constructible") {
+            REQUIRE(sizeof(EntityMigrationManager) > 0);
+        }
+
+        SECTION("initial active migration count is zero") {
+            REQUIRE(manager->getActiveMigrationCount() == 0);
+        }
+    }
+
+    TEST_CASE("EntityMigrationManager getStats is safe to call", "[entitymigration]") {
+        RedisManager redis;
+        EntityMigrationManager manager(1, &redis);
+        REQUIRE_NOTHROW(manager.getStats());
+    }
+
+    TEST_CASE("EntityMigrationManager isMigrating returns false for unknown entity", "[entitymigration]") {
+        RedisManager redis;
+        EntityMigrationManager manager(1, &redis);
+        entt::entity unknown = static_cast<entt::entity>(9999);
+        REQUIRE_FALSE(manager.isMigrating(unknown));
+    }
+
+    TEST_CASE("EntityMigrationManager getMigrationState returns NONE for unknown entity", "[entitymigration]") {
+        RedisManager redis;
+        EntityMigrationManager manager(1, &redis);
+        entt::entity unknown = static_cast<entt::entity>(9999);
+        REQUIRE(manager.getMigrationState(unknown) == MigrationState::NONE);
+    }
+
+    TEST_CASE("EntityMigrationManager cancelMigration returns false for unknown entity", "[entitymigration]") {
+        RedisManager redis;
+        EntityMigrationManager manager(1, &redis);
+        entt::entity unknown = static_cast<entt::entity>(9999);
+        REQUIRE_FALSE(manager.cancelMigration(unknown));
+    }
+
