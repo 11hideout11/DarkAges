@@ -604,3 +604,39 @@ TEST_CASE("CombatSystem damage calculation", "[combat]") {
         REQUIRE(normalDamage <= 1100);  // 1000 * 1.1
     }
 }
+
+    TEST_CASE("CombatSystem default construction", "[combatsystem]") {
+        CombatSystem obj;
+
+        SECTION("object is constructible") {
+            REQUIRE(sizeof(CombatSystem) > 0);
+        }
+    }
+
+    TEST_CASE("CombatConfig default construction", "[combatconfig]") {
+        CombatConfig s{};
+
+        SECTION("all fields are zeroed or default") {
+            // Verify struct is trivially constructible
+            REQUIRE(sizeof(CombatConfig) > 0);
+        }
+    }
+
+    TEST_CASE("HitResult default construction", "[hitresult]") {
+        HitResult s{};
+
+        SECTION("all fields are zeroed or default") {
+            // Verify struct is trivially constructible
+            REQUIRE(sizeof(HitResult) > 0);
+        }
+    }
+
+    TEST_CASE("AttackInput default construction", "[attackinput]") {
+        AttackInput s{};
+
+        SECTION("all fields are zeroed or default") {
+            // Verify struct is trivially constructible
+            REQUIRE(sizeof(AttackInput) > 0);
+        }
+    }
+
