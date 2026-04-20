@@ -174,6 +174,87 @@ ItemStats ItemSystem::getEquippedStats(const Registry& registry, EntityID entity
 }
 
 // ============================================================================
+// Consumable Use
+// ============================================================================
+
+bool ItemSystem::useItem(Registry& registry, EntityID entity, uint32_t inventorySlot) {
+    // Validate inventory slot (1-indexed to match client input)
+    if (inventorySlot == 0 || inventorySlot > INVENTORY_SIZE) return false;
+
+    // Get inventory
+    Inventory* inv = registry.try_get<Inventory>(entity);
+    if (!inv) return false;
+
+    // Get the slot (convert to 0-indexed)
+    uint32_t slotIdx = inventorySlot - 1;
+    InventorySlot& slot = inv->slots[slotIdx];
+    if (slot.isEmpty()) return false;
+
+    // Get item definition
+    const ItemDefinition* def = getItem(slot.itemId);
+    if (!def) return false;
+
+    // Only consumables can be used this way
+    if (def->type != ItemType::Consumable) return false;
+
+    // Check level requirement
+    const PlayerProgression* prog = registry.try_get<PlayerProgression>(entity);
+    if (prog && def->requiredLevel > prog->level) return false;
+
+    // Apply consumable effects
+    bool applied = false;
+
+    // Health restoration
+    if (def->stats.healthBonus > 0) {
+        CombatState* combat = registry.try_get<CombatState>(entity);
+        if (combat && !combat->isDead) {
+            int16_t healAmount = def->stats.healthBonus;
+            int16_t oldHealth = combat->health;
+            combat->health = std::min(static_cast<int16_t>(combat->health + healAmount),
+                                      combat->maxHealth);
+            int16_t actualHeal = combat->health - oldHealth;
+            if (actualHeal > 0) {
+                applied = true;
+            }
+        }
+    }
+
+    // Mana restoration
+    if (def->stats.manaBonus > 0) {
+        Mana* mana = registry.try_get<Mana>(entity);
+        if (mana) {
+            float oldMana = mana->current;
+            mana->current = std::min(mana->current + static_cast<float>(def->stats.manaBonus),
+                                     mana->max);
+            float actualRestore = mana->current - oldMana;
+            if (actualRestore > 0.0f) {
+                applied = true;
+            }
+        }
+    }
+
+    // If nothing was applied (full health/mana), still allow use but don't consume
+    // Actually, let's consume it anyway — the player chose to use it
+    if (!applied) {
+        // Player is already at full health AND mana — don't waste the potion
+        return false;
+    }
+
+    // Remove one from the stack
+    slot.quantity--;
+    if (slot.quantity == 0) {
+        slot.itemId = 0;
+    }
+
+    // Fire inventory change callback
+    if (inventoryChangeCallback_) {
+        inventoryChangeCallback_(entity, def->itemId, 1, false);
+    }
+
+    return true;
+}
+
+// ============================================================================
 // Starter Kit
 // ============================================================================
 

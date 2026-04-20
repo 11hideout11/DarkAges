@@ -110,6 +110,7 @@ struct InputState {
     uint32_t timestamp_ms{0};  // Client send time
     uint32_t targetEntity{0};  // Target entity ID for abilities/combat
     uint8_t abilitySlot{0};    // 0=melee attack, 1-4=ability slot cast
+    uint8_t itemSlot{0};       // 0=no item use, 1-24=inventory slot to consume
 
     // Initialize all bits to 0
     InputState() : forward(0), backward(0), left(0), right(0),
@@ -613,6 +614,143 @@ struct AbilityLoadout {
     uint32_t getAbilityInSlot(uint8_t slot) const {
         if (slot == 0 || slot > MAX_ABILITY_SLOTS) return 0;
         return abilityIds[slot - 1]; // slot is 1-indexed
+    }
+};
+
+// ============================================================================
+// QUEST SYSTEM
+// ============================================================================
+
+// Quest objective types
+enum class QuestObjectiveType : uint8_t {
+    KillNPC     = 0,  // Kill N NPCs of a specific type
+    CollectItem = 1,  // Collect N of a specific item
+    TalkToNPC   = 2,  // Interact with an NPC
+    ReachLevel  = 3,  // Reach a specific level
+    ExploreZone = 4   // Visit a specific zone
+};
+
+// NPC archetype for kill objectives (reuse existing enum)
+// Uses NPCArchetype directly
+
+// A single objective within a quest
+struct QuestObjective {
+    QuestObjectiveType type{QuestObjectiveType::KillNPC};
+    uint32_t targetId{0};          // NPC archetype ID, item ID, NPC entity ID, etc.
+    uint32_t requiredCount{1};     // How many needed
+    char description[64]{0};       // Human-readable description
+};
+
+// Quest reward
+struct QuestReward {
+    uint32_t xpReward{0};          // Experience points
+    uint32_t goldReward{0};        // Gold
+    uint32_t itemId{0};            // Item reward (0 = none)
+    uint32_t itemQuantity{0};      // How many of the item
+};
+
+// Quest definition — describes a quest
+static constexpr uint32_t MAX_QUEST_OBJECTIVES = 4;
+struct QuestDefinition {
+    uint32_t questId{0};
+    char name[48]{0};
+    char description[128]{0};
+    char startDialogue[256]{0};    // NPC dialogue when giving quest
+    char completionDialogue[256]{0}; // NPC dialogue when turning in
+    uint32_t requiredLevel{1};     // Minimum level to accept
+    uint32_t prerequisiteQuestId{0}; // Must complete this quest first (0 = none)
+    QuestObjective objectives[MAX_QUEST_OBJECTIVES];
+    uint32_t objectiveCount{0};
+    QuestReward reward{};
+    bool repeatable{false};
+};
+
+// Per-objective progress tracking
+struct ObjectiveProgress {
+    uint32_t currentCount{0};
+    bool completed{false};
+};
+
+// Player's progress on an active quest
+static constexpr uint32_t MAX_ACTIVE_QUESTS = 20;
+static constexpr uint32_t MAX_COMPLETED_QUESTS = 100;
+
+struct QuestProgress {
+    uint32_t questId{0};
+    bool accepted{false};
+    bool completed{false};
+    ObjectiveProgress objectives[MAX_QUEST_OBJECTIVES];
+    uint32_t acceptTimeMs{0};      // When the quest was accepted
+};
+
+// Player's quest log — tracks active and completed quests
+struct QuestLog {
+    QuestProgress activeQuests[MAX_ACTIVE_QUESTS];
+    uint32_t activeCount{0};
+    uint32_t completedQuests[MAX_COMPLETED_QUESTS]; // Just quest IDs
+    uint32_t completedCount{0};
+
+    // Check if quest is active
+    bool hasActiveQuest(uint32_t questId) const {
+        for (uint32_t i = 0; i < activeCount; ++i) {
+            if (activeQuests[i].questId == questId && activeQuests[i].accepted) return true;
+        }
+        return false;
+    }
+
+    // Check if quest was completed
+    bool hasCompletedQuest(uint32_t questId) const {
+        for (uint32_t i = 0; i < completedCount; ++i) {
+            if (completedQuests[i] == questId) return true;
+        }
+        return false;
+    }
+
+    // Get active quest progress, nullptr if not found
+    QuestProgress* getActiveQuest(uint32_t questId) {
+        for (uint32_t i = 0; i < activeCount; ++i) {
+            if (activeQuests[i].questId == questId) return &activeQuests[i];
+        }
+        return nullptr;
+    }
+
+    const QuestProgress* getActiveQuest(uint32_t questId) const {
+        for (uint32_t i = 0; i < activeCount; ++i) {
+            if (activeQuests[i].questId == questId) return &activeQuests[i];
+        }
+        return nullptr;
+    }
+
+    // Add an active quest, returns true if added
+    bool addActiveQuest(uint32_t questId, uint32_t currentTimeMs) {
+        if (activeCount >= MAX_ACTIVE_QUESTS) return false;
+        if (hasActiveQuest(questId)) return false;
+        QuestProgress& qp = activeQuests[activeCount++];
+        qp = QuestProgress{}; // Zero-initialize
+        qp.questId = questId;
+        qp.accepted = true;
+        qp.acceptTimeMs = currentTimeMs;
+        return true;
+    }
+
+    // Complete a quest (move from active to completed)
+    bool completeQuest(uint32_t questId) {
+        // Find and remove from active
+        for (uint32_t i = 0; i < activeCount; ++i) {
+            if (activeQuests[i].questId == questId) {
+                // Shift remaining down
+                for (uint32_t j = i; j < activeCount - 1; ++j) {
+                    activeQuests[j] = activeQuests[j + 1];
+                }
+                activeCount--;
+                // Add to completed
+                if (completedCount < MAX_COMPLETED_QUESTS) {
+                    completedQuests[completedCount++] = questId;
+                }
+                return true;
+            }
+        }
+        return false;
     }
 };
 

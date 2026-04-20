@@ -62,6 +62,13 @@ public:
     // Get total stat bonuses from equipped items
     ItemStats getEquippedStats(const Registry& registry, EntityID entity) const;
 
+    // --- Consumable Use ---
+
+    // Use a consumable item from inventory (potions, food, etc.)
+    // Applies instant effects (health/mana restoration), removes 1 from stack.
+    // Returns true if item was used successfully.
+    bool useItem(Registry& registry, EntityID entity, uint32_t inventorySlot);
+
     // --- Starter Kit ---
 
     // Give a new player their starting gear and abilities
