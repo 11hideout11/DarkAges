@@ -158,8 +158,14 @@ void CombatEventHandler::onEntityDied(EntityID victim, EntityID killer) {
         }
     }
 
-    // Schedule respawn
-    pendingRespawns_.push_back({victim, getCurrentTimeMs() + RESPAWN_DELAY_MS});
+    // Schedule respawn — NPCs use their own respawn time and spawn point
+    if (registry.all_of<NPCTag>(victim)) {
+        const auto* npcStats = registry.try_get<NPCStats>(victim);
+        uint32_t respawnDelay = npcStats ? npcStats->respawnTimeMs : RESPAWN_DELAY_MS;
+        pendingRespawns_.push_back({victim, getCurrentTimeMs() + respawnDelay});
+    } else {
+        pendingRespawns_.push_back({victim, getCurrentTimeMs() + RESPAWN_DELAY_MS});
+    }
 }
 
 void CombatEventHandler::processRespawns() {
@@ -178,13 +184,24 @@ void CombatEventHandler::processRespawns() {
                 // Restore health
                 if (auto* stats = registry.try_get<CombatState>(entity)) {
                     stats->health = stats->maxHealth;
+                    stats->isDead = false;
+                    stats->lastAttacker = entt::null;
                 }
 
-                // Teleport to spawn point (origin for now)
+                // Teleport to spawn point — NPCs use their AI spawn point, players go to origin
                 if (auto* pos = registry.try_get<Position>(entity)) {
-                    pos->x = 0.0f;
-                    pos->y = 0.0f;
-                    pos->z = 0.0f;
+                    if (auto* ai = registry.try_get<NPCAIState>(entity)) {
+                        *pos = ai->spawnPoint;
+                        // Reset AI state
+                        ai->behavior = NPCBehavior::Idle;
+                        ai->target = entt::null;
+                        ai->behaviorTimerMs = 0;
+                        ai->lastAttackTimeMs = 0;
+                    } else {
+                        pos->x = 0.0f;
+                        pos->y = 0.0f;
+                        pos->z = 0.0f;
+                    }
                 }
 
                 std::cout << "[ZONE " << server_.getConfig().zoneId << "] Entity "

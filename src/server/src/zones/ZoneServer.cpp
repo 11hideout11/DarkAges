@@ -233,6 +233,12 @@ bool ZoneServer::initialize(const ZoneConfig& config) {
     }
 
     std::cout << "[ZONE " << config_.zoneId << "] Initialization complete" << std::endl;
+
+    // [GAMEPLAY_AGENT] Auto-populate zone with NPCs if configured
+    if (config_.autoPopulateNPCs) {
+        populateNPCs();
+    }
+
     return true;
 }
 
@@ -1023,6 +1029,41 @@ EntityID ZoneServer::spawnNPC(const Position& spawnPos, uint8_t level, uint16_t 
     registry_.emplace<NPCStats>(entity, stats);
 
     return entity;
+}
+
+void ZoneServer::populateNPCs() {
+    float centerX = (config_.minX + config_.maxX) / 2.0f;
+    float centerZ = (config_.minZ + config_.maxZ) / 2.0f;
+
+    for (uint32_t i = 0; i < config_.npcCount; ++i) {
+        // Random position within spawn radius
+        float angle = static_cast<float>(std::rand()) / RAND_MAX * 2.0f * 3.14159f;
+        float radius = static_cast<float>(std::rand()) / RAND_MAX * config_.npcSpawnRadius;
+        float x = centerX + std::cos(angle) * radius;
+        float z = centerZ + std::sin(angle) * radius;
+
+        // Clamp to zone bounds
+        x = std::max(config_.minX + 1.0f, std::min(config_.maxX - 1.0f, x));
+        z = std::max(config_.minZ + 1.0f, std::min(config_.maxZ - 1.0f, z));
+
+        Position spawnPos = Position::fromVec3(glm::vec3(x, 0, z));
+
+        // Vary level slightly
+        uint8_t level = config_.npcBaseLevel;
+        if (i > config_.npcCount / 2) {
+            level = static_cast<uint8_t>(std::min<uint32_t>(level + 1, level + config_.npcCount / 4));
+        }
+
+        spawnNPC(spawnPos, level, config_.npcBaseDamage,
+                 15.0f,   // aggroRange
+                 30.0f,   // leashRange
+                 2.0f,    // attackRange
+                 config_.npcXpReward,
+                 10000);  // respawnTimeMs
+    }
+
+    std::cout << "[ZONE " << config_.zoneId << "] Populated " << config_.npcCount
+              << " NPCs (level " << static_cast<int>(config_.npcBaseLevel) << ")" << std::endl;
 }
 
 void ZoneServer::despawnEntity(EntityID entity) {

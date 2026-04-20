@@ -80,6 +80,14 @@ struct ZoneConfig {
 
     // Aura projection buffer (overlap with adjacent zones)
     float auraBuffer{Constants::AURA_BUFFER_METERS};
+
+    // NPC population — if true, zone auto-spawns default NPCs
+    bool autoPopulateNPCs{false};
+    uint32_t npcCount{10};           // Number of NPCs to spawn
+    float npcSpawnRadius{50.0f};     // Spawn radius from zone center
+    uint8_t npcBaseLevel{1};         // Base level for spawned NPCs
+    uint16_t npcBaseDamage{10};      // Base damage
+    uint32_t npcXpReward{50};        // XP per kill
 };
 
 struct TickMetrics {
@@ -153,6 +161,9 @@ public:
     EntityID spawnNPC(const Position& spawnPos, uint8_t level, uint16_t baseDamage,
                       float aggroRange, float leashRange, float attackRange,
                       uint32_t xpReward, uint32_t respawnTimeMs);
+
+    // Populate zone with NPCs based on config
+    void populateNPCs();
 
     // Despawn entity
     void despawnEntity(EntityID entity);
