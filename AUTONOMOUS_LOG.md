@@ -1,3 +1,23 @@
+
+### ✅ 2026-04-20 17:06 UTC — CraftingSystem implementation and dev loop fixes
+- **Task:** Implement CraftingSystem with recipe registry, tests, and dev loop fixes
+- **Branch:** main (direct commit: aedb48a)
+- **Build:** PASS (clean rebuild after fixing stale build_validate corruption)
+- **Tests:** PASS (35 crafting tests, 127 assertions, all passing)
+- **Changes:**
+  - CraftingSystem.hpp: New header with full API (recipe registry, validation, startCraft, cancelCraft, updateCraft)
+  - CraftingSystem.cpp: Complete rewrite with 5 starter recipes, instant/timed crafting, profession XP
+  - TestCraftingSystem.cpp: 35 test cases (765 lines) covering all crafting scenarios
+  - CoreTypes.hpp: Added craftCount field and finishCraft() to CraftingComponent
+  - ItemSystem.cpp: Extended with 100 item definitions
+  - InputHandler/ZoneServer: Integrated crafting validation and callbacks
+  - cron_dev_loop.py: Fixed IndexError in generate_test_file (split on "include/" with guard)
+  - discover_tasks.py: Added filter to exclude _deps/build_* tasks from cache
+- **Issues Fixed:**
+  - Stale build_validate directory had corrupted protobuf archive (cleaned and rebuilt)
+  - Task cache had 576 polluted dep tasks (filtered out with DEP_PATTERNS)
+  - CMakeLists.txt had accidental CraftingSystem.cpp removal (restored)
+- **Test Count:** 892 → 927 (+35 crafting tests)
 # DarkAges Autonomous Iteration Log
 
 ### ✅ 2026-04-19 20:15 UTC — Comprehensive test expansion and infrastructure improvements
