@@ -1,25 +1,15 @@
 {
-  "timestamp": 1776647149.043628,
-  "git_head": "8fc9811cf938c1af6aff39d95dae4b5dcce11c44",
+  "timestamp": 1776675161.080395,
+  "git_head": "f0e956bcc376051aca52918df3f322eb4855666d",
   "tasks": [
     {
-      "priority": "P2",
-      "category": "test",
-      "title": "Add tests for StatusEffectSystem",
-      "description": "No test file found for src/server/src/combat/StatusEffectSystem.cpp",
-      "files": [
-        "src/server/src/combat/StatusEffectSystem.cpp"
-      ],
-      "estimated_hours": 1.0
-    },
-    {
-      "priority": "P2",
+      "priority": "P1",
       "category": "test-depth",
-      "title": "Expand tests for EntityMigration (12 tests for 623 lines)",
-      "description": "Source file has 623 lines but only 12 test cases \u2014 need 15+",
+      "title": "Expand tests for ZoneServer (34 tests for 1429 lines)",
+      "description": "Source file has 1429 lines but only 34 test cases \u2014 need 35+",
       "files": [
-        "src/server/src/zones/EntityMigration.cpp",
-        "src/server/tests/TestEntityMigration.cpp"
+        "src/server/src/zones/ZoneServer.cpp",
+        "src/server/tests/TestZoneServer.cpp"
       ],
       "estimated_hours": 2.0
     },
@@ -29,17 +19,37 @@
       "title": "Update 3 stale documentation files",
       "description": "Documentation references old project state \u2014 needs alignment with current implementation",
       "files": [
-        "PROJECT_STATUS.md",
         "DOCUMENTATION_SYNC_REPORT.md",
-        "DarkAges_Comprehensive_Review.md"
+        "DarkAges_Comprehensive_Review.md",
+        "PROJECT_STATUS.md"
       ],
       "estimated_hours": 2.0
     },
     {
       "priority": "P3",
       "category": "refactor",
-      "title": "Reduce includes in ZoneServer.hpp (37 includes)",
-      "description": "Header has 37 #include directives \u2014 consider forward declarations",
+      "title": "Refactor CombatSystem.cpp (547 lines)",
+      "description": "File is 547 lines with cleanup potential",
+      "files": [
+        "src/server/src/combat/CombatSystem.cpp"
+      ],
+      "estimated_hours": 3.0
+    },
+    {
+      "priority": "P3",
+      "category": "refactor",
+      "title": "Refactor CoreTypes.hpp (619 lines)",
+      "description": "File is 619 lines with cleanup potential",
+      "files": [
+        "src/server/include/ecs/CoreTypes.hpp"
+      ],
+      "estimated_hours": 3.0
+    },
+    {
+      "priority": "P3",
+      "category": "refactor",
+      "title": "Reduce includes in ZoneServer.hpp (42 includes)",
+      "description": "Header has 42 #include directives \u2014 consider forward declarations",
       "files": [
         "src/server/include/zones/ZoneServer.hpp"
       ],

@@ -19,7 +19,7 @@ CMAKE_CMD = [
     "-DENABLE_GNS=OFF", "-DENABLE_REDIS=OFF", "-DENABLE_SCYLLA=OFF"
 ]
 BUILD_CMD = ["cmake", "--build", str(BUILD_DIR), "-j", str(os.cpu_count() or 4)]
-TEST_CMD = ["ctest", "--output-on-failure"]
+TEST_CMD = ["ctest", "--output-on-failure", "-j8"]
 MAX_RETRIES = 2
 
 def run(cmd, cwd=None, timeout=300, capture=True):
@@ -66,7 +66,7 @@ def build():
 
 def test():
     """Run ctest. Returns (ok, summary, error_snippet)."""
-    code, out, err = run(TEST_CMD, cwd=str(BUILD_DIR), timeout=120)
+    code, out, err = run(TEST_CMD, cwd=str(BUILD_DIR), timeout=600)
     output = out + "\n" + err
     if code != 0:
         lines = output.strip().split("\n")
