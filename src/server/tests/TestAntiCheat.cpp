@@ -2,6 +2,7 @@
 // Comprehensive anti-cheat detection and behavior tracking tests
 
 #include <catch2/catch_test_macros.hpp>
+#include <catch2/catch_approx.hpp>
 #include "security/AntiCheat.hpp"
 #include "security/AntiCheatConfig.hpp"
 #include "ecs/CoreTypes.hpp"
@@ -823,5 +824,444 @@ TEST_CASE("AntiCheatSystem edge cases", "[security][anticheat]") {
             makePosition(0.005f, 0, 0),
             1, makeInput(), registry);
         REQUIRE_FALSE(result.detected);
+    }
+
+    SECTION("Large Y displacement triggers speed hack detection") {
+        Registry registry;
+        auto entity = setupPlayerEntity(registry, 1501);
+        // Move 50m upward instantly - triggers speed violation first
+        // because 50m/16ms = 3125 m/s, way over 6 m/s limit
+        auto result = acs.validateMovement(entity,
+            makePosition(0, 0, 0),
+            makePosition(0, 50, 0),
+            16, makeInput(), registry);
+        REQUIRE(result.detected);
+        // Speed is checked before fly-hack, so this is SPEED_HACK
+        REQUIRE(result.type == CheatType::SPEED_HACK);
+    }
+
+    SECTION("Subtle Y displacement triggers speed detection") {
+        Registry registry;
+        auto entity = setupPlayerEntity(registry, 1502);
+        // Move up 20m in one tick - also speed violation
+        auto result = acs.validateMovement(entity,
+            makePosition(0, 1, 0),
+            makePosition(0, 21, 0),
+            100, makeInput(), registry);
+        REQUIRE(result.detected);
+        // 20m/100ms = 200 m/s, speed hack
+        REQUIRE(result.type == CheatType::SPEED_HACK);
+    }
+}
+
+// ============================================================================
+// ServerAuthority Validation
+// ============================================================================
+
+TEST_CASE("ServerAuthority client claim validation", "[security][anticheat]") {
+    SECTION("Matching positions pass validation") {
+        Position serverPos = makePosition(10, 5, 10);
+        Position claimedPos = makePosition(10, 5, 10);
+        Velocity vel;
+
+        REQUIRE(ServerAuthority::validateClientClaim(
+            serverPos, claimedPos, vel, vel, 1.0f));
+    }
+
+    SECTION("Within tolerance passes") {
+        Position serverPos = makePosition(100, 0, 100);
+        Position claimedPos = makePosition(100.5f, 0, 100.5f);
+        Velocity vel;
+
+        // 0.5m offset, tolerance 1.0m -> passes
+        REQUIRE(ServerAuthority::validateClientClaim(
+            serverPos, claimedPos, vel, vel, 1.0f));
+    }
+
+    SECTION("Beyond tolerance fails") {
+        Position serverPos = makePosition(0, 0, 0);
+        Position claimedPos = makePosition(10, 0, 0);
+        Velocity vel;
+
+        // 10m offset, tolerance 1.0m -> fails
+        REQUIRE_FALSE(ServerAuthority::validateClientClaim(
+            serverPos, claimedPos, vel, vel, 1.0f));
+    }
+
+    SECTION("3D distance matters") {
+        // 3-4-5 triangle = 5 units apart
+        Position serverPos = makePosition(0, 0, 0);
+        Position claimedPos = makePosition(3, 4, 0);
+        Velocity vel;
+
+        REQUIRE(ServerAuthority::validateClientClaim(
+            serverPos, claimedPos, vel, vel, 5.1f));  // Just over 5
+        REQUIRE_FALSE(ServerAuthority::validateClientClaim(
+            serverPos, claimedPos, vel, vel, 4.9f));  // Just under 5
+    }
+}
+
+TEST_CASE("ServerAuthority correction magnitude", "[security][anticheat]") {
+    SECTION("Same position has zero magnitude") {
+        Position pos = makePosition(10, 20, 30);
+        float mag = ServerAuthority::calculateCorrectionMagnitude(pos, pos);
+        REQUIRE(mag == Catch::Approx(0.0f).margin(0.001f));
+    }
+
+    SECTION("Distance along single axis") {
+        Position serverPos = makePosition(0, 0, 0);
+        Position clientPos = makePosition(10, 0, 0);
+        float mag = ServerAuthority::calculateCorrectionMagnitude(serverPos, clientPos);
+        REQUIRE(mag == Catch::Approx(10.0f).margin(0.1f));
+    }
+
+    SECTION("3D distance calculation") {
+        Position serverPos = makePosition(0, 0, 0);
+        Position clientPos = makePosition(3, 4, 0);  // 5 units
+        float mag = ServerAuthority::calculateCorrectionMagnitude(serverPos, clientPos);
+        REQUIRE(mag == Catch::Approx(5.0f).margin(0.1f));
+    }
+}
+
+TEST_CASE("ServerAuthority needsCorrection", "[security][anticheat]") {
+    SECTION("Small offset within tolerance needs no correction") {
+        Position serverPos = makePosition(100, 0, 100);
+        Position clientPos = makePosition(100.3f, 0, 100);
+        REQUIRE_FALSE(ServerAuthority::needsCorrection(serverPos, clientPos, 1.0f));
+    }
+
+    SECTION("Large offset beyond tolerance needs correction") {
+        Position serverPos = makePosition(0, 0, 0);
+        Position clientPos = makePosition(5, 0, 0);
+        REQUIRE(ServerAuthority::needsCorrection(serverPos, clientPos, 1.0f));
+    }
+
+    SECTION("Exact tolerance boundary") {
+        Position serverPos = makePosition(0, 0, 0);
+        Position clientPos = makePosition(1, 0, 0);  // Exactly 1.0m
+        // At exact boundary, should be false (not greater than)
+        REQUIRE_FALSE(ServerAuthority::needsCorrection(serverPos, clientPos, 1.0f));
+    }
+}
+
+// ============================================================================
+// StatisticalAnalyzer Placeholder Methods
+// ============================================================================
+
+TEST_CASE("StatisticalAnalyzer placeholder methods", "[security][anticheat]") {
+    SECTION("analyzeAimPattern returns false (placeholder)") {
+        std::vector<Rotation> history;
+        REQUIRE_FALSE(StatisticalAnalyzer::analyzeAimPattern(
+            static_cast<EntityID>(1), history));
+    }
+
+    SECTION("calculateMovementConsistency returns 1.0 (placeholder)") {
+        std::vector<Position> history;
+        float consistency = StatisticalAnalyzer::calculateMovementConsistency(history);
+        REQUIRE(consistency == 1.0f);
+    }
+
+    SECTION("detectImpossibleReactions returns false (placeholder)") {
+        std::vector<uint32_t> samples;
+        REQUIRE_FALSE(StatisticalAnalyzer::detectImpossibleReactions(samples));
+    }
+}
+
+// ============================================================================
+// Multi-Violation Trust Decay
+// ============================================================================
+
+TEST_CASE("AntiCheatSystem multi-violation trust decay", "[security][anticheat]") {
+    AntiCheatSystem acs;
+    REQUIRE(acs.initialize());
+
+    SECTION("Multiple violations decay trust score") {
+        uint64_t playerId = 2000;
+        auto* profile = acs.getProfile(playerId);
+        uint8_t initialTrust = profile->trustScore;
+        REQUIRE(initialTrust > 0);
+
+        // Apply 3 WARNING violations
+        for (int i = 0; i < 3; ++i) {
+            CheatDetectionResult det;
+            det.type = CheatType::SPEED_HACK;
+            det.severity = ViolationSeverity::WARNING;
+            det.confidence = 0.5f;
+            det.timestamp = static_cast<uint32_t>(1000 + i * 100);
+            profile->recordViolation(det);
+        }
+
+        REQUIRE(profile->trustScore < initialTrust);
+        REQUIRE(profile->speedViolations == 3);
+        REQUIRE(profile->violationHistory.size() == 3);
+    }
+
+    SECTION("CRITICAL violations decay trust more than WARNING") {
+        uint64_t playerIdWarn = 2001;
+        uint64_t playerIdCrit = 2002;
+
+        auto* warnProfile = acs.getProfile(playerIdWarn);
+        auto* critProfile = acs.getProfile(playerIdCrit);
+
+        // Same initial trust
+        REQUIRE(warnProfile->trustScore == critProfile->trustScore);
+
+        CheatDetectionResult warning;
+        warning.type = CheatType::SPEED_HACK;
+        warning.severity = ViolationSeverity::WARNING;
+        warning.confidence = 0.5f;
+        warning.timestamp = 1000;
+        warnProfile->recordViolation(warning);
+
+        CheatDetectionResult critical;
+        critical.type = CheatType::SPEED_HACK;
+        critical.severity = ViolationSeverity::CRITICAL;
+        critical.confidence = 0.9f;
+        critical.timestamp = 1000;
+        critProfile->recordViolation(critical);
+
+        // CRITICAL should result in lower trust
+        REQUIRE(critProfile->trustScore < warnProfile->trustScore);
+    }
+
+    SECTION("BAN severity drops trust to near-zero immediately") {
+        uint64_t playerId = 2003;
+        auto* profile = acs.getProfile(playerId);
+
+        CheatDetectionResult ban;
+        ban.type = CheatType::DAMAGE_HACK;
+        ban.severity = ViolationSeverity::BAN;
+        ban.confidence = 1.0f;
+        ban.timestamp = 1000;
+        profile->recordViolation(ban);
+
+        REQUIRE(profile->trustScore <= 10);  // Should be very low after BAN
+        REQUIRE(profile->isSuspicious());
+    }
+
+    SECTION("Clean movement recovers trust over time") {
+        uint64_t playerId = 2004;
+        auto* profile = acs.getProfile(playerId);
+
+        // Drop trust with violations
+        for (int i = 0; i < 5; ++i) {
+            CheatDetectionResult det;
+            det.type = CheatType::SPEED_HACK;
+            det.severity = ViolationSeverity::WARNING;
+            det.confidence = 0.5f;
+            det.timestamp = static_cast<uint32_t>(1000 + i * 100);
+            profile->recordViolation(det);
+        }
+        uint8_t afterViolations = profile->trustScore;
+
+        // 6000 clean ticks = 10 recoveries of +1 each
+        for (uint32_t i = 0; i < 6000; ++i) {
+            profile->recordCleanMovement();
+        }
+
+        REQUIRE(profile->trustScore > afterViolations);
+    }
+
+    SECTION("violationHistory caps at MAX_VIOLATIONS") {
+        uint64_t playerId = 2005;
+        auto* profile = acs.getProfile(playerId);
+
+        // Record many violations
+        for (int i = 0; i < 50; ++i) {
+            CheatDetectionResult det;
+            det.type = CheatType::SPEED_HACK;
+            det.severity = ViolationSeverity::INFO;
+            det.confidence = 0.1f;
+            det.timestamp = static_cast<uint32_t>(i * 100);
+            profile->recordViolation(det);
+        }
+
+        // History should be capped
+        REQUIRE(profile->violationHistory.size() <= 20);  // MAX_VIOLATIONS
+    }
+}
+
+// ============================================================================
+// Combat Edge Cases
+// ============================================================================
+
+TEST_CASE("AntiCheatSystem combat edge cases", "[security][anticheat]") {
+    AntiCheatSystem acs;
+    REQUIRE(acs.initialize());
+    Registry registry;
+    auto attacker = setupPlayerEntity(registry, 3000);
+    auto target = setupPlayerEntity(registry, 3001);
+
+    SECTION("Damage exactly at max is accepted") {
+        AntiCheatConfig config = acs.getConfig();
+        config.maxDamagePerHit = 1000;
+        acs.setConfig(config);
+
+        auto result = acs.validateCombat(
+            attacker, target, 1000,
+            makePosition(1, 0, 0),
+            makePosition(0, 0, 0),
+            registry);
+        REQUIRE_FALSE(result.detected);
+    }
+
+    SECTION("Damage one over max is detected") {
+        AntiCheatConfig config = acs.getConfig();
+        config.maxDamagePerHit = 1000;
+        acs.setConfig(config);
+
+        auto result = acs.validateCombat(
+            attacker, target, 1001,
+            makePosition(1, 0, 0),
+            makePosition(0, 0, 0),
+            registry);
+        REQUIRE(result.detected);
+        REQUIRE(result.type == CheatType::DAMAGE_HACK);
+    }
+
+    SECTION("Hit at max melee range passes") {
+        AntiCheatConfig config = acs.getConfig();
+        config.maxMeleeRange = 3.0f;
+        acs.setConfig(config);
+
+        // At exactly maxMeleeRange (with 50% tolerance = 4.5m)
+        auto result = acs.validateCombat(
+            attacker, target, 100,
+            makePosition(3.0f, 0, 0),
+            makePosition(0, 0, 0),
+            registry);
+        REQUIRE_FALSE(result.detected);
+    }
+
+    SECTION("Hit just beyond tolerance fails") {
+        AntiCheatConfig config = acs.getConfig();
+        config.maxMeleeRange = 3.0f;
+        acs.setConfig(config);
+
+        // 5m is beyond 3.0 * 1.5 = 4.5m tolerance
+        auto result = acs.validateCombat(
+            attacker, target, 100,
+            makePosition(5.0f, 0, 0),
+            makePosition(0, 0, 0),
+            registry);
+        REQUIRE(result.detected);
+        REQUIRE(result.type == CheatType::HITBOX_EXTENSION);
+    }
+
+    SECTION("Zero damage is always accepted") {
+        auto result = acs.validateCombat(
+            attacker, target, 0,
+            makePosition(0, 0, 0),
+            makePosition(0, 0, 0),
+            registry);
+        REQUIRE_FALSE(result.detected);
+    }
+
+    SECTION("Negative damage is accepted") {
+        // Healing or damage reduction - should not trigger
+        auto result = acs.validateCombat(
+            attacker, target, -100,
+            makePosition(1, 0, 0),
+            makePosition(0, 0, 0),
+            registry);
+        REQUIRE_FALSE(result.detected);
+    }
+}
+
+// ============================================================================
+// Multi-Entity Concurrent Validation
+// ============================================================================
+
+TEST_CASE("AntiCheatSystem multi-entity concurrent validation", "[security][anticheat]") {
+    AntiCheatSystem acs;
+    REQUIRE(acs.initialize());
+
+    SECTION("Different entities tracked independently") {
+        Registry registry;
+        std::vector<EntityID> entities;
+        for (int i = 0; i < 10; ++i) {
+            entities.push_back(setupPlayerEntity(registry, static_cast<uint64_t>(4000 + i)));
+        }
+
+        // Entity 0 cheats (speed hack)
+        auto result0 = acs.validateMovement(entities[0],
+            makePosition(0, 0, 0), makePosition(50, 0, 0),
+            100, makeInput(), registry);
+        REQUIRE(result0.detected);
+
+        // Entity 1 moves normally
+        auto result1 = acs.validateMovement(entities[1],
+            makePosition(0, 0, 0), makePosition(0.5f, 0, 0),
+            100, makeInput(), registry);
+        REQUIRE_FALSE(result1.detected);
+
+        // Detection count should only reflect the cheater
+        REQUIRE(acs.getDetectionCount(CheatType::SPEED_HACK) >= 1);
+    }
+
+    SECTION("Profile count matches connected players") {
+        Registry registry;
+        for (int i = 0; i < 5; ++i) {
+            uint64_t pid = static_cast<uint64_t>(5000 + i);
+            (void)acs.getProfile(pid);
+        }
+        REQUIRE(acs.getActiveProfileCount() == 5);
+
+        acs.removeProfile(5000);
+        REQUIRE(acs.getActiveProfileCount() == 4);
+    }
+}
+
+// ============================================================================
+// Detection Callback Propagation
+// ============================================================================
+
+TEST_CASE("AntiCheatSystem detection callback propagation", "[security][anticheat]") {
+    AntiCheatSystem acs;
+    REQUIRE(acs.initialize());
+
+    SECTION("Callback receives correct cheat type") {
+        CheatType detectedType = CheatType::NONE;
+        acs.setOnCheatDetected([&](uint64_t, const CheatDetectionResult& result) {
+            detectedType = result.type;
+        });
+
+        Registry registry;
+        auto entity = setupPlayerEntity(registry, 6000);
+        (void)acs.validateMovement(entity,
+            makePosition(0, 0, 0), makePosition(50, 0, 0),
+            100, makeInput(), registry);
+
+        REQUIRE(detectedType == CheatType::SPEED_HACK);
+    }
+
+    SECTION("Callback receives correct confidence value") {
+        float detectedConfidence = 0.0f;
+        acs.setOnCheatDetected([&](uint64_t, const CheatDetectionResult& result) {
+            detectedConfidence = result.confidence;
+        });
+
+        Registry registry;
+        auto entity = setupPlayerEntity(registry, 6001);
+        (void)acs.validateMovement(entity,
+            makePosition(0, 0, 0), makePosition(100, 0, 0),
+            100, makeInput(), registry);
+
+        REQUIRE(detectedConfidence > 0.0f);
+    }
+
+    SECTION("No callback for clean movement") {
+        bool callbackFired = false;
+        acs.setOnCheatDetected([&](uint64_t, const CheatDetectionResult&) {
+            callbackFired = true;
+        });
+
+        Registry registry;
+        auto entity = setupPlayerEntity(registry, 6002);
+        (void)acs.validateMovement(entity,
+            makePosition(0, 0, 0), makePosition(0.3f, 0, 0),
+            100, makeInput(), registry);
+
+        REQUIRE_FALSE(callbackFired);
     }
 }

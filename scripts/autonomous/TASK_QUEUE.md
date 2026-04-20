@@ -25,12 +25,12 @@ Prioritized list of autonomous improvements for DarkAges.
 - [x] Performance test infrastructure ✅ (TestLoadTesting.cpp, phase9_report.py)
 - [x] Benchmark runner ✅ (tick_benchmark.py)
 - [x] All 7 budget checks PASS ✅
-- [ ] Extend load tests to 800+ entities
-- [ ] Multi-zone load testing
+- [x] Extend load tests to 800+ entities ✅ 2026-04-19
+- [x] Multi-zone load testing ✅ 2026-04-19
 
 ## P3 — Phase 10: Security Testing
-- [ ] Anti-cheat validation (speed hack, teleport, fly hack)
-- [ ] DDoS protection simulation
+- [x] Anti-cheat validation (speed hack, teleport, fly hack) ✅ 2026-04-19
+- [x] DDoS protection simulation ✅ 2026-04-19
 - [ ] Fuzz testing (protocol fuzzing with AFL++)
 - [ ] Penetration testing (packet manipulation, replay attacks)
 
