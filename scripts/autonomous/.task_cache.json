@@ -1,6 +1,6 @@
 {
-  "timestamp": 1776705195.4238849,
-  "git_head": "b655257cae7882a3a64355e64057f53dbba677a9",
+  "timestamp": 1776730550.7865713,
+  "git_head": "dbc9642cf5bc6c2e840b8e553727ae0786cbf325",
   "tasks": [
     {
       "priority": "P1",
@@ -20,8 +20,8 @@
       "description": "Documentation references old project state \u2014 needs alignment with current implementation",
       "files": [
         "DarkAges_Comprehensive_Review.md",
-        "PROJECT_STATUS.md",
-        "DOCUMENTATION_SYNC_REPORT.md"
+        "DOCUMENTATION_SYNC_REPORT.md",
+        "PROJECT_STATUS.md"
       ],
       "estimated_hours": 2.0
     },

@@ -424,6 +424,7 @@ set(SERVER_SOURCES
     src/server/src/ecs/CoreTypes.cpp
     src/server/src/physics/SpatialHash.cpp
     src/server/src/physics/MovementSystem.cpp
+    src/server/src/physics/NavigationGrid.cpp
     src/server/src/memory/MemoryPool.cpp
     src/server/src/memory/LeakDetector.cpp
     src/server/src/combat/CombatSystem.cpp
@@ -776,6 +777,7 @@ if(BUILD_TESTS AND TARGET Catch2::Catch2WithMain)
         src/server/tests/TestItemSystem.cpp
         src/server/tests/TestQuestSystem.cpp
         src/server/tests/TestChatSystem.cpp
+        src/server/tests/TestNavigationGrid.cpp
         src/server/tests/TestCraftingSystem.cpp
     )
 

@@ -58,6 +58,7 @@ set(TEST_SOURCES
     TestCoreTypes.cpp
     TestQuestSystem.cpp
     TestChatSystem.cpp
+    TestNavigationGrid.cpp
 )
 
 # Conditional test sources based on dependencies

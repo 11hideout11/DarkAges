@@ -17,7 +17,13 @@ void NPCAISystem::update(Registry& registry, uint32_t currentTimeMs) {
     // Use a fixed delta-time based on 60Hz tick (16.67ms)
     constexpr uint32_t dtMs = 17;
 
+    // Track live NPC IDs for path state cleanup
+    std::vector<uint32_t> liveNpcIds;
+    liveNpcIds.reserve(64);
+
     view.each([&](EntityID npc, NPCAIState& ai, NPCStats& stats, Position& pos) {
+        liveNpcIds.push_back(static_cast<uint32_t>(npc));
+
         // Update behavior timer
         ai.behaviorTimerMs += dtMs;
 
@@ -42,6 +48,21 @@ void NPCAISystem::update(Registry& registry, uint32_t currentTimeMs) {
                 break;
         }
     });
+
+    // Clean up path states for destroyed NPCs
+    if (!pathStates_.empty()) {
+        for (auto it = pathStates_.begin(); it != pathStates_.end();) {
+            bool found = false;
+            for (uint32_t id : liveNpcIds) {
+                if (id == it->first) { found = true; break; }
+            }
+            if (!found) {
+                it = pathStates_.erase(it);
+            } else {
+                ++it;
+            }
+        }
+    }
 }
 
 // ============================================================================
@@ -124,7 +145,11 @@ void NPCAISystem::updateWander(Registry& registry, EntityID npc, NPCAIState& ai,
 
     if (distFromSpawn > leashSq) {
         // Move back toward spawn
-        moveToward(registry, npc, ai.spawnPoint, NPC_WANDER_SPEED);
+        if (navGrid_) {
+            moveTowardWithPathfinding(registry, npc, ai.spawnPoint, NPC_WANDER_SPEED, currentTimeMs);
+        } else {
+            moveToward(registry, npc, ai.spawnPoint, NPC_WANDER_SPEED);
+        }
     } else if (ai.behaviorTimerMs >= 2000) {
         // Wander for 2 seconds then go back to idle
         // Pick a random direction and move briefly
@@ -134,7 +159,11 @@ void NPCAISystem::updateWander(Registry& registry, EntityID npc, NPCAIState& ai,
         wanderTarget.y = pos.y;
         wanderTarget.z = pos.z + static_cast<Constants::Fixed>(std::sin(angle) * 5.0f);
 
-        moveToward(registry, npc, wanderTarget, NPC_WANDER_SPEED);
+        if (navGrid_) {
+            moveTowardWithPathfinding(registry, npc, wanderTarget, NPC_WANDER_SPEED, currentTimeMs);
+        } else {
+            moveToward(registry, npc, wanderTarget, NPC_WANDER_SPEED);
+        }
 
         if (ai.behaviorTimerMs >= 4000) {
             ai.behavior = NPCBehavior::Idle;
@@ -205,7 +234,11 @@ void NPCAISystem::updateChase(Registry& registry, EntityID npc, NPCAIState& ai,
     }
 
     // Chase the target
-    moveToward(registry, npc, *targetPos, NPC_MOVE_SPEED);
+    if (navGrid_) {
+        moveTowardWithPathfinding(registry, npc, *targetPos, NPC_MOVE_SPEED, currentTimeMs);
+    } else {
+        moveToward(registry, npc, *targetPos, NPC_MOVE_SPEED);
+    }
 }
 
 // ============================================================================
@@ -315,8 +348,13 @@ void NPCAISystem::updateFlee(Registry& registry, EntityID npc, NPCAIState& ai,
         }
     }
 
-    // Run away from threat
-    moveAway(registry, npc, *targetPos, NPC_FLEE_SPEED);
+    // Run away from threat — flee toward spawn point
+    if (navGrid_) {
+        moveAwayWithPathfinding(registry, npc, *targetPos, ai.spawnPoint,
+                                NPC_FLEE_SPEED, currentTimeMs);
+    } else {
+        moveAway(registry, npc, *targetPos, NPC_FLEE_SPEED);
+    }
 }
 
 // ============================================================================
@@ -484,6 +522,208 @@ void NPCAISystem::stopMovement(Registry& registry, EntityID npc) {
         vel->dx = 0;
         vel->dy = 0;
         vel->dz = 0;
+    }
+}
+
+// ============================================================================
+// Pathfinding Methods
+// ============================================================================
+
+void NPCAISystem::clearPaths() {
+    pathStates_.clear();
+}
+
+void NPCAISystem::clearPath(EntityID npc) {
+    pathStates_.erase(static_cast<uint32_t>(npc));
+}
+
+void NPCAISystem::posToFloat(const Position& pos, float& x, float& z) {
+    x = static_cast<float>(pos.x) * Constants::FIXED_TO_FLOAT;
+    z = static_cast<float>(pos.z) * Constants::FIXED_TO_FLOAT;
+}
+
+bool NPCAISystem::hasLineOfSight(const Position& a, const Position& b) const {
+    if (!navGrid_) return true;  // No grid = no obstacles = always LOS
+
+    float ax, az, bx, bz;
+    posToFloat(a, ax, az);
+    posToFloat(b, bx, bz);
+
+    return navGrid_->hasLineOfSight(ax, az, bx, bz);
+}
+
+const Path& NPCAISystem::getOrCalcPath(EntityID npc, const Position& from,
+                                        float toX, float toZ, uint32_t currentTimeMs,
+                                        uint32_t targetEntity) {
+    static Path emptyPath;  // Fallback when no grid
+
+    if (!navGrid_) {
+        return emptyPath;
+    }
+
+    uint32_t npcId = static_cast<uint32_t>(npc);
+    auto& state = pathStates_[npcId];
+
+    // Check if we need to recalculate
+    float fromX, fromZ;
+    posToFloat(from, fromX, fromZ);
+
+    float targetMoved = (toX - state.targetX) * (toX - state.targetX) +
+                        (toZ - state.targetZ) * (toZ - state.targetZ);
+    bool targetFar = targetMoved > (TARGET_MOVED_THRESHOLD * TARGET_MOVED_THRESHOLD);
+
+    uint32_t elapsed = currentTimeMs - state.lastPathCalcMs;
+    bool timeExpired = elapsed >= PATH_RECALC_MS;
+
+    if (state.currentPath.valid && !timeExpired && !targetFar) {
+        return state.currentPath;
+    }
+
+    // Recalculate path
+    state.currentPath = navGrid_->findPath(fromX, fromZ, toX, toZ);
+    state.lastPathCalcMs = currentTimeMs;
+    state.targetX = toX;
+    state.targetZ = toZ;
+    state.pathTargetEntity = targetEntity;
+
+    return state.currentPath;
+}
+
+bool NPCAISystem::followPath(Registry& registry, EntityID npc,
+                              NPCPathState& pathState, float speed,
+                              uint32_t currentTimeMs) {
+    if (!pathState.currentPath.valid || pathState.currentPath.empty()) {
+        return false;
+    }
+
+    // Get NPC position
+    Position* pos = registry.try_get<Position>(npc);
+    if (!pos) return false;
+
+    float npcX, npcZ;
+    posToFloat(*pos, npcX, npcZ);
+
+    // Get next waypoint
+    Waypoint wp = pathState.currentPath.waypoints.front();
+
+    // Check if we've reached this waypoint
+    float dx = wp.x - npcX;
+    float dz = wp.z - npcZ;
+    float distSq = dx * dx + dz * dz;
+
+    if (distSq < WAYPOINT_REACH_DIST * WAYPOINT_REACH_DIST) {
+        // Reached this waypoint, move to next
+        pathState.currentPath.waypoints.erase(pathState.currentPath.waypoints.begin());
+
+        if (pathState.currentPath.waypoints.empty()) {
+            // Path complete
+            stopMovement(registry, npc);
+            return false;
+        }
+
+        // Get next waypoint
+        wp = pathState.currentPath.waypoints.front();
+        dx = wp.x - npcX;
+        dz = wp.z - npcZ;
+        distSq = dx * dx + dz * dz;
+    }
+
+    if (distSq < 0.01f) {
+        stopMovement(registry, npc);
+        return true;
+    }
+
+    // Move toward waypoint
+    Velocity* vel = registry.try_get<Velocity>(npc);
+    if (!vel) return false;
+
+    float dist = std::sqrt(distSq);
+    float speedFixed = speed * Constants::FLOAT_TO_FIXED;
+    vel->dx = static_cast<Constants::Fixed>((dx / dist) * speedFixed);
+    vel->dy = 0;
+    vel->dz = static_cast<Constants::Fixed>((dz / dist) * speedFixed);
+
+    return true;
+}
+
+void NPCAISystem::moveTowardWithPathfinding(Registry& registry, EntityID npc,
+                                             const Position& target, float speed,
+                                             uint32_t currentTimeMs) {
+    if (!navGrid_) {
+        // No grid — fall back to direct movement
+        moveToward(registry, npc, target, speed);
+        return;
+    }
+
+    // Check line of sight first — if clear, use direct movement
+    Position* pos = registry.try_get<Position>(npc);
+    if (!pos) return;
+
+    if (hasLineOfSight(*pos, target)) {
+        moveToward(registry, npc, target, speed);
+        // Clear path cache since we're going direct
+        clearPath(npc);
+        return;
+    }
+
+    // No line of sight — use pathfinding
+    float targetX, targetZ;
+    posToFloat(target, targetX, targetZ);
+
+    uint32_t npcId = static_cast<uint32_t>(npc);
+    const Path& path = getOrCalcPath(npc, *pos, targetX, targetZ,
+                                      currentTimeMs, npcId);
+
+    auto& state = pathStates_[npcId];
+
+    if (!path.valid || path.waypoints.empty()) {
+        // No path found — try direct movement as fallback
+        moveToward(registry, npc, target, speed);
+        return;
+    }
+
+    // Follow the path
+    if (!followPath(registry, npc, state, speed, currentTimeMs)) {
+        // Path complete or failed — move directly
+        moveToward(registry, npc, target, speed);
+    }
+}
+
+void NPCAISystem::moveAwayWithPathfinding(Registry& registry, EntityID npc,
+                                           const Position& threat,
+                                           const Position& fleeGoal,
+                                           float speed, uint32_t currentTimeMs) {
+    if (!navGrid_) {
+        moveAway(registry, npc, threat, speed);
+        return;
+    }
+
+    // Flee toward the goal (usually spawn point) using pathfinding
+    Position* pos = registry.try_get<Position>(npc);
+    if (!pos) return;
+
+    if (hasLineOfSight(*pos, fleeGoal)) {
+        moveToward(registry, npc, fleeGoal, speed);
+        clearPath(npc);
+        return;
+    }
+
+    float goalX, goalZ;
+    posToFloat(fleeGoal, goalX, goalZ);
+
+    uint32_t npcId = static_cast<uint32_t>(npc);
+    const Path& path = getOrCalcPath(npc, *pos, goalX, goalZ,
+                                      currentTimeMs, 0);
+
+    auto& state = pathStates_[npcId];
+
+    if (!path.valid || path.waypoints.empty()) {
+        moveAway(registry, npc, threat, speed);
+        return;
+    }
+
+    if (!followPath(registry, npc, state, speed, currentTimeMs)) {
+        moveAway(registry, npc, threat, speed);
     }
 }
 

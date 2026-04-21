@@ -61,6 +61,7 @@ set(SERVER_SOURCES
     src/ecs/CoreTypes.cpp
     src/physics/SpatialHash.cpp
     src/physics/MovementSystem.cpp
+    src/physics/NavigationGrid.cpp
     src/zones/ZoneServer.cpp
     src/zones/CombatEventHandler.cpp
     src/zones/AuraZoneHandler.cpp
@@ -128,6 +129,7 @@ set(SERVER_HEADERS
     include/ecs/Components.hpp
     include/physics/SpatialHash.hpp
     include/physics/MovementSystem.hpp
+    include/physics/NavigationGrid.hpp
     include/netcode/NetworkManager.hpp
     include/db/RedisManager.hpp
     include/db/ScyllaManager.hpp
