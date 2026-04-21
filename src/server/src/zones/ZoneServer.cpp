@@ -230,6 +230,11 @@ bool ZoneServer::initialize(const ZoneConfig& config) {
     craftingSystem_.setItemSystem(&itemSystem_);
     inputHandler_.setCraftingSystem(&craftingSystem_);
 
+    // [GAMEPLAY_AGENT] Initialize trade system
+    tradeSystem_.setItemSystem(&itemSystem_);
+    tradeSystem_.setChatSystem(&chatSystem_);
+    inputHandler_.setTradeSystem(&tradeSystem_);
+
     // [GAMEPLAY_AGENT] Wire level-up into quest tracking
     experienceSystem_.setLevelUpCallback([this](EntityID player, uint32_t newLevel) {
         questSystem_.onLevelUp(registry_, player, newLevel);
@@ -696,6 +701,9 @@ void ZoneServer::updateGameLogic() {
     // [GAMEPLAY_AGENT] Update loot system — despawn expired loot
     lootSystem_.update(registry_, getCurrentTimeMs());
 
+    // [GAMEPLAY_AGENT] Update trade system — handle timeouts
+    tradeSystem_.update(registry_, getCurrentTimeMs());
+
     // Process pending respawns
     combatEventHandler_.processRespawns();
 
@@ -903,6 +911,11 @@ void ZoneServer::onClientDisconnected(ConnectionID connectionId) {
     EntityID entity = playerManager_.getEntityByConnection(connectionId);
 
     if (entity != entt::null) {
+        // [GAMEPLAY_AGENT] Cancel any active trade on disconnect
+        if (tradeSystem_.isTrading(registry_, entity)) {
+            tradeSystem_.cancelTrade(registry_, entity);
+        }
+
         // [SECURITY_AGENT] Clean up anti-cheat behavior profile
         if (const PlayerInfo* info = registry_.try_get<PlayerInfo>(entity)) {
             antiCheat_.removeProfile(info->playerId);
@@ -1067,6 +1080,9 @@ EntityID ZoneServer::spawnPlayer(ConnectionID connectionId, uint64_t playerId,
 
     // [GAMEPLAY_AGENT] Initialize chat state
     registry_.emplace<ChatComponent>(entity);
+
+    // [GAMEPLAY_AGENT] Initialize trade state
+    registry_.emplace<TradeComponent>(entity);
 
     // Update mappings
     connectionToEntity_[connectionId] = entity;

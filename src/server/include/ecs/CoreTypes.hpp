@@ -113,6 +113,11 @@ struct InputState {
     uint8_t itemSlot{0};       // 0=no item use, 1-24=inventory slot to consume
     uint8_t chatChannel{0};    // 0=no chat, 1=local, 2=global, 3=whisper, 4=party, 5=guild
     uint32_t craftingRecipeId{0}; // 0=no craft, >0=recipe ID to craft
+    uint8_t tradeAction{0};     // 0=no trade, 1=request, 2=accept, 3=decline, 4=cancel, 5=lock, 6=unlock, 7=confirm
+    uint8_t tradeSlotIndex{0};  // For addItem: inventory slot, for removeItem: trade slot
+    uint32_t tradeItemId{0};    // Item to add to trade offer (0=none)
+    uint32_t tradeQuantity{0};  // Quantity for trade item
+    float tradeGoldOffer{0.0f}; // Gold to offer in trade
 
     // Initialize all bits to 0
     InputState() : forward(0), backward(0), left(0), right(0),
@@ -914,5 +919,75 @@ struct GuildComponent {
 // Guild configuration
 static constexpr uint32_t MAX_GUILD_SIZE = 100;
 static constexpr uint32_t GUILD_NAME_MAX = 32;
+
+// ============================================================================
+// TRADING SYSTEM
+// ============================================================================
+
+// Trade state machine
+enum class TradeState : uint8_t {
+    None       = 0,  // Not trading
+    Pending    = 1,  // Trade request sent, awaiting response
+    Active     = 2,  // Both players in trade, adding items
+    Locked     = 3,  // One side locked (waiting for other)
+    BothLocked = 4,  // Both sides locked, awaiting confirmation
+    Confirmed  = 5   // Both confirmed, trade executing
+};
+
+// Maximum items a player can offer in a single trade
+static constexpr uint32_t MAX_TRADE_SLOTS = 8;
+
+// A single offered item in a trade
+struct TradeSlot {
+    uint32_t itemId{0};
+    uint32_t quantity{0};
+
+    bool isEmpty() const { return itemId == 0 || quantity == 0; }
+};
+
+// Per-player trade state
+struct TradeComponent {
+    TradeState state{TradeState::None};
+    EntityID tradePartner{entt::null};         // The other player
+    TradeSlot offeredItems[MAX_TRADE_SLOTS];   // Items this player is offering
+    float offeredGold{0.0f};                   // Gold this player is offering
+    bool locked{false};                         // Player has locked their offer
+    bool confirmed{false};                      // Player has confirmed the trade
+
+    // Count non-empty offered items
+    uint32_t offeredItemCount() const {
+        uint32_t count = 0;
+        for (uint32_t i = 0; i < MAX_TRADE_SLOTS; ++i) {
+            if (!offeredItems[i].isEmpty()) count++;
+        }
+        return count;
+    }
+
+    // Find first empty trade slot
+    int32_t findEmptySlot() const {
+        for (uint32_t i = 0; i < MAX_TRADE_SLOTS; ++i) {
+            if (offeredItems[i].isEmpty()) return static_cast<int32_t>(i);
+        }
+        return -1;
+    }
+
+    // Reset to clean state
+    void reset() {
+        state = TradeState::None;
+        tradePartner = entt::null;
+        for (uint32_t i = 0; i < MAX_TRADE_SLOTS; ++i) {
+            offeredItems[i] = TradeSlot{};
+        }
+        offeredGold = 0.0f;
+        locked = false;
+        confirmed = false;
+    }
+};
+
+// Trade configuration
+struct TradeConfig {
+    float maxTradeDistance{10.0f};   // Max distance between trading players (meters)
+    uint32_t tradeTimeoutMs{60000}; // Trade expires after 60s of inactivity
+};
 
 } // namespace DarkAges

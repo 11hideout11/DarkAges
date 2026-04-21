@@ -9,6 +9,7 @@
 #include "combat/ItemSystem.hpp"
 #include "combat/ChatSystem.hpp"
 #include "combat/CraftingSystem.hpp"
+#include "combat/TradeSystem.hpp"
 #include "netcode/NetworkManager.hpp"
 #include "netcode/ProtobufProtocol.hpp"
 #include "security/AntiCheat.hpp"
@@ -185,6 +186,11 @@ void InputHandler::validateAndApplyInput(EntityID entity, const ClientInputPacke
     // Process crafting request (can happen alongside other actions)
     if (input.input.craftingRecipeId > 0) {
         processCraftingInput(entity, input.input.craftingRecipeId, currentTimeMs);
+    }
+
+    // Process trade action (separate from combat/item actions)
+    if (input.input.tradeAction > 0) {
+        processTradeInput(entity, input, currentTimeMs);
     }
 }
 
@@ -460,6 +466,63 @@ void InputHandler::processCraftingInput(EntityID entity, uint32_t recipeId,
                 }
             }
         }
+    }
+}
+
+void InputHandler::processTradeInput(EntityID entity, const ClientInputPacket& input,
+                                      uint32_t currentTimeMs) {
+    if (!tradeSystem_) return;
+
+    auto& registry = server_.getRegistry();
+    uint8_t action = input.input.tradeAction;
+
+    switch (action) {
+        case 1: { // Trade request — targetEntity is the target player
+            EntityID target = static_cast<EntityID>(input.input.targetEntity);
+            tradeSystem_->sendTradeRequest(registry, entity, target, currentTimeMs);
+            break;
+        }
+        case 2: { // Accept trade — targetEntity is the initiator
+            EntityID initiator = static_cast<EntityID>(input.input.targetEntity);
+            tradeSystem_->acceptTrade(registry, entity, initiator, currentTimeMs);
+            break;
+        }
+        case 3: { // Decline trade — targetEntity is who sent the request
+            EntityID from = static_cast<EntityID>(input.input.targetEntity);
+            tradeSystem_->declineTrade(registry, entity, from);
+            break;
+        }
+        case 4: { // Cancel trade
+            tradeSystem_->cancelTrade(registry, entity);
+            break;
+        }
+        case 5: { // Add item to trade — tradeItemId, tradeQuantity
+            tradeSystem_->addItem(registry, entity,
+                                   input.input.tradeItemId, input.input.tradeQuantity);
+            break;
+        }
+        case 6: { // Remove item from trade — tradeSlotIndex
+            tradeSystem_->removeItem(registry, entity, input.input.tradeSlotIndex);
+            break;
+        }
+        case 7: { // Set gold offer
+            tradeSystem_->setGoldOffer(registry, entity, input.input.tradeGoldOffer);
+            break;
+        }
+        case 8: { // Lock trade
+            tradeSystem_->lockTrade(registry, entity);
+            break;
+        }
+        case 9: { // Unlock trade
+            tradeSystem_->unlockTrade(registry, entity);
+            break;
+        }
+        case 10: { // Confirm trade
+            tradeSystem_->confirmTrade(registry, entity, currentTimeMs);
+            break;
+        }
+        default:
+            break;
     }
 }
 

@@ -29,6 +29,7 @@
 #include "combat/ChatSystem.hpp"
 #include "combat/QuestSystem.hpp"
 #include "combat/CraftingSystem.hpp"
+#include "combat/TradeSystem.hpp"
 #include "security/AntiCheat.hpp"
 #include "profiling/PerfettoProfiler.hpp"
 #include "profiling/PerformanceMonitor.hpp"
@@ -191,6 +192,7 @@ public:
     [[nodiscard]] QuestSystem& getQuestSystem() { return questSystem_; }
     [[nodiscard]] ChatSystem& getChatSystem() { return chatSystem_; }
     [[nodiscard]] CraftingSystem& getCraftingSystem() { return craftingSystem_; }
+    [[nodiscard]] TradeSystem& getTradeSystem() { return tradeSystem_; }
     [[nodiscard]] LagCompensator* getLagCompensatorPtr() { return &lagCompensator_; }
     [[nodiscard]] MovementSystem& getMovementSystemRef() { return movementSystem_; }
     [[nodiscard]] Security::AntiCheatSystem& getAntiCheatRef() { return antiCheat_; }
@@ -256,6 +258,7 @@ private:
     ChatSystem chatSystem_;
     QuestSystem questSystem_;
     CraftingSystem craftingSystem_;
+    TradeSystem tradeSystem_;
     LagCompensator lagCompensator_;
 
     // [SECURITY_AGENT] Anti-cheat system

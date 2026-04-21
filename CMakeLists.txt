@@ -430,6 +430,7 @@ set(SERVER_SOURCES
     src/server/src/combat/CombatSystem.cpp
     src/server/src/combat/AbilitySystem.cpp
     src/server/src/combat/CraftingSystem.cpp
+    src/server/src/combat/TradeSystem.cpp
     src/server/src/combat/StatusEffectSystem.cpp
     src/server/src/combat/ProjectileSystem.cpp
     src/server/src/combat/NPCAISystem.cpp
@@ -440,6 +441,7 @@ set(SERVER_SOURCES
     src/server/src/combat/PartySystem.cpp
     src/server/src/combat/GuildSystem.cpp
     src/server/src/combat/CraftingSystem.cpp
+    src/server/src/combat/TradeSystem.cpp
     src/server/src/combat/PositionHistory.cpp
     src/server/src/combat/LagCompensatedCombat.cpp
     src/server/src/zones/AreaOfInterest.cpp
@@ -781,6 +783,7 @@ if(BUILD_TESTS AND TARGET Catch2::Catch2WithMain)
         src/server/tests/TestChatSystem.cpp
         src/server/tests/TestNavigationGrid.cpp
         src/server/tests/TestCraftingSystem.cpp
+        src/server/tests/TestTradeSystem.cpp
         src/server/tests/TestPartyGuildSystem.cpp
     )
 
