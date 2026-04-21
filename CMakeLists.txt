@@ -820,7 +820,7 @@ if(BUILD_TESTS AND TARGET Catch2::Catch2WithMain)
     )
     
     enable_testing()
-    add_test(NAME unit_tests COMMAND darkages_tests --reporter console)
+    add_test(NAME unit_tests COMMAND darkages_tests --reporter compact)
     
     # Individual test suites for CI/CD reporting
     add_test(NAME test_spatial COMMAND darkages_tests "[spatial]")

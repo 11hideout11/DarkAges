@@ -2,8 +2,8 @@
 
 ## Project State (Updated 2026-04-20)
 
-**Phase 8: COMPLETE** — All 8 work packages finished.
-**917 test cases** across **72 test files**, **5,286 assertions**. All passing (11 suites).
+**Phase 8: COMPLETE** — All core gameplay systems implemented.
+**972 test cases** across **74 test files**, **5,457 assertions**. All passing (11 suites).
 **~56K LOC** total. Server: ~26K lines C++ (EnTT ECS, 60Hz tick loop).
 
 ### Build
@@ -21,7 +21,7 @@ cd build_validate && ctest --output-on-failure -j8
 - **Zones**: `ZoneServer`, `ZoneOrchestrator`, `EntityMigration`, `ZoneHandoff`
 - **Security**: `PacketValidator`, `AntiCheat`, `StatisticalDetector`, `MovementValidator`, `RateLimiter`
 - **Monitoring**: `MetricsExporter` (Prometheus/Grafana)
-- **Gameplay Systems**: `CombatSystem`, `AbilitySystem`, `ItemSystem`, `QuestSystem`, `ChatSystem`, `CraftingSystem`, `NPCAISystem`, `ExperienceSystem`, `LootSystem`, `ProjectileSystem`, `StatusEffectSystem`
+- **Gameplay Systems**: `CombatSystem`, `AbilitySystem`, `NPCAI` + Pathfinding, `PartySystem`, `GuildSystem`, `LootSystem`, `XP`/Progression, `Inventory`, `Items`, `Consumables`, `Quests`, `Chat` (Party/Guild routing), `Crafting`
 
 ### Key Gotchas
 - `Protocol.cpp` depends on GNS types — excluded when `ENABLE_GNS=OFF`
@@ -47,7 +47,6 @@ cd build_validate && ctest --output-on-failure -j8
 - **Crafting**: Recipe registry, material consumption, instant/timed crafting, profession XP
 
 ### Remaining Gameplay Gaps
-- Guild/party system (ChatSystem has placeholder routing ready)
 - NPC dialogue system (quest hand-in uses programmatic flow, not dialogue trees)
 - Trading between players
 - Zone events / world bosses

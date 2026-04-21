@@ -1,6 +1,6 @@
 {
-  "timestamp": 1776740777.962522,
-  "git_head": "eb8e5cad16363fc50188ae33e4b4a68e994ed3ae",
+  "timestamp": 1776788144.3473744,
+  "git_head": "ae60905f166cf66b1376c5af9015ff3ff6fb5b2d",
   "tasks": [
     {
       "priority": "P1",
@@ -15,45 +15,15 @@
     },
     {
       "priority": "P2",
-      "category": "test",
-      "title": "Add tests for GuildSystem",
-      "description": "No test file found for src/server/src/combat/GuildSystem.cpp",
-      "files": [
-        "src/server/src/combat/GuildSystem.cpp"
-      ],
-      "estimated_hours": 1.0
-    },
-    {
-      "priority": "P2",
-      "category": "test",
-      "title": "Add tests for PartySystem",
-      "description": "No test file found for src/server/src/combat/PartySystem.cpp",
-      "files": [
-        "src/server/src/combat/PartySystem.cpp"
-      ],
-      "estimated_hours": 1.0
-    },
-    {
-      "priority": "P2",
       "category": "docs",
       "title": "Update 3 stale documentation files",
       "description": "Documentation references old project state \u2014 needs alignment with current implementation",
       "files": [
-        "DOCUMENTATION_SYNC_REPORT.md",
         "DarkAges_Comprehensive_Review.md",
-        "PROJECT_STATUS.md"
+        "PROJECT_STATUS.md",
+        "DOCUMENTATION_SYNC_REPORT.md"
       ],
       "estimated_hours": 2.0
-    },
-    {
-      "priority": "P3",
-      "category": "refactor",
-      "title": "Refactor NPCAISystem.cpp (730 lines)",
-      "description": "File is 730 lines with cleanup potential",
-      "files": [
-        "src/server/src/combat/NPCAISystem.cpp"
-      ],
-      "estimated_hours": 3.0
     },
     {
       "priority": "P3",

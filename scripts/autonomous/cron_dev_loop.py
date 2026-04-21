@@ -372,6 +372,7 @@ def implement_refactor_task(task):
 def _extract_public_methods(source_content):
     """Extract public method signatures from source content.
     Returns list of (class_name, method_name, return_type, params).
+    Filters noise from macro invocations, lambda captures, and comment snippets.
     """
     methods = []
     # Match: ReturnType ClassName::methodName(params)
@@ -379,6 +380,15 @@ def _extract_public_methods(source_content):
     for m in re.finditer(pattern, source_content):
         class_name, method_name, params = m.group(1), m.group(2), m.group(3).strip()
         if method_name.startswith('_') or method_name in ('getInternal',):
+            continue
+        # Filter noise: reject if method name looks like a variable, macro, or number
+        if not method_name[0].isalpha() and method_name[0] != '_':
+            continue
+        # Reject if name contains non-identifier chars (macro-like: RATE_(, SIZE(, etc.)
+        if not method_name.replace('_', '').isalnum():
+            continue
+        # Reject numeric-looking single tokens (e.g. "2" in "compensation(2-second history buffer)")
+        if method_name.isdigit():
             continue
         methods.append((class_name, method_name, params))
     return methods
