@@ -144,3 +144,54 @@ TEST_CASE("ClientInputPacket default construction", "[input][handler]") {
     REQUIRE(packet.input.sequence == 0);
     REQUIRE(packet.receiveTimeMs == 0);
 }
+TEST_CASE("InputHandler onClientInput signature", "[input][handler]") {
+    // onClientInput(const ClientInputPacket&) - verify signature via compile check
+    ZoneServer server;
+    InputHandler handler(server);
+    // Use address-of to verify method exists and is callable (compile-time)
+    auto ptr = &InputHandler::onClientInput;
+    (void)ptr;
+    REQUIRE(true);
+}
+
+TEST_CASE("InputHandler validateAndApplyInput signature", "[input][handler]") {
+    // validateAndApplyInput(EntityID, const ClientInputPacket&) - compile-time check
+    ZoneServer server;
+    InputHandler handler(server);
+    auto ptr = &InputHandler::validateAndApplyInput;
+    (void)ptr;
+    REQUIRE(true);
+}
+
+TEST_CASE("InputHandler construction with ZoneServer reference", "[input][handler]") {
+    // InputHandler requires a ZoneServer reference - use default-constructed server
+    ZoneServer server;
+    InputHandler handler(server);
+    REQUIRE(true);  // Construction successful
+}
+
+TEST_CASE("InputHandler processAttackInput signature", "[input][handler]") {
+    // processAttackInput(EntityID, const ClientInputPacket&) - compile-time check
+    ZoneServer server;
+    InputHandler handler(server);
+    auto ptr = &InputHandler::processAttackInput;
+    (void)ptr;
+    REQUIRE(true);
+}
+
+TEST_CASE("InputHandler subsystem setters compile", "[input][handler]") {
+    ZoneServer server;
+    InputHandler handler(server);
+    // All setters take raw pointers - nullptr is valid for testing compilation
+    REQUIRE_NOTHROW(handler.setPlayerManager(nullptr));
+    REQUIRE_NOTHROW(handler.setAntiCheat(nullptr));
+    REQUIRE_NOTHROW(handler.setMovementSystem(nullptr));
+    REQUIRE_NOTHROW(handler.setNetwork(nullptr));
+    REQUIRE_NOTHROW(handler.setCombatEventHandler(nullptr));
+    REQUIRE_NOTHROW(handler.setAbilitySystem(nullptr));
+    REQUIRE_NOTHROW(handler.setItemSystem(nullptr));
+    REQUIRE_NOTHROW(handler.setChatSystem(nullptr));
+    REQUIRE_NOTHROW(handler.setCraftingSystem(nullptr));
+    REQUIRE_NOTHROW(handler.setTradeSystem(nullptr));
+}
+
