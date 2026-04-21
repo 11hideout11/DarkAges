@@ -13,6 +13,14 @@ BUILD_DIR = REPO / "build_validate"
 LOG_FILE = REPO / "AUTONOMOUS_LOG.md"
 DISCOVER = REPO / "scripts/autonomous" / "discover_tasks.py"
 
+# Prevent git from hanging on prompts (interactive SSH, credential helpers, etc.)
+os.environ.setdefault("GIT_TERMINAL_PROMPT", "0")
+os.environ.setdefault("GIT_ASK_PASS", "/bin/true")
+os.environ.setdefault("GITHUB_TOKEN", "")  # clear any stale token
+
+# Timeout for git operations (network ops can hang indefinitely)
+GIT_TIMEOUT = 30
+
 CMAKE_CMD = [
     "cmake", "-S", str(REPO), "-B", str(BUILD_DIR),
     "-DBUILD_TESTS=ON", "-DFETCH_DEPENDENCIES=ON",
@@ -45,9 +53,10 @@ def discover_tasks(limit=3):
         print(f"[discover] Bad JSON output: {out[:300]}")
         return []
 
-def git(*args):
-    """Run a git command in the repo."""
-    return run(["git", "-C", str(REPO)] + list(args))
+def git(*args, **kwargs):
+    """Run a git command in the repo with a short timeout."""
+    kwargs.setdefault("timeout", GIT_TIMEOUT)
+    return run(["git", "-C", str(REPO)] + list(args), **kwargs)
 
 def build():
     """Configure + build. Returns (ok, error_snippet)."""

@@ -145,3 +145,4 @@ src/server/build/
 
 # Build variants
 /build_*/
+.task_cache.json
