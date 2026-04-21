@@ -442,6 +442,7 @@ set(SERVER_SOURCES
     src/server/src/combat/GuildSystem.cpp
     src/server/src/combat/CraftingSystem.cpp
     src/server/src/combat/TradeSystem.cpp
+    src/server/src/combat/ZoneEventSystem.cpp
     src/server/src/combat/PositionHistory.cpp
     src/server/src/combat/LagCompensatedCombat.cpp
     src/server/src/zones/AreaOfInterest.cpp
@@ -771,19 +772,18 @@ if(BUILD_TESTS AND TARGET Catch2::Catch2WithMain)
         src/server/tests/TestConstants.cpp
         src/server/tests/TestNetworkManager.cpp
         src/server/tests/TestRedisManager.cpp
-        src/server/tests/TestRedisInternal.cpp
         src/server/tests/TestZoneDefinition.cpp
         src/server/tests/BenchmarkTick.cpp
         src/server/tests/TestLoadTesting.cpp
         src/server/tests/TestStatusEffectSystem.cpp
         src/server/tests/TestStatusEffectCombatIntegration.cpp
-        src/server/tests/TestExperienceSystem.cpp
         src/server/tests/TestItemSystem.cpp
         src/server/tests/TestQuestSystem.cpp
         src/server/tests/TestChatSystem.cpp
         src/server/tests/TestNavigationGrid.cpp
         src/server/tests/TestCraftingSystem.cpp
         src/server/tests/TestTradeSystem.cpp
+        src/server/tests/TestZoneEventSystem.cpp
         src/server/tests/TestPartyGuildSystem.cpp
     )
 

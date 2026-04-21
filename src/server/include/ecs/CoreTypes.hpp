@@ -990,4 +990,183 @@ struct TradeConfig {
     uint32_t tradeTimeoutMs{60000}; // Trade expires after 60s of inactivity
 };
 
+// ============================================================================
+// ZONE EVENT SYSTEM
+// ============================================================================
+
+// Zone event type — determines the event structure
+enum class ZoneEventType : uint8_t {
+    WorldBoss     = 0,  // Single powerful boss spawns, all players can attack
+    WaveDefense   = 1,  // Waves of enemies, survive all waves
+    Territory     = 2,  // Capture and hold a point
+    Invasion      = 3,  // NPCs attack a location, players defend
+    TimedKill     = 4   // Kill as many as possible in a time limit
+};
+
+// Event objective types
+enum class EventObjectiveType : uint8_t {
+    KillNPC       = 0,  // Kill N NPCs of a specific archetype
+    KillBoss      = 1,  // Kill the world boss
+    SurviveTime   = 2,  // Survive for N seconds
+    TotalDamage   = 3,  // Deal N total damage
+    PlayerDeaths  = 4,  // Keep player deaths below N
+    ProtectEntity = 5   // Keep an entity alive
+};
+
+// A single objective within an event phase
+struct ZoneEventObjective {
+    EventObjectiveType type{EventObjectiveType::KillNPC};
+    uint32_t targetId{0};           // NPC archetype ID, boss entity ID, etc.
+    uint32_t requiredCount{1};      // Target count to complete
+    char description[64]{0};        // Human-readable description
+};
+
+// Maximum objectives per phase
+static constexpr uint32_t MAX_EVENT_OBJECTIVES = 4;
+
+// Event phase definition — one stage of a multi-phase event
+struct ZoneEventPhaseDefinition {
+    uint32_t phaseId{0};
+    char name[48]{0};
+    char description[128]{0};
+    uint32_t durationMs{0};         // Phase time limit (0 = no limit)
+    uint32_t npcArchetypeId{0};     // NPC type to spawn this phase (0 = none)
+    uint32_t npcCount{0};           // How many NPCs to spawn
+    uint8_t npcLevel{1};            // Level of spawned NPCs
+    uint32_t bossNpcArchetypeId{0}; // Boss NPC to spawn (0 = none)
+    uint8_t bossLevel{1};           // Boss level
+    ZoneEventObjective objectives[MAX_EVENT_OBJECTIVES];
+    uint32_t objectiveCount{0};
+};
+
+// Maximum phases per event
+static constexpr uint32_t MAX_EVENT_PHASES = 4;
+
+// Event reward
+struct ZoneEventReward {
+    uint32_t xpReward{0};           // XP for participation
+    uint32_t goldReward{0};         // Gold for participation
+    uint32_t bonusItemId{0};        // Bonus item for top contributor (0 = none)
+    uint32_t bonusItemQuantity{0};
+};
+
+// Zone event definition — describes a complete event
+struct ZoneEventDefinition {
+    uint32_t eventId{0};
+    char name[48]{0};
+    char description[128]{0};
+    ZoneEventType type{ZoneEventType::WorldBoss};
+    ZoneEventPhaseDefinition phases[MAX_EVENT_PHASES];
+    uint32_t phaseCount{0};
+    ZoneEventReward reward{};
+    uint32_t cooldownMs{300000};    // Time before event can repeat (5 min default)
+    float spawnX{0.0f};             // Event spawn location
+    float spawnZ{0.0f};
+    float spawnRadius{20.0f};       // Spawn area radius
+    uint32_t requiredPlayers{1};    // Min players to start (0 = auto-start)
+    uint32_t maxParticipants{0};    // Max participants (0 = unlimited)
+};
+
+// Event state
+enum class ZoneEventState : uint8_t {
+    Inactive    = 0,  // Not running
+    Announcing  = 1,  // Announcing event start to players
+    Active      = 2,  // Running, players participating
+    Completing  = 3,  // All objectives met, distributing rewards
+    Cooldown    = 4   // Cooling down before next availability
+};
+
+// Per-player participation tracking
+struct EventParticipation {
+    uint64_t playerId{0};
+    uint32_t totalDamage{0};        // Total damage dealt during event
+    uint32_t kills{0};              // Kills during event
+    uint32_t deaths{0};             // Deaths during event
+    bool contributed{false};        // Whether player did anything meaningful
+};
+
+// Maximum participants tracked per event
+static constexpr uint32_t MAX_EVENT_PARTICIPANTS = 50;
+
+// Active event instance state
+struct ActiveZoneEvent {
+    ZoneEventState state{ZoneEventState::Inactive};
+    const ZoneEventDefinition* definition{nullptr};  // Pointer to definition (not owned)
+    uint32_t currentPhase{0};                           // Current phase index
+    uint32_t phaseStartTimeMs{0};                       // When current phase started
+    uint32_t eventStartTimeMs{0};                       // When event started
+    uint32_t lastStateChangeMs{0};                      // Last state transition time
+    uint32_t announcementEndTimeMs{0};                  // When announcement phase ends
+    EntityID bossEntity{entt::null};                    // Spawned boss entity (if any)
+    EventParticipation participants[MAX_EVENT_PARTICIPANTS];
+    uint32_t participantCount{0};
+
+    // Per-objective progress (aggregated across all participants)
+    uint32_t objectiveProgress[MAX_EVENT_OBJECTIVES]{0, 0, 0, 0};
+
+    bool isActive() const {
+        return state == ZoneEventState::Active || state == ZoneEventState::Announcing;
+    }
+
+    bool isComplete() const {
+        return state == ZoneEventState::Completing;
+    }
+
+    void reset() {
+        state = ZoneEventState::Inactive;
+        definition = nullptr;
+        currentPhase = 0;
+        phaseStartTimeMs = 0;
+        eventStartTimeMs = 0;
+        lastStateChangeMs = 0;
+        announcementEndTimeMs = 0;
+        bossEntity = entt::null;
+        participantCount = 0;
+        for (uint32_t i = 0; i < MAX_EVENT_OBJECTIVES; ++i) {
+            objectiveProgress[i] = 0;
+        }
+        for (uint32_t i = 0; i < MAX_EVENT_PARTICIPANTS; ++i) {
+            participants[i] = EventParticipation{};
+        }
+    }
+
+    // Find or add participant, returns pointer to participation record
+    EventParticipation* findParticipant(uint64_t playerId) {
+        for (uint32_t i = 0; i < participantCount; ++i) {
+            if (participants[i].playerId == playerId) return &participants[i];
+        }
+        return nullptr;
+    }
+
+    const EventParticipation* findParticipant(uint64_t playerId) const {
+        for (uint32_t i = 0; i < participantCount; ++i) {
+            if (participants[i].playerId == playerId) return &participants[i];
+        }
+        return nullptr;
+    }
+
+    EventParticipation* addParticipant(uint64_t playerId) {
+        if (participantCount >= MAX_EVENT_PARTICIPANTS) return nullptr;
+        if (auto* existing = findParticipant(playerId)) return existing;
+        EventParticipation& p = participants[participantCount++];
+        p.playerId = playerId;
+        return &p;
+    }
+};
+
+// Zone event configuration
+struct ZoneEventConfig {
+    uint32_t announcementDurationMs{15000};     // How long to announce before start (15s)
+    float participationRange{100.0f};           // Max distance to count as participant
+    uint32_t minDamageForReward{100};           // Min damage dealt to earn rewards
+    float topContributorBonusMultiplier{2.0f};  // Reward multiplier for top contributor
+};
+
+// Per-player event component — tracks current event participation
+struct ZoneEventComponent {
+    uint32_t activeEventId{0};      // Event the player is in (0 = none)
+    bool inEvent{false};            // Whether player is participating
+    uint32_t joinTimeMs{0};         // When player joined
+};
+
 } // namespace DarkAges

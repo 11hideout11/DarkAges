@@ -139,12 +139,20 @@ bool ZoneServer::initialize(const ZoneConfig& config) {
         if (const NPCStats* stats = registry_.try_get<NPCStats>(victim)) {
             questSystem_.onNPCKilled(registry_, killer,
                                      static_cast<uint32_t>(stats->archetype));
+            // [GAMEPLAY_AGENT] Track kill for zone event objectives
+            zoneEventSystem_.onNPCKilled(registry_, killer, victim,
+                                         static_cast<uint32_t>(stats->archetype),
+                                         getCurrentTimeMs());
         }
     });
 
     combatSystem_.setOnDamage([this](EntityID attacker, EntityID target,
                                      int16_t damage, const Position& location) {
         combatEventHandler_.sendCombatEvent(attacker, target, damage, location);
+        // Track damage for zone event participation
+        zoneEventSystem_.onDamageDealt(registry_, attacker, target,
+                                       static_cast<uint32_t>(std::abs(damage)),
+                                       getCurrentTimeMs());
     });
 
     // [COMBAT_AGENT] Wire status effect system into combat system for Buff/Debuff/Status abilities
@@ -234,6 +242,15 @@ bool ZoneServer::initialize(const ZoneConfig& config) {
     tradeSystem_.setItemSystem(&itemSystem_);
     tradeSystem_.setChatSystem(&chatSystem_);
     inputHandler_.setTradeSystem(&tradeSystem_);
+
+    // [GAMEPLAY_AGENT] Initialize zone event system
+    zoneEventSystem_.setChatSystem(&chatSystem_);
+    zoneEventSystem_.setExperienceSystem(&experienceSystem_);
+    zoneEventSystem_.setItemSystem(&itemSystem_);
+    zoneEventSystem_.setBossSpawnCallback([this](float x, float z, uint8_t level) -> EntityID {
+        Position spawnPos = Position::fromVec3(glm::vec3(x, 0, z));
+        return spawnNPC(spawnPos, level, 20, 25.0f, 50.0f, 3.0f, 500, 0);
+    });
 
     // [GAMEPLAY_AGENT] Wire level-up into quest tracking
     experienceSystem_.setLevelUpCallback([this](EntityID player, uint32_t newLevel) {
@@ -704,6 +721,9 @@ void ZoneServer::updateGameLogic() {
     // [GAMEPLAY_AGENT] Update trade system — handle timeouts
     tradeSystem_.update(registry_, getCurrentTimeMs());
 
+    // [GAMEPLAY_AGENT] Update zone event system — handle event lifecycle
+    zoneEventSystem_.update(registry_, getCurrentTimeMs());
+
     // Process pending respawns
     combatEventHandler_.processRespawns();
 
@@ -1083,6 +1103,9 @@ EntityID ZoneServer::spawnPlayer(ConnectionID connectionId, uint64_t playerId,
 
     // [GAMEPLAY_AGENT] Initialize trade state
     registry_.emplace<TradeComponent>(entity);
+
+    // [GAMEPLAY_AGENT] Initialize zone event participation state
+    registry_.emplace<ZoneEventComponent>(entity);
 
     // Update mappings
     connectionToEntity_[connectionId] = entity;

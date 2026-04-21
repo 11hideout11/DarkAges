@@ -1,10 +1,10 @@
 # DarkAges MMO - Agent Context
 
-## Project State (Updated 2026-04-20)
+## Project State (Updated 2026-04-21)
 
 **Phase 8: COMPLETE** — All core gameplay systems implemented.
-**972 test cases** across **74 test files**, **5,457 assertions**. All passing (11 suites).
-**~56K LOC** total. Server: ~26K lines C++ (EnTT ECS, 60Hz tick loop).
+**1070 test cases** across **81 test files**. All passing (11 suites).
+**~58K LOC** total. Server: ~28K lines C++ (EnTT ECS, 60Hz tick loop).
 
 ### Build
 ```bash
@@ -45,11 +45,11 @@ cd build_validate && ctest --output-on-failure -j8
 - **Quests**: Accept/track/complete, kill/collect/level objectives, rewards
 - **Chat**: Local/Global/Whisper/Party/Guild channels, rate limiting, mute
 - **Crafting**: Recipe registry, material consumption, instant/timed crafting, profession XP
+- **Trading**: Player-to-player item and gold exchange, trade request/accept/decline, item escrow, lock/confirm flow, timeout handling
+- **Zone Events**: World bosses, wave defense, timed kill events. Multi-phase with objectives, participation tracking, scaled rewards, boss spawning via callbacks
 
 ### Remaining Gameplay Gaps
 - NPC dialogue system (quest hand-in uses programmatic flow, not dialogue trees)
-- Trading between players
-- Zone events / world bosses
 
 ### Phase 9 Focus
 - Performance testing infrastructure
@@ -58,8 +58,11 @@ cd build_validate && ctest --output-on-failure -j8
 - Documentation alignment with actual implementation status
 
 ### Autonomous Cron Jobs
-- Hourly (c5d9): Quick tasks, `once` mode — discover → implement → build → test → commit
-- 4-hourly (6ec7): Deep iteration, `deep` mode — 3 tasks per run
+- Every 6h (c5d9): Quick tasks, `once` mode — backlog → discovery → fallback
+- Twice daily 9am/9pm (6ec7): Deep iteration, `deep` mode — 3 tasks per run
 - Orchestrator: `scripts/autonomous/cron_dev_loop.py`
+- Task backlog: `scripts/autonomous/task_backlog.json` (18 test-expansion tasks)
+- Behavioral test generator: `scripts/autonomous/generate_behavioral_tests.py`
 - Discovery: `scripts/autonomous/discover_tasks.py`
 - Test matrix: `build_validate` directory
+
