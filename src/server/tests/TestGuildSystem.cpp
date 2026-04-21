@@ -15,5 +15,16 @@ namespace test {
         static_assert(sizeof(GuildSystem) > 0, "GuildSystem should be a complete type");
         REQUIRE(sizeof(GuildSystem) > 0);
     }
+    TEST_CASE("GuildSystem - GuildData has nonzero size", "[guildsystem]") {
+        // Verify GuildData is a complete type
+        static_assert(sizeof(GuildData) > 0, "GuildData should be a complete type");
+        REQUIRE(sizeof(GuildData) > 0);
+    }
+    TEST_CASE("GuildSystem - PendingInvite has nonzero size", "[guildsystem]") {
+        // Verify PendingInvite is a complete type
+        static_assert(sizeof(PendingInvite) > 0, "PendingInvite should be a complete type");
+        REQUIRE(sizeof(PendingInvite) > 0);
+    }
+
 } // namespace test
 } // namespace DarkAges

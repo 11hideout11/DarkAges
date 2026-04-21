@@ -437,6 +437,8 @@ set(SERVER_SOURCES
     src/server/src/combat/ItemSystem.cpp
     src/server/src/combat/QuestSystem.cpp
     src/server/src/combat/ChatSystem.cpp
+    src/server/src/combat/PartySystem.cpp
+    src/server/src/combat/GuildSystem.cpp
     src/server/src/combat/CraftingSystem.cpp
     src/server/src/combat/PositionHistory.cpp
     src/server/src/combat/LagCompensatedCombat.cpp
@@ -779,6 +781,7 @@ if(BUILD_TESTS AND TARGET Catch2::Catch2WithMain)
         src/server/tests/TestChatSystem.cpp
         src/server/tests/TestNavigationGrid.cpp
         src/server/tests/TestCraftingSystem.cpp
+        src/server/tests/TestPartyGuildSystem.cpp
     )
 
     # Conditionally include tests for optional features

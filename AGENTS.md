@@ -36,6 +36,7 @@ cd build_validate && ctest --output-on-failure -j8
 - **Combat**: Melee attacks, damage, lag compensation, hit detection
 - **Abilities**: 4-slot loadout, casting, cooldowns, mana costs, damage/heal effects
 - **NPC AI**: Idle/Wander/Chase/Attack/Flee behaviors, aggro, leash, archetype configs
+- **NPC Pathfinding**: A* grid-based pathfinding with 8-directional movement, line-of-sight checks, path caching. NPCs navigate around obstacles during chase/wander/flee. Falls back to direct movement when no grid is configured or LOS is clear.
 - **Loot**: Drop tables, loot entities, pickup, despawn timers
 - **XP/Progression**: Kill XP, level-up, stat points
 - **Inventory**: 24-slot, stacking, add/remove, equip/unequip
@@ -46,7 +47,6 @@ cd build_validate && ctest --output-on-failure -j8
 - **Crafting**: Recipe registry, material consumption, instant/timed crafting, profession XP
 
 ### Remaining Gameplay Gaps
-- Pathfinding (NPCs still move in straight lines)
 - Guild/party system (ChatSystem has placeholder routing ready)
 - NPC dialogue system (quest hand-in uses programmatic flow, not dialogue trees)
 - Trading between players

@@ -59,6 +59,16 @@ set(TEST_SOURCES
     TestQuestSystem.cpp
     TestChatSystem.cpp
     TestNavigationGrid.cpp
+    TestPartyGuildSystem.cpp
+    TestCraftingSystem.cpp
+    TestNPCAISystem.cpp
+    TestItemSystem.cpp
+    TestExperienceSystem.cpp
+    TestStatusEffectSystem.cpp
+    TestProjectileSystem.cpp
+    TestAbilitySystem.cpp
+    TestStatusEffectCombatIntegration.cpp
+    TestZoneServer.cpp
 )
 
 # Conditional test sources based on dependencies
@@ -107,6 +117,13 @@ set(TEST_SERVER_SOURCES
     ${CMAKE_SOURCE_DIR}/src/combat/ItemSystem.cpp
     ${CMAKE_SOURCE_DIR}/src/combat/QuestSystem.cpp
     ${CMAKE_SOURCE_DIR}/src/combat/ChatSystem.cpp
+    ${CMAKE_SOURCE_DIR}/src/combat/NPCAISystem.cpp
+    ${CMAKE_SOURCE_DIR}/src/combat/ExperienceSystem.cpp
+    ${CMAKE_SOURCE_DIR}/src/combat/StatusEffectSystem.cpp
+    ${CMAKE_SOURCE_DIR}/src/combat/ProjectileSystem.cpp
+    ${CMAKE_SOURCE_DIR}/src/combat/PartySystem.cpp
+    ${CMAKE_SOURCE_DIR}/src/combat/GuildSystem.cpp
+    ${CMAKE_SOURCE_DIR}/src/physics/NavigationGrid.cpp
     ${CMAKE_SOURCE_DIR}/src/zones/InputHandler.cpp
     ${CMAKE_SOURCE_DIR}/src/monitoring/MetricsExporter.cpp
     ${CMAKE_SOURCE_DIR}/src/profiling/PerformanceMonitor.cpp

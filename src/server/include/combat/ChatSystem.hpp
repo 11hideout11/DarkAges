@@ -12,6 +12,9 @@
 
 namespace DarkAges {
 
+class PartySystem;  // Forward declaration
+class GuildSystem;  // Forward declaration
+
 class ChatSystem {
 public:
     ChatSystem() = default;
@@ -84,6 +87,12 @@ public:
         nearbyEntitiesCallback_ = std::move(cb);
     }
 
+    // Set party system for party chat routing
+    void setPartySystem(PartySystem* ps) { partySystem_ = ps; }
+
+    // Set guild system for guild chat routing
+    void setGuildSystem(GuildSystem* gs) { guildSystem_ = gs; }
+
     // --- Statistics ---
 
     [[nodiscard]] uint32_t getTotalMessagesProcessed() const { return totalMessagesProcessed_; }
@@ -136,6 +145,10 @@ private:
     MessageDeliveryCallback messageDeliveryCallback_;
     ConnectionLookupCallback connectionLookupCallback_;
     NearbyEntitiesCallback nearbyEntitiesCallback_;
+
+    // Social systems for routing
+    PartySystem* partySystem_{nullptr};
+    GuildSystem* guildSystem_{nullptr};
 };
 
 } // namespace DarkAges

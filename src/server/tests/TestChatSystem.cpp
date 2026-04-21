@@ -389,7 +389,7 @@ TEST_CASE("ChatSystem global chat disabled", "[chat]") {
                                   "Local message", 1000));
 }
 
-TEST_CASE("ChatSystem party chat not yet implemented", "[chat]") {
+TEST_CASE("ChatSystem party chat without party system", "[chat]") {
     Registry registry;
     ChatSystem chatSystem;
 
@@ -399,17 +399,16 @@ TEST_CASE("ChatSystem party chat not yet implemented", "[chat]") {
         return info ? info->connectionId : 0;
     });
 
-    // Party chat should still accept the message (but echo + system warning)
+    // Without a PartySystem set, party chat should send a system warning
     bool sent = chatSystem.sendMessage(registry, player, ChatChannel::Party,
                                         "Party message", 1000);
     CHECK(sent);
 
-    // Should have a system message about party not implemented
     auto msgs = chatSystem.getRecentMessages(registry, player);
     bool foundWarning = false;
     for (const auto& m : msgs) {
         if (m.channel == ChatChannel::System &&
-            std::string(m.content) == "Party system not yet implemented.") {
+            std::string(m.content) == "Party system not available.") {
             foundWarning = true;
             break;
         }
@@ -417,7 +416,7 @@ TEST_CASE("ChatSystem party chat not yet implemented", "[chat]") {
     CHECK(foundWarning);
 }
 
-TEST_CASE("ChatSystem guild chat not yet implemented", "[chat]") {
+TEST_CASE("ChatSystem guild chat without guild system", "[chat]") {
     Registry registry;
     ChatSystem chatSystem;
 
@@ -427,6 +426,7 @@ TEST_CASE("ChatSystem guild chat not yet implemented", "[chat]") {
         return info ? info->connectionId : 0;
     });
 
+    // Without a GuildSystem set, guild chat should send a system warning
     bool sent = chatSystem.sendMessage(registry, player, ChatChannel::Guild,
                                         "Guild message", 1000);
     CHECK(sent);
@@ -435,7 +435,7 @@ TEST_CASE("ChatSystem guild chat not yet implemented", "[chat]") {
     bool foundWarning = false;
     for (const auto& m : msgs) {
         if (m.channel == ChatChannel::System &&
-            std::string(m.content) == "Guild system not yet implemented.") {
+            std::string(m.content) == "Guild system not available.") {
             foundWarning = true;
             break;
         }

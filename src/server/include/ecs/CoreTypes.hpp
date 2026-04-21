@@ -870,4 +870,49 @@ struct CraftingComponent {
     }
 };
 
+// ============================================================================
+// PARTY SYSTEM
+// ============================================================================
+
+// Party role
+enum class PartyRole : uint8_t {
+    None    = 0,  // Not in a party
+    Member  = 1,  // Regular member
+    Leader  = 2   // Party leader
+};
+
+// Party component — attached to players in a party
+struct PartyComponent {
+    uint32_t partyId{0};                // 0 = not in a party
+    PartyRole role{PartyRole::None};
+    bool shareXP{true};                 // Whether XP is shared with party
+};
+
+// Party configuration
+static constexpr uint32_t MAX_PARTY_SIZE = 5;
+static constexpr float PARTY_XP_SHARE_RANGE = 100.0f;  // Meters — XP sharing range
+
+// ============================================================================
+// GUILD SYSTEM
+// ============================================================================
+
+// Guild rank
+enum class GuildRank : uint8_t {
+    None    = 0,  // Not in a guild
+    Member  = 1,  // Regular member
+    Officer = 2,  // Officer — can invite/kick members
+    Leader  = 3   // Guild leader — full control
+};
+
+// Guild component — attached to players in a guild
+struct GuildComponent {
+    uint32_t guildId{0};                // 0 = not in a guild
+    GuildRank rank{GuildRank::None};
+    uint32_t joinTimeMs{0};             // When the player joined
+};
+
+// Guild configuration
+static constexpr uint32_t MAX_GUILD_SIZE = 100;
+static constexpr uint32_t GUILD_NAME_MAX = 32;
+
 } // namespace DarkAges

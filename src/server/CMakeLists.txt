@@ -98,6 +98,14 @@ set(SERVER_SOURCES
     src/combat/AbilitySystem.cpp
     src/combat/CraftingSystem.cpp
     src/combat/ChatSystem.cpp
+    src/combat/NPCAISystem.cpp
+    src/combat/ItemSystem.cpp
+    src/combat/ExperienceSystem.cpp
+    src/combat/StatusEffectSystem.cpp
+    src/combat/ProjectileSystem.cpp
+    src/combat/QuestSystem.cpp
+    src/combat/PartySystem.cpp
+    src/combat/GuildSystem.cpp
     src/monitoring/MetricsExporter.cpp
 )
 
@@ -175,6 +183,14 @@ set(SERVER_HEADERS
     include/combat/AbilitySystem.hpp
     include/combat/CraftingSystem.hpp
     include/combat/ChatSystem.hpp
+    include/combat/NPCAISystem.hpp
+    include/combat/ItemSystem.hpp
+    include/combat/ExperienceSystem.hpp
+    include/combat/StatusEffectSystem.hpp
+    include/combat/ProjectileSystem.hpp
+    include/combat/QuestSystem.hpp
+    include/combat/PartySystem.hpp
+    include/combat/GuildSystem.hpp
 )
 
 # Main executable

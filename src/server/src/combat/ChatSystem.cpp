@@ -2,6 +2,8 @@
 // Manages message routing, validation, rate limiting, and delivery
 
 #include "combat/ChatSystem.hpp"
+#include "combat/PartySystem.hpp"
+#include "combat/GuildSystem.hpp"
 #include "ecs/Components.hpp"
 #include <cstring>
 #include <algorithm>
@@ -275,24 +277,56 @@ void ChatSystem::routeGlobalChat(Registry& registry, const ChatMessage& message)
 
 void ChatSystem::routePartyChat(Registry& registry, EntityID sender,
                                  const ChatMessage& message) {
-    // TODO: Implement when party system is added
-    // For now, deliver to sender only
-    deliverMessage(registry, sender, message);
+    if (!partySystem_) {
+        // No party system — notify sender
+        sendSystemMessage(registry, sender, "Party system not available.",
+                          message.timestampMs);
+        return;
+    }
 
-    // Notify sender that party system is not yet implemented
-    sendSystemMessage(registry, sender, "Party system not yet implemented.",
-                      message.timestampMs);
+    uint32_t partyId = partySystem_->getPartyId(sender);
+    if (partyId == 0) {
+        sendSystemMessage(registry, sender, "You are not in a party.",
+                          message.timestampMs);
+        return;
+    }
+
+    // Get all party members and deliver the message
+    auto members = partySystem_->getPartyMembers(partyId);
+    for (EntityID member : members) {
+        if (member != sender) {  // Don't echo back to sender
+            deliverMessage(registry, member, message);
+        }
+    }
+
+    // Also deliver to sender (confirmation)
+    deliverMessage(registry, sender, message);
 }
 
 void ChatSystem::routeGuildChat(Registry& registry, EntityID sender,
                                  const ChatMessage& message) {
-    // TODO: Implement when guild system is added
-    // For now, deliver to sender only
-    deliverMessage(registry, sender, message);
+    if (!guildSystem_) {
+        sendSystemMessage(registry, sender, "Guild system not available.",
+                          message.timestampMs);
+        return;
+    }
 
-    // Notify sender that guild system is not yet implemented
-    sendSystemMessage(registry, sender, "Guild system not yet implemented.",
-                      message.timestampMs);
+    uint32_t guildId = guildSystem_->getGuildId(sender);
+    if (guildId == 0) {
+        sendSystemMessage(registry, sender, "You are not in a guild.",
+                          message.timestampMs);
+        return;
+    }
+
+    // Get all guild members and deliver the message
+    auto members = guildSystem_->getGuildMembers(guildId);
+    for (EntityID member : members) {
+        if (member != sender) {
+            deliverMessage(registry, member, message);
+        }
+    }
+
+    deliverMessage(registry, sender, message);
 }
 
 } // namespace DarkAges
