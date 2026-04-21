@@ -820,3 +820,14 @@
   - ZoneConfig.autoPopulateNPCs: auto-spawn NPCs on zone init
   - Configurable: count, spawn radius, base level/damage, XP reward
   - Level variation across spawned NPCs
+
+## 2026-04-21 03:30 UTC — Loop run
+**Status:** COMPLETE  
+**Commit:** fa78091  
+**Changes:**
+- Fixed 2 failing tests in TestPartyGuildSystem.cpp (ChatSystem party/guild routing)
+- Root cause: connectionLookupCallback stub returned 0 → deliverMessage never fired messageDeliveryCallback
+- Fix: Return static_cast<ConnectionID>(entity) so entities receive their own chat messages
+- Full suite: 972 test cases, 5457 assertions — all passing
+- Build: Fixed stale CMake state from prior incomplete configure run
+- Tests: 2 fixed, 970 pre-existing passing

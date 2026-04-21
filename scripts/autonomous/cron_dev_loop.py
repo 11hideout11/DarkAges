@@ -51,12 +51,20 @@ def git(*args):
 
 def build():
     """Configure + build. Returns (ok, error_snippet)."""
-    # Skip configure if build dir already exists and is recent
+    # Detect stale build dir: cache exists but Makefile missing
     cache_file = BUILD_DIR / "CMakeCache.txt"
-    if not cache_file.exists():
+    makefile = BUILD_DIR / "Makefile"
+    needs_configure = not cache_file.exists() or not makefile.exists()
+    if needs_configure:
         code, out, err = run(CMAKE_CMD, timeout=120)
         if code != 0:
             return False, f"cmake configure failed: {err[-500:]}"
+        # Verify configure produced a Makefile; if not, cache was stale — reconfigure
+        if not (BUILD_DIR / "Makefile").exists():
+            cache_file.unlink(missing_ok=True)
+            code, out, err = run(CMAKE_CMD, timeout=120)
+            if code != 0:
+                return False, f"cmake reconfigure failed: {err[-500:]}"
     code, out, err = run(BUILD_CMD, timeout=600)
     if code != 0:
         # Return last 30 lines of stderr for debugging
