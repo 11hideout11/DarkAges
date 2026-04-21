@@ -3,7 +3,7 @@
 ## Project State (Updated 2026-04-21)
 
 **Phase 8: COMPLETE** — All core gameplay systems implemented.
-**1106 test cases** across **82 test files**. All passing (11 suites).
+**1127 test cases** across **83 test files**. All passing (11 suites).
 **~59K LOC** total. Server: ~28K lines C++ (EnTT ECS, 60Hz tick loop).
 
 ### Build
