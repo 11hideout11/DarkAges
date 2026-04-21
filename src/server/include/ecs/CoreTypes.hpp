@@ -1169,4 +1169,116 @@ struct ZoneEventComponent {
     uint32_t joinTimeMs{0};         // When player joined
 };
 
+// ============================================================================
+// NPC DIALOGUE SYSTEM
+// ============================================================================
+
+// Dialogue condition types — controls when nodes/responses are available
+enum class DialogueConditionType : uint8_t {
+    None          = 0,  // Always available
+    HasQuest      = 1,  // Player has a specific active quest
+    QuestComplete = 2,  // Player has completed a specific quest
+    QuestNotStarted = 3, // Player has NOT started a specific quest
+    MinLevel      = 4,  // Player level >= required level
+    HasItem       = 5,  // Player has a specific item in inventory
+    NoCondition   = 6   // Explicit no-condition (alias for None)
+};
+
+// A condition that gates dialogue nodes or responses
+struct DialogueCondition {
+    DialogueConditionType type{DialogueConditionType::None};
+    uint32_t targetId{0};       // Quest ID, item ID, or level depending on type
+    uint32_t quantity{1};       // Item quantity (for HasItem)
+};
+
+// Dialogue action types — triggered when a response is selected
+enum class DialogueActionType : uint8_t {
+    None            = 0,  // No action
+    GiveQuest       = 1,  // Give a quest to the player
+    CompleteQuest   = 2,  // Complete a quest (turn-in)
+    GiveItem        = 3,  // Give an item to the player
+    TakeItem        = 4,  // Remove an item from the player
+    GiveGold        = 5,  // Give gold to the player
+    CloseDialogue   = 6   // End the conversation
+};
+
+// An action triggered by selecting a dialogue response
+struct DialogueAction {
+    DialogueActionType type{DialogueActionType::None};
+    uint32_t targetId{0};       // Quest ID, item ID, etc.
+    uint32_t quantity{1};       // Item quantity or gold amount
+};
+
+// Maximum responses per dialogue node
+static constexpr uint32_t MAX_DIALOGUE_RESPONSES = 6;
+// Maximum actions per response
+static constexpr uint32_t MAX_DIALOGUE_ACTIONS = 3;
+// Maximum conditions per node or response
+static constexpr uint32_t MAX_DIALOGUE_CONDITIONS = 3;
+// Maximum nodes per dialogue tree
+static constexpr uint32_t MAX_DIALOGUE_NODES = 16;
+// Max dialogue text length
+static constexpr uint32_t DIALOGUE_TEXT_MAX_LEN = 256;
+// Max NPC name length
+static constexpr uint32_t NPC_NAME_MAX_LEN = 32;
+
+// A player response option within a dialogue node
+struct DialogueResponse {
+    char text[128]{0};                                          // Response text shown to player
+    uint32_t nextNodeId{0};                                     // Node to transition to (0 = end conversation)
+    DialogueCondition conditions[MAX_DIALOGUE_CONDITIONS];      // Conditions to show this response
+    uint32_t conditionCount{0};
+    DialogueAction actions[MAX_DIALOGUE_ACTIONS];               // Actions triggered on selection
+    uint32_t actionCount{0};
+};
+
+// A single node in a dialogue tree
+struct DialogueNode {
+    uint32_t nodeId{0};                                         // Unique within tree
+    char text[DIALOGUE_TEXT_MAX_LEN]{0};                        // NPC says this
+    DialogueResponse responses[MAX_DIALOGUE_RESPONSES];         // Player choices
+    uint32_t responseCount{0};
+    DialogueCondition conditions[MAX_DIALOGUE_CONDITIONS];      // Conditions to show this node
+    uint32_t conditionCount{0};
+    bool isEnd{false};                                          // If true, conversation ends after this node
+};
+
+// Complete dialogue tree — attached to an NPC
+struct DialogueTree {
+    uint32_t treeId{0};                                         // Unique dialogue tree ID
+    char npcName[NPC_NAME_MAX_LEN]{0};                          // NPC display name
+    DialogueNode nodes[MAX_DIALOGUE_NODES];                     // All nodes in the tree
+    uint32_t nodeCount{0};
+    uint32_t greetingNodeId{0};                                 // Starting node ID
+
+    const DialogueNode* findNode(uint32_t nodeId) const {
+        for (uint32_t i = 0; i < nodeCount; ++i) {
+            if (nodes[i].nodeId == nodeId) return &nodes[i];
+        }
+        return nullptr;
+    }
+};
+
+// Per-player dialogue state — tracks active conversation
+struct DialogueComponent {
+    uint32_t activeTreeId{0};       // Active dialogue tree (0 = no conversation)
+    uint32_t currentNodeId{0};      // Current node in the tree
+    EntityID npcEntity{entt::null}; // NPC being talked to
+    bool inConversation{false};     // Whether player is in a dialogue
+
+    void startConversation(uint32_t treeId, uint32_t startNodeId, EntityID npc) {
+        activeTreeId = treeId;
+        currentNodeId = startNodeId;
+        npcEntity = npc;
+        inConversation = true;
+    }
+
+    void endConversation() {
+        activeTreeId = 0;
+        currentNodeId = 0;
+        npcEntity = entt::null;
+        inConversation = false;
+    }
+};
+
 } // namespace DarkAges

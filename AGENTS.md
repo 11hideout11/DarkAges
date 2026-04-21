@@ -3,8 +3,8 @@
 ## Project State (Updated 2026-04-21)
 
 **Phase 8: COMPLETE** — All core gameplay systems implemented.
-**1070 test cases** across **81 test files**. All passing (11 suites).
-**~58K LOC** total. Server: ~28K lines C++ (EnTT ECS, 60Hz tick loop).
+**1106 test cases** across **82 test files**. All passing (11 suites).
+**~59K LOC** total. Server: ~28K lines C++ (EnTT ECS, 60Hz tick loop).
 
 ### Build
 ```bash
@@ -47,9 +47,10 @@ cd build_validate && ctest --output-on-failure -j8
 - **Crafting**: Recipe registry, material consumption, instant/timed crafting, profession XP
 - **Trading**: Player-to-player item and gold exchange, trade request/accept/decline, item escrow, lock/confirm flow, timeout handling
 - **Zone Events**: World bosses, wave defense, timed kill events. Multi-phase with objectives, participation tracking, scaled rewards, boss spawning via callbacks
+- **NPC Dialogue**: Branching conversation trees, conditional responses (quest state, level, items), quest integration (give/complete), item/gold rewards, multi-player independent conversations
 
 ### Remaining Gameplay Gaps
-- NPC dialogue system (quest hand-in uses programmatic flow, not dialogue trees)
+- None — all core gameplay systems are implemented
 
 ### Phase 9 Focus
 - Performance testing infrastructure

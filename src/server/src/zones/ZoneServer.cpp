@@ -252,6 +252,11 @@ bool ZoneServer::initialize(const ZoneConfig& config) {
         return spawnNPC(spawnPos, level, 20, 25.0f, 50.0f, 3.0f, 500, 0);
     });
 
+    // [GAMEPLAY_AGENT] Initialize dialogue system
+    dialogueSystem_.setQuestSystem(&questSystem_);
+    dialogueSystem_.setItemSystem(&itemSystem_);
+    dialogueSystem_.setChatSystem(&chatSystem_);
+
     // [GAMEPLAY_AGENT] Wire level-up into quest tracking
     experienceSystem_.setLevelUpCallback([this](EntityID player, uint32_t newLevel) {
         questSystem_.onLevelUp(registry_, player, newLevel);
@@ -1106,6 +1111,9 @@ EntityID ZoneServer::spawnPlayer(ConnectionID connectionId, uint64_t playerId,
 
     // [GAMEPLAY_AGENT] Initialize zone event participation state
     registry_.emplace<ZoneEventComponent>(entity);
+
+    // [GAMEPLAY_AGENT] Initialize dialogue state
+    registry_.emplace<DialogueComponent>(entity);
 
     // Update mappings
     connectionToEntity_[connectionId] = entity;
