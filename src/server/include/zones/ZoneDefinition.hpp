@@ -1,4 +1,5 @@
 #pragma once
+#include "ecs/CoreTypes.hpp"
 #include "Constants.hpp"
 #include <string>
 #include <vector>
@@ -26,9 +27,13 @@ struct ZoneDefinition {
     float minY, maxY;
     float minZ, maxZ;
     
-    // Center point
+// Center point
     float centerX, centerZ;
-    
+
+    // Player spawn point (where new players appear in this zone)
+    float spawnX{0.0f};
+    float spawnZ{0.0f};
+
     // Adjacent zones (for handoff)
     std::vector<uint32_t> adjacentZones;
     
@@ -38,13 +43,21 @@ struct ZoneDefinition {
     
     // Check if position is within this zone (excluding buffer)
     bool containsPosition(float x, float z) const;
-    
+
     // Check if position is within aura buffer (overlap region)
     bool isInAuraBuffer(float x, float z) const;
-    
+
     // Get distance to zone edge (negative if inside)
     float distanceToEdge(float x, float z) const;
-    
+
+    // Get spawn position for players entering this zone
+    Position getSpawnPosition() const {
+        // Use spawnX/spawnZ if set (non-zero), otherwise use center
+        float x = (spawnX != 0.0f) ? spawnX : centerX;
+        float z = (spawnZ != 0.0f) ? spawnZ : centerZ;
+        return Position::fromVec3(glm::vec3(x, 0.0f, z), 0);
+    }
+
     // Calculate overlap region with another zone
     bool calculateOverlap(const ZoneDefinition& other, 
                          float& outMinX, float& outMaxX,
