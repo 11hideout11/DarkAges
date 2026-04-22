@@ -357,6 +357,9 @@ struct Mana {
      uint32_t statPoints{0};                  // Unspent stat points
  };
 
+ // Player entity tag (marks an entity as a player character)
+ struct PlayerComponent {};
+
  // Dropped loot entity tag (for items on the ground)
  struct LootDropTag {};                       // Entity is a dropped item
  struct LootDropData {

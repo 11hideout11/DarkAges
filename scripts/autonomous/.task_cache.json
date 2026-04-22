@@ -1,6 +1,6 @@
 {
-  "timestamp": 1776830752.6284544,
-  "git_head": "4be5893a560d26a17bad1115894a6c59ca0b3a10",
+  "timestamp": 1776873933.5443642,
+  "git_head": "d211d4a011af147b5c910def74488607bb9b3f52",
   "tasks": [
     {
       "priority": "P1",
@@ -19,8 +19,8 @@
       "title": "Update 3 stale documentation files",
       "description": "Documentation references old project state \u2014 needs alignment with current implementation",
       "files": [
-        "DarkAges_Comprehensive_Review.md",
         "DOCUMENTATION_SYNC_REPORT.md",
+        "DarkAges_Comprehensive_Review.md",
         "PROJECT_STATUS.md"
       ],
       "estimated_hours": 2.0

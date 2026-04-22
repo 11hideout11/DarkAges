@@ -447,6 +447,8 @@ set(SERVER_SOURCES
     src/server/src/combat/DialogueSystem.cpp
     src/server/src/combat/PositionHistory.cpp
     src/server/src/combat/LagCompensatedCombat.cpp
+    src/server/src/combat/AchievementSystem.cpp
+    src/server/src/combat/LeaderboardSystem.cpp
     src/server/src/zones/AreaOfInterest.cpp
     src/server/src/zones/AuraProjection.cpp
     src/server/src/zones/ReplicationOptimizer.cpp
@@ -791,6 +793,8 @@ if(BUILD_TESTS AND TARGET Catch2::Catch2WithMain)
         src/server/tests/TestSpawnSystem.cpp
         src/server/tests/TestSpawnSystemIntegration.cpp
         src/server/tests/TestPartyGuildSystem.cpp
+        src/server/tests/TestAchievementSystem.cpp
+        src/server/tests/TestLeaderboardSystem.cpp
     )
 
     # Conditionally include tests for optional features
