@@ -2,6 +2,7 @@
 #include "combat/NPCAISystem.hpp"
 #include "combat/CombatSystem.hpp"
 #include "ecs/CoreTypes.hpp"
+#include "Constants.hpp"
 #include <cmath>
 #include <algorithm>
 #include <numeric>
@@ -60,18 +61,18 @@ void SpawnSystem::update(Registry& registry, uint32_t currentTimeMs) {
         
         // Check if respawn time has passed
         if (currentTimeMs >= spawnable.respawnTimeMs) {
-            // Find zone ID from position
-            // For simplicity, we assume zone 1 - in production would lookup
-            uint32_t zoneId = 1;
+            // Use the configured zone ID for spawn position lookups
             std::vector<ZoneDefinition> emptyZones;
             
             // Try to respawn
             EntityID spawned = spawnEntity(registry, spawnable.spawnGroupId, 
-                                          zoneId, emptyZones);
+                                          currentZoneId_, emptyZones);
             if (spawned != entt::null) {
-                // Mark original as no longer tracking
-                spawnable.isSpawned = true;
+                // Successfully spawned replacement — destroy the old dead entity
+                registry.destroy(entity);
             }
+            // If spawn failed (no group registered, etc.), leave entity dead
+            // and isSpawned=false so we retry next tick (until group is registered)
         }
     }
 }
@@ -111,50 +112,35 @@ EntityID SpawnSystem::spawnEntity(Registry& registry, uint32_t spawnGroupId,
         level = dist(rng_);
     }
     
-    // Create NPC from template
-    EntityID npc = entt::null;
-    if (createNPCFromTemplate(registry, config->npcTemplateId, spawnPos, level)) {
-        // Get the created entity - we need to track it
-        // For now return a new entity with spawn component
-        npc = registry.create();
-        registry.emplace<Position>(npc, spawnPos);
-        registry.emplace<Velocity>(npc);
-        registry.emplace<Rotation>(npc);
-        registry.emplace<BoundingVolume>(npc);
-        
-        CombatState combat;
-        combat.health = 100;
-        combat.maxHealth = 100;
-        registry.emplace<CombatState>(npc, combat);
-        
-        registry.emplace<Mana>(npc);
-        registry.emplace<NPCTag>(npc);
-        registry.emplace<CollisionLayer>(npc, CollisionLayer::makeNPC());
-        
-        NPCAIState ai;
-        ai.spawnPoint = spawnPos;
-        registry.emplace<NPCAIState>(npc, ai);
-        
-        NPCStats stats;
-        stats.baseDamage = 10;
-        stats.xpReward = 50;
-        stats.respawnTimeMs = config->respawnTimeMs;
-        registry.emplace<NPCStats>(npc, stats);
-        
-        // Add spawnable component with respawn time
-        SpawnableComponent spawnable;
-        spawnable.spawnGroupId = spawnGroupId;
-        spawnable.templateId = config->npcTemplateId;
-        spawnable.respawnTimeMs = config->respawnTimeMs;  // Respawn delay from config
-        spawnable.spawnPosition = spawnPos;
-        spawnable.level = level;
-        spawnable.isSpawned = true;
-        spawnable.shouldRespawn = true;
-        registry.emplace<SpawnableComponent>(npc, spawnable);
-        
-        if (spawnCallback_) {
-            spawnCallback_(npc, spawnGroupId);
-        }
+    // Create NPC from template (returns the entity, or entt::null on failure)
+    EntityID npc = createNPCFromTemplate(registry, config->npcTemplateId, spawnPos, level);
+    if (npc == entt::null) {
+        return entt::null;
+    }
+    
+    // Add spawn tracking to the NPC entity
+    // Note: the NPC already has Position, CombatState, NPCStats, etc. from createNPCFromTemplate.
+    // We add the spawn tracking components on top.
+    
+    // Set level on NPCStats if the entity has it
+    if (auto* stats = registry.try_get<NPCStats>(npc)) {
+        stats->level = level;
+        stats->respawnTimeMs = config->respawnTimeMs;
+    }
+    
+    // Add spawnable component with respawn time
+    SpawnableComponent spawnable;
+    spawnable.spawnGroupId = spawnGroupId;
+    spawnable.templateId = config->npcTemplateId;
+    spawnable.respawnTimeMs = config->respawnTimeMs;  // Respawn delay from config
+    spawnable.spawnPosition = spawnPos;
+    spawnable.level = level;
+    spawnable.isSpawned = true;
+    spawnable.shouldRespawn = true;
+    registry.emplace<SpawnableComponent>(npc, spawnable);
+    
+    if (spawnCallback_) {
+        spawnCallback_(npc, spawnGroupId);
     }
     
     return npc;
@@ -192,7 +178,7 @@ void SpawnSystem::onEntityDeath(Registry& registry, EntityID entity) {
     }
 }
 
-bool SpawnSystem::createNPCFromTemplate(Registry& registry, uint32_t templateId,
+EntityID SpawnSystem::createNPCFromTemplate(Registry& registry, uint32_t templateId,
                                        const Position& spawnPos, uint8_t level) {
     // Template-based NPC creation
     // In production, would look up template data and create appropriately
@@ -220,12 +206,13 @@ bool SpawnSystem::createNPCFromTemplate(Registry& registry, uint32_t templateId,
     registry.emplace<NPCAIState>(entity, ai);
     
     NPCStats stats;
+    stats.level = level;
     stats.baseDamage = 5 + (level * 2);
     stats.xpReward = 10 + (level * 5);
     stats.respawnTimeMs = 60000;  // 1 minute default
     registry.emplace<NPCStats>(entity, stats);
     
-    return true;
+    return entity;
 }
 
 const SpawnGroup* SpawnSystem::getSpawnGroup(uint32_t groupId) const {
@@ -266,8 +253,8 @@ void SpawnSystem::forceSpawnGroup(Registry& registry, uint32_t spawnGroupId,
             // Add some jitter to position
             float jitterX = std::uniform_real_distribution<float>(-5.0f, 5.0f)(rng_);
             float jitterZ = std::uniform_real_distribution<float>(-5.0f, 5.0f)(rng_);
-            spawnPos.x += jitterX;
-            spawnPos.z += jitterZ;
+            spawnPos.x += static_cast<Constants::Fixed>(jitterX * Constants::FLOAT_TO_FIXED);
+            spawnPos.z += static_cast<Constants::Fixed>(jitterZ * Constants::FLOAT_TO_FIXED);
             
             uint8_t level = config.minLevel;
             if (config.maxLevel > config.minLevel) {
@@ -276,7 +263,31 @@ void SpawnSystem::forceSpawnGroup(Registry& registry, uint32_t spawnGroupId,
                 level = dist(rng_);
             }
             
-            createNPCFromTemplate(registry, config.npcTemplateId, spawnPos, level);
+            EntityID npc = createNPCFromTemplate(registry, config.npcTemplateId, spawnPos, level);
+            if (npc == entt::null) {
+                continue;
+            }
+            
+            // Set level on NPCStats
+            if (auto* stats = registry.try_get<NPCStats>(npc)) {
+                stats->level = level;
+                stats->respawnTimeMs = config.respawnTimeMs;
+            }
+            
+            // Add spawnable component so getAliveCount tracks this entity
+            SpawnableComponent spawnable;
+            spawnable.spawnGroupId = spawnGroupId;
+            spawnable.templateId = config.npcTemplateId;
+            spawnable.respawnTimeMs = config.respawnTimeMs;
+            spawnable.spawnPosition = spawnPos;
+            spawnable.level = level;
+            spawnable.isSpawned = true;
+            spawnable.shouldRespawn = true;
+            registry.emplace<SpawnableComponent>(npc, spawnable);
+            
+            if (spawnCallback_) {
+                spawnCallback_(npc, spawnGroupId);
+            }
         }
     }
 }

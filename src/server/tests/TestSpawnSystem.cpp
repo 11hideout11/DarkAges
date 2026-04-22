@@ -4,10 +4,15 @@
 #include "combat/NPCAISystem.hpp"
 #include "zones/ZoneDefinition.hpp"
 #include "ecs/CoreTypes.hpp"
+#include "Constants.hpp"
 #include <entt/entt.hpp>
 #include <glm/glm.hpp>
 
 using namespace DarkAges;
+
+// Helper to convert Position x/z (Fixed) to float for test assertions
+static float posX(const Position& pos) { return pos.x * Constants::FIXED_TO_FLOAT; }
+static float posZ(const Position& pos) { return pos.z * Constants::FIXED_TO_FLOAT; }
 
 // ============================================================================
 // Test Helpers
@@ -77,8 +82,10 @@ TEST_CASE("SpawnSystem registers spawn region", "[combat][spawn]") {
     bool foundInBounds = false;
     for (int i = 0; i < 100; ++i) {
         Position pos = system.getSpawnPosition(1, 1, zones);
-        if (pos.x >= 50.0f && pos.x <= 150.0f && 
-            pos.z >= 150.0f && pos.z <= 250.0f) {
+        float px = posX(pos);
+        float pz = posZ(pos);
+        if (px >= 50.0f && px <= 150.0f && 
+            pz >= 150.0f && pz <= 250.0f) {
             foundInBounds = true;
             break;
         }
@@ -102,8 +109,8 @@ TEST_CASE("SpawnSystem uses zone spawn position as fallback", "[combat][spawn]")
     Position pos = system.getSpawnPosition(1, 1, zones);
     
     // Should use spawnX/spawnZ from zone, not center
-    REQUIRE(pos.x == 520.0f);
-    REQUIRE(pos.z == 620.0f);
+    REQUIRE(posX(pos) == Catch::Approx(520.0f));
+    REQUIRE(posZ(pos) == Catch::Approx(620.0f));
 }
 
 TEST_CASE("SpawnSystem falls back to zone center", "[combat][spawn]") {
@@ -121,8 +128,8 @@ TEST_CASE("SpawnSystem falls back to zone center", "[combat][spawn]") {
     Position pos = system.getSpawnPosition(1, 1, zones);
     
     // Should use center
-    REQUIRE(pos.x == 100.0f);
-    REQUIRE(pos.z == 200.0f);
+    REQUIRE(posX(pos) == Catch::Approx(100.0f));
+    REQUIRE(posZ(pos) == Catch::Approx(200.0f));
 }
 
 TEST_CASE("SpawnSystem spawns entity from group", "[combat][spawn]") {
@@ -325,8 +332,8 @@ TEST_CASE("SpawnSystem createNPCFromTemplate creates valid NPC", "[combat][spawn
     
     Position pos = Position::fromVec3(glm::vec3(50.0f, 0.0f, 50.0f));
     
-    bool result = system.createNPCFromTemplate(registry, 1001, pos, 5);
-    REQUIRE(result == true);
+    EntityID entity = system.createNPCFromTemplate(registry, 1001, pos, 5);
+    REQUIRE((entity != entt::null));
     
     // Check that NPC was created with proper stats
     // The system creates the entity internally - we can verify by component count
@@ -482,13 +489,13 @@ TEST_CASE("SpawnSystem zone spawn position integration", "[combat][spawn]") {
     
     // Get spawn position for zone 1
     Position pos1 = system.getSpawnPosition(999, 1, zones);  // No region, use zone
-    REQUIRE(pos1.x == 100.0f);
-    REQUIRE(pos1.z == 200.0f);
+    REQUIRE(posX(pos1) == Catch::Approx(100.0f));
+    REQUIRE(posZ(pos1) == Catch::Approx(200.0f));
     
     // Get spawn position for zone 2
     Position pos2 = system.getSpawnPosition(999, 2, zones);
-    REQUIRE(pos2.x == 500.0f);
-    REQUIRE(pos2.z == 600.0f);
+    REQUIRE(posX(pos2) == Catch::Approx(500.0f));
+    REQUIRE(posZ(pos2) == Catch::Approx(600.0f));
 }
 
 TEST_CASE("SpawnSystem multiple spawn groups", "[combat][spawn]") {

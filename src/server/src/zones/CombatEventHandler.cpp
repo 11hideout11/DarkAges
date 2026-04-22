@@ -3,6 +3,7 @@
 
 #include "zones/CombatEventHandler.hpp"
 #include "zones/ZoneServer.hpp"
+#include "combat/SpawnSystem.hpp"
 #include "netcode/NetworkManager.hpp"
 #include "netcode/ProtobufProtocol.hpp"
 #include "db/ScyllaManager.hpp"
@@ -158,11 +159,18 @@ void CombatEventHandler::onEntityDied(EntityID victim, EntityID killer) {
         }
     }
 
-    // Schedule respawn — NPCs use their own respawn time and spawn point
+    // [GAMEPLAY_AGENT] If NPC is managed by SpawnSystem, delegate respawn to SpawnSystem
+    // Otherwise use simple health-restore respawn for unmanaged NPCs
     if (registry.all_of<NPCTag>(victim)) {
-        const auto* npcStats = registry.try_get<NPCStats>(victim);
-        uint32_t respawnDelay = npcStats ? npcStats->respawnTimeMs : RESPAWN_DELAY_MS;
-        pendingRespawns_.push_back({victim, getCurrentTimeMs() + respawnDelay});
+        if (registry.all_of<SpawnableComponent>(victim)) {
+            // Managed NPC — SpawnSystem handles respawn lifecycle (destroy + recreate)
+            server_.getSpawnSystem().onEntityDeath(registry, victim);
+        } else {
+            // Unmanaged NPC — simple respawn: heal + teleport to spawn point
+            const auto* npcStats = registry.try_get<NPCStats>(victim);
+            uint32_t respawnDelay = npcStats ? npcStats->respawnTimeMs : RESPAWN_DELAY_MS;
+            pendingRespawns_.push_back({victim, getCurrentTimeMs() + respawnDelay});
+        }
     } else {
         pendingRespawns_.push_back({victim, getCurrentTimeMs() + RESPAWN_DELAY_MS});
     }

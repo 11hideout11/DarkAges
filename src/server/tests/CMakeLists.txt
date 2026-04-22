@@ -70,6 +70,8 @@ set(TEST_SOURCES
     TestProjectileSystem.cpp
     TestAbilitySystem.cpp
     TestStatusEffectCombatIntegration.cpp
+    TestSpawnSystem.cpp
+    TestSpawnSystemIntegration.cpp
     TestZoneServer.cpp
 )
 

@@ -2,6 +2,7 @@
 
 #include "ecs/CoreTypes.hpp"
 #include "zones/ZoneDefinition.hpp"
+#include "physics/NavigationGrid.hpp"
 #include <cstdint>
 #include <vector>
 #include <unordered_map>
@@ -70,12 +71,12 @@ struct SpawnableComponent {
     SpawnableComponent() = default;
     
     SpawnableComponent(uint32_t groupId, uint32_t npcTemplateId, uint32_t respawnMs,
-                       const Position& pos, uint8_t lv = 1)
+                       uint8_t lv, const Position& pos)
         : spawnGroupId(groupId)
         , templateId(npcTemplateId)
         , respawnTimeMs(respawnMs)
-        , spawnPosition(pos)
         , level(lv)
+        , spawnPosition(pos)
         , isSpawned(true)
     {}
 };
@@ -126,9 +127,9 @@ public:
     void onEntityDeath(Registry& registry, EntityID entity);
     
     // Get NPC template for a spawn config (called by spawnEntity)
-    // Returns true if template was valid and entity was created
-    bool createNPCFromTemplate(Registry& registry, uint32_t templateId, 
-                               const Position& spawnPos, uint8_t level);
+    // Returns the created entity ID, or entt::null if creation failed
+    EntityID createNPCFromTemplate(Registry& registry, uint32_t templateId, 
+                                  const Position& spawnPos, uint8_t level);
     
     // Get config for a spawn group
     const SpawnGroup* getSpawnGroup(uint32_t groupId) const;
@@ -147,7 +148,24 @@ public:
     // Set callback for death events (before respawn)
     using DeathCallback = std::function<void(EntityID entity, uint32_t spawnGroupId)>;
     void setDeathCallback(DeathCallback cb) { deathCallback_ = std::move(cb); }
-    
+
+    // Notify spawn system that an NPC was manually spawned (fires spawn callback)
+    void notifySpawned(EntityID entity, uint32_t spawnGroupId) {
+        if (spawnCallback_) {
+            spawnCallback_(entity, spawnGroupId);
+        }
+    }
+
+    // Get navigation grid pointer (may be nullptr)
+    [[nodiscard]] NavigationGrid* getNavigationGrid() const { return navGrid_; }
+
+    // Set navigation grid for spawn position validation
+    void setNavigationGrid(NavigationGrid* grid) { navGrid_ = grid; }
+
+    // Set the current zone ID for respawn position lookups
+    void setZoneId(uint32_t zoneId) { currentZoneId_ = zoneId; }
+    [[nodiscard]] uint32_t getZoneId() const { return currentZoneId_; }
+
 private:
     // Select a random spawn config from group based on weights
     const NPCSpawnConfig* selectRandomConfig(SpawnGroup& group);
@@ -165,7 +183,13 @@ private:
     // Callbacks
     SpawnCallback spawnCallback_;
     DeathCallback deathCallback_;
-    
+
+    // Navigation grid for spawn position validation
+    NavigationGrid* navGrid_{nullptr};
+
+    // Current zone ID for respawn position lookups
+    uint32_t currentZoneId_{1};
+
     // Default respawn time if not specified (60 seconds)
     static constexpr uint32_t DEFAULT_RESPAWN_TIME_MS = 60000;
 };

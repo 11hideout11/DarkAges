@@ -789,6 +789,7 @@ if(BUILD_TESTS AND TARGET Catch2::Catch2WithMain)
         src/server/tests/TestDialogueSystem.cpp
         src/server/tests/TestExperienceSystem.cpp
         src/server/tests/TestSpawnSystem.cpp
+        src/server/tests/TestSpawnSystemIntegration.cpp
         src/server/tests/TestPartyGuildSystem.cpp
     )
 

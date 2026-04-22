@@ -33,6 +33,7 @@
 #include "combat/TradeSystem.hpp"
 #include "combat/ZoneEventSystem.hpp"
 #include "combat/DialogueSystem.hpp"
+#include "combat/SpawnSystem.hpp"
 #include "security/AntiCheat.hpp"
 #include "profiling/PerfettoProfiler.hpp"
 #include "profiling/PerformanceMonitor.hpp"
@@ -172,6 +173,12 @@ public:
                       float aggroRange, float leashRange, float attackRange,
                       uint32_t xpReward, uint32_t respawnTimeMs);
 
+    // Spawn NPC from a spawn group (managed respawn via SpawnSystem)
+    EntityID spawnFromGroup(const Position& spawnPos, uint8_t level,
+                            uint16_t baseDamage, float aggroRange, float leashRange,
+                            float attackRange, uint32_t xpReward, uint32_t respawnTimeMs,
+                            uint32_t spawnGroupId, uint32_t npcTemplateId);
+
     // Populate zone with NPCs based on config
     void populateNPCs();
 
@@ -199,6 +206,7 @@ public:
     [[nodiscard]] TradeSystem& getTradeSystem() { return tradeSystem_; }
     [[nodiscard]] ZoneEventSystem& getZoneEventSystem() { return zoneEventSystem_; }
     [[nodiscard]] DialogueSystem& getDialogueSystem() { return dialogueSystem_; }
+    [[nodiscard]] SpawnSystem& getSpawnSystem() { return spawnSystem_; }
     [[nodiscard]] LagCompensator* getLagCompensatorPtr() { return &lagCompensator_; }
     [[nodiscard]] MovementSystem& getMovementSystemRef() { return movementSystem_; }
     [[nodiscard]] Security::AntiCheatSystem& getAntiCheatRef() { return antiCheat_; }
@@ -268,6 +276,7 @@ private:
     TradeSystem tradeSystem_;
     ZoneEventSystem zoneEventSystem_;
     DialogueSystem dialogueSystem_;
+    SpawnSystem spawnSystem_;
     LagCompensator lagCompensator_;
 
     // [SECURITY_AGENT] Anti-cheat system

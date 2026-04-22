@@ -192,6 +192,16 @@ bool ZoneServer::initialize(const ZoneConfig& config) {
         combatEventHandler_.sendCombatEvent(npc, target, damage, loc);
     });
 
+    // [GAMEPLAY_AGENT] Wire SpawnSystem with navigation grid for pathfinding-aware spawning
+    spawnSystem_.setNavigationGrid(&navigationGrid_);
+    spawnSystem_.setZoneId(config_.zoneId);
+    spawnSystem_.setSpawnCallback([this](EntityID entity, uint32_t spawnGroupId) {
+        // NPC spawned from spawn group — could notify nearby players
+    });
+    spawnSystem_.setDeathCallback([this](EntityID entity, uint32_t spawnGroupId) {
+        // NPC from spawn group died — could track group kill stats
+    });
+
     // [GAMEPLAY_AGENT] Wire loot system callbacks for logging
     lootSystem_.setLootDropCallback([this](EntityID lootEntity, uint32_t itemId,
                                             uint32_t quantity, float gold) {
@@ -739,8 +749,11 @@ void ZoneServer::updateGameLogic() {
     // [GAMEPLAY_AGENT] Update zone event system — handle event lifecycle
     zoneEventSystem_.update(registry_, getCurrentTimeMs());
 
-    // Process pending respawns
+    // Process pending respawns (simple health-restore respawn for unmanaged NPCs)
     combatEventHandler_.processRespawns();
+
+    // [GAMEPLAY_AGENT] Update spawn system — handle spawn group respawns, spawn due NPCs
+    spawnSystem_.update(registry_, getCurrentTimeMs());
 
     // [PHASE 4] Zone transitions and migration
     auraZoneHandler_.checkEntityZoneTransitions();
@@ -1181,6 +1194,74 @@ EntityID ZoneServer::spawnNPC(const Position& spawnPos, uint8_t level, uint16_t 
     stats.xpReward = xpReward;
     stats.respawnTimeMs = respawnTimeMs;
     registry_.emplace<NPCStats>(entity, stats);
+
+    return entity;
+}
+
+EntityID ZoneServer::spawnFromGroup(const Position& spawnPos, uint8_t level,
+                                    uint16_t baseDamage, float aggroRange, float leashRange,
+                                    float attackRange, uint32_t xpReward, uint32_t respawnTimeMs,
+                                    uint32_t spawnGroupId, uint32_t npcTemplateId) {
+    EntityID entity = registry_.create();
+
+    // Core components
+    registry_.emplace<Position>(entity, spawnPos);
+    registry_.emplace<Velocity>(entity);
+    registry_.emplace<Rotation>(entity);
+    registry_.emplace<BoundingVolume>(entity);
+
+    // Combat state — scaled by level
+    CombatState combat;
+    combat.health = static_cast<int16_t>(1000 + (level - 1) * 200);
+    combat.maxHealth = combat.health;
+    combat.classType = 0;
+    registry_.emplace<CombatState>(entity, combat);
+
+    // Mana
+    Mana mana;
+    mana.current = 0;
+    mana.max = 0;
+    mana.regenerationRate = 0;
+    registry_.emplace<Mana>(entity, mana);
+
+    // NPC tag
+    registry_.emplace<NPCTag>(entity);
+
+    // Collision layer
+    registry_.emplace<CollisionLayer>(entity, CollisionLayer::makeNPC());
+
+    // NPC AI state
+    NPCAIState ai;
+    ai.aggroRange = aggroRange;
+    ai.leashRange = leashRange;
+    ai.attackRange = attackRange;
+    ai.spawnPoint = spawnPos;
+    ai.attackCooldownMs = 1500;
+    ai.wanderCooldownMs = 3000;
+    registry_.emplace<NPCAIState>(entity, ai);
+
+    // NPC stats
+    NPCStats stats;
+    stats.level = level;
+    stats.baseDamage = baseDamage;
+    stats.attackSpeed = 1.0f;
+    stats.xpReward = xpReward;
+    stats.respawnTimeMs = respawnTimeMs;
+    registry_.emplace<NPCStats>(entity, stats);
+
+    // SpawnableComponent — marks this NPC as managed by SpawnSystem for respawn tracking
+    SpawnableComponent spawnable;
+    spawnable.spawnGroupId = spawnGroupId;
+    spawnable.templateId = npcTemplateId;
+    spawnable.respawnTimeMs = respawnTimeMs;
+    spawnable.spawnPosition = spawnPos;
+    spawnable.level = level;
+    spawnable.isSpawned = true;
+    spawnable.shouldRespawn = true;
+    registry_.emplace<SpawnableComponent>(entity, spawnable);
+
+    // Fire spawn callback
+    spawnSystem_.notifySpawned(entity, spawnGroupId);
 
     return entity;
 }
