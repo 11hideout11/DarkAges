@@ -435,6 +435,7 @@ set(SERVER_SOURCES
     src/server/src/combat/ProjectileSystem.cpp
     src/server/src/combat/NPCAISystem.cpp
     src/server/src/combat/ExperienceSystem.cpp
+    src/server/src/combat/SpawnSystem.cpp
     src/server/src/combat/ItemSystem.cpp
     src/server/src/combat/QuestSystem.cpp
     src/server/src/combat/ChatSystem.cpp
@@ -787,6 +788,7 @@ if(BUILD_TESTS AND TARGET Catch2::Catch2WithMain)
         src/server/tests/TestZoneEventSystem.cpp
         src/server/tests/TestDialogueSystem.cpp
         src/server/tests/TestExperienceSystem.cpp
+        src/server/tests/TestSpawnSystem.cpp
         src/server/tests/TestPartyGuildSystem.cpp
     )
 

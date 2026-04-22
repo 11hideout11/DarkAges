@@ -48,6 +48,7 @@ cd build_validate && ctest --output-on-failure -j8
 - **Trading**: Player-to-player item and gold exchange, trade request/accept/decline, item escrow, lock/confirm flow, timeout handling
 - **Zone Events**: World bosses, wave defense, timed kill events. Multi-phase with objectives, participation tracking, scaled rewards, boss spawning via callbacks
 - **NPC Dialogue**: Branching conversation trees, conditional responses (quest state, level, items), quest integration (give/complete), item/gold rewards, multi-player independent conversations
+- **SpawnSystem**: NPC spawn groups, respawn timers, weighted selection, spawn regions, per-zone spawn positions
 
 ### Remaining Gameplay Gaps
 - None — all core gameplay systems are implemented
