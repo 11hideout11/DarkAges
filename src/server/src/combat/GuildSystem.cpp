@@ -178,18 +178,24 @@ bool GuildSystem::setRank(EntityID player, GuildRank newRank, EntityID requester
     GuildRank requesterRank = getRank(requester);
     GuildRank currentRank = getRank(player);
 
-    // Leader can set any rank
+    // Leader can set any rank except Leader (unique)
     if (requesterRank == GuildRank::Leader) {
-        // Can't set rank to Leader (only one leader)
         if (newRank == GuildRank::Leader) return false;
-        return true;  // Would update component in actual ECS usage
+        // Apply rank change
+        if (newRank == GuildRank::Member) {
+            memberRanks_.erase(player);  // Reset to default
+        } else {
+            memberRanks_[player] = newRank;
+        }
+        return true;
     }
 
-    // Officers can promote/demote members only
+    // Officers can promote members to Officer, but not demote or change other ranks
     if (requesterRank == GuildRank::Officer) {
         if (currentRank != GuildRank::Member) return false;
-        if (newRank != GuildRank::Member) return true;  // Promote to officer
-        return false;
+        if (newRank != GuildRank::Officer) return false; // Only promotion to Officer allowed
+        memberRanks_[player] = GuildRank::Officer;
+        return true;
     }
 
     return false;
@@ -221,8 +227,13 @@ GuildRank GuildSystem::getRank(EntityID player) const {
 
     if (it->second.leader == player) return GuildRank::Leader;
 
-    // In a real implementation, this would check the GuildComponent
-    // For now, everyone except the leader is a Member
+    // Check for explicit rank override (e.g., Officer)
+    auto rit = memberRanks_.find(player);
+    if (rit != memberRanks_.end()) {
+        return rit->second;
+    }
+
+    // Default rank for guild members
     return GuildRank::Member;
 }
 
@@ -279,6 +290,9 @@ void GuildSystem::removeMemberFromGuild(uint32_t guildId, EntityID player) {
         std::remove(members.begin(), members.end(), player),
         members.end()
     );
+
+    // Clean up any rank information
+    memberRanks_.erase(player);
 }
 
 } // namespace DarkAges

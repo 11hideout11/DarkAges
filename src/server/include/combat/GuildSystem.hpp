@@ -80,8 +80,11 @@ public:
 
     // Clean up when a player disconnects
     void onPlayerDisconnect(Registry& registry, EntityID player);
-
 private:
+    // Per-member rank overrides (only stores non-default ranks like Officer)
+    // Member default rank is Member; leader is determined from GuildData.leader
+    mutable std::unordered_map<EntityID, GuildRank> memberRanks_;
+
     // Guild data
     struct GuildData {
         uint32_t guildId{0};

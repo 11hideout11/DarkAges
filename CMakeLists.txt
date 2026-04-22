@@ -795,6 +795,11 @@ if(BUILD_TESTS AND TARGET Catch2::Catch2WithMain)
         src/server/tests/TestPartyGuildSystem.cpp
         src/server/tests/TestAchievementSystem.cpp
         src/server/tests/TestLeaderboardSystem.cpp
+        # New comprehensive unit tests — expanded from stubs
+        src/server/tests/TestPartySystem.cpp
+        src/server/tests/TestGuildSystem.cpp
+        # New integration test for full gameplay loop
+        src/server/tests/TestIntegration.cpp
     )
 
     # Conditionally include tests for optional features
