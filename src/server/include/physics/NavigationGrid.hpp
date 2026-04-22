@@ -46,6 +46,9 @@ struct Path {
 // 2D navigation grid with A* pathfinding
 class NavigationGrid {
 public:
+    // Default constructor - creates empty grid
+    NavigationGrid() = default;
+
     // Create a grid centered at (centerX, centerZ) with given size in meters
     // resolution = meters per cell (default 1.0m)
     NavigationGrid(float centerX, float centerZ, float widthMeters, float heightMeters,

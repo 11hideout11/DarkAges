@@ -3,6 +3,7 @@
 #include "ecs/CoreTypes.hpp"
 #include "physics/SpatialHash.hpp"
 #include "physics/MovementSystem.hpp"
+#include "physics/NavigationGrid.hpp"
 #include "netcode/NetworkManager.hpp"
 #include "db/RedisManager.hpp"
 #include "db/ScyllaManager.hpp"
@@ -152,6 +153,7 @@ public:
     [[nodiscard]] Registry& getRegistry() { return registry_; }
     [[nodiscard]] NetworkManager& getNetwork() { return *network_; }
     [[nodiscard]] SpatialHash& getSpatialHash() { return spatialHash_; }
+    [[nodiscard]] NavigationGrid& getNavigationGrid() { return navigationGrid_; }
     [[nodiscard]] MovementSystem& getMovementSystem() { return movementSystem_; }
     [[nodiscard]] RedisManager& getRedis() { return *redis_; }
 
@@ -245,6 +247,7 @@ private:
     std::unique_ptr<RedisManager> redis_;
     std::unique_ptr<ScyllaManager> scylla_;
     SpatialHash spatialHash_;
+    NavigationGrid navigationGrid_;
     MovementSystem movementSystem_;
     MovementValidator movementValidator_;
     BroadPhaseSystem broadPhaseSystem_;

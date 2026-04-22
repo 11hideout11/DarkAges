@@ -182,18 +182,9 @@ const DialogueNode* DialogueSystem::findBestGreeting(const Registry& registry, E
 
 const char* DialogueSystem::startConversation(Registry& registry, EntityID player,
                                                 EntityID npc) {
-    // Get tree ID for this NPC
+    // Get tree ID for this NPC (must be explicitly assigned via setNPCTree)
     uint32_t treeId = getNPCTreeId(npc);
     if (treeId == 0) {
-        // Try to find from NPC component
-        const DialogueTree* treePtr = nullptr;
-        // Check if NPC has an associated tree
-        for (size_t i = 0; i < trees_.size(); ++i) {
-            if (trees_[i].treeId != 0) {
-                // For now, just use the first registered tree as a fallback
-                break;
-            }
-        }
         return nullptr;
     }
 

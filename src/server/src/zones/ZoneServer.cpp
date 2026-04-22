@@ -167,6 +167,16 @@ bool ZoneServer::initialize(const ZoneConfig& config) {
 
     // [COMBAT_AGENT] Initialize projectile system with spatial hash and damage callback
     projectileSystem_.setSpatialHash(&spatialHash_);
+
+    // [GAMEPLAY_AGENT] Initialize navigation grid for NPC A* pathfinding
+    // Grid covers the zone's world bounds with 5-meter resolution
+    const float zoneCenterX = (config_.minX + config_.maxX) * 0.5f;
+    const float zoneCenterZ = (config_.minZ + config_.maxZ) * 0.5f;
+    const float zoneWidth = config_.maxX - config_.minX;
+    const float zoneHeight = config_.maxZ - config_.minZ;
+    constexpr float NAV_GRID_RESOLUTION = 5.0f; // 5 meters per cell
+    navigationGrid_ = NavigationGrid(zoneCenterX, zoneCenterZ, zoneWidth, zoneHeight, NAV_GRID_RESOLUTION);
+    npcAISystem_.setNavigationGrid(&navigationGrid_);
     projectileSystem_.setDamageCallback([this](Registry& reg, EntityID target, EntityID attacker,
                                                 int16_t damage, uint32_t timeMs) -> bool {
         return combatSystem_.applyDamage(reg, target, attacker, damage, timeMs);

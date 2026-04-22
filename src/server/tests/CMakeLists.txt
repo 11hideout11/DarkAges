@@ -60,6 +60,8 @@ set(TEST_SOURCES
     TestChatSystem.cpp
     TestNavigationGrid.cpp
     TestPartyGuildSystem.cpp
+    TestPartySystem.cpp
+    TestGuildSystem.cpp
     TestCraftingSystem.cpp
     TestNPCAISystem.cpp
     TestItemSystem.cpp
