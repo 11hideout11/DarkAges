@@ -140,8 +140,8 @@ class TestClient:
         if block:    flags |= 0x40
         if sprint:   flags |= 0x80
 
-        yaw_q = int(yaw * 10000)
-        pitch_q = int(pitch * 10000)
+        yaw_q = max(-32768, min(32767, int(yaw * 10000)))
+        pitch_q = max(-32768, min(32767, int(pitch * 10000)))
         timestamp = int(time.time() * 1000) & 0xFFFFFFFF
 
         # [type:1=1][sequence:4][timestamp:4][flags:1][yaw:2][pitch:2][target:4]

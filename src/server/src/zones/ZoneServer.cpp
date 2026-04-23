@@ -848,6 +848,9 @@ void ZoneServer::updateReplication() {
             // Filter by update rate based on priority (near=20Hz, mid=10Hz, far=5Hz)
             auto entitiesToUpdate = replicationOptimizer_.filterByUpdateRate(priorities, currentTick_);
 
+            // Always include the viewer's own entity so the client knows its state
+            entitiesToUpdate.push_back(entityId);
+
             if (entitiesToUpdate.empty() && destroyedEntities_.empty()) {
                 continue;  // Nothing to send this tick
             }
