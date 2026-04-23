@@ -69,6 +69,11 @@ namespace DarkAges.Entities
         private double _hitMarkerVisibleTime;
         private const double HitMarkerDuration = 0.5f;
         
+        // Health bar
+        private MeshInstance3D _healthBarBg;
+        private MeshInstance3D _healthBarFill;
+        private float _currentHealthPercent = 1.0f;
+        
         // Debug materials
         private StandardMaterial3D _normalMaterial;
         private StandardMaterial3D _extrapolateMaterial;
@@ -88,6 +93,8 @@ namespace DarkAges.Entities
             _meshInstance = GetNode<MeshInstance3D>("Model/MeshInstance3D");
             _animPlayer = GetNode<AnimationPlayer>("Model/AnimationPlayer");
             _nameLabel = GetNode<Label3D>("NameLabel");
+            _healthBarBg = GetNode<MeshInstance3D>("HealthBarBg");
+            _healthBarFill = GetNode<MeshInstance3D>("HealthBarFill");
             
             // Initialize display state
             _displayPosition = GlobalPosition;
@@ -155,38 +162,41 @@ namespace DarkAges.Entities
         /// Add a new state from server snapshot
         /// Called by RemotePlayerManager when snapshot arrives
         /// </summary>
-        public void AddSnapshot(EntityFrame frame)
+    public void AddSnapshot(EntityFrame frame)
+    {
+        _stateBuffer.Enqueue(frame);
+        
+        // Remove old states to keep buffer size limited
+        while (_stateBuffer.Count > MaxBufferSize)
+            _stateBuffer.Dequeue();
+        
+        // Track metrics
+        double now = Time.GetTicksMsec() / 1000.0;
+        if (_lastSnapshotTime > 0)
         {
-            _stateBuffer.Enqueue(frame);
+            double delta = now - _lastSnapshotTime;
+            _averageJitter = (_averageJitter * _snapshotsReceived + (float)Math.Abs(delta - 0.05)) / (_snapshotsReceived + 1);
+        }
+        _lastSnapshotTime = now;
+        _snapshotsReceived++;
+        
+        // Update health bar from snapshot data
+        SetHealth(frame.HealthPercent);
+        
+        // Stop extrapolating when we get fresh data
+        if (_isExtrapolating)
+        {
+            _isExtrapolating = false;
+            _extrapolationTime = 0;
+            GD.Print($"[RemotePlayer {EntityId}] Resumed interpolation");
             
-            // Remove old states to keep buffer size limited
-            while (_stateBuffer.Count > MaxBufferSize)
-                _stateBuffer.Dequeue();
-            
-            // Track metrics
-            double now = Time.GetTicksMsec() / 1000.0;
-            if (_lastSnapshotTime > 0)
+            // Reset material
+            if (_meshInstance != null && ShowDebugVisualization)
             {
-                double delta = now - _lastSnapshotTime;
-                _averageJitter = (_averageJitter * _snapshotsReceived + (float)Math.Abs(delta - 0.05)) / (_snapshotsReceived + 1);
-            }
-            _lastSnapshotTime = now;
-            _snapshotsReceived++;
-            
-            // Stop extrapolating when we get fresh data
-            if (_isExtrapolating)
-            {
-                _isExtrapolating = false;
-                _extrapolationTime = 0;
-                GD.Print($"[RemotePlayer {EntityId}] Resumed interpolation");
-                
-                // Reset material
-                if (_meshInstance != null && ShowDebugVisualization)
-                {
-                    _meshInstance.MaterialOverride = _normalMaterial;
-                }
+                _meshInstance.MaterialOverride = _normalMaterial;
             }
         }
+    }
         
         /// <summary>
         /// Legacy method for compatibility - creates frame from individual parameters
@@ -205,10 +215,13 @@ namespace DarkAges.Entities
                 AnimationState = animState
             };
             
-            AddSnapshot(frame);
-            
-            // Update animation
-            UpdateAnimation(animState);
+        AddSnapshot(frame);
+        
+        // Update health bar
+        SetHealth(health / 100.0f);
+        
+        // Update animation
+        UpdateAnimation(animState);
         }
 
         public override void _Process(double delta)
@@ -229,6 +242,10 @@ namespace DarkAges.Entities
             if (_modelRoot != null)
             {
                 _modelRoot.Quaternion = _displayRotation;
+                // Idle animation: subtle bobbing + slow rotation
+                float t = (float)currentTime;
+                _modelRoot.Position = new Vector3(0, Mathf.Sin(t * 2.0f + EntityId) * 0.05f, 0);
+                _modelRoot.RotateY(Mathf.Sin(t * 0.5f + EntityId * 0.7f) * 0.3f * (float)delta);
             }
             else
             {
@@ -431,7 +448,27 @@ namespace DarkAges.Entities
         /// </summary>
         public void SetHealth(float percent)
         {
-            // Could update health bar here
+            _currentHealthPercent = Mathf.Clamp(percent, 0f, 1f);
+            if (_healthBarFill != null)
+            {
+                // Scale the fill bar based on health percentage
+                _healthBarFill.Scale = new Vector3(_currentHealthPercent, 1f, 1f);
+                // Offset position so it shrinks from the left
+                float barWidth = 0.8f;
+                float offset = (barWidth * (1f - _currentHealthPercent)) / 2f;
+                _healthBarFill.Position = new Vector3(-offset, 1.95f, 0);
+                
+                // Change color based on health
+                if (_healthBarFill.MaterialOverride is StandardMaterial3D mat)
+                {
+                    if (_currentHealthPercent > 0.6f)
+                        mat.AlbedoColor = new Color(0.2f, 0.8f, 0.2f);  // Green
+                    else if (_currentHealthPercent > 0.3f)
+                        mat.AlbedoColor = new Color(0.9f, 0.8f, 0.1f);  // Yellow
+                    else
+                        mat.AlbedoColor = new Color(0.9f, 0.2f, 0.2f);  // Red
+                }
+            }
         }
         
         /// <summary>

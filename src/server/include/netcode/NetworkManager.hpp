@@ -256,6 +256,28 @@ namespace Protocol {
         const Velocity& velocity,
         uint32_t lastProcessedInput
     );
+
+    // [COMBAT_AGENT] Simple binary combat event format (no protobuf dependency)
+    // Format: [type:1=3][subtype:1][attacker_id:4][target_id:4][damage:4][health_pct:1][timestamp:4]
+    // Subtypes: 1=Damage, 2=Death, 3=Heal
+    std::vector<uint8_t> serializeCombatEvent(
+        uint8_t subtype,
+        uint32_t attackerId,
+        uint32_t targetId,
+        int32_t damage,
+        uint8_t healthPercent,
+        uint32_t timestampMs
+    );
+
+    bool deserializeCombatEvent(
+        std::span<const uint8_t> data,
+        uint8_t& outSubtype,
+        uint32_t& outAttackerId,
+        uint32_t& outTargetId,
+        int32_t& outDamage,
+        uint8_t& outHealthPercent,
+        uint32_t& outTimestampMs
+    );
 }
 
 } // namespace DarkAges

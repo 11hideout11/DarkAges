@@ -43,29 +43,6 @@ namespace DarkAges
 			
 			// Find local player
 			_localPlayer = GetNode<PredictedPlayer>("Players/Player");
-
-			// [DEMO] Auto-exit after duration if --demo-duration is specified
-			var args = OS.GetCmdlineUserArgs();
-			for (int i = 0; i < args.Length; i++)
-			{
-				if (args[i] == "--demo-duration" && i + 1 < args.Length)
-				{
-					if (float.TryParse(args[i + 1], out float duration))
-					{
-						GD.Print($"[Main] Auto-exit scheduled after {duration}s");
-						var timer = new Godot.Timer();
-						timer.WaitTime = duration;
-						timer.OneShot = true;
-						timer.Timeout += () =>
-						{
-							GD.Print($"[Main] Demo duration reached. Exiting. Entities seen: {GameState.Instance.Entities.Count}, Snapshots: {_snapshotCount}");
-							GetTree().Quit();
-						};
-						AddChild(timer);
-						timer.Start();
-					}
-				}
-			}
 		}
 
 		public override void _ExitTree()
@@ -93,6 +70,29 @@ namespace DarkAges
 			if (success)
 			{
 				GD.Print("[Main] Connected to server!");
+
+				// [DEMO] Auto-exit after duration if --demo-duration is specified
+				var args = OS.GetCmdlineUserArgs();
+				for (int i = 0; i < args.Length; i++)
+				{
+					if (args[i] == "--demo-duration" && i + 1 < args.Length)
+					{
+						if (float.TryParse(args[i + 1], out float duration))
+						{
+							GD.Print($"[Main] Auto-exit scheduled {duration}s after connection");
+							var timer = new Godot.Timer();
+							timer.WaitTime = duration;
+							timer.OneShot = true;
+							timer.Timeout += () =>
+							{
+								GD.Print($"[Main] Demo duration reached. Exiting. Entities seen: {GameState.Instance.Entities.Count}, Snapshots: {_snapshotCount}");
+								GetTree().Quit();
+							};
+							AddChild(timer);
+							timer.Start();
+						}
+					}
+				}
 			}
 			else
 			{

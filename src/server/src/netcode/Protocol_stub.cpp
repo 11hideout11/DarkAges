@@ -380,6 +380,72 @@ std::vector<uint8_t> serializeCorrection(
     return data;
 }
 
+// [COMBAT_AGENT] Simple binary combat event format (no protobuf dependency)
+// Format: [type:1=3][subtype:1][attacker_id:4][target_id:4][damage:4][health_pct:1][timestamp:4]
+// Subtypes: 1=Damage, 2=Death, 3=Heal
+std::vector<uint8_t> serializeCombatEvent(
+    uint8_t subtype,
+    uint32_t attackerId,
+    uint32_t targetId,
+    int32_t damage,
+    uint8_t healthPercent,
+    uint32_t timestampMs) {
+
+    std::vector<uint8_t> data;
+    data.reserve(1 + 1 + 4 + 4 + 4 + 1 + 4);  // 19 bytes
+
+    data.push_back(static_cast<uint8_t>(PacketType::ReliableEvent));
+    data.push_back(subtype);
+
+    auto appendUInt32 = [&data](uint32_t value) {
+        const uint8_t* bytes = reinterpret_cast<const uint8_t*>(&value);
+        data.insert(data.end(), bytes, bytes + sizeof(uint32_t));
+    };
+
+    auto appendInt32 = [&data](int32_t value) {
+        const uint8_t* bytes = reinterpret_cast<const uint8_t*>(&value);
+        data.insert(data.end(), bytes, bytes + sizeof(int32_t));
+    };
+
+    appendUInt32(attackerId);
+    appendUInt32(targetId);
+    appendInt32(damage);
+    data.push_back(healthPercent);
+    appendUInt32(timestampMs);
+
+    return data;
+}
+
+bool deserializeCombatEvent(
+    std::span<const uint8_t> data,
+    uint8_t& outSubtype,
+    uint32_t& outAttackerId,
+    uint32_t& outTargetId,
+    int32_t& outDamage,
+    uint8_t& outHealthPercent,
+    uint32_t& outTimestampMs) {
+
+    constexpr size_t EVENT_SIZE = 1 + 1 + 4 + 4 + 4 + 1 + 4;  // 19 bytes (including type byte)
+
+    if (data.size() < EVENT_SIZE) {
+        return false;
+    }
+
+    size_t offset = 1;  // Skip packet type byte
+
+    outSubtype = data[offset++];
+    std::memcpy(&outAttackerId, &data[offset], sizeof(uint32_t));
+    offset += sizeof(uint32_t);
+    std::memcpy(&outTargetId, &data[offset], sizeof(uint32_t));
+    offset += sizeof(uint32_t);
+    std::memcpy(&outDamage, &data[offset], sizeof(int32_t));
+    offset += sizeof(int32_t);
+    outHealthPercent = data[offset++];
+    std::memcpy(&outTimestampMs, &data[offset], sizeof(uint32_t));
+
+    return true;
+}
+
 } // namespace Protocol
 
 namespace Protocol {

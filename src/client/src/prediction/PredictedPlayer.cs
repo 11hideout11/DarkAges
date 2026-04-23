@@ -359,11 +359,11 @@ namespace DarkAges
         {
             try
             {
-                // Parse FlatBuffer ServerCorrection
-                // Format: [packet_type:1][server_tick:4][pos_x:2][pos_y:2][pos_z:2][vel_x:2][vel_y:2][vel_z:2][last_input:4]
-                if (correctionData.Length < 19)
+                // Parse stub protocol ServerCorrection
+                // Server format: [packet_type:1][server_tick:4][pos_x:4f][pos_y:4f][pos_z:4f][vel_x:4f][vel_y:4f][vel_z:4f][last_input:4]
+                if (correctionData.Length < 33)
                 {
-                    GD.PrintErr("[PredictedPlayer] Invalid correction packet size");
+                    GD.PrintErr($"[PredictedPlayer] Invalid correction packet size: {correctionData.Length} (expected >= 33)");
                     return;
                 }
                 
@@ -372,21 +372,21 @@ namespace DarkAges
                 uint serverTick = BitConverter.ToUInt32(correctionData, offset);
                 offset += 4;
                 
-                // Parse quantized position (Vec3: x,y,z as int16, actual = value / 64.0)
-                float posX = BitConverter.ToInt16(correctionData, offset) / 64.0f;
-                offset += 2;
-                float posY = BitConverter.ToInt16(correctionData, offset) / 64.0f;
-                offset += 2;
-                float posZ = BitConverter.ToInt16(correctionData, offset) / 64.0f;
-                offset += 2;
+                // Parse float position (matches server serializeCorrection)
+                float posX = BitConverter.ToSingle(correctionData, offset);
+                offset += 4;
+                float posY = BitConverter.ToSingle(correctionData, offset);
+                offset += 4;
+                float posZ = BitConverter.ToSingle(correctionData, offset);
+                offset += 4;
                 
-                // Parse quantized velocity (Vec3Velocity: x,y,z as int16, actual = value / 256.0)
-                float velX = BitConverter.ToInt16(correctionData, offset) / 256.0f;
-                offset += 2;
-                float velY = BitConverter.ToInt16(correctionData, offset) / 256.0f;
-                offset += 2;
-                float velZ = BitConverter.ToInt16(correctionData, offset) / 256.0f;
-                offset += 2;
+                // Parse float velocity
+                float velX = BitConverter.ToSingle(correctionData, offset);
+                offset += 4;
+                float velY = BitConverter.ToSingle(correctionData, offset);
+                offset += 4;
+                float velZ = BitConverter.ToSingle(correctionData, offset);
+                offset += 4;
                 
                 uint lastProcessedInput = BitConverter.ToUInt32(correctionData, offset);
                 
@@ -706,13 +706,12 @@ namespace DarkAges
                 Velocity = new Vector3(Velocity.X, JumpVelocity, Velocity.Z);
             }
             
-            // Apply gravity
-            if (!IsOnFloor())
-            {
-                Velocity += new Vector3(0, -Gravity * dt, 0);
-            }
+            // [FIX] Disable gravity for flat terrain demo - server has no gravity
+            // Clamp Y to 0 to match server behavior
+            Velocity = new Vector3(Velocity.X, 0, Velocity.Z);
             
-            // Move
+            // Apply movement
+            Velocity = new Vector3(Velocity.X, 0, Velocity.Z);  // Ensure Y stays 0
             MoveAndSlide();
         }
 

@@ -553,18 +553,31 @@ namespace DarkAges.Networking
 
         /// <summary>
         /// Process combat event from server
-        /// Event format: [packet_type:1][event_type:2][event_data...]
+        /// Simple binary format: [packet_type:1=3][subtype:1][attacker_id:4][target_id:4][damage:4][health_pct:1][timestamp:4]
+        /// Subtypes: 1=Damage, 2=Death, 3=Heal
         /// </summary>
         private void ProcessCombatEvent(byte[] data)
         {
-            if (data.Length < 3) return;
+            if (data.Length < 19) return;
             
-            // Parse: [event_type:2][event_data...]
-            uint eventType = BitConverter.ToUInt16(data, 1);
-            byte[] eventData = new byte[data.Length - 3];
-            Array.Copy(data, 3, eventData, 0, eventData.Length);
+            uint subtype = data[1];
+            uint attackerId = BitConverter.ToUInt32(data, 2);
+            uint targetId = BitConverter.ToUInt32(data, 6);
+            int damage = BitConverter.ToInt32(data, 10);
+            byte healthPercent = data[14];
+            uint timestamp = BitConverter.ToUInt32(data, 15);
             
-            EmitSignal(SignalName.CombatEventReceived, eventType, eventData);
+            GD.Print($"[NetworkManager] CombatEvent subtype={subtype} attacker={attackerId} target={targetId} dmg={damage} hp={healthPercent}%");
+            
+            // Update target entity health immediately from event
+            var entity = GameState.Instance.GetEntity(targetId);
+            if (entity != null)
+            {
+                entity.HealthPercent = healthPercent;
+            }
+            
+            // Emit signal for HUD systems
+            EmitSignal(SignalName.CombatEventReceived, subtype, data);
         }
 
         /// <summary>

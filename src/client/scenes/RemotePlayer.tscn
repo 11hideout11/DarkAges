@@ -14,6 +14,20 @@ height = 1.8
 albedo_color = Color(0.8, 0.3, 0.3, 1)
 roughness = 0.5
 
+[sub_resource type="BoxMesh" id="BoxMesh_health_bg"]
+size = Vector3(0.8, 0.15, 0.05)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_health_bg"]
+albedo_color = Color(0.1, 0.1, 0.1, 1)
+
+[sub_resource type="BoxMesh" id="BoxMesh_health_fill"]
+size = Vector3(0.8, 0.15, 0.05)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_health_fill"]
+albedo_color = Color(0.2, 0.9, 0.2, 1)
+emission = Color(0.1, 0.4, 0.1, 1)
+emission_energy_multiplier = 0.5
+
 [sub_resource type="Animation" id="Animation_default"]
 resource_name = "Idle"
 length = 0.001
@@ -40,12 +54,13 @@ PositionSmoothing = 15.0
 RotationSmoothing = 10.0
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.9, 0)
 shape = SubResource("CapsuleShape3D_remote")
 
 [node name="Model" type="Node3D" parent="."]
 
 [node name="MeshInstance3D" type="MeshInstance3D" parent="Model"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 0)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.9, 0)
 mesh = SubResource("CapsuleMesh_remote")
 surface_material_override/0 = SubResource("StandardMaterial3D_remote")
 
@@ -54,10 +69,22 @@ root_node = NodePath("..")
 anims/Idle = SubResource("Animation_default")
 
 [node name="NameLabel" type="Label3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.2, 0)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.1, 0)
 pixel_size = 0.015
 billboard = 1
 no_depth_test = true
 text = "Player"
 font_size = 32
 outline_size = 8
+
+[node name="HealthBarBg" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.95, 0)
+billboard = 1
+mesh = SubResource("BoxMesh_health_bg")
+surface_material_override/0 = SubResource("StandardMaterial3D_health_bg")
+
+[node name="HealthBarFill" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.95, 0)
+billboard = 1
+mesh = SubResource("BoxMesh_health_fill")
+surface_material_override/0 = SubResource("StandardMaterial3D_health_fill")

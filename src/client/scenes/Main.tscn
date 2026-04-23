@@ -4,6 +4,9 @@
 [ext_resource type="PackedScene" uid="uid://player" path="res://scenes/Player.tscn" id="2_player"]
 [ext_resource type="PackedScene" uid="uid://ui" path="res://scenes/UI.tscn" id="3_ui"]
 [ext_resource type="PackedScene" uid="uid://remoteplayer" path="res://scenes/RemotePlayer.tscn" id="4_remoteplayer"]
+[ext_resource type="Script" path="res://src/utils/DemoInstrumentation.cs" id="5_instrumentation"]
+[ext_resource type="PackedScene" uid="uid://hudmain" path="res://scenes/ui/HUD.tscn" id="6_hud"]
+[ext_resource type="Script" path="res://src/utils/DemoAutoCombat.cs" id="7_autocombat"]
 
 [sub_resource type="PlaneMesh" id="PlaneMesh_ground"]
 size = Vector2(200, 200)
@@ -21,6 +24,39 @@ ssao_enabled = true
 ssil_enabled = true
 sdfgi_enabled = true
 
+[sub_resource type="WorldBoundaryShape3D" id="WorldBoundaryShape3D_ground"]
+
+[sub_resource type="BoxMesh" id="BoxMesh_rock1"]
+size = Vector3(2, 1.5, 2)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_rock1"]
+albedo_color = Color(0.4, 0.35, 0.3, 1)
+roughness = 0.9
+
+[sub_resource type="BoxMesh" id="BoxMesh_rock2"]
+size = Vector3(1.5, 1, 3)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_rock2"]
+albedo_color = Color(0.35, 0.3, 0.25, 1)
+roughness = 0.85
+
+[sub_resource type="SphereMesh" id="SphereMesh_bush1"]
+radius = 0.8
+height = 1.6
+radial_segments = 8
+rings = 6
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_bush1"]
+albedo_color = Color(0.15, 0.4, 0.1, 1)
+roughness = 0.9
+
+[sub_resource type="BoxMesh" id="BoxMesh_pillar"]
+size = Vector3(0.8, 3, 0.8)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_pillar"]
+albedo_color = Color(0.5, 0.5, 0.45, 1)
+roughness = 0.7
+
 [node name="Main" type="Node3D"]
 script = ExtResource("1_main")
 PlayerScene = ExtResource("2_player")
@@ -28,9 +64,14 @@ RemotePlayerScene = ExtResource("4_remoteplayer")
 
 [node name="World" type="Node3D" parent="."]
 
-[node name="Ground" type="MeshInstance3D" parent="World"]
+[node name="Ground" type="StaticBody3D" parent="World"]
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="World/Ground"]
 mesh = SubResource("PlaneMesh_ground")
 surface_material_override/0 = SubResource("StandardMaterial3D_ground")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="World/Ground"]
+shape = SubResource("WorldBoundaryShape3D_ground")
 
 [node name="DirectionalLight3D" type="DirectionalLight3D" parent="World"]
 transform = Transform3D(0.707107, -0.5, 0.5, 0, 0.707107, 0.707107, -0.707107, -0.5, 0.5, 0, 10, 0)
@@ -43,8 +84,62 @@ environment = SubResource("Environment_default")
 [node name="PlayerSpawn" type="Marker3D" parent="World"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0)
 
+[node name="Props" type="Node3D" parent="World"]
+
+[node name="Rock1" type="MeshInstance3D" parent="World/Props"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 8, 0.75, 5)
+mesh = SubResource("BoxMesh_rock1")
+surface_material_override/0 = SubResource("StandardMaterial3D_rock1")
+
+[node name="Rock2" type="MeshInstance3D" parent="World/Props"]
+transform = Transform3D(0.707107, 0, 0.707107, 0, 1, 0, -0.707107, 0, 0.707107, -6, 0.5, 8)
+mesh = SubResource("BoxMesh_rock2")
+surface_material_override/0 = SubResource("StandardMaterial3D_rock2")
+
+[node name="Rock3" type="MeshInstance3D" parent="World/Props"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -5, 0.6, -7)
+mesh = SubResource("BoxMesh_rock1")
+surface_material_override/0 = SubResource("StandardMaterial3D_rock1")
+
+[node name="Bush1" type="MeshInstance3D" parent="World/Props"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4, 0.8, -4)
+mesh = SubResource("SphereMesh_bush1")
+surface_material_override/0 = SubResource("StandardMaterial3D_bush1")
+
+[node name="Bush2" type="MeshInstance3D" parent="World/Props"]
+transform = Transform3D(1.2, 0, 0, 0, 1.1, 0, 0, 0, 1.2, -8, 0.88, -3)
+mesh = SubResource("SphereMesh_bush1")
+surface_material_override/0 = SubResource("StandardMaterial3D_bush1")
+
+[node name="Bush3" type="MeshInstance3D" parent="World/Props"]
+transform = Transform3D(0.8, 0, 0, 0, 0.7, 0, 0, 0, 0.8, 10, 0.56, -6)
+mesh = SubResource("SphereMesh_bush1")
+surface_material_override/0 = SubResource("StandardMaterial3D_bush1")
+
+[node name="Pillar1" type="MeshInstance3D" parent="World/Props"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 12, 1.5, 0)
+mesh = SubResource("BoxMesh_pillar")
+surface_material_override/0 = SubResource("StandardMaterial3D_pillar")
+
+[node name="Pillar2" type="MeshInstance3D" parent="World/Props"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -10, 1.5, 4)
+mesh = SubResource("BoxMesh_pillar")
+surface_material_override/0 = SubResource("StandardMaterial3D_pillar")
+
 [node name="Players" type="Node3D" parent="."]
 
 [node name="Player" parent="Players" instance=ExtResource("2_player")]
 
 [node name="UI" parent="." instance=ExtResource("3_ui")]
+
+[node name="HUD" parent="." instance=ExtResource("6_hud")]
+
+[node name="DemoInstrumentation" type="Node" parent="."]
+script = ExtResource("5_instrumentation")
+
+[node name="DemoAutoCombat" type="Node" parent="."]
+script = ExtResource("7_autocombat")
+Enabled = true
+AttackRange = 8.0
+AttackInterval = 0.8
+AutoMoveToTarget = true

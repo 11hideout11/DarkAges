@@ -27,6 +27,7 @@ run/delta_smoothing=false
 
 NetworkManager="*res://src/networking/NetworkManager.cs"
 GameState="*res://src/GameState.cs"
+CombatEventSystem="*res://src/combat/CombatEventSystem.cs"
 
 [debug]
 

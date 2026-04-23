@@ -65,25 +65,64 @@ namespace DarkAges.Combat
 
         /// <summary>
         /// Called when combat event arrives from server
+        /// Simple binary format: [packet_type:1=3][subtype:1][attacker_id:4][target_id:4][damage:4][health_pct:1][timestamp:4]
+        /// Subtypes: 1=Damage, 2=Death, 3=Heal
         /// </summary>
         private void OnCombatEventReceived(uint eventType, byte[] data)
         {
-            // Parse event data
-            // Event types: 1=damage_dealt, 2=damage_taken, 4=death, 5=respawn
+            // eventType is the subtype from NetworkManager (1=damage, 2=death, 3=heal)
+            // data is the full packet bytes
             
-            switch (eventType)
+            if (data.Length < 19) return;
+            
+            uint subtype = data[1];
+            uint attackerId = BitConverter.ToUInt32(data, 2);
+            uint targetId = BitConverter.ToUInt32(data, 6);
+            int damage = BitConverter.ToInt32(data, 10);
+            byte healthPercent = data[14];
+            uint timestamp = BitConverter.ToUInt32(data, 15);
+            
+            uint localEntityId = GameState.Instance.LocalEntityId;
+            
+            switch (subtype)
             {
-                case 1: // Damage dealt (we hit someone)
-                    ParseDamageDealt(data);
+                case 1: // Damage
+                    // Determine if we dealt or took damage
+                    if (attackerId == localEntityId)
+                    {
+                        // We dealt damage
+                        var targetEntity = GameState.Instance.GetEntity(targetId);
+                        Vector3 position = targetEntity?.Position ?? Vector3.Zero;
+                        SpawnDamageNumber(damage, position, false);
+                        ShowHitMarker(false);
+                        EmitSignal(SignalName.DamageDealt, targetId, damage, false, position);
+                    }
+                    else if (targetId == localEntityId)
+                    {
+                        // We took damage
+                        ShowDamageIndicator(damage, false);
+                        EmitSignal(SignalName.DamageTaken, damage, false);
+                    }
                     break;
-                case 2: // Damage taken (we got hit)
-                    ParseDamageTaken(data);
+                    
+                case 2: // Death
+                    EmitSignal(SignalName.EntityDied, targetId, attackerId);
+                    if (targetId == localEntityId)
+                    {
+                        EmitSignal(SignalName.LocalPlayerDied, attackerId);
+                        ActivateDeathCam(attackerId);
+                    }
+                    else if (attackerId == localEntityId)
+                    {
+                        ShowKillNotification(targetId, attackerId);
+                    }
                     break;
-                case 4: // Death
-                    ParseDeathEvent(data);
-                    break;
-                case 5: // Respawn
-                    ParseRespawnEvent(data);
+                    
+                case 3: // Heal
+                    // Show heal number
+                    var healedEntity = GameState.Instance.GetEntity(targetId);
+                    Vector3 healPos = healedEntity?.Position ?? Vector3.Zero;
+                    SpawnDamageNumber(damage, healPos, false); // Reuse damage number for heal
                     break;
             }
         }

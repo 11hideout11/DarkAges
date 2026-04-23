@@ -1,0 +1,6 @@
+#!/bin/bash
+# DarkAges MMO — One-command demo launcher
+# Usage: ./demo [--quick|--extended|--no-build|--headed|--dashboard|...]
+
+cd "$(dirname "$0")" || exit 1
+exec python3 autonomous_demo.py "$@"
