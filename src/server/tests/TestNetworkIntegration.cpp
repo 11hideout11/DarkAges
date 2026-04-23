@@ -136,6 +136,7 @@ TEST_CASE("Network integration - connection handshake", "[network][integration]"
     *reinterpret_cast<uint32_t*>(req + 1) = 1; // version
     *reinterpret_cast<uint32_t*>(req + 5) = 12345; // player id
     REQUIRE(client.send(req, sizeof(req)));
+    server.update(0);
 
     // Wait for server to process and respond
     std::this_thread::sleep_for(std::chrono::milliseconds(100));
@@ -174,6 +175,7 @@ TEST_CASE("Network integration - ping/pong roundtrip", "[network][integration]")
     *reinterpret_cast<uint32_t*>(req + 1) = 1;
     *reinterpret_cast<uint32_t*>(req + 5) = 1;
     REQUIRE(client.send(req, sizeof(req)));
+    server.update(0);
     std::this_thread::sleep_for(std::chrono::milliseconds(100));
 
     // Drain connection response
@@ -185,6 +187,7 @@ TEST_CASE("Network integration - ping/pong roundtrip", "[network][integration]")
     ping[0] = PACKET_PING;
     *reinterpret_cast<uint32_t*>(ping + 1) = 12345678;
     REQUIRE(client.send(ping, sizeof(ping)));
+    server.update(0);
 
     std::this_thread::sleep_for(std::chrono::milliseconds(100));
 
@@ -215,6 +218,7 @@ TEST_CASE("Network integration - client input received by server", "[network][in
     *reinterpret_cast<uint32_t*>(req + 1) = 1;
     *reinterpret_cast<uint32_t*>(req + 5) = 1;
     REQUIRE(client.send(req, sizeof(req)));
+    server.update(0);
     std::this_thread::sleep_for(std::chrono::milliseconds(100));
 
     // Drain connection response
@@ -234,6 +238,7 @@ TEST_CASE("Network integration - client input received by server", "[network][in
     *reinterpret_cast<int16_t*>(input + 12) = 200; // pitch
     *reinterpret_cast<uint32_t*>(input + 14) = 0; // target
     REQUIRE(client.send(input, sizeof(input)));
+    server.update(0);
 
     std::this_thread::sleep_for(std::chrono::milliseconds(100));
 
@@ -276,6 +281,7 @@ TEST_CASE("Network integration - snapshot broadcast received by client", "[netwo
     *reinterpret_cast<uint32_t*>(req + 1) = 1;
     *reinterpret_cast<uint32_t*>(req + 5) = 1;
     REQUIRE(client.send(req, sizeof(req)));
+    server.update(0);
     std::this_thread::sleep_for(std::chrono::milliseconds(100));
 
     // Drain connection response
@@ -353,6 +359,7 @@ TEST_CASE("Network integration - multiple clients connect", "[network][integrati
 
     REQUIRE(client1.send(req, sizeof(req)));
     REQUIRE(client2.send(req, sizeof(req)));
+    server.update(0);
 
     std::this_thread::sleep_for(std::chrono::milliseconds(200));
 
@@ -393,6 +400,7 @@ TEST_CASE("Network integration - connection timeout", "[network][integration]") 
     *reinterpret_cast<uint32_t*>(req + 1) = 1;
     *reinterpret_cast<uint32_t*>(req + 5) = 1;
     REQUIRE(client.send(req, sizeof(req)));
+    server.update(0);
 
     std::this_thread::sleep_for(std::chrono::milliseconds(100));
     uint8_t drain[256];

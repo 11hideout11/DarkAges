@@ -81,6 +81,7 @@ bool ZoneServer::initialize(const ZoneConfig& config) {
     combatEventHandler_.setConnectionMappings(&connectionToEntity_, &entityToConnection_);
 
     // [ZONE_AGENT] Initialize player manager
+    playerManager_.setZoneServer(this);
     playerManager_.setDatabaseConnections(redis_.get(), scylla_.get());
     playerManager_.setZoneId(config_.zoneId);
     std::cout << "[ZONE " << config_.zoneId << "] Player manager initialized" << std::endl;
@@ -945,6 +946,25 @@ void ZoneServer::onClientConnected(ConnectionID connectionId) {
         "Player" + std::to_string(connectionId),
         spawnPos
     );
+
+    // [GAMEPLAY_AGENT] Initialize player progression
+    registry_.emplace<PlayerProgression>(entity);
+
+    // [GAMEPLAY_AGENT] Initialize chat state
+    registry_.emplace<ChatComponent>(entity);
+
+    // [GAMEPLAY_AGENT] Initialize trade state
+    registry_.emplace<TradeComponent>(entity);
+
+    // [GAMEPLAY_AGENT] Initialize zone event participation state
+    registry_.emplace<ZoneEventComponent>(entity);
+
+    // [GAMEPLAY_AGENT] Initialize dialogue state
+    registry_.emplace<DialogueComponent>(entity);
+
+    // [ZONE_AGENT] Update ZoneServer connection mappings for replication
+    connectionToEntity_[connectionId] = entity;
+    entityToConnection_[entity] = connectionId;
 
     // [GAMEPLAY_AGENT] Give player their starter kit (inventory, abilities, gear)
     itemSystem_.giveStarterKit(registry_, entity);
