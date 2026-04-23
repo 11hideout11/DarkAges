@@ -1,4 +1,4 @@
-[gd_scene load_steps=8 format=3 uid="uid://hudmain"]
+[gd_scene load_steps=9 format=3 uid="uid://hudmain"]
 
 [ext_resource type="Script" path="res://src/ui/HUDController.cs" id="1_hudctrl"]
 [ext_resource type="Script" path="res://src/ui/HealthBarSystem.cs" id="2_health"]
@@ -6,6 +6,7 @@
 [ext_resource type="Script" path="res://src/ui/TargetLockSystem.cs" id="4_targetlock"]
 [ext_resource type="Script" path="res://src/ui/CombatTextSystem.cs" id="5_combattext"]
 [ext_resource type="Script" path="res://src/ui/DeathRespawnUI.cs" id="6_deathui"]
+[ext_resource type="Script" path="res://src/ui/InventoryPanel.cs" id="7_inventory"]
 
 [sub_resource type="GradientTexture2D" id="1_crosshair"]
 width = 32
@@ -185,3 +186,17 @@ script = ExtResource("5_combattext")
 layout_mode = 3
 anchors_preset = 0
 script = ExtResource("6_deathui")
+
+[node name="InventoryPanel" type="Panel" parent="."]
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -180.0
+offset_top = -150.0
+offset_right = 180.0
+offset_bottom = 150.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("7_inventory")

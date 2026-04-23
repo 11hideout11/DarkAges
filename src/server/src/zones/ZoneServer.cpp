@@ -405,31 +405,48 @@ void ZoneServer::run() {
 
  std::cout << "[ZONE " << config_.zoneId << "] Server running at 60Hz on port " << config_.port << std::endl;
 
- // [DEMO_AGENT] Auto-trigger zone event after 30 seconds in demo mode
+ // [DEMO_AGENT] In demo mode, start zone event immediately for continuous play
  if (config_.demoMode) {
- // Register the showcase world boss event
+ // Register the showcase world boss event (Event ID 99)
  ZoneEventDefinition bossEvent{};
  bossEvent.eventId = 99;
  std::strncpy(bossEvent.name, "World Boss: Shadow Ogre", sizeof(bossEvent.name) - 1);
  std::strncpy(bossEvent.description, "A powerful ogre has emerged!", sizeof(bossEvent.description) - 1);
- bossEvent.eventType = ZoneEventType::WorldBoss;
- bossEvent.minLevel = 1;
+ bossEvent.type = ZoneEventType::WorldBoss;
+ bossEvent.requiredPlayers = 1; // Min players to auto-start
  bossEvent.maxParticipants = 100;
  bossEvent.phaseCount = 1;
- bossEvent.phases[0].phaseType = ZoneEventPhaseType::BossBattle;
- bossEvent.phases[0].durationSeconds = 300;
- bossEvent.phases[0].objective = ZoneEventObjective::KillTarget;
- bossEvent.announceSeconds = 30;
- bossEvent.cooldownMinutes = 0; // No cooldown for demo
+ bossEvent.phases[0].phaseId = 1;
+ std::strncpy(bossEvent.phases[0].name, "The Battle Begins", sizeof(bossEvent.phases[0].name) - 1);
+ bossEvent.phases[0].durationMs = 300000; // 5 minute phase
+ bossEvent.phases[0].bossNpcArchetypeId = static_cast<uint32_t>(NPCArchetype::Boss); // Boss archetype
+ bossEvent.phases[0].bossLevel = 5;
+ bossEvent.phases[0].objectiveCount = 1;
+ bossEvent.phases[0].objectives[0].type = EventObjectiveType::KillBoss;
+ bossEvent.phases[0].objectives[0].requiredCount = 1;
+ std::strncpy(bossEvent.phases[0].objectives[0].description, "Defeat the Shadow Ogre",
+ sizeof(bossEvent.phases[0].objectives[0].description) - 1);
+ bossEvent.cooldownMs = 0; // No cooldown for demo
+ bossEvent.spawnX = 0.0f;
+ bossEvent.spawnZ = 0.0f;
+ bossEvent.spawnRadius = 10.0f;
+ bossEvent.reward.xpReward = 500;
+ bossEvent.reward.goldReward = 100;
+ bossEvent.reward.bonusItemId = 3; // Iron Longsword
+ bossEvent.reward.bonusItemQuantity = 1;
  zoneEventSystem_.registerEvent(bossEvent);
 
- // Start the event after 30 seconds
- zoneEventSystem_.startEvent(registry_, 99, getCurrentTimeMs());
- chatSystem_.broadcastMessage("[EVENT] World Boss spawning in 30 seconds!", ChatChannel::Global);
+ // Start the event immediately
+ uint32_t currentTime = getCurrentTimeMs();
+ zoneEventSystem_.startEvent(registry_, 99, currentTime);
+ chatSystem_.broadcastSystemMessage(registry_, "[EVENT] World Boss Event: Shadow Ogre has appeared!",
+ currentTime);
 
- std::cout << "[ZONE " << config_.zoneId << "] [DEMO] World boss scheduled for T+30 seconds" << std::endl;
+ std::cout << "[ZONE " << config_.zoneId << "] [DEMO] World boss event started" << std::endl;
  }
-        auto frameStart = std::chrono::steady_clock::now();
+ 
+ while (running_) {
+ auto frameStart = std::chrono::steady_clock::now();
 
         // Execute one game tick
         tick();
