@@ -36,52 +36,68 @@ class E2EValidator:
         self.host = server_host
         self.port = server_port
         self.checks: List[Check] = []
-    def _udp_ping(self, timeout: float = 3.0) -> bool:
+        self._sock: socket.socket = None
+        self._client_id = 9999
+        self._entity_id = 0
+
+    def _connect(self) -> bool:
+        """Establish a persistent UDP connection to the server."""
         try:
-            sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-            sock.settimeout(timeout)
-            sock.sendto(b'\x04', (self.host, self.port))
-            data, _ = sock.recvfrom(1024)
-            sock.close()
+            self._sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+            self._sock.settimeout(5.0)
+            request = struct.pack('<BII', PACKET_CONNECTION_REQUEST, 1, self._client_id)
+            self._sock.sendto(request, (self.host, self.port))
+            data, _ = self._sock.recvfrom(1024)
+            if len(data) >= 10:
+                pkt_type, success, entity_id, zone_id = struct.unpack('<BBII', data)
+                if pkt_type == PACKET_CONNECTION_RESPONSE and success == 1:
+                    self._entity_id = entity_id
+                    return True
+            return False
+        except Exception:
+            return False
+
+    def _disconnect(self):
+        """Close the persistent connection."""
+        if self._sock:
+            try:
+                self._sock.close()
+            except Exception:
+                pass
+            self._sock = None
+
+    def _udp_ping(self, timeout: float = 3.0) -> bool:
+        if not self._sock and not self._connect():
+            return False
+        try:
+            self._sock.settimeout(timeout)
+            ping_time = int(time.time() * 1000) & 0xFFFFFFFF
+            ping_pkt = struct.pack('<BI', PACKET_PING, ping_time)
+            self._sock.sendto(ping_pkt, (self.host, self.port))
+            data, _ = self._sock.recvfrom(1024)
             return len(data) >= 1 and data[0] == PACKET_PONG
         except Exception:
             return False
 
     def _handshake(self) -> tuple[bool, int]:
-        try:
-            sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-            sock.settimeout(5.0)
-            client_id = 9999
-            request = struct.pack('<BII', PACKET_CONNECTION_REQUEST, 1, client_id)
-            sock.sendto(request, (self.host, self.port))
-            data, _ = sock.recvfrom(1024)
-            if len(data) >= 10:
-                pkt_type, success, entity_id, zone_id = struct.unpack('<BBII', data)
-                return pkt_type == PACKET_CONNECTION_RESPONSE and success == 1, entity_id
+        if not self._sock and not self._connect():
             return False, 0
-        except Exception:
-            return False, 0
+        return True, self._entity_id
 
     def _count_snapshots(self, duration: float = 5.0) -> int:
+        if not self._sock and not self._connect():
+            return 0
         try:
-            sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-            sock.settimeout(5.0)
-            client_id = 9999
-            request = struct.pack('<BII', PACKET_CONNECTION_REQUEST, 1, client_id)
-            sock.sendto(request, (self.host, self.port))
-            data, _ = sock.recvfrom(1024)  # consume response
-
             start = time.time()
             count = 0
-            sock.settimeout(1.0)
+            self._sock.settimeout(1.0)
             while time.time() - start < duration:
                 try:
-                    data, _ = sock.recvfrom(4096)
+                    data, _ = self._sock.recvfrom(4096)
                     if len(data) >= 1 and data[0] == PACKET_SNAPSHOT:
                         count += 1
                 except socket.timeout:
                     continue
-            sock.close()
             return count
         except Exception:
             return 0
@@ -89,32 +105,8 @@ class E2EValidator:
     def _udp_ping_with_retry(self, max_wait: float = 10.0) -> bool:
         start = time.time()
         while time.time() - start < max_wait:
-            try:
-                sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-                sock.settimeout(2.0)
-                # First handshake to establish connection
-                client_id = 9998
-                request = struct.pack('<BII', PACKET_CONNECTION_REQUEST, 1, client_id)
-                sock.sendto(request, (self.host, self.port))
-                data, _ = sock.recvfrom(1024)
-                if len(data) < 10:
-                    time.sleep(0.5)
-                    continue
-                pkt_type, success, entity_id, zone_id = struct.unpack('<BBII', data)
-                if pkt_type != PACKET_CONNECTION_RESPONSE or success != 1:
-                    time.sleep(0.5)
-                    continue
-                # Now send ping (type 4 + uint32 timestamp)
-                import time as time_mod
-                ping_time = int(time_mod.time() * 1000) & 0xFFFFFFFF
-                ping_pkt = struct.pack('<BI', PACKET_PING, ping_time)
-                sock.sendto(ping_pkt, (self.host, self.port))
-                data, _ = sock.recvfrom(1024)
-                sock.close()
-                if len(data) >= 5 and data[0] == PACKET_PONG:
-                    return True
-            except Exception:
-                pass
+            if self._udp_ping(timeout=2.0):
+                return True
             time.sleep(0.5)
         return False
 
@@ -157,6 +149,7 @@ class E2EValidator:
         self.checks.append(Check("Server Binary", ok, str(binary)))
 
         self._print_report()
+        self._disconnect()
         return self.checks
 
     def _scan_logs_for_errors(self, log_dir: Path) -> List[str]:

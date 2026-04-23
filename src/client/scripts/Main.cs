@@ -17,6 +17,7 @@ namespace DarkAges
 		private Node3D? _playersContainer;
 		private PredictedPlayer? _localPlayer;
 		private RemotePlayerManager? _remotePlayerManager;
+		private int _snapshotCount = 0;
 
 		public override void _Ready()
 		{
@@ -42,6 +43,29 @@ namespace DarkAges
 			
 			// Find local player
 			_localPlayer = GetNode<PredictedPlayer>("Players/Player");
+
+			// [DEMO] Auto-exit after duration if --demo-duration is specified
+			var args = OS.GetCmdlineUserArgs();
+			for (int i = 0; i < args.Length; i++)
+			{
+				if (args[i] == "--demo-duration" && i + 1 < args.Length)
+				{
+					if (float.TryParse(args[i + 1], out float duration))
+					{
+						GD.Print($"[Main] Auto-exit scheduled after {duration}s");
+						var timer = new Godot.Timer();
+						timer.WaitTime = duration;
+						timer.OneShot = true;
+						timer.Timeout += () =>
+						{
+							GD.Print($"[Main] Demo duration reached. Exiting. Entities seen: {GameState.Instance.Entities.Count}, Snapshots: {_snapshotCount}");
+							GetTree().Quit();
+						};
+						AddChild(timer);
+						timer.Start();
+					}
+				}
+			}
 		}
 
 		public override void _ExitTree()
@@ -78,6 +102,7 @@ namespace DarkAges
 
 		private void OnSnapshotReceived(uint serverTick, byte[] data)
 		{
+			_snapshotCount++;
 			// Enhanced snapshot processing is now in NetworkManager
 			// RemotePlayerManager receives the signal and distributes to entities
 			// This handler can be used for additional game logic if needed

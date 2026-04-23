@@ -9,6 +9,7 @@ import json
 import os
 import signal
 import socket
+import struct
 import subprocess
 import sys
 import threading
@@ -238,13 +239,30 @@ class Supervisor:
         self.stop_server()
 
     def _probe_server_udp(self) -> bool:
+        """Probe server UDP with proper handshake + ping."""
         try:
             sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
             sock.settimeout(2.0)
-            sock.sendto(b'\x04\x00\x00\x00ping', ("127.0.0.1", self.server_port))
+            # First establish a connection
+            client_id = 99999
+            request = struct.pack('<BII', 6, 1, client_id)  # PACKET_CONNECTION_REQUEST
+            sock.sendto(request, ("127.0.0.1", self.server_port))
+            data, _ = sock.recvfrom(1024)
+            if len(data) < 10:
+                sock.close()
+                return False
+            pkt_type, success = struct.unpack('<BB', data[:2])
+            if pkt_type != 7 or success != 1:  # PACKET_CONNECTION_RESPONSE
+                sock.close()
+                return False
+            # Now send ping
+            import time as time_mod
+            ping_time = int(time_mod.time() * 1000) & 0xFFFFFFFF
+            ping_pkt = struct.pack('<BI', 4, ping_time)  # PACKET_PING
+            sock.sendto(ping_pkt, ("127.0.0.1", self.server_port))
             data, _ = sock.recvfrom(1024)
             sock.close()
-            return len(data) > 0
+            return len(data) >= 1 and data[0] == 5  # PACKET_PONG
         except Exception:
             return False
 

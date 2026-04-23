@@ -134,6 +134,7 @@ namespace DarkAges.Networking
                         Disconnect();
                     }
                 };
+                AddChild(timer);
                 timer.Start();
             }
             catch (Exception ex)

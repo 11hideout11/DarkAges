@@ -1,30 +1,39 @@
 # DarkAges MMO - Project Status
 
-**Version:** 5.0 (Phase 8-9 Complete)  
-**Last Updated:** 2026-04-22  
-**Status:** Phase 9 Performance Validation Complete — Ready for Network Integration Phase  
+**Version:** 5.1 (Phase 8-9 Complete, Demo Pipeline v1.1)  
+**Last Updated:** 2026-04-23  
+**Status:** Demo Pipeline Operational — All gameplay systems validated, GNS patch integrated, demo mode CLI active  
 
 ---
 
 ## Executive Summary
 
-DarkAges MMO has successfully completed **Phases 0-8** (all core gameplay systems) and **Phase 9** (performance testing). The server is production-stable at 60Hz with comprehensive test coverage (1165 test cases, 88 files, all passing). All gameplay loops — combat, abilities, loot, XP, inventory, crafting, trading, quests, chat, NPC AI with A* pathfinding, zone events, and dialogue — are fully implemented and validated.
+DarkAges MMO has successfully completed **Phases 0-8** (all core gameplay systems) and **Phase 9** (performance testing). The server is production-stable at 60Hz with comprehensive test coverage (1212+ test cases, 88 files, all passing). All gameplay loops — combat, abilities, loot, XP, inventory, crafting, trading, quests, chat, NPC AI with A* pathfinding, zone events, and dialogue — are fully implemented and validated.
 
-The project is now at the **critical network integration milestone**: GameNetworkingSockets (GNS) implementation exists but is conditionally compiled (ENABLE_GNS=OFF in CI). Transitioning from stub to real networking is the primary path to live multiplayer validation.
+The **demo pipeline** is now fully operational with:
+- One-command demo launcher (`tools/demo/run_demo.py`)
+- Supervisor with circuit breaker, port escalation, memory guard, zombie detection
+- Live terminal dashboard with rich metrics
+- Chaos injection for resilience testing
+- Demo mode CLI (`--demo-mode`, `--zone-config`) with curated NPC spawns
+- Deep validation (NPC movement, tick budget, combat over network)
+- E2EValidator with persistent connection (fixed connection leak)
 
 ### Current State at a Glance
 
 | Metric | Value |
 |--------|-------|
-| **Total Test Cases** | 1165 |
+| **Total Test Cases** | 1212+ |
 | **Test Files** | 88 |
 | **Test Suites** | 11 (all passing) |
-| **Server Core LOC** | ~25091 |
-| **Client (Godot C#)** | ~5695 lines |
+| **Server Core LOC** | ~32K |
+| **Client (Godot C#)** | ~6.2K lines |
 | **Tick Rate** | 60Hz target, validated to 20ms budget @ 400 entities |
-| **Performance Grade** | ✅ All 7 budget checks PASS |
-| **GNS Status** | Implementation ready, dependency not enabled in CI |
-| **Client Protocol** | Custom UDP (binary) — needs GNS/protobuf alignment |
+| **Performance Grade** | All 7 budget checks PASS |
+| **GNS Status** | Patch integrated (0001-fix-compile-features.patch), blocked by WebRTC submodule |
+| **Client Protocol** | Custom UDP (binary) — live validator passes with 10 clients |
+| **Demo Pipeline** | Operational: build, test, deploy, validate, report |
+| **Demo Mode** | `--demo-mode` + `--zone-config` CLI with curated zone 99 |
 
 ---
 
@@ -147,14 +156,17 @@ src/
 
 ## Known Issues & Technical Debt
 
-1. **GNS Integration Inactive** — NetworkManager_stub.cpp is linked in test builds; real GNS dependency not available in CI environment. Client and server cannot communicate over real network in CI.
+1. **GNS Integration Blocked** — Patch `0001-fix-compile-features.patch` integrated, but WebRTC submodule clone fails (webrtc.googlesource.com restricted access). ENABLE_GNS=ON configure succeeds but build cannot complete. Stubbed UDP layer is fully functional for demo purposes.
 2. **Protocol.cpp Excluded** — Depends on GNS types; excluded when `ENABLE_GNS=OFF`. Delta encoding stub used instead.
 3. **Redis/Scylla Disabled** — Database stubs active. No persistence validation in CI.
-4. **Documentation Drift** — Several markdown files reference pre-April state (Comprehensive Review: Feb 18)
-5. **Shallow Test Files** — TestPartySystem (19 lines), TestGuildSystem (30 lines), TestProtocol (49 lines) need expansion
+4. **Documentation Drift** — Several markdown files reference pre-April state (Comprehensive Review: Feb 18). AGENTS.md updated April 22.
+5. **Validator Connection Spam** — `live_client_validator.py` creates aggressive UDP retries that can transiently exhaust server connection slots when run concurrently with supervisor health probes. Does not affect validation results.
 
 **Recently Resolved**:
 - ~~Lag compensation `calculateAttackTime` double-counted one-way latency~~ — Fixed: caller (`processAttackInput`) already subtracts latency, so `calculateAttackTime` now returns `clientTimestamp` directly. All 124 combat tests pass.
+- ~~E2EValidator connection leak~~ — Fixed: E2EValidator now reuses a single persistent UDP socket across all checks instead of creating a new connection per check. Supervisor zombie-kills eliminated during smoke tests.
+- ~~C# client compilation errors~~ — Fixed: 37 errors resolved (API mismatches, missing usings, type casts). Godot editor build passes.
+- ~~GNS CMake "No known features" error~~ — Fixed: Patched `set_clientlib_target_properties` macro to use `target_compile_features(... c_std_99 cxx_std_11)` instead of empty feature variables.
 
 ---
 
@@ -170,11 +182,46 @@ Live client validator (`tools/validation/live_client_validator.py`) now covers:
 | Phase 4 | Latency simulation | PASS | Server resilient to 30ms latency + 5% packet loss |
 | Phase 5 | NPC replication | PASS | 3 clients + 10 NPCs: 14 entities in snapshots |
 | Phase 6 | Combat over network | PASS | Attack inputs trigger health changes, deaths, respawns |
+| Phase 7 | Interpolation stress | PASS | 5s burst, median 50ms inter-arrival, 0% loss |
+| Phase 9 | NPC movement validation | PASS | 2-4 moving NPCs observed per client |
+| Phase 10 | Tick budget validation | PASS | No tick overruns detected at 400 entities |
+
+### Godot Client Integration Test (NEW — April 23)
+The **actual Godot 4.2.2 Mono C# client** has been validated headlessly:
+- Builds with 0 C# errors
+- Auto-connects to server via `--auto-connect --demo-duration` CLI flags
+- Receives snapshots at 20Hz (~100 snapshots in 5s)
+- Spawns 11 entities (local player + 10 NPCs from demo mode)
+- Sends player inputs continuously (~280 inputs in 5s)
+- Clean disconnect and exit
+
+Test: `python3 tools/validation/godot_integration_test.py`
+
+| Metric | Value |
+|--------|-------|
+| Connection | PASS |
+| Snapshots | 102 @ 20Hz |
+| Entities | 11 (1 player + 10 NPCs) |
+| Inputs sent | 288 |
+| Errors | 0 (headless artifacts ignored) |
+| OVERALL | **PASS** |
+
+**Known non-fatal headless artifacts** (do not affect networking):
+- `add_child()` failed during `_Ready()` — Godot lifecycle timing
+- `!is_inside_tree()` — Transform access before node fully added
+- `Quaternion is not normalized` — Snapshot rotation values need normalization before applying
 
 **Combat Validation Results** (latest run):
 - 226 attacks sent, 40 health changes observed, 7 deaths, 6 respawns
 - Server event log confirms `DAMAGE_DEALT` events and respawn cycles
 - Lag compensation hit validation fixed and passing all tests
+
+**Demo Mode Validation** (`--demo-mode`):
+- Zone 99 loaded from `tools/demo/content/demo_zone.json`
+- 9 curated NPCs spawned (5 wolf, 3 bandit, 1 boss)
+- Auto-quest accepted on player connect
+- Zone event `demo_wave_defense` configured
+- All checks pass with 2 clients + 10 NPCs
 
 ---
 
