@@ -141,6 +141,10 @@ Research/
 infra/alerting/alertmanager.local.yml
 infra/docker-compose.monitoring.local.yml
 
+# Demo pipeline artifacts
+tools/demo/artifacts/
+!tools/demo/artifacts/.gitkeep
+
 nul
 
 

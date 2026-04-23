@@ -1,0 +1,31 @@
+{
+  "zone_id": 99,
+  "name": "Showcase Grounds",
+  "description": "Curated demo zone for DarkAges MMO showcase",
+  "spawn_points": [
+    {"x": 0, "y": 0, "z": 0, "type": "player_start"},
+    {"x": 10, "y": 0, "z": 10, "type": "npc_guard"},
+    {"x": -10, "y": 0, "z": 10, "type": "npc_merchant"}
+  ],
+  "npc_presets": [
+    {"archetype": "wolf", "count": 5, "radius": 25, "level": 1},
+    {"archetype": "bandit", "count": 3, "radius": 15, "level": 2},
+    {"archetype": "boss_ogre", "count": 1, "radius": 5, "level": 5, "event": "world_boss"}
+  ],
+  "demo_quest": {
+    "id": "demo_welcome",
+    "title": "Welcome to DarkAges",
+    "objectives": [
+      {"type": "kill", "target": "wolf", "count": 3},
+      {"type": "interact", "target": "npc_merchant"}
+    ],
+    "rewards": {"xp": 100, "gold": 50}
+  },
+  "zone_event": {
+    "id": "demo_wave_defense",
+    "trigger": "timer",
+    "interval_seconds": 120,
+    "waves": 3,
+    "enemies_per_wave": 5
+  }
+}

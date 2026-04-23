@@ -135,6 +135,7 @@ if(ENABLE_GNS AND NOT WIN32)
         GIT_REPOSITORY https://github.com/ValveSoftware/GameNetworkingSockets.git
         GIT_TAG v1.4.1
         GIT_SHALLOW TRUE
+        PATCH_COMMAND ${CMAKE_COMMAND} -E env patch -p1 -d "<SOURCE_DIR>" -b --suffix=.bak < "${CMAKE_SOURCE_DIR}/patches/game-networking-sockets/0001-fix-compile-features.patch"
     )
 endif()
 
