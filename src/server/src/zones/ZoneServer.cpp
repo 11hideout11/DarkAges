@@ -674,7 +674,12 @@ void ZoneServer::updateNetwork() {
 
     // Process pending inputs
     auto inputs = network_->getPendingInputs();
+    // Deduplicate: keep only the latest input per connection per tick
+    std::unordered_map<ConnectionID, ClientInputPacket> latestInputs;
     for (const auto& input : inputs) {
+        latestInputs[input.connectionId] = input;
+    }
+    for (const auto& [connId, input] : latestInputs) {
         inputHandler_.onClientInput(input);
     }
 
