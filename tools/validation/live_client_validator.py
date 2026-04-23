@@ -61,6 +61,10 @@ class ClientStats:
     health_changes: list[tuple] = field(default_factory=list)  # (entity_id, old, new, tick)
     deaths_observed: int = 0
     respawns_observed: int = 0
+    # Interpolation / jitter tracking
+    snapshot_arrival_times: list[float] = field(default_factory=list)
+    snapshot_server_ticks: list[int] = field(default_factory=list)
+    entity_positions: dict[int, list[tuple]] = field(default_factory=dict)  # entity_id -> [(time, x, y, z)]
 
 
 class TestClient:
@@ -252,20 +256,30 @@ class TestClient:
             )
             return
 
+        arrival_time = time.time()
         with self._lock:
             self.stats.snapshots_received += 1
             self.stats.snapshot_entity_counts.append(entity_count)
+            self.stats.snapshot_arrival_times.append(arrival_time)
+            self.stats.snapshot_server_ticks.append(server_tick)
 
             # Parse entity health data for combat tracking
             offset = 13
             for i in range(entity_count):
                 entity_id = struct.unpack_from('<I', data, offset)[0]
                 offset += 4  # id
+                pos_x, pos_y, pos_z = struct.unpack_from('<fff', data, offset)
                 offset += 12  # pos x,y,z (3 floats)
+                vel_x, vel_y, vel_z = struct.unpack_from('<fff', data, offset)
                 offset += 12  # vel x,y,z (3 floats)
                 health = data[offset]
                 offset += 1  # health
                 offset += 1  # anim
+
+                # Track position for interpolation validation
+                if entity_id not in self.stats.entity_positions:
+                    self.stats.entity_positions[entity_id] = []
+                self.stats.entity_positions[entity_id].append((arrival_time, pos_x, pos_y, pos_z))
 
                 old_health = self.stats.entity_health.get(entity_id, -1)
                 if old_health != -1 and old_health != health:
@@ -284,6 +298,73 @@ class TestClient:
         with self._lock:
             self.stats.pongs_received += 1
             self.stats.rtt_ms = rtt
+
+
+def compute_jitter_stats(arrival_times: list[float]) -> dict:
+    """Compute snapshot jitter statistics from arrival timestamps."""
+    if len(arrival_times) < 2:
+        return {'count': len(arrival_times), 'median_ms': 0.0, 'stddev_ms': 0.0,
+                'min_ms': 0.0, 'max_ms': 0.0, 'loss_percent': 0.0}
+
+    intervals = []
+    for i in range(1, len(arrival_times)):
+        dt = (arrival_times[i] - arrival_times[i - 1]) * 1000.0
+        intervals.append(dt)
+
+    intervals_sorted = sorted(intervals)
+    n = len(intervals)
+    median = intervals_sorted[n // 2] if n % 2 else (intervals_sorted[n // 2 - 1] + intervals_sorted[n // 2]) / 2
+    mean = sum(intervals) / n
+    variance = sum((x - mean) ** 2 for x in intervals) / n
+    stddev = variance ** 0.5
+    min_i = min(intervals)
+    max_i = max(intervals)
+
+    # Estimate packet loss: intervals > 2x median suggest a dropped snapshot
+    expected_interval = 50.0  # 20Hz = 50ms
+    lost = sum(1 for dt in intervals if dt > expected_interval * 1.8)
+    loss_percent = (lost / (n + lost)) * 100.0 if (n + lost) > 0 else 0.0
+
+    return {
+        'count': len(arrival_times),
+        'median_ms': median,
+        'stddev_ms': stddev,
+        'min_ms': min_i,
+        'max_ms': max_i,
+        'loss_percent': loss_percent
+    }
+
+
+def compute_tick_consistency(ticks: list[int]) -> dict:
+    """Check that server tick increments are consistent (should be +3 at 20Hz from 60Hz tick)."""
+    if len(ticks) < 2:
+        return {'consistent': True, 'expected_delta': 3, 'actual_deltas': []}
+    deltas = [ticks[i] - ticks[i - 1] for i in range(1, len(ticks))]
+    # Allow some variance: most deltas should be 3, occasional 2 or 4 is ok
+    expected = 3
+    ok = sum(1 for d in deltas if d in (2, 3, 4))
+    return {'consistent': ok >= len(deltas) * 0.8, 'expected_delta': expected, 'actual_deltas': deltas}
+
+
+def compute_position_jitter(entity_positions: dict[int, list[tuple]]) -> dict:
+    """Compute per-entity position delta statistics."""
+    max_delta = 0.0
+    total_deltas = 0
+    large_jumps = 0
+    for entity_id, positions in entity_positions.items():
+        if len(positions) < 2:
+            continue
+        for i in range(1, len(positions)):
+            _, x1, y1, z1 = positions[i - 1]
+            _, x2, y2, z2 = positions[i]
+            dx = ((x2 - x1) ** 2 + (y2 - y1) ** 2 + (z2 - z1) ** 2) ** 0.5
+            max_delta = max(max_delta, dx)
+            total_deltas += 1
+            # At 20Hz, max reasonable movement is ~5m/s * 0.05s = 0.25m
+            # But server allows higher speeds; flag jumps > 2m between snapshots
+            if dx > 2.0:
+                large_jumps += 1
+    return {'max_delta_m': max_delta, 'total_deltas': total_deltas, 'large_jumps': large_jumps}
 
 
 def start_server(bin_path: str, port: int, npcs: bool = False, npc_count: int = 10) -> subprocess.Popen:
@@ -518,6 +599,71 @@ def run_validation(args) -> bool:
             else:
                 print(f"  [PASS] Observed {total_respawns} respawn(s)")
 
+        # Phase 8: Interpolation / jitter stress test
+        if args.interpolation_stress and len(clients) >= 1:
+            print(f"[VALIDATOR] Phase 8: Interpolation stress test ({args.interpolation_duration}s)...")
+            stress_start = time.time()
+            input_interval = 1.0 / 60.0
+            last_input_time = [0.0] * len(clients)
+            last_ping_time = stress_start
+
+            while time.time() - stress_start < args.interpolation_duration:
+                now = time.time()
+                for i, client in enumerate(clients):
+                    if now - last_input_time[i] >= input_interval:
+                        # Circular movement pattern to generate smooth position curves
+                        t = now - stress_start
+                        yaw = (t * 2.0) % 6.28
+                        client.send_input(forward=True, yaw=yaw)
+                        last_input_time[i] = now
+
+                if now - last_ping_time >= 1.0:
+                    for client in clients:
+                        client.send_ping()
+                    last_ping_time = now
+
+                time.sleep(0.005)
+
+            # Allow final snapshots to arrive
+            time.sleep(0.5)
+
+            # Validate jitter metrics
+            for i, client in enumerate(clients):
+                stats = client.stats
+                jitter = compute_jitter_stats(stats.snapshot_arrival_times)
+                tick_check = compute_tick_consistency(stats.snapshot_server_ticks)
+                pos_check = compute_position_jitter(stats.entity_positions)
+
+                print(f"  Client {i+1} interpolation stats:")
+                print(f"    Snapshots received: {jitter['count']}")
+                print(f"    Median inter-arrival: {jitter['median_ms']:.2f}ms (expected ~50ms)")
+                print(f"    Jitter (stddev): {jitter['stddev_ms']:.2f}ms")
+                print(f"    Min/Max interval: {jitter['min_ms']:.2f}ms / {jitter['max_ms']:.2f}ms")
+                print(f"    Estimated snapshot loss: {jitter['loss_percent']:.1f}%")
+                print(f"    Tick consistency: {'PASS' if tick_check['consistent'] else 'WARN'}")
+                print(f"    Max position delta: {pos_check['max_delta_m']:.3f}m")
+                print(f"    Large position jumps (>2m): {pos_check['large_jumps']}")
+
+                # Validation criteria
+                if jitter['count'] < 20:
+                    print(f"  [WARN] Too few snapshots for jitter analysis ({jitter['count']})")
+                else:
+                    if 40 <= jitter['median_ms'] <= 65:
+                        print(f"  [PASS] Snapshot rate within expected range")
+                    else:
+                        print(f"  [FAIL] Snapshot rate out of range ({jitter['median_ms']:.1f}ms)")
+                        all_passed = False
+
+                    if jitter['stddev_ms'] > 20:
+                        print(f"  [WARN] High jitter detected ({jitter['stddev_ms']:.1f}ms stddev)")
+                    else:
+                        print(f"  [PASS] Jitter acceptable")
+
+                    if jitter['loss_percent'] > 10:
+                        print(f"  [WARN] High estimated snapshot loss ({jitter['loss_percent']:.1f}%)")
+                    else:
+                        print(f"  [PASS] Snapshot loss acceptable")
+
     finally:
         print("[VALIDATOR] Cleaning up clients...")
         for client in clients:
@@ -576,6 +722,10 @@ def main():
                         help='Enable combat validation phase (attack inputs + health tracking)')
     parser.add_argument('--combat-duration', type=int, default=10,
                         help='Duration of combat phase in seconds (default: 10)')
+    parser.add_argument('--interpolation-stress', action='store_true',
+                        help='Enable interpolation/jitter stress test')
+    parser.add_argument('--interpolation-duration', type=int, default=10,
+                        help='Duration of interpolation stress in seconds (default: 10)')
     args = parser.parse_args()
 
     success = run_validation(args)
