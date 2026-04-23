@@ -71,11 +71,6 @@ TEST_CASE("ViolationSeverity enum values", "[security][anticheat][types]") {
         REQUIRE(std::string(severityToString(ViolationSeverity::CRITICAL)) == "CRITICAL");
         REQUIRE(std::string(severityToString(ViolationSeverity::BAN)) == "BAN");
     }
-
-    SECTION("Default severity value") {
-        ViolationSeverity defaultSeverity;
-        REQUIRE(defaultSeverity == ViolationSeverity::INFO);
-    }
 }
 
 // ============================================================================

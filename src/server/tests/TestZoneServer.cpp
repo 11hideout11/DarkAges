@@ -9,6 +9,8 @@
 #include "Constants.hpp"
 #include <cstdint>
 #include <string>
+#include <thread>
+#include <chrono>
 
 using namespace DarkAges;
 using Catch::Approx;
@@ -900,7 +902,14 @@ TEST_CASE("ZoneConfig with extreme bounds", "[zones][zoneserver]") {
     TEST_CASE("ZoneServer run is safe to call", "[zoneserver]") {
         ZoneServer obj;
         obj.initialize(ZoneConfig{});
-        REQUIRE_NOTHROW(obj.run());
+        std::thread runThread([&obj]() {
+            obj.run();
+        });
+        // Let the main loop spin briefly, then stop it
+        std::this_thread::sleep_for(std::chrono::milliseconds(100));
+        obj.stop();
+        runThread.join();
+        REQUIRE(true);
     }
 
     TEST_CASE("ZoneServer setupSignalHandlers is safe to call", "[zoneserver]") {

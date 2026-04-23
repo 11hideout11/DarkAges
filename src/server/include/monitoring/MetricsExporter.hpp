@@ -155,7 +155,13 @@ public:
     
 private:
     MetricsExporter() = default;
-    ~MetricsExporter() = default;
+    ~MetricsExporter() {
+        // Ensure clean shutdown if the singleton is destroyed
+        // without an explicit Shutdown() call (e.g., during static destruction)
+        if (running_.load() || serverThread_.joinable()) {
+            Shutdown();
+        }
+    }
     MetricsExporter(const MetricsExporter&) = delete;
     MetricsExporter& operator=(const MetricsExporter&) = delete;
     

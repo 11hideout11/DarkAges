@@ -303,6 +303,12 @@ void MetricsExporter::Shutdown() {
     running_ = false;
     
     if (serverSocket_ != -1) {
+        // Wake up blocked accept() before closing the socket
+#ifdef _WIN32
+        shutdown(serverSocket_, SD_BOTH);
+#else
+        shutdown(serverSocket_, SHUT_RDWR);
+#endif
         CLOSE_SOCKET(serverSocket_);
         serverSocket_ = -1;
     }
