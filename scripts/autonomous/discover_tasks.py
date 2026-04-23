@@ -509,6 +509,152 @@ def find_include_deps() -> List[Task]:
     return tasks
 
 
+def find_missing_include_guards() -> List[Task]:
+    """Find header files missing include guards."""
+    tasks = []
+    for f in SRC_DIR.rglob("*.hpp"):
+        if "/tests/" in str(f) or "stub" in f.name.lower():
+            continue
+        try:
+            content = f.read_text()
+        except (UnicodeDecodeError, PermissionError):
+            continue
+
+        # Check for #ifndef or #pragma once
+        has_guard = bool(re.search(r'#ifndef\s+\w+_HPP_|#pragma\s+once', content))
+        if not has_guard:
+            tasks.append(Task(
+                priority="P2",
+                category="refactor",
+                title=f"Add include guard to {f.name}",
+                description="Header file missing #ifndef guard or #pragma once",
+                files=[str(f.relative_to(PROJECT_ROOT))],
+                estimated_hours=0.25
+            ))
+    return tasks
+
+
+def find_godot_client_gaps() -> List[Task]:
+    """Find Godot client integration gaps."""
+    tasks = []
+    client_dir = PROJECT_ROOT / "src" / "client"
+
+    if not client_dir.exists():
+        return tasks
+
+    # Check if Godot imports exist but have errors
+    godot_dir = client_dir / ".godot"
+    if godot_dir.exists():
+        # Check for import errors in the project
+        project_file = client_dir / "project.godot"
+        if project_file.exists():
+            content = project_file.read_text()
+            # Look for common Godot build issues
+            if "!editor" in content or "!runnable" in content:
+                tasks.append(Task(
+                    priority="P1",
+                    category="fix",
+                    title="Fix Godot client project configuration",
+                    description="project.godot may have configuration errors",
+                    files=[str(project_file.relative_to(PROJECT_ROOT))],
+                    estimated_hours=1.0
+                ))
+
+    # Check C# scripts for common issues
+    for cs_file in client_dir.rglob("*.cs"):
+        try:
+            content = cs_file.read_text()
+            # Check for common Godot C# issues
+            if "void Update()" in content and "extends Node" in content:
+                # Check if using old GDScript-style Update
+                if "delta" not in content:
+                    tasks.append(Task(
+                        priority="P2",
+                        category="fix",
+                        title=f"Fix {cs_file.name} - Update method should have delta parameter",
+                        description="Godot 4.x requires delta parameter in _Process",
+                        files=[str(cs_file.relative_to(PROJECT_ROOT))],
+                        estimated_hours=0.5
+                    ))
+        except (UnicodeDecodeError, PermissionError):
+            continue
+
+    return tasks
+
+
+def find_performance_hotspots() -> List[Task]:
+    """Find potential performance hotspots in hot paths."""
+    tasks = []
+
+    # Hot path files (called every tick/frame)
+    hot_paths = ["ZoneServer.cpp", "NPCAISystem.cpp", "CombatSystem.cpp",
+                "PhysicsSystem.cpp", "NetworkManager.cpp"]
+
+    for name in hot_paths:
+        for f in SRC_DIR.rglob(name):
+            try:
+                content = f.read_text()
+                lines = len(content.splitlines())
+
+                # Find large functions (>100 lines)
+                functions = re.findall(r'(?:void|bool|int|float|entity_t|void\*)\s+(\w+)\s*\([^)]*\)\s*\{[^}]*\{[^}]{100,}[^}][^}]*\}', content)
+                if len(functions) > 0:
+                    tasks.append(Task(
+                        priority="P2",
+                        category="perf",
+                        title=f"Profile {f.name} - {len(functions)} large functions",
+                        description=f"Hot path file with {lines} lines — consider profiling",
+                        files=[str(f.relative_to(PROJECT_ROOT))],
+                        estimated_hours=2.0
+                    ))
+            except (UnicodeDecodeError, PermissionError):
+                continue
+
+    return tasks
+
+
+def find_api_unused_in_header() -> List[Task]:
+    """Find public methods in headers not called anywhere in the codebase."""
+    tasks = []
+
+    for h in SRC_DIR.rglob("*.hpp"):
+        if "/tests/" in str(h):
+            continue
+        try:
+            content = h.read_text()
+        except (UnicodeDecodeError, PermissionError):
+            continue
+
+        # Find public methods (non-static, non-private)
+        methods = re.findall(r'^\s*(?!private|protected|static)(\w+(?:<[^>]+>)?)\s+(\w+)\s*\([^)]*\)', content, re.MULTILINE)
+        if not methods:
+            continue
+
+        # Check if each method is used anywhere in src/
+        for ret_type, method_name in methods:
+            if method_name in ("init", "update", "process", "tick", "cleanup", "shutdown"):
+                continue  # Common names, skip
+
+            # Grep for method usage (quick check, limit to 10 matches)
+            result = subprocess.run(
+                ["grep", "-r", f"{method_name}\\(", str(SRC_DIR), "--include=*.cpp", "--include=*.hpp", "-l"],
+                capture_output=True, text=True, timeout=10
+            )
+            if result.returncode != 0 or not result.stdout.strip():
+                tasks.append(Task(
+                    priority="P2",
+                    category="fix",
+                    title=f"Check if {method_name} in {h.name} is used",
+                    description=f"Method '{method_name}' may be unused — verify or remove",
+                    files=[str(h.relative_to(PROJECT_ROOT))],
+                    estimated_hours=0.5
+                ))
+                if len(tasks) >= 5:  # Limit results
+                    break
+
+    return tasks
+
+
 def main():
     import sys
 
@@ -539,6 +685,11 @@ def main():
     all_tasks.extend(find_todos())
     all_tasks.extend(find_stale_branches())
     all_tasks.extend(find_doc_drift())
+    # NEW: Extended discovery patterns
+    all_tasks.extend(find_missing_include_guards())
+    all_tasks.extend(find_godot_client_gaps())
+    all_tasks.extend(find_performance_hotspots())
+    all_tasks.extend(find_api_unused_in_header())
 
     # Deduplicate by title
     seen = set()
