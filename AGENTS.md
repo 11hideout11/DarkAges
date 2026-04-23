@@ -4,7 +4,8 @@
 
 **Phase 8: COMPLETE** — All core gameplay systems implemented.
 **Phase 9: COMPLETE** — Performance testing infrastructure operational, all budget checks passing.
-**1165 test cases** across **88 test files**. All passing (11 suites).
+**Networking: STABLE** — Live client validator passes (1-3 clients, snapshots received, no crashes). Single-threaded main-tick driven I/O.
+**1170+ test cases** across **88 test files**. All passing (11 suites).
 **~32K LOC** in server core (C++20, EnTT ECS, 60Hz tick). Client: ~6.2K LOC (C# Godot).
 
 ### Build
@@ -17,7 +18,7 @@ cd build_validate && ctest --output-on-failure -j8
 
 ### Architecture
 - **ECS**: EnTT, `DarkAges::` namespace. Components in `ecs/`, systems in `combat/`, `physics/`, `zones/`
-- **Netcode**: `NetworkManager` (stub), `GNSNetworkManager` (implementation exists but ENABLE_GNS=OFF in test builds), `ProtobufProtocol` — GNS disabled in test builds; protocol stubbed with custom delta encoding
+- **Netcode**: `NetworkManager` (single-threaded, main-tick driven UDP), `GNSNetworkManager` (conditionally compiled when ENABLE_GNS=ON), `ProtobufProtocol` — test builds use stubbed network layer; live builds can use GNS
 - **DB**: `RedisManager`, `ScyllaManager` — stubs when Redis/Scylla disabled
 - **Zones**: `ZoneServer`, `ZoneOrchestrator`, `EntityMigration`, `ZoneHandoff`
 - **Security**: `PacketValidator`, `AntiCheat`, `StatisticalDetector`, `MovementValidator`, `RateLimiter` (functional but not actively developed per current scope)
@@ -52,6 +53,7 @@ cd build_validate && ctest --output-on-failure -j8
 - **SpawnSystem**: NPC spawn groups, respawn timers, weighted selection, spawn regions, per-zone spawn positions, density limiting
 
 ### Recent Major Additions (Last 10 Commits)
+- Fix: live client validator passes — snapshot replication now includes viewer entity, yaw/pitch clamped, threading crash resolved
 - AchievementSystem + LeaderboardSystem with comprehensive tests
 - SpawnSystem refactor: single-entity spawn design, forceSpawn tracking
 - Per-zone spawn positions and NavigationGrid wiring to NPCAISystem
@@ -68,9 +70,8 @@ cd build_validate && ctest --output-on-failure -j8
 - Test infrastructure: `tools/perf/phase9_report.py`, `docs/performance/reports/`
 
 ### Remaining Strategic Gaps
-- **Networking (GNS/Protobuf)**: Production UDP networking via GameNetworkingSockets is implemented in `GNSNetworkManager.cpp` but conditionally compiled (ENABLE_GNS=OFF in CI). Test builds use `NetworkManager_stub.cpp`. Client uses custom UDP (Godot `UdpClient`). This is the primary blocker for live multiplayer testing.
-- **Client ↔ Server Integration**: Full network protocol integration untested in live environment; stub-based test coverage exists but real network traversal, latency compensation, and packet loss handling need validation
-- **Documentation Sync**: AGENTS.md (test count/features stale), PROJECT_STATUS.md (Jan 30), DarkAges_Comprehensive_Review.md (Feb 18) require updates to match current codebase state
+- **Client ↔ Server Integration**: Live client validator now passes (connection, ping/pong, input, snapshots). Next: stress test with 10+ clients, validate entity interpolation on client, test packet loss/latency simulation.
+- **Documentation Sync**: AGENTS.md (updated), PROJECT_STATUS.md (Jan 30), DarkAges_Comprehensive_Review.md (Feb 18) require updates to match current codebase state
 - **Test Depth**: Minor gaps in shallow test files (TestPartySystem 19 lines, TestGuildSystem 30 lines, TestProtocol 49 lines)
 
 ### Autonomous Dev Loop
@@ -84,3 +85,4 @@ cd build_validate && ctest --output-on-failure -j8
 ---
 
 **Last updated by autonomous review on 2026-04-22**
+
