@@ -392,20 +392,43 @@ bool ZoneServer::initialize(const ZoneConfig& config) {
 }
 
 void ZoneServer::run() {
-    std::cout << "[ZONE " << config_.zoneId << "] Starting main loop..." << std::endl;
+ std::cout << "[ZONE " << config_.zoneId << "] Starting main loop..." << std::endl;
 
-    setupSignalHandlers();
-    running_ = true;
-    shutdownRequested_ = false;
+ setupSignalHandlers();
+ running_ = true;
+ shutdownRequested_ = false;
 
-    // Main game loop at 60Hz (16.67ms per tick)
-    constexpr auto tickInterval = std::chrono::microseconds(16667);
-    auto nextTick = std::chrono::steady_clock::now();
-    uint32_t tickCount = 0;
+ // Main game loop at 60Hz (16.67ms per tick)
+ constexpr auto tickInterval = std::chrono::microseconds(16667);
+ auto nextTick = std::chrono::steady_clock::now();
+ uint32_t tickCount = 0;
 
-    std::cout << "[ZONE " << config_.zoneId << "] Server running at 60Hz on port " << config_.port << std::endl;
+ std::cout << "[ZONE " << config_.zoneId << "] Server running at 60Hz on port " << config_.port << std::endl;
 
-    while (running_) {
+ // [DEMO_AGENT] Auto-trigger zone event after 30 seconds in demo mode
+ if (config_.demoMode) {
+ // Register the showcase world boss event
+ ZoneEventDefinition bossEvent{};
+ bossEvent.eventId = 99;
+ std::strncpy(bossEvent.name, "World Boss: Shadow Ogre", sizeof(bossEvent.name) - 1);
+ std::strncpy(bossEvent.description, "A powerful ogre has emerged!", sizeof(bossEvent.description) - 1);
+ bossEvent.eventType = ZoneEventType::WorldBoss;
+ bossEvent.minLevel = 1;
+ bossEvent.maxParticipants = 100;
+ bossEvent.phaseCount = 1;
+ bossEvent.phases[0].phaseType = ZoneEventPhaseType::BossBattle;
+ bossEvent.phases[0].durationSeconds = 300;
+ bossEvent.phases[0].objective = ZoneEventObjective::KillTarget;
+ bossEvent.announceSeconds = 30;
+ bossEvent.cooldownMinutes = 0; // No cooldown for demo
+ zoneEventSystem_.registerEvent(bossEvent);
+
+ // Start the event after 30 seconds
+ zoneEventSystem_.startEvent(registry_, 99, getCurrentTimeMs());
+ chatSystem_.broadcastMessage("[EVENT] World Boss spawning in 30 seconds!", ChatChannel::Global);
+
+ std::cout << "[ZONE " << config_.zoneId << "] [DEMO] World boss scheduled for T+30 seconds" << std::endl;
+ }
         auto frameStart = std::chrono::steady_clock::now();
 
         // Execute one game tick
@@ -993,8 +1016,13 @@ void ZoneServer::onClientConnected(ConnectionID connectionId) {
     // [GAMEPLAY_AGENT] Give player their starter kit (inventory, abilities, gear)
     itemSystem_.giveStarterKit(registry_, entity);
 
-    // [GAMEPLAY_AGENT] Give player their starter quests
-    questSystem_.giveStarterQuests(registry_, entity, getCurrentTimeMs());
+ // [GAMEPLAY_AGENT] Give player their starter quests
+ questSystem_.giveStarterQuests(registry_, entity, getCurrentTimeMs());
+
+ // [DEMO_AGENT] In demo mode, also give the showcase quest
+ if (config_.demoMode) {
+ questSystem_.giveDemoQuest(registry_, entity, getCurrentTimeMs());
+ }
 
     // [GAMEPLAY_AGENT] Give player their starter crafting recipes
     craftingSystem_.giveStarterRecipes(registry_, entity);

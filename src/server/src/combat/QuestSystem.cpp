@@ -268,6 +268,15 @@ void QuestSystem::giveStarterQuests(Registry& registry, EntityID player,
     }
 }
 
+// [DEMO_AGENT] Give the demo showcase quest (Quest 99)
+void QuestSystem::giveDemoQuest(Registry& registry, EntityID player,
+ uint32_t currentTimeMs) {
+ // Give the demo showcase quest
+ if (canAcceptQuest(registry, player, 99)) {
+ acceptQuest(registry, player, 99, currentTimeMs);
+ }
+}
+
 // ============================================================================
 // Default Quest Database
 // ============================================================================
@@ -442,11 +451,39 @@ void QuestSystem::initializeDefaults() {
         quest.reward.xpReward = 200;
         quest.reward.goldReward = 100;
         quest.reward.itemId = 5; // Iron Helmet
-        quest.reward.itemQuantity = 1;
-        registerQuest(quest);
-    }
+ quest.reward.itemQuantity = 1;
+ registerQuest(quest);
+ }
 
-    std::cout << "[QUESTS] Initialized " << quests_.size() << " quest definitions" << std::endl;
+ // Demo Quest: "Showcase Challenge" — Kill wolves for demo showcase
+ {
+ QuestDefinition quest{};
+ quest.questId = 99;
+ std::strncpy(quest.name, "Showcase Challenge", sizeof(quest.name) - 1);
+ std::strncpy(quest.description, "Welcome to DarkAges! Defeat the wolves and claim your reward.",
+ sizeof(quest.description) - 1);
+ std::strncpy(quest.startDialogue,
+ "Welcome to the showcase grounds! Wolves have been spotted nearby. "
+ "Slay 3 of them to prove your worth!",
+ sizeof(quest.startDialogue) - 1);
+ std::strncpy(quest.completionDialogue,
+ "Well done! Welcome to DarkAges. Enjoy your rewards!",
+ sizeof(quest.completionDialogue) - 1);
+ quest.requiredLevel = 1;
+ quest.objectiveCount = 1;
+ quest.objectives[0].type = QuestObjectiveType::KillNPC;
+ quest.objectives[0].targetId = static_cast<uint32_t>(NPCArchetype::Melee);
+ quest.objectives[0].requiredCount = 3;
+ std::strncpy(quest.objectives[0].description, "Kill 3 Wolves",
+ sizeof(quest.objectives[0].description) - 1);
+ quest.reward.xpReward = 100;
+ quest.reward.goldReward = 50;
+ quest.reward.itemId = 10; // Health Potion
+ quest.reward.itemQuantity = 3;
+ registerQuest(quest);
+ }
+
+ std::cout << "[QUESTS] Initialized " << quests_.size() << " quest definitions" << std::endl;
 }
 
 } // namespace DarkAges

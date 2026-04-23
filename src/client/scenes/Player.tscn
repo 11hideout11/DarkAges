@@ -1,7 +1,8 @@
-[gd_scene load_steps=5 format=3 uid="uid://player"]
+[gd_scene load_steps=6 format=3 uid="uid://player"]
 
 [ext_resource type="Script" path="res://src/prediction/PredictedPlayer.cs" id="1_player"]
 [ext_resource type="Script" path="res://src/combat/AttackFeedbackSystem.cs" id="2_attack"]
+[ext_resource type="Script" path="res://src/utils/MovementTrailSystem.cs" id="3_trail"]
 
 [sub_resource type="CapsuleShape3D" id="CapsuleShape3D_1"]
 radius = 0.3
@@ -39,3 +40,7 @@ current = true
 
 [node name="AttackFeedback" type="Node3D" parent="."]
 script = ExtResource("2_attack")
+
+[node name="MovementTrail" type="Node3D" parent="."]
+script = ExtResource("3_trail")
+Enabled = true

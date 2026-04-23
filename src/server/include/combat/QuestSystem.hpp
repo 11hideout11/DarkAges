@@ -53,12 +53,15 @@ public:
     // Called when a player levels up — updates level objectives
     void onLevelUp(Registry& registry, EntityID player, uint32_t newLevel);
 
-    // --- Starter Quests ---
+ // --- Starter Quests ---
 
-    // Give new player their initial quests
-    void giveStarterQuests(Registry& registry, EntityID player, uint32_t currentTimeMs);
+ // Give new player their initial quests
+ void giveStarterQuests(Registry& registry, EntityID player, uint32_t currentTimeMs);
 
-    // --- Default Quest Database ---
+ // Give demo-specific starter quest (Quest 99)
+ void giveDemoQuest(Registry& registry, EntityID player, uint32_t currentTimeMs);
+
+ // --- Default Quest Database ---
 
     // Initialize the default quest database
     void initializeDefaults();

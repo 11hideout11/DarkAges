@@ -1,31 +1,63 @@
 {
-  "zone_id": 99,
-  "name": "Showcase Grounds",
-  "description": "Curated demo zone for DarkAges MMO showcase",
-  "spawn_points": [
-    {"x": 0, "y": 0, "z": 0, "type": "player_start"},
-    {"x": 10, "y": 0, "z": 10, "type": "npc_guard"},
-    {"x": -10, "y": 0, "z": 10, "type": "npc_merchant"}
-  ],
-  "npc_presets": [
-    {"archetype": "wolf", "count": 5, "radius": 25, "level": 1},
-    {"archetype": "bandit", "count": 3, "radius": 15, "level": 2},
-    {"archetype": "boss_ogre", "count": 1, "radius": 5, "level": 5, "event": "world_boss"}
-  ],
-  "demo_quest": {
-    "id": "demo_welcome",
-    "title": "Welcome to DarkAges",
-    "objectives": [
-      {"type": "kill", "target": "wolf", "count": 3},
-      {"type": "interact", "target": "npc_merchant"}
-    ],
-    "rewards": {"xp": 100, "gold": 50}
-  },
-  "zone_event": {
-    "id": "demo_wave_defense",
-    "trigger": "timer",
-    "interval_seconds": 120,
-    "waves": 3,
-    "enemies_per_wave": 5
-  }
+ "zone_id": 99,
+ "name": "Showcase Grounds",
+ "description": "Curated demo zone for DarkAges MMO showcase",
+ "spawn_points": [
+ {"x": 0, "y": 0, "z": 0, "type": "player_start"},
+ {"x": 10, "y": 0, "z": 10, "type": "npc_merchant", "name": "Merchant Aldric"},
+ {"x": -10, "y": 0, "z": 10, "type": "npc_guard", "name": "Guard Captain"}
+ ],
+ "npc_presets": [
+ {"archetype": "wolf", "count": 5, "radius": 25, "level": 1, "loot_id": "wolf"},
+ {"archetype": "bandit", "count": 3, "radius": 15, "level": 2, "loot_id": "bandit"},
+ {"archetype": "boss_ogre", "count": 1, "radius": 5, "level": 5, "event": "world_boss", "loot_id": "boss"}
+ ],
+ "loot_tables": {
+ "wolf": {
+ "gold_min": 5,
+ "gold_max": 15,
+ "items": [
+ {"id": 11, "chance": 0.3, "name": "Wolf Pelt"},
+ {"id": 10, "chance": 0.2, "name": "Health Potion"}
+ ]
+ },
+ "bandit": {
+ "gold_min": 10,
+ "gold_max": 25,
+ "items": [
+ {"id": 2, "chance": 0.15, "name": "Iron Dagger"},
+ {"id": 10, "chance": 0.25, "name": "Health Potion"}
+ ]
+ },
+ "boss": {
+ "gold_min": 100,
+ "gold_max": 200,
+ "items": [
+ {"id": 3, "chance": 0.5, "name": "Iron Longsword"},
+ {"id": 4, "chance": 0.3, "name": "Iron Shield"},
+ {"id": 10, "chance": 1.0, "name": "Health Potion", "quantity": 5}
+ ]
+ }
+ },
+ "demo_quest": {
+ "id": "demo_welcome",
+ "quest_id": 99,
+ "title": "Welcome to DarkAges",
+ "auto_start": true,
+ "objectives": [
+ {"type": "kill", "target": "wolf", "count": 3},
+ {"type": "interact", "target": "npc_merchant"}
+ ],
+ "rewards": {"xp": 100, "gold": 50, "item_id": 10, "item_qty": 3}
+ },
+ "zone_event": {
+ "id": "demo_wave_defense",
+ "quest_id": 99,
+ "trigger": "timer",
+ "auto_start_delay_seconds": 30,
+ "interval_seconds": 180,
+ "waves": 3,
+ "enemies_per_wave": 5,
+ "announcement": "A powerful enemy approaches!"
+ }
 }
