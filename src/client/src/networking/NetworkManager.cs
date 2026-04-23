@@ -38,13 +38,16 @@ namespace DarkAges.Networking
         [Signal]
         public delegate void EntityStateReceivedEventHandler(uint entityId, Vector3 position, Vector3 velocity);
         
-        [Signal]
-        public delegate void CombatEventReceivedEventHandler(uint eventType, byte[] data);
-        
-        [Signal]
-        public delegate void ConnectedEventHandler(uint entityId);
-        
-        // Socket
+ [Signal]
+ public delegate void CombatEventReceivedEventHandler(uint eventType, byte[] data);
+ 
+ [Signal]
+ public delegate void ConnectedEventHandler(uint entityId);
+ 
+ [Signal]
+ public delegate void InputSentEventHandler(InputState input);
+ 
+ // Socket
         private UdpClient? _udpClient;
         private IPEndPoint? _serverEndPoint;
         private Thread? _receiveThread;

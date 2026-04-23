@@ -56,12 +56,33 @@ See [CURRENT_STATUS.md](CURRENT_STATUS.md) for daily updates • [PROJECT_STATUS
 
 ### What's Implemented
 - ✅ **Server**: 25,000+ lines (ECS, physics, combat, sharding, security) - **OPERATIONAL**
-- ✅ **Client**: 3,500+ lines (Godot 4.x, prediction, interpolation) - **OPERATIONAL**
+- ✅ **Client**: 3,500+ lines (Godot 4.x, prediction, interpolation, combat UI) - **OPERATIONAL**
 - ✅ **Testing**: ~15,000 lines (Three-tier infrastructure) - **OPERATIONAL**
 - ✅ **Build System**: CMake, MSVC 2022, cross-platform CI/CD - **COMPLETE**
 - ✅ **External Libraries**: Redis ✅, FlatBuffers ✅, Protobuf
+- ✅ **Demo Pipeline**: Autonomous launcher with screenshots, video, validation - **OPERATIONAL**
+- ✅ **Combat System**: Server-authoritative combat with binary event protocol - **OPERATIONAL**
 
 ## Quick Start
+
+### One-Command Demo
+
+The fastest way to see DarkAges in action:
+
+```bash
+cd /root/projects/DarkAges
+
+# Quick demo (~45s): server + Godot client + validation + screenshots + video
+./tools/demo/demo --quick --no-build
+
+# Standard demo (~60s)
+./tools/demo/demo --no-build
+
+# Extended demo (~120s) with more NPCs
+./tools/demo/demo --extended --no-build
+```
+
+This autonomously: validates dependencies, starts the server, launches the Godot client (headless via xvfb-run), validates network/physics/combat, captures screenshots and MP4 video, and generates a report.
 
 ### Prerequisites
 
@@ -71,6 +92,7 @@ See [CURRENT_STATUS.md](CURRENT_STATUS.md) for daily updates • [PROJECT_STATUS
 - CMake 3.20+
 - Docker Desktop (for infrastructure)
 - Godot 4.2+ (for client)
+- xvfb-run, ffmpeg (for headless demo)
 
 ### Clone and Build
 

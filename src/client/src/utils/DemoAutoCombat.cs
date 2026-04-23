@@ -29,50 +29,62 @@ namespace DarkAges.Client.Utils
                 _player = GetTree().Root.GetNodeOrNull<PredictedPlayer>("Main/PredictedPlayer");
             }
             
+            SetProcess(true);
+            
             GD.Print($"[DemoAutoCombat] Initialized, Enabled={Enabled}");
         }
         
-        public override void _PhysicsProcess(double delta)
+        public override void _Process(double delta)
         {
             if (!Enabled || _player == null) return;
             if (GameState.Instance.CurrentConnectionState != GameState.ConnectionState.Connected) return;
             
-            // Find nearest NPC entity
-            var nearest = FindNearestNPC();
-            if (nearest == null)
+            try
             {
-                _lastTargetId = 0;
-                return;
+                // Find nearest NPC entity
+                var nearest = FindNearestNPC();
+                if (nearest == null)
+                {
+                    _lastTargetId = 0;
+                    return;
+                }
+                
+                _lastTargetId = nearest.Id;
+                Vector3 playerPos = _player.GlobalPosition;
+                Vector3 targetPos = nearest.Position;
+                float distance = playerPos.DistanceTo(targetPos);
+                
+                // Face target using safe method
+                Vector3 direction = (targetPos - playerPos).Normalized();
+                direction.Y = 0;
+                if (direction.LengthSquared() > 0.01f)
+                {
+                    // Safe look_at that works even if node tree state changes
+                    var newTransform = _player.GlobalTransform;
+                    newTransform.Basis = new Basis(Vector3.Up, Mathf.Atan2(direction.X, direction.Z));
+                    _player.GlobalTransform = newTransform;
+                }
+                
+                // Move toward target if out of range
+                if (AutoMoveToTarget && distance > AttackRange)
+                {
+                    Vector3 moveDir = (targetPos - playerPos).Normalized();
+                    moveDir.Y = 0;
+                    _player.Velocity = new Vector3(moveDir.X * MoveSpeed, _player.Velocity.Y, moveDir.Z * MoveSpeed);
+                    _player.MoveAndSlide();
+                }
+                
+                // Attack periodically when in range
+                _attackTimer += delta;
+                if (_attackTimer >= AttackInterval && distance <= AttackRange + 2.0f)
+                {
+                    _attackTimer = 0.0;
+                    SendAttackInput();
+                }
             }
-            
-            _lastTargetId = nearest.Id;
-            Vector3 playerPos = _player.GlobalPosition;
-            Vector3 targetPos = nearest.Position;
-            float distance = playerPos.DistanceTo(targetPos);
-            
-            // Face target
-            Vector3 direction = (targetPos - playerPos).Normalized();
-            direction.Y = 0;
-            if (direction.LengthSquared() > 0.01f)
+            catch (Exception ex)
             {
-                _player.LookAt(targetPos, Vector3.Up);
-            }
-            
-            // Move toward target if out of range
-            if (AutoMoveToTarget && distance > AttackRange)
-            {
-                Vector3 moveDir = (targetPos - playerPos).Normalized();
-                moveDir.Y = 0;
-                _player.Velocity = new Vector3(moveDir.X * MoveSpeed, _player.Velocity.Y, moveDir.Z * MoveSpeed);
-                _player.MoveAndSlide();
-            }
-            
-            // Attack periodically when in range
-            _attackTimer += delta;
-            if (_attackTimer >= AttackInterval && distance <= AttackRange + 2.0f)
-            {
-                _attackTimer = 0.0;
-                SendAttackInput();
+                GD.PrintErr($"[DemoAutoCombat] Error in _Process: {ex.Message}");
             }
         }
         
@@ -81,6 +93,8 @@ namespace DarkAges.Client.Utils
             Vector3 playerPos = _player?.GlobalPosition ?? Vector3.Zero;
             EntityData nearest = null;
             float nearestDist = float.MaxValue;
+            
+            GD.Print($"[DemoAutoCombat] Finding NPCs. Player pos={playerPos}, Entity count={GameState.Instance.Entities.Count}");
             
             foreach (var kvp in GameState.Instance.Entities)
             {
@@ -92,11 +106,22 @@ namespace DarkAges.Client.Utils
                 if (entity.Type != 3 && entity.Type != 0) continue; // Accept both NPC and player types
                 
                 float dist = playerPos.DistanceTo(entity.Position);
-                if (dist < nearestDist && dist < 50.0f) // Only consider entities within 50 units
+                GD.Print($"[DemoAutoCombat]  Entity {entityId} type={entity.Type} pos={entity.Position} dist={dist:F1}");
+                
+                if (dist < nearestDist && dist < 50.0f)
                 {
                     nearestDist = dist;
                     nearest = entity;
                 }
+            }
+            
+            if (nearest != null)
+            {
+                GD.Print($"[DemoAutoCombat] Nearest target: {nearest.Id} at dist={nearestDist:F1}");
+            }
+            else
+            {
+                GD.Print("[DemoAutoCombat] No valid target found");
             }
             
             return nearest;
