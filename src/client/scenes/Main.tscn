@@ -1,4 +1,4 @@
-[gd_scene load_steps=8 format=3 uid="uid://c8yvxg3ulq3a"]
+[gd_scene load_steps=10 format=3 uid="uid://c8yvxg3ulq3a"]
 
 [ext_resource type="Script" path="res://scripts/Main.cs" id="1_main"]
 [ext_resource type="PackedScene" uid="uid://player" path="res://scenes/Player.tscn" id="2_player"]
@@ -10,10 +10,24 @@
 
 [sub_resource type="PlaneMesh" id="PlaneMesh_ground"]
 size = Vector2(200, 200)
+subdivide_width = 20
+subdivide_depth = 20
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_ground"]
-albedo_color = Color(0.2, 0.4, 0.2, 1)
+albedo_color = Color(0.25, 0.42, 0.25, 1)
+albedo_texture = SubResource("GradientTexture2D_grid")
 roughness = 0.8
+uv1_scale = Vector3(20, 20, 20)
+
+[sub_resource type="Gradient" id="Gradient_checker"]
+colors = [Color(0.35, 0.55, 0.3, 1), Color(0.25, 0.4, 0.22, 1), Color(0.15, 0.35, 0.15, 1), Color(0.2, 0.42, 0.18, 1)]
+
+[sub_resource type="GradientTexture2D" id="GradientTexture2D_grid"]
+gradient = SubResource("Gradient_checker")
+fill = 2
+fill_from = Vector2(0, 0)
+fill_to = Vector2(1, 0)
+repeat = 2
 
 [sub_resource type="Environment" id="Environment_default"]
 background_mode = 1
