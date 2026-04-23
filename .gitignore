@@ -61,6 +61,17 @@ export_presets.cfg
 *.import
 project.godot.user
 
+# Godot editor cache (machine-specific)
+.godot/editor/
+.godot/shader_cache/
+.godot/uid_cache.bin
+.godot/global_script_class_cache.cfg
+.godot/scene_groups_cache.cfg
+.godot/import/
+# Godot import/resolution cache
+/.godot_import
+/.godot_export
+
 # Godot Mono/C#-specific
 .mono/
 data_*/
