@@ -150,8 +150,31 @@ src/
 1. **GNS Integration Inactive** — NetworkManager_stub.cpp is linked in test builds; real GNS dependency not available in CI environment. Client and server cannot communicate over real network in CI.
 2. **Protocol.cpp Excluded** — Depends on GNS types; excluded when `ENABLE_GNS=OFF`. Delta encoding stub used instead.
 3. **Redis/Scylla Disabled** — Database stubs active. No persistence validation in CI.
-4. **Documentation Drift** — Several markdown files reference pre-April state (AGENTS.md: 1127→1165 tests; PROJECT_STATUS.md: Jan 30 date; Comprehensive Review: Feb 18)
+4. **Documentation Drift** — Several markdown files reference pre-April state (Comprehensive Review: Feb 18)
 5. **Shallow Test Files** — TestPartySystem (19 lines), TestGuildSystem (30 lines), TestProtocol (49 lines) need expansion
+
+**Recently Resolved**:
+- ~~Lag compensation `calculateAttackTime` double-counted one-way latency~~ — Fixed: caller (`processAttackInput`) already subtracts latency, so `calculateAttackTime` now returns `clientTimestamp` directly. All 124 combat tests pass.
+
+---
+
+## Network Integration Validation
+
+Live client validator (`tools/validation/live_client_validator.py`) now covers:
+
+| Phase | Test | Status | Details |
+|-------|------|--------|---------|
+| Phase 1 | Handshake + snapshot reception | PASS | 1-10 clients, snapshots received within 2s |
+| Phase 2 | Multi-client visibility | PASS | All clients see each other in snapshots |
+| Phase 3 | Input sending + movement | PASS | Forward/rotate inputs processed, position changes observed |
+| Phase 4 | Latency simulation | PASS | Server resilient to 30ms latency + 5% packet loss |
+| Phase 5 | NPC replication | PASS | 3 clients + 10 NPCs: 14 entities in snapshots |
+| Phase 6 | Combat over network | PASS | Attack inputs trigger health changes, deaths, respawns |
+
+**Combat Validation Results** (latest run):
+- 226 attacks sent, 40 health changes observed, 7 deaths, 6 respawns
+- Server event log confirms `DAMAGE_DEALT` events and respawn cycles
+- Lag compensation hit validation fixed and passing all tests
 
 ---
 

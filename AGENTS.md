@@ -53,6 +53,8 @@ cd build_validate && ctest --output-on-failure -j8
 - **SpawnSystem**: NPC spawn groups, respawn timers, weighted selection, spawn regions, per-zone spawn positions, density limiting
 
 ### Recent Major Additions (Last 10 Commits)
+- Fix: Lag compensation `calculateAttackTime` double-counted one-way latency (caller `processAttackInput` already subtracts it). Fixed to return `clientTimestamp` as-is. Tests updated accordingly. All 124 combat tests pass.
+- Validator: Combat validation phase (`--combat`, `--combat-duration`) — sends attack inputs, tracks entity health changes, deaths, respawns over network
 - Fix: C# client `EntityFrame` visibility bug (private -> public) so `RemotePlayerManager` compiles in Godot
 - Validator: NPC replication over network validated (`--npcs` + `--npc-count` server flags, Phase 5 visibility check)
 - Validator: Latency/packet loss simulation (`--latency`, `--packet-loss`) — server resilient to 30ms + 5% loss with 3 clients + 10 NPCs

@@ -51,10 +51,16 @@ class ClientStats:
     corrections_received: int = 0
     events_received: int = 0
     inputs_sent: int = 0
+    attacks_sent: int = 0
     pings_sent: int = 0
     pongs_received: int = 0
     errors: list[str] = field(default_factory=list)
     snapshot_entity_counts: list[int] = field(default_factory=list)
+    # Combat tracking
+    entity_health: dict[int, int] = field(default_factory=dict)  # entity_id -> health%
+    health_changes: list[tuple] = field(default_factory=list)  # (entity_id, old, new, tick)
+    deaths_observed: int = 0
+    respawns_observed: int = 0
 
 
 class TestClient:
@@ -175,6 +181,8 @@ class TestClient:
             self.input_sequence += 1
             with self._lock:
                 self.stats.inputs_sent += 1
+                if attack:
+                    self.stats.attacks_sent += 1
             return True
         else:
             with self._lock:
@@ -247,6 +255,26 @@ class TestClient:
         with self._lock:
             self.stats.snapshots_received += 1
             self.stats.snapshot_entity_counts.append(entity_count)
+
+            # Parse entity health data for combat tracking
+            offset = 13
+            for i in range(entity_count):
+                entity_id = struct.unpack_from('<I', data, offset)[0]
+                offset += 4  # id
+                offset += 12  # pos x,y,z (3 floats)
+                offset += 12  # vel x,y,z (3 floats)
+                health = data[offset]
+                offset += 1  # health
+                offset += 1  # anim
+
+                old_health = self.stats.entity_health.get(entity_id, -1)
+                if old_health != -1 and old_health != health:
+                    self.stats.health_changes.append((entity_id, old_health, health, server_tick))
+                    if old_health > 0 and health == 0:
+                        self.stats.deaths_observed += 1
+                    if old_health == 0 and health > 0:
+                        self.stats.respawns_observed += 1
+                self.stats.entity_health[entity_id] = health
 
     def _process_pong(self, data: bytes):
         """Calculate RTT from pong packet."""
@@ -346,28 +374,35 @@ def run_validation(args) -> bool:
                 all_passed = False
 
         # Phase 3: Input sending + snapshot reception
-        print(f"[VALIDATOR] Phase 3: Sending inputs for {args.duration}s...")
-        start_time = time.time()
-        input_interval = 1.0 / 60.0
-        last_input_time = [0.0] * len(clients)
-        last_ping_time = start_time
+        if args.combat:
+            # When combat testing, skip movement to keep entities at spawn (melee range)
+            print("[VALIDATOR] Phase 3: Combat setup (minimal movement, staying at spawn)...")
+            time.sleep(1.0)
+            for client in clients:
+                client.send_ping()
+        else:
+            print(f"[VALIDATOR] Phase 3: Sending inputs for {args.duration}s...")
+            start_time = time.time()
+            input_interval = 1.0 / 60.0
+            last_input_time = [0.0] * len(clients)
+            last_ping_time = start_time
 
-        while time.time() - start_time < args.duration:
-            now = time.time()
-            for i, client in enumerate(clients):
-                if now - last_input_time[i] >= input_interval:
-                    # Send varied movement inputs
-                    yaw = (now % 6.28)  # rotating yaw
-                    client.send_input(forward=True, yaw=yaw)
-                    last_input_time[i] = now
+            while time.time() - start_time < args.duration:
+                now = time.time()
+                for i, client in enumerate(clients):
+                    if now - last_input_time[i] >= input_interval:
+                        # Send varied movement inputs
+                        yaw = (now % 6.28)  # rotating yaw
+                        client.send_input(forward=True, yaw=yaw)
+                        last_input_time[i] = now
 
-            # Ping every second
-            if now - last_ping_time >= 1.0:
-                for client in clients:
-                    client.send_ping()
-                last_ping_time = now
+                # Ping every second
+                if now - last_ping_time >= 1.0:
+                    for client in clients:
+                        client.send_ping()
+                    last_ping_time = now
 
-            time.sleep(0.005)
+                time.sleep(0.005)
 
         # Phase 4: Validation
         print("[VALIDATOR] Phase 4: Validating results...")
@@ -420,6 +455,68 @@ def run_validation(args) -> bool:
                 else:
                     print(f"  [FAIL] Client {i+1} not visible")
                     all_passed = False
+
+        # Phase 7: Combat validation
+        if args.combat and len(clients) >= 1:
+            print(f"[VALIDATOR] Phase 7: Combat validation ({args.combat_duration}s)...")
+            combat_start = time.time()
+            input_interval = 1.0 / 20.0  # 20Hz input sends
+            last_input_time = [0.0] * len(clients)
+            last_ping_time = combat_start
+
+            while time.time() - combat_start < args.combat_duration:
+                now = time.time()
+                for i, client in enumerate(clients):
+                    if now - last_input_time[i] >= input_interval:
+                        # Send attack input without movement to stay in melee range
+                        client.send_input(attack=True, yaw=0.0)
+                        last_input_time[i] = now
+
+                if now - last_ping_time >= 1.0:
+                    for client in clients:
+                        client.send_ping()
+                    last_ping_time = now
+
+                time.sleep(0.005)
+
+            # Allow snapshots to settle
+            time.sleep(1.0)
+
+            # Validate combat results
+            total_deaths = 0
+            total_respawns = 0
+            total_health_changes = 0
+            for i, client in enumerate(clients):
+                stats = client.stats
+                total_deaths += stats.deaths_observed
+                total_respawns += stats.respawns_observed
+                total_health_changes += len(stats.health_changes)
+                print(f"  Client {i+1} combat stats:")
+                print(f"    Attacks sent: {stats.attacks_sent}")
+                print(f"    Health changes observed: {len(stats.health_changes)}")
+                print(f"    Deaths observed: {stats.deaths_observed}")
+                print(f"    Respawns observed: {stats.respawns_observed}")
+                if stats.health_changes:
+                    # Show first few changes
+                    for eid, old, new, tick in stats.health_changes[:5]:
+                        print(f"      entity {eid}: {old}% -> {new}% (tick {tick})")
+
+            if total_health_changes == 0:
+                print(f"  [FAIL] No health changes observed — combat may not be processing")
+                all_passed = False
+            else:
+                print(f"  [PASS] Observed {total_health_changes} health changes")
+
+            if total_deaths == 0:
+                print(f"  [WARN] No deaths observed (may need longer combat duration)")
+                # Don't fail — could be low damage or targets out of range
+            else:
+                print(f"  [PASS] Observed {total_deaths} death(s)")
+
+            if total_respawns == 0:
+                print(f"  [WARN] No respawns observed (respawn delay is 5s)")
+            else:
+                print(f"  [PASS] Observed {total_respawns} respawn(s)")
 
     finally:
         print("[VALIDATOR] Cleaning up clients...")
@@ -475,6 +572,10 @@ def main():
                         help='Simulated packet loss probability 0.0-1.0 (default: 0.0)')
     parser.add_argument('--verbose', action='store_true',
                         help='Print server stdout on completion')
+    parser.add_argument('--combat', action='store_true',
+                        help='Enable combat validation phase (attack inputs + health tracking)')
+    parser.add_argument('--combat-duration', type=int, default=10,
+                        help='Duration of combat phase in seconds (default: 10)')
     args = parser.parse_args()
 
     success = run_validation(args)

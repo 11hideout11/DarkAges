@@ -233,9 +233,13 @@ TEST_CASE("LagCompensatedCombat hit claim validation", "[combat][lag][validation
         // Client claims hit at that position (within 2m tolerance)
         Position claimedPos = Position::fromVec3(glm::vec3(5.0f, 0, 0), 500);
         
+        PositionHistoryEntry entry;
+        bool histFound = fixture.lagCompensator.getHistoricalPosition(fixture.target, 500, entry);
+        REQUIRE(histFound);
+        
         bool valid = fixture.lagCombat.validateHitClaim(
             fixture.registry, fixture.attacker, fixture.target,
-            claimedPos, 450, 100  // 100ms RTT, attack at t=500
+            claimedPos, 500, 100  // 100ms RTT, attack at t=500
         );
         
         REQUIRE(valid);
@@ -249,7 +253,7 @@ TEST_CASE("LagCompensatedCombat hit claim validation", "[combat][lag][validation
         
         bool valid = fixture.lagCombat.validateHitClaim(
             fixture.registry, fixture.attacker, fixture.target,
-            claimedPos, 450, 100
+            claimedPos, 500, 100
         );
         
         REQUIRE(valid);
@@ -263,7 +267,7 @@ TEST_CASE("LagCompensatedCombat hit claim validation", "[combat][lag][validation
         
         bool valid = fixture.lagCombat.validateHitClaim(
             fixture.registry, fixture.attacker, fixture.target,
-            claimedPos, 450, 100
+            claimedPos, 500, 100
         );
         
         REQUIRE_FALSE(valid);
@@ -288,7 +292,7 @@ TEST_CASE("LagCompensatedCombat hit claim validation", "[combat][lag][validation
         
         bool valid = fixture.lagCombat.validateHitClaim(
             fixture.registry, fixture.attacker, fixture.target,
-            claimedPos, 450, 100
+            claimedPos, 500, 100
         );
         
         REQUIRE_FALSE(valid);

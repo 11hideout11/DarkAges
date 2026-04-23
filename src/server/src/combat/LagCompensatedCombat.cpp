@@ -85,7 +85,7 @@ std::vector<HitResult> LagCompensatedCombat::processAttackWithRewind(
             
             // Note: We need to expose calculateDamage in CombatSystem or use applyDamage
             // For now, we'll use applyDamage with base damage
-            int16_t damage = baseDamage / 100;  // Simplified - just use base
+            int16_t damage = baseDamage;
             
             if (combatSystem_.applyDamage(registry, target, attack.attacker, 
                                          damage, attack.serverTimestamp)) {
@@ -215,19 +215,8 @@ bool LagCompensatedCombat::hasHistoryForEntityAtTime(EntityID entity, uint32_t t
 // ============================================================================
 
 uint32_t LagCompensatedCombat::calculateAttackTime(uint32_t clientTimestamp, uint32_t rttMs) const {
-    // Calculate one-way latency (half of round-trip time)
-    uint32_t oneWayLatency = rttMs / 2;
-    
-    // Clamp to max rewind to prevent excessive rewinds
-    if (oneWayLatency > Constants::MAX_REWIND_MS) {
-        oneWayLatency = Constants::MAX_REWIND_MS;
-    }
-    
-    // The attack was initiated at clientTimestamp on the client
-    // By the time the server receives it, one-way latency has elapsed
-    // So the server time when the attack was initiated is: clientTimestamp + oneWayLatency
-    // This is the time we need to rewind to for lag compensation
-    return clientTimestamp + oneWayLatency;
+    (void)rttMs;  // one-way latency already subtracted by caller (processAttackInput)
+    return clientTimestamp;
 }
 
 bool LagCompensatedCombat::isRewindValid(uint32_t rttMs) const {
