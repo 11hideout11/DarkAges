@@ -47,6 +47,14 @@ namespace DarkAges.Combat
             }
         }
         
+        private void OnInputSent(bool attack, bool block)
+        {
+            if (attack && !_isSwinging)
+            {
+                TriggerSwing();
+            }
+        }
+        
         private void SetupWeapon()
         {
             // Create pivot point at player side
@@ -110,14 +118,6 @@ namespace DarkAges.Combat
             trail.MaterialOverride = trailMat;
             
             _weaponPivot.AddChild(trail);
-        }
-        
-        private void OnInputSent(InputState input)
-        {
-            if (input.Attack && !_isSwinging)
-            {
-                TriggerSwing();
-            }
         }
         
         private void TriggerSwing()

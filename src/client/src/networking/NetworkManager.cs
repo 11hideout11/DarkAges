@@ -45,7 +45,7 @@ namespace DarkAges.Networking
  public delegate void ConnectedEventHandler(uint entityId);
  
  [Signal]
- public delegate void InputSentEventHandler(InputState input);
+ public delegate void InputSentEventHandler(bool attack, bool block);
  
  // Socket
         private UdpClient? _udpClient;
@@ -243,11 +243,14 @@ namespace DarkAges.Networking
                 var input = _inputQueue.Dequeue();
                 var data = SerializeInput(input);
                 
-                try
-                {
-                    _udpClient.Send(data, data.Length);
-                    GD.Print($"[NetworkManager] Sent input seq={input.Sequence}");
-                }
+            try
+            {
+                _udpClient.Send(data, data.Length);
+                GD.Print($"[NetworkManager] Sent input seq={input.Sequence}");
+                
+                // Emit signal for attack feedback
+                EmitSignal(SignalName.InputSent, input.Attack, input.Block);
+            }
                 catch (Exception ex)
                 {
                     GD.PrintErr($"[NetworkManager] Send failed: {ex.Message}");
