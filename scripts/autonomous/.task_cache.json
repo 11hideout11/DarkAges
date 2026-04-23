@@ -1,12 +1,12 @@
 {
-  "timestamp": 1776960365.9824486,
-  "git_head": "e17b9645e561226b253396cdd40b78a6c23a8740",
+  "timestamp": 1776981939.7685475,
+  "git_head": "5d2b9169dfdfd814c59c6952cc3a4356128d01f1",
   "tasks": [
     {
       "priority": "P1",
       "category": "test-depth",
-      "title": "Expand tests for ZoneServer (34 tests for 1859 lines)",
-      "description": "Source file has 1859 lines but only 34 test cases \u2014 need 46+",
+      "title": "Expand tests for ZoneServer (34 tests for 1904 lines)",
+      "description": "Source file has 1904 lines but only 34 test cases \u2014 need 47+",
       "files": [
         "src/server/src/zones/ZoneServer.cpp",
         "src/server/tests/TestZoneServer.cpp"
@@ -22,6 +22,16 @@
         "src/server/src/netcode/NetworkManager_udp.cpp"
       ],
       "estimated_hours": 1.0
+    },
+    {
+      "priority": "P2",
+      "category": "refactor",
+      "title": "Refactor ZoneServer.cpp (1904 lines)",
+      "description": "File is 1904 lines with cleanup potential",
+      "files": [
+        "src/server/src/zones/ZoneServer.cpp"
+      ],
+      "estimated_hours": 3.0
     },
     {
       "priority": "P2",

@@ -444,7 +444,7 @@ void ZoneServer::run() {
 
  std::cout << "[ZONE " << config_.zoneId << "] [DEMO] World boss event started" << std::endl;
  }
- 
+
  while (running_) {
  auto frameStart = std::chrono::steady_clock::now();
 
