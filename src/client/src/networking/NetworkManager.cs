@@ -422,7 +422,7 @@ namespace DarkAges.Networking
                 var currentEntities = new HashSet<uint>();
                 
                 // Each entity: [entity_id:4][pos_x:4][pos_y:4][pos_z:4][vel_x:4][vel_y:4][vel_z:4][health:1][anim:1]
-                const int ENTITY_DATA_SIZE = 28;
+                const int ENTITY_DATA_SIZE = 30;
                 
                 for (int i = 0; i < entityCount && offset + ENTITY_DATA_SIZE <= data.Length; i++)
                 {

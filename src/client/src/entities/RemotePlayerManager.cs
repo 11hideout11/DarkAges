@@ -88,7 +88,7 @@ namespace DarkAges.Entities
             offset += 4;
             
             var currentEntities = new HashSet<uint>();
-            const int EntityDataSize = 28;  // As defined in NetworkManager
+            const int EntityDataSize = 30;  // id(4) + pos(12) + vel(12) + health(1) + anim(1)
             
             for (int i = 0; i < entityCount && offset + EntityDataSize <= data.Length; i++)
             {
