@@ -222,7 +222,7 @@ namespace DarkAges.Entities
             
             // Smoothly interpolate to target (double smoothing for extra smoothness)
             _displayPosition = _displayPosition.Lerp(targetPos, (float)delta * PositionSmoothing);
-            _displayRotation = _displayRotation.Slerp(targetRot, (float)delta * RotationSmoothing);
+            _displayRotation = _displayRotation.Slerp(targetRot, (float)delta * RotationSmoothing).Normalized();
             
             // Apply to transform
             GlobalPosition = _displayPosition;
@@ -280,7 +280,7 @@ namespace DarkAges.Entities
                         Vector3 pos = frames[i].Position.Lerp(frames[i + 1].Position, t);
                         
                         // Interpolate rotation (spherical)
-                        Quaternion rot = frames[i].Rotation.Slerp(frames[i + 1].Rotation, t);
+                        Quaternion rot = frames[i].Rotation.Slerp(frames[i + 1].Rotation, t).Normalized();
                         
                         // Estimate velocity
                         _estimatedVelocity = frames[i].Velocity.Lerp(frames[i + 1].Velocity, t);

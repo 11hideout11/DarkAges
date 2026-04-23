@@ -84,7 +84,7 @@ class GodotController:
     def build_solutions(self) -> bool:
         print(f"{CYAN}  Building C# solutions...{RESET}")
         r = self._run(
-            ["--headless", "--path", str(self.project_path), "--build-solutions"],
+            ["--headless", "--path", str(self.project_path), "--build-solutions", "--quit"],
             timeout=180,
         )
         if not r.success:

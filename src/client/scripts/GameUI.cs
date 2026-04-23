@@ -49,6 +49,29 @@ namespace DarkAges
             
             // Show connection panel initially
             UpdateUIState(GameState.ConnectionState.Disconnected);
+
+            // [DEMO] Auto-connect if --auto-connect flag is present in command-line args
+            var args = OS.GetCmdlineUserArgs();
+            bool autoConnect = false;
+            string autoAddress = "127.0.0.1";
+            int autoPort = 7777;
+            for (int i = 0; i < args.Length; i++)
+            {
+                if (args[i] == "--auto-connect")
+                    autoConnect = true;
+                else if (args[i] == "--server" && i + 1 < args.Length)
+                    autoAddress = args[i + 1];
+                else if (args[i] == "--port" && i + 1 < args.Length)
+                    int.TryParse(args[i + 1], out autoPort);
+            }
+            if (autoConnect)
+            {
+                GD.Print($"[GameUI] Auto-connecting to {autoAddress}:{autoPort}...");
+                if (_addressInput != null) _addressInput.Text = autoAddress;
+                if (_portInput != null) _portInput.Text = autoPort.ToString();
+                // Defer connect to next frame so UI is fully initialized
+                CallDeferred(nameof(OnConnectPressed));
+            }
         }
 
         public override void _ExitTree()
