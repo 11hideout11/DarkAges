@@ -53,7 +53,7 @@ cd build_validate && ctest --output-on-failure -j8
 - **SpawnSystem**: NPC spawn groups, respawn timers, weighted selection, spawn regions, per-zone spawn positions, density limiting
 
 ### Recent Major Additions (Last 10 Commits)
-- Fix: live client validator passes — snapshot replication now includes viewer entity, yaw/pitch clamped, threading crash resolved
+- Fix: live client validator passes — snapshot replication now includes viewer entity, yaw/pitch clamped, threading crash resolved, input deduplication prevents anti-cheat false positives at 10 clients
 - AchievementSystem + LeaderboardSystem with comprehensive tests
 - SpawnSystem refactor: single-entity spawn design, forceSpawn tracking
 - Per-zone spawn positions and NavigationGrid wiring to NPCAISystem
@@ -70,9 +70,9 @@ cd build_validate && ctest --output-on-failure -j8
 - Test infrastructure: `tools/perf/phase9_report.py`, `docs/performance/reports/`
 
 ### Remaining Strategic Gaps
-- **Client ↔ Server Integration**: Live client validator now passes (connection, ping/pong, input, snapshots). Next: stress test with 10+ clients, validate entity interpolation on client, test packet loss/latency simulation.
+- **Client ↔ Server Integration**: Live client validator passes with 10 clients/10s (connection, ping/pong, input, snapshots, visibility). Next: packet loss/latency simulation, validate Godot client entity interpolation, test NPC spawning over network.
 - **Documentation Sync**: AGENTS.md (updated), PROJECT_STATUS.md (Jan 30), DarkAges_Comprehensive_Review.md (Feb 18) require updates to match current codebase state
-- **Test Depth**: Minor gaps in shallow test files (TestPartySystem 19 lines, TestGuildSystem 30 lines, TestProtocol 49 lines)
+- **Test Depth**: Minor gaps in shallow test files (TestPartySystem 19 lines, TestGuildSystem 30 lines, TestProtocol 49 lines) — NOTE: actually comprehensive, AGENTS.md was stale
 
 ### Autonomous Dev Loop
 - Hourly quick scan (c5d9): `once` mode, task discovery → implementation → validate
