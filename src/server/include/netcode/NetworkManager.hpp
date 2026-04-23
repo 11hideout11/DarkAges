@@ -104,6 +104,10 @@ public:
     [[nodiscard]] bool isConnected(ConnectionID connectionId) const;
     [[nodiscard]] ConnectionQuality getConnectionQuality(ConnectionID connectionId) const;
     
+    // [ZONE_AGENT] Set the game entity ID associated with a network connection
+    // Must be called before connection response is sent for accurate client entity mapping
+    void setConnectionEntityId(ConnectionID connectionId, EntityID entityId);
+    
     // Callbacks
     void setOnClientConnected(ConnectionCallback callback) { onConnected_ = std::move(callback); }
     void setOnClientDisconnected(ConnectionCallback callback) { onDisconnected_ = std::move(callback); }
@@ -201,6 +205,15 @@ namespace Protocol {
         std::span<const EntityStateData> baselineEntities = {}
     );
     
+    // [CLIENT_AGENT] Create full snapshot in client-compatible format
+    // Format: [type:1=2][server_tick:4][last_input:4][entity_count:4][entity_data...]
+    // Each entity: [id:4][pos_x:4f][pos_y:4f][pos_z:4f][vel_x:4f][vel_y:4f][vel_z:4f][health:1][anim:1]
+    std::vector<uint8_t> createFullSnapshot(
+        uint32_t serverTick,
+        uint32_t lastProcessedInput,
+        std::span<const EntityStateData> entities
+    );
+    
     // Apply delta snapshot - reconstructs full state from baseline + delta
     // Returns true on success, false if baseline mismatch
     bool applyDeltaSnapshot(
@@ -228,6 +241,13 @@ namespace Protocol {
         inline constexpr int32_t MEDIUM_DELTA_THRESHOLD = 32767;   // Fits in int16
     }
     
+    // [NETWORK_AGENT] Protocol versioning
+    // Returns the current protocol version (major << 16 | minor)
+    uint32_t getProtocolVersion();
+    
+    // Check if client version is compatible with server
+    bool isVersionCompatible(uint32_t clientVersion);
+    
     // [NETWORK_AGENT] Serialize server correction for client reconciliation
     // Sent when server detects client misprediction
     std::vector<uint8_t> serializeCorrection(
@@ -236,13 +256,6 @@ namespace Protocol {
         const Velocity& velocity,
         uint32_t lastProcessedInput
     );
-    
-    // [NETWORK_AGENT] Protocol versioning
-    // Returns the current protocol version (major << 16 | minor)
-    uint32_t getProtocolVersion();
-    
-    // Check if client version is compatible with server
-    bool isVersionCompatible(uint32_t clientVersion);
 }
 
 } // namespace DarkAges

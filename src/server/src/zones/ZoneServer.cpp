@@ -664,6 +664,8 @@ uint32_t ZoneServer::getCurrentTimeMs() const {
 }
 
 void ZoneServer::updateNetwork() {
+    if (!network_) return;
+
     auto start = std::chrono::steady_clock::now();
 
     ZONE_TRACE_EVENT("NetworkManager::update", Profiling::TraceCategory::NETWORK);
@@ -772,6 +774,8 @@ void ZoneServer::updateGameLogic() {
 
 
 void ZoneServer::updateReplication() {
+    if (!network_) return;
+
     auto start = std::chrono::steady_clock::now();
 
     // [PHASE 4B] Sync aura state with adjacent zones
@@ -882,13 +886,16 @@ void ZoneServer::updateReplication() {
                 }
             }
 
-            // Create and send delta snapshot
-            auto snapshotData = Protocol::createDeltaSnapshot(
+            // Create and send full snapshot in client-compatible format
+            uint32_t lastProcessedInput = 0;
+            if (NetworkState* netState = registry_.try_get<NetworkState>(entityId)) {
+                lastProcessedInput = netState->lastInputSequence;
+            }
+
+            auto snapshotData = Protocol::createFullSnapshot(
                 currentTick_,
-                baselineTick,
-                entityStates,
-                destroyedEntities_,
-                baselineEntities
+                lastProcessedInput,
+                entityStates
             );
 
             network_->sendSnapshot(connId, snapshotData);
@@ -945,8 +952,12 @@ void ZoneServer::onClientConnected(ConnectionID connectionId) {
     // [GAMEPLAY_AGENT] Give player their starter quests
     questSystem_.giveStarterQuests(registry_, entity, getCurrentTimeMs());
 
-    // [GAMEPLAY_AGENT] Give player starter crafting recipes
+    // [GAMEPLAY_AGENT] Give player their starter crafting recipes
     craftingSystem_.giveStarterRecipes(registry_, entity);
+
+    // [NETWORK_AGENT] Inform NetworkManager of the assigned entity ID
+    // so the connection response contains the correct entity mapping
+    network_->setConnectionEntityId(connectionId, entity);
 
     std::cout << "[ZONE " << config_.zoneId << "] Spawned entity " << static_cast<uint32_t>(entity)
               << " for connection " << connectionId << std::endl;

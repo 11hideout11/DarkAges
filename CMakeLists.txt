@@ -487,10 +487,12 @@ if(GNS_FOUND)
     message(STATUS "  - GNSNetworkManager: Full-featured implementation")
 else()
     list(APPEND SERVER_SOURCES 
-        src/server/src/netcode/NetworkManager_stub.cpp
+        src/server/src/netcode/NetworkManager_udp.cpp
+        src/server/src/netcode/Protocol_stub.cpp
         src/server/src/netcode/ProtobufProtocol.cpp
     )
-    message(WARNING "NetworkManager: Using stub implementation with Protobuf")
+    message(STATUS "NetworkManager: Using real UDP implementation (no GNS)")
+    message(STATUS "  - NetworkManager_udp.cpp: BSD socket-based UDP server")
 endif()
 
 # Protocol layer - conditional on FlatBuffers AND real NetworkManager
@@ -795,6 +797,8 @@ if(BUILD_TESTS AND TARGET Catch2::Catch2WithMain)
         src/server/tests/TestPartyGuildSystem.cpp
         src/server/tests/TestAchievementSystem.cpp
         src/server/tests/TestLeaderboardSystem.cpp
+        src/server/tests/TestProtocolStub.cpp
+        src/server/tests/TestNetworkIntegration.cpp
         # New comprehensive unit tests — expanded from stubs
         src/server/tests/TestPartySystem.cpp
         src/server/tests/TestGuildSystem.cpp

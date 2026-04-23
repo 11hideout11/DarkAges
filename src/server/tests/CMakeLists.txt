@@ -73,6 +73,7 @@ set(TEST_SOURCES
     TestSpawnSystem.cpp
     TestSpawnSystemIntegration.cpp
     TestZoneServer.cpp
+    TestProtocolStub.cpp
 )
 
 # Conditional test sources based on dependencies
