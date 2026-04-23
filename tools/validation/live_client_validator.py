@@ -60,10 +60,13 @@ class ClientStats:
 class TestClient:
     """UDP test client that mimics the Godot client's network behavior."""
 
-    def __init__(self, server_host: str, server_port: int, client_id: int):
+    def __init__(self, server_host: str, server_port: int, client_id: int,
+                 latency_ms: int = 0, packet_loss: float = 0.0):
         self.server_host = server_host
         self.server_port = server_port
         self.client_id = client_id
+        self.latency_ms = latency_ms
+        self.packet_loss = packet_loss
         self.stats = ClientStats()
 
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
@@ -75,12 +78,33 @@ class TestClient:
         self.last_ping_time = 0.0
         self._lock = threading.Lock()
 
+    def _send_with_simulation(self, data: bytes) -> bool:
+        """Send data with optional packet loss and latency simulation."""
+        if self.packet_loss > 0 and __import__('random').random() < self.packet_loss:
+            return True  # Drop packet silently
+        if self.latency_ms > 0:
+            def delayed_send():
+                time.sleep(self.latency_ms / 1000.0)
+                try:
+                    self.sock.sendto(data, (self.server_host, self.server_port))
+                except Exception:
+                    pass
+            threading.Thread(target=delayed_send, daemon=True).start()
+            return True
+        try:
+            self.sock.sendto(data, (self.server_host, self.server_port))
+            return True
+        except Exception:
+            return False
+
     def connect(self) -> bool:
         """Send connection request and wait for response."""
         try:
             # [type:1=6][version:4][player_id:4]
             request = struct.pack('<BII', PACKET_CONNECTION_REQUEST, 1, self.client_id)
-            self.sock.sendto(request, (self.server_host, self.server_port))
+            if not self._send_with_simulation(request):
+                self.stats.errors.append("Connection request send failed")
+                return False
 
             # Wait for connection response
             data, addr = self.sock.recvfrom(1024)
@@ -147,15 +171,14 @@ class TestClient:
         # [type:1=1][sequence:4][timestamp:4][flags:1][yaw:2][pitch:2][target:4]
         data = struct.pack('<BIIbhhI', PACKET_CLIENT_INPUT, self.input_sequence,
                            timestamp, flags, yaw_q, pitch_q, 0)
-        try:
-            self.sock.sendto(data, (self.server_host, self.server_port))
+        if self._send_with_simulation(data):
             self.input_sequence += 1
             with self._lock:
                 self.stats.inputs_sent += 1
             return True
-        except Exception as e:
+        else:
             with self._lock:
-                self.stats.errors.append(f"Input send error: {e}")
+                self.stats.errors.append("Input send error")
             return False
 
     def send_ping(self) -> bool:
@@ -166,14 +189,13 @@ class TestClient:
         self.last_ping_time = time.time()
         timestamp = int(self.last_ping_time * 1000) & 0xFFFFFFFF
         data = struct.pack('<BI', PACKET_PING, timestamp)
-        try:
-            self.sock.sendto(data, (self.server_host, self.server_port))
+        if self._send_with_simulation(data):
             with self._lock:
                 self.stats.pings_sent += 1
             return True
-        except Exception as e:
+        else:
             with self._lock:
-                self.stats.errors.append(f"Ping send error: {e}")
+                self.stats.errors.append("Ping send error")
             return False
 
     def _receive_loop(self):
@@ -236,9 +258,12 @@ class TestClient:
             self.stats.rtt_ms = rtt
 
 
-def start_server(bin_path: str, port: int) -> subprocess.Popen:
+def start_server(bin_path: str, port: int, npcs: bool = False, npc_count: int = 10) -> subprocess.Popen:
     """Start the darkages_server binary on a given port."""
     cmd = [bin_path, '--port', str(port), '--zone-id', '1']
+    if npcs:
+        cmd.append('--npcs')
+        cmd.extend(['--npc-count', str(npc_count)])
     env = os.environ.copy()
     # Suppress metrics exporter port conflict
     env['METRICS_PORT'] = '0'
@@ -283,7 +308,9 @@ def run_validation(args) -> bool:
         # Start server if binary provided
         if args.server_bin:
             print(f"[VALIDATOR] Starting server: {args.server_bin} --port {port}")
-            server_proc = start_server(args.server_bin, port)
+            if args.npcs:
+                print(f"[VALIDATOR] NPC auto-population enabled ({args.npc_count} NPCs)")
+            server_proc = start_server(args.server_bin, port, args.npcs, args.npc_count)
             print("[VALIDATOR] Server started successfully")
             time.sleep(0.5)  # Let it settle
 
@@ -292,7 +319,8 @@ def run_validation(args) -> bool:
         # Phase 1: Connection handshake for all clients
         print(f"[VALIDATOR] Phase 1: Connecting {args.clients} client(s)...")
         for i in range(args.clients):
-            client = TestClient('127.0.0.1', port, client_id=i + 1)
+            client = TestClient('127.0.0.1', port, client_id=i + 1,
+                               latency_ms=args.latency, packet_loss=args.packet_loss)
             if not client.connect():
                 print(f"  [FAIL] Client {i+1} failed to connect")
                 all_passed = False
@@ -365,9 +393,25 @@ def run_validation(args) -> bool:
                 print(f"  [WARN] Client {i+1} errors: {stats.errors[:3]}")
                 all_passed = False
 
-        # Phase 5: Multi-client overlap validation (if > 1 client)
+        # Phase 5: NPC visibility validation (if NPCs enabled)
+        if args.npcs and len(clients) > 0:
+            print("[VALIDATOR] Phase 5: NPC visibility check...")
+            npcs_visible = False
+            for i, client in enumerate(clients):
+                if client.stats.snapshot_entity_counts:
+                    max_entities = max(client.stats.snapshot_entity_counts)
+                    if max_entities > len(clients):
+                        npcs_visible = True
+                        print(f"  [PASS] Client {i+1} saw up to {max_entities} entities (>{len(clients)} players = NPCs present)")
+                    else:
+                        print(f"  [INFO] Client {i+1} max entities: {max_entities} (expected >{len(clients)} for NPCs)")
+            if not npcs_visible:
+                print(f"  [FAIL] No client observed NPCs in snapshots")
+                all_passed = False
+
+        # Phase 6: Multi-client overlap validation (if > 1 client)
         if len(clients) > 1:
-            print("[VALIDATOR] Phase 5: Multi-client visibility check...")
+            print("[VALIDATOR] Phase 6: Multi-client visibility check...")
             # All clients should see each other in snapshots
             # (server broadcasts to all connections)
             for i, client in enumerate(clients):
@@ -394,7 +438,11 @@ def run_validation(args) -> bool:
             if stdout and args.verbose:
                 print("[SERVER OUTPUT]\n" + stdout[-2000:])
 
-    print("")
+        if args.latency > 0 or args.packet_loss > 0:
+            print(f"[VALIDATOR] Network simulation: latency={args.latency}ms, packet_loss={args.packet_loss*100:.1f}%")
+        if args.npcs:
+            print(f"[VALIDATOR] NPCs enabled: {args.npc_count} NPCs")
+        print("")
     if all_passed:
         print("[VALIDATOR] ========================================")
         print("[VALIDATOR] ALL CHECKS PASSED")
@@ -417,6 +465,14 @@ def main():
                         help='Number of simultaneous test clients (default: 1)')
     parser.add_argument('--duration', type=int, default=5,
                         help='Duration of input/snapshot test in seconds (default: 5)')
+    parser.add_argument('--npcs', action='store_true',
+                        help='Enable NPC auto-population on server')
+    parser.add_argument('--npc-count', type=int, default=10,
+                        help='Number of NPCs to spawn (default: 10)')
+    parser.add_argument('--latency', type=int, default=0,
+                        help='Simulated latency in ms (default: 0)')
+    parser.add_argument('--packet-loss', type=float, default=0.0,
+                        help='Simulated packet loss probability 0.0-1.0 (default: 0.0)')
     parser.add_argument('--verbose', action='store_true',
                         help='Print server stdout on completion')
     args = parser.parse_args()

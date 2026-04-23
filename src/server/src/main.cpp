@@ -16,6 +16,8 @@ void printUsage(const char* programName) {
               << "\nOptions:\n"
               << "  --port <num>          Server port (default: 7777)\n"
               << "  --zone-id <num>       Zone ID (default: 1)\n"
+              << "  --npcs                Auto-populate zone with NPCs\n"
+              << "  --npc-count <num>     Number of NPCs to spawn (default: 10)\n"
               << "  --redis-host <host>   Redis host (default: localhost)\n"
               << "  --redis-port <num>    Redis port (default: 6379)\n"
               << "  --scylla-host <host>  ScyllaDB host (default: localhost)\n"
@@ -50,6 +52,10 @@ int main(int argc, char* argv[]) {
                 config.port = static_cast<uint16_t>(std::atoi(argv[++i]));
             } else if (arg == "--zone-id" && i + 1 < argc) {
                 config.zoneId = static_cast<uint32_t>(std::atoi(argv[++i]));
+            } else if (arg == "--npcs") {
+                config.autoPopulateNPCs = true;
+            } else if (arg == "--npc-count" && i + 1 < argc) {
+                config.npcCount = static_cast<uint32_t>(std::atoi(argv[++i]));
             } else if (arg == "--redis-host" && i + 1 < argc) {
                 config.redisHost = argv[++i];
             } else if (arg == "--redis-port" && i + 1 < argc) {

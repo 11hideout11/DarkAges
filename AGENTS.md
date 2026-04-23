@@ -53,6 +53,9 @@ cd build_validate && ctest --output-on-failure -j8
 - **SpawnSystem**: NPC spawn groups, respawn timers, weighted selection, spawn regions, per-zone spawn positions, density limiting
 
 ### Recent Major Additions (Last 10 Commits)
+- Fix: C# client `EntityFrame` visibility bug (private -> public) so `RemotePlayerManager` compiles in Godot
+- Validator: NPC replication over network validated (`--npcs` + `--npc-count` server flags, Phase 5 visibility check)
+- Validator: Latency/packet loss simulation (`--latency`, `--packet-loss`) — server resilient to 30ms + 5% loss with 3 clients + 10 NPCs
 - Fix: live client validator passes — snapshot replication now includes viewer entity, yaw/pitch clamped, threading crash resolved, input deduplication prevents anti-cheat false positives at 10 clients
 - AchievementSystem + LeaderboardSystem with comprehensive tests
 - SpawnSystem refactor: single-entity spawn design, forceSpawn tracking
@@ -60,8 +63,6 @@ cd build_validate && ctest --output-on-failure -j8
 - NPC Dialogue System (branching, conditions, quest hooks)
 - Zone Event System (multi-phase world events)
 - Player Trading System (full lifecycle with escrow)
-- CraftingSystem (instant + timed recipes, profession XP)
-- Chat System (all 5 channels, routing, rate limiting)
 
 ### Performance Testing (Phase 9 — Complete)
 - `TestLoadTesting.cpp`: 690 lines, 13 test cases covering 50/200/400/800/1000 entity ticks
@@ -70,7 +71,7 @@ cd build_validate && ctest --output-on-failure -j8
 - Test infrastructure: `tools/perf/phase9_report.py`, `docs/performance/reports/`
 
 ### Remaining Strategic Gaps
-- **Client ↔ Server Integration**: Live client validator passes with 10 clients/10s (connection, ping/pong, input, snapshots, visibility). Next: packet loss/latency simulation, validate Godot client entity interpolation, test NPC spawning over network.
+- **Client ↔ Server Integration**: Live client validator passes with 10 clients/10s. NPC replication validated (3 clients + 10 NPCs). Latency (30ms) and packet loss (5%) simulation confirmed server resilient. Next: validate Godot client entity interpolation end-to-end (C# fixes applied, pending Godot build test).
 - **Documentation Sync**: AGENTS.md (updated), PROJECT_STATUS.md (Jan 30), DarkAges_Comprehensive_Review.md (Feb 18) require updates to match current codebase state
 - **Test Depth**: Minor gaps in shallow test files (TestPartySystem 19 lines, TestGuildSystem 30 lines, TestProtocol 49 lines) — NOTE: actually comprehensive, AGENTS.md was stale
 

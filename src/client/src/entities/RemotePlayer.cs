@@ -32,7 +32,7 @@ namespace DarkAges.Entities
         /// <summary>
         /// Frame of entity state for interpolation buffer
         /// </summary>
-        private class EntityFrame
+        public class EntityFrame
         {
             public double Timestamp;      // Local receive time
             public double ServerTime;     // Server timestamp
