@@ -135,7 +135,7 @@ namespace DarkAges.UI
             if (GameState.Instance == null) return;
             
             // Get values from GameState
-            float error = GameState.Instance.PredictionError;
+            float error = GameState.Instance.CurrentPredictionError;
             int bufferSize = GameState.Instance.InputBufferSize;
             int reconCount = GameState.Instance.ReconciliationCount;
             uint rtt = GameState.Instance.LastRttMs;

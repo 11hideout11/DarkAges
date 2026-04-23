@@ -41,6 +41,9 @@ namespace DarkAges.Networking
         [Signal]
         public delegate void CombatEventReceivedEventHandler(uint eventType, byte[] data);
         
+        [Signal]
+        public delegate void ConnectedEventHandler(uint entityId);
+        
         // Socket
         private UdpClient? _udpClient;
         private IPEndPoint? _serverEndPoint;
@@ -120,7 +123,7 @@ namespace DarkAges.Networking
                 SendConnectionRequest();
                 
                 // Wait for response (simplified - would use async/await in production)
-                var timer = new Timer();
+                var timer = new Godot.Timer();
                 timer.WaitTime = 5.0f;
                 timer.OneShot = true;
                 timer.Timeout += () =>
@@ -239,7 +242,7 @@ namespace DarkAges.Networking
                 try
                 {
                     _udpClient.Send(data, data.Length);
-                    GD.PrintVerbose($"[NetworkManager] Sent input seq={input.Sequence}");
+                    GD.Print($"[NetworkManager] Sent input seq={input.Sequence}");
                 }
                 catch (Exception ex)
                 {
@@ -251,7 +254,7 @@ namespace DarkAges.Networking
             while (_inputQueue.Count > 10)
             {
                 var dropped = _inputQueue.Dequeue();
-                GD.PrintVerbose($"[NetworkManager] Dropping old input seq={dropped.Sequence}");
+                GD.Print($"[NetworkManager] Dropping old input seq={dropped.Sequence}");
             }
         }
 
@@ -387,7 +390,7 @@ namespace DarkAges.Networking
                     ProcessConnectionResponse(data);
                     break;
                 default:
-                    GD.PrintVerbose($"[NetworkManager] Unknown packet type: {packetType}");
+                    GD.Print($"[NetworkManager] Unknown packet type: {packetType}");
                     break;
             }
         }
@@ -504,7 +507,7 @@ namespace DarkAges.Networking
             // Emit signal for entity interpolation system
             EmitSignal(SignalName.SnapshotReceived, serverTick, data);
             
-            GD.PrintVerbose($"[NetworkManager] Snapshot received tick={serverTick}");
+            GD.Print($"[NetworkManager] Snapshot received tick={serverTick}");
         }
 
         /// <summary>
@@ -513,7 +516,7 @@ namespace DarkAges.Networking
         /// </summary>
         private void ProcessServerCorrection(byte[] data)
         {
-            GD.PrintVerbose("[NetworkManager] Server correction received");
+            GD.Print("[NetworkManager] Server correction received");
             
             // Forward to predicted player for reconciliation
             if (_predictedPlayer != null)
@@ -616,6 +619,7 @@ namespace DarkAges.Networking
                 GameState.Instance.LocalEntityId = entityId;
                 GameState.Instance.SetConnectionState(GameState.ConnectionState.Connected);
                 EmitSignal(SignalName.ConnectionResult, true, "");
+                EmitSignal(SignalName.Connected, entityId);
                 GD.Print($"[NetworkManager] Connected! Entity ID: {entityId}");
             }
             else

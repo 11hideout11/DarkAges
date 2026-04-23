@@ -317,7 +317,7 @@ namespace DarkAges
             while (_inputBuffer.Count >= MaxInputBufferSize)
             {
                 var removed = _inputBuffer.Dequeue();
-                GD.PrintVerbose($"[PredictedPlayer] Dropping old input seq={removed.Sequence} (buffer full)");
+                GD.Print($"[PredictedPlayer] Dropping old input seq={removed.Sequence} (buffer full)");
             }
             
             // Calculate input direction from movement keys
@@ -442,7 +442,7 @@ namespace DarkAges
             if (_predictionError <= ErrorCorrectThreshold)
             {
                 // Error is negligible - no correction needed
-                GD.PrintVerbose($"[PredictedPlayer] Small error ({_predictionError:F3}m) - no correction");
+                GD.Print($"[PredictedPlayer] Small error ({_predictionError:F3}m) - no correction");
                 _isSmoothingCorrection = false;
                 return;
             }
@@ -540,7 +540,7 @@ namespace DarkAges
             float distance = startPos.DistanceTo(targetPos);
             _correctionDuration = Mathf.Max(distance / CorrectionSpeed, FixedDt * 3); // At least 3 frames
             
-            GD.PrintVerbose($"[PredictedPlayer] Starting smooth correction: {distance:F3}m over {_correctionDuration:F3}s");
+            GD.Print($"[PredictedPlayer] Starting smooth correction: {distance:F3}m over {_correctionDuration:F3}s");
         }
         
         /// <summary>
@@ -564,7 +564,7 @@ namespace DarkAges
             if (t >= 1.0f)
             {
                 _isSmoothingCorrection = false;
-                GD.PrintVerbose("[PredictedPlayer] Smooth correction complete");
+                GD.Print("[PredictedPlayer] Smooth correction complete");
             }
         }
 
@@ -590,7 +590,7 @@ namespace DarkAges
             _predictedPosition = GlobalPosition;
             _predictedVelocity = Velocity;
             
-            GD.PrintVerbose($"[PredictedPlayer] Reconciliation complete: replayed {replayedCount} inputs");
+            GD.Print($"[PredictedPlayer] Reconciliation complete: replayed {replayedCount} inputs");
             
             _reconciling = false;
         }
@@ -609,7 +609,7 @@ namespace DarkAges
             if (unacknowledged.Count == 0)
                 return 0;
             
-            GD.PrintVerbose($"[PredictedPlayer] Replaying {unacknowledged.Count} unacknowledged inputs");
+            GD.Print($"[PredictedPlayer] Replaying {unacknowledged.Count} unacknowledged inputs");
             
             foreach (var input in unacknowledged)
             {
@@ -745,7 +745,7 @@ namespace DarkAges
         private void UpdateDebugStats()
         {
             // Expose stats for debug UI
-            GameState.Instance.PredictionError = _predictionError;
+            GameState.Instance.CurrentPredictionError = _predictionError;
             GameState.Instance.InputBufferSize = _inputBuffer.Count;
             GameState.Instance.LastProcessedInput = _lastProcessedServerInput;
             GameState.Instance.ReconciliationCount = _reconciliationCount;

@@ -18,6 +18,8 @@ namespace DarkAges.Entities
     /// </summary>
     public partial class RemotePlayerManager : Node3D
     {
+        public static RemotePlayerManager Instance { get; private set; } = null!;
+        
         [Export] public PackedScene RemotePlayerScene;
         [Export] public bool ShowInterpolationDebug = false;
         
@@ -33,6 +35,11 @@ namespace DarkAges.Entities
         // Metrics tracking
         private double _lastMetricsLogTime;
         private const double MetricsLogInterval = 5.0;
+
+        public override void _EnterTree()
+        {
+            Instance = this;
+        }
 
         public override void _Ready()
         {

@@ -1,6 +1,7 @@
 using Godot;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using DarkAges.Combat;
 using DarkAges.Entities;
 
@@ -136,7 +137,7 @@ namespace DarkAges.Client.UI
             textNode.Scale = Vector3.Zero;
             var tween = CreateTween();
             tween.TweenProperty(textNode, "scale", Vector3.One * activeText.InitialScale, 0.1f)
-                 .SetEase(Tween.EaseType.OutBack);
+                 .SetEase(Tween.EaseType.Out);
         }
         
         /// <summary>
@@ -201,7 +202,8 @@ namespace DarkAges.Client.UI
         private void OnDamageTaken(int damage, bool isCritical)
         {
             // Show on self (local player)
-            var localPlayer = GetTree().GetNodesInGroup("local_player").FirstOrDefault() as Node3D;
+            var nodes = GetTree().GetNodesInGroup("local_player");
+            var localPlayer = nodes.Count > 0 ? nodes[0] as Node3D : null;
             if (localPlayer != null)
             {
                 ShowDamage(localPlayer.GlobalPosition + Vector3.Up * 1.5f, damage, isCritical);
@@ -334,9 +336,9 @@ namespace DarkAges.Client.UI
             FontSize = (int)fontSize;
             Billboard = BaseMaterial3D.BillboardModeEnum.Enabled;
             PixelSize = 0.015f;
-            OutlineSize = 2;
-            OutlineColor = Colors.Black;
-            HorizontalAlignment = HorizontalAlignment.Center;
+            // OutlineColor not available on Label3D in Godot 4.2 C#
+            // Using shadow effect via modulates instead
+            Modulate = new Color(color.R, color.G, color.B, 1.0f);
         }
         
         public void SetAlpha(float alpha)

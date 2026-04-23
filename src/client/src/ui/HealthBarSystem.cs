@@ -89,7 +89,7 @@ namespace DarkAges.Client.UI
                 double timeSinceDamage = Time.GetTicksMsec() / 1000.0 - _lastDamageTime;
                 if (timeSinceDamage > DamageBarDelay && _damageBar.Value > _healthBar.Value)
                 {
-                    float targetValue = _healthBar.Value;
+                    float targetValue = (float)_healthBar.Value;
                     _damageBar.Value = Mathf.Lerp((float)_damageBar.Value, targetValue, (float)delta * 5f);
                 }
             }
@@ -123,7 +123,7 @@ namespace DarkAges.Client.UI
                 // Verify 100ms requirement
                 if (updateLatency > MaxHealthUpdateLatency)
                 {
-                    GD.PrintVerbose($"[HealthBarSystem] Health update latency: {updateLatency * 1000:F1}ms (target: <100ms)");
+                    GD.Print($"[HealthBarSystem] Health update latency: {updateLatency * 1000:F1}ms (target: <100ms)");
                 }
                 
                 SetServerHealth(actualHealth, _maxHealth);

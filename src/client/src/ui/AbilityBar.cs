@@ -97,7 +97,7 @@ namespace DarkAges.Client.UI
             // Cooldown overlay (fills from top to bottom as cooldown progresses)
             slot.CooldownOverlay = new TextureProgressBar
             {
-                FillMode = TextureProgressBar.FillModeEnum.TopToBottom,
+                FillMode = (int)TextureProgressBar.FillModeEnum.TopToBottom,
                 Value = 0,
                 MinValue = 0,
                 MaxValue = 100,
@@ -226,7 +226,7 @@ namespace DarkAges.Client.UI
             slot.CooldownOverlay.Visible = true;
             slot.CooldownText.Visible = true;
             
-            GD.PrintVerbose($"[AbilityBar] Server cooldown update: ability={abilityId}, duration={cooldownDuration:F2}, remaining={remainingTime:F2}");
+            GD.Print($"[AbilityBar] Server cooldown update: ability={abilityId}, duration={cooldownDuration:F2}, remaining={remainingTime:F2}");
         }
 
         private void OnAbilityPressed(int slotIndex)

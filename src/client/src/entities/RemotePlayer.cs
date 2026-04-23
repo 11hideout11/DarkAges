@@ -178,7 +178,7 @@ namespace DarkAges.Entities
             {
                 _isExtrapolating = false;
                 _extrapolationTime = 0;
-                GD.PrintVerbose($"[RemotePlayer {EntityId}] Resumed interpolation");
+                GD.Print($"[RemotePlayer {EntityId}] Resumed interpolation");
                 
                 // Reset material
                 if (_meshInstance != null && ShowDebugVisualization)

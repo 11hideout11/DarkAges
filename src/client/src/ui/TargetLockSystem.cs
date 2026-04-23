@@ -202,9 +202,9 @@ namespace DarkAges.Client.UI
                 if (dot > -0.5f) continue;  // Must be roughly in front
                 
                 // Get screen position
-                Vector3 screenPos = camera.UnprojectPosition(player.GlobalPosition + Vector3.Up * 1.5f);
+                Vector2 screenPos = camera.UnprojectPosition(player.GlobalPosition + Vector3.Up * 1.5f);
                 Vector2 screenCenter = GetViewport().GetVisibleRect().Size / 2;
-                float screenDistance = new Vector2(screenPos.X, screenPos.Y).DistanceTo(screenCenter);
+                float screenDistance = screenPos.DistanceTo(screenCenter);
                 
                 // Check if within lock angle (screen space)
                 float maxScreenDistance = Mathf.Tan(Mathf.DegToRad(LockAngle)) * screenCenter.Y;
@@ -259,7 +259,7 @@ namespace DarkAges.Client.UI
             }
         }
         
-        private void ClearTarget()
+        public void ClearTarget()
         {
             if (CurrentTarget.HasValue)
             {

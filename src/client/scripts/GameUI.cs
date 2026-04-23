@@ -7,7 +7,7 @@ namespace DarkAges
     /// <summary>
     /// [CLIENT_AGENT] UI controller for connection panel and debug info
     /// </summary>
-    public partial class UI : CanvasLayer
+    public partial class GameUI : CanvasLayer
     {
         private Panel? _connectionPanel;
         private Panel? _debugPanel;

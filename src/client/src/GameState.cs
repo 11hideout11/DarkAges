@@ -54,7 +54,7 @@ namespace DarkAges
         public float PacketLoss { get; set; } = 0.0f;
         
         // Prediction debug metrics (updated by PredictedPlayer)
-        public float PredictionError { get; set; } = 0.0f;
+        public float CurrentPredictionError { get; set; } = 0.0f;
         public int InputBufferSize { get; set; } = 0;
         public uint LastProcessedInput { get; set; } = 0;
         public int ReconciliationCount { get; set; } = 0;
@@ -103,7 +103,7 @@ namespace DarkAges
         /// </summary>
         public string GetPredictionStats()
         {
-            return $"Error: {PredictionError:F3}m | Buffer: {InputBufferSize} | Reconciliations: {ReconciliationCount}";
+            return $"Error: {CurrentPredictionError:F3}m | Buffer: {InputBufferSize} | Reconciliations: {ReconciliationCount}";
         }
     }
 
@@ -113,7 +113,7 @@ namespace DarkAges
     public class EntityData
     {
         public uint Id { get; set; }
-        public string Name { get; set; } = $"Player_{Id}";
+        public string Name { get; set; } = "Unknown";
         public byte Type { get; set; }
         public Vector3 Position { get; set; }
         public Vector3 Velocity { get; set; }

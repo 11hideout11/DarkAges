@@ -1,8 +1,9 @@
 using Godot;
 using System;
+using System.Linq;
 using DarkAges.Combat;
 using DarkAges.Networking;
-
+using DarkAges.Entities;
 namespace DarkAges.Client.UI
 {
     /// <summary>
@@ -82,9 +83,9 @@ namespace DarkAges.Client.UI
             // Content container
             var vbox = new VBoxContainer
             {
-                Alignment = BoxContainer.AlignmentMode.Center,
-                Separation = 20
+                Alignment = BoxContainer.AlignmentMode.Center
             };
+            vbox.AddThemeConstantOverride("separation", 20);
             centerContainer.AddChild(vbox);
             
             // Death title
@@ -235,7 +236,8 @@ namespace DarkAges.Client.UI
             _respawnAvailableTime = _deathTime + RespawnDelay;
             
             // Get local player position for camera
-            _localPlayer = GetTree().GetNodesInGroup("local_player").FirstOrDefault() as Node3D;
+            var nodes = GetTree().GetNodesInGroup("local_player");
+            _localPlayer = nodes.Count > 0 ? nodes[0] as Node3D : null;
             if (_localPlayer != null)
             {
                 _cameraPivot.GlobalPosition = _localPlayer.GlobalPosition;
@@ -296,7 +298,7 @@ namespace DarkAges.Client.UI
             // Animation for dramatic effect
             var tween = CreateTween();
             tween.TweenProperty(_deathTitleLabel, "scale", new Vector2(1.2f, 1.2f), 0.3f)
-                 .SetEase(Tween.EaseType.OutBack);
+                 .SetEase(Tween.EaseType.Out);
             tween.TweenProperty(_deathTitleLabel, "scale", Vector2.One, 0.2f);
         }
         
