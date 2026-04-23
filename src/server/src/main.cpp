@@ -22,6 +22,8 @@ void printUsage(const char* programName) {
               << "  --redis-port <num>    Redis port (default: 6379)\n"
               << "  --scylla-host <host>  ScyllaDB host (default: localhost)\n"
               << "  --scylla-port <num>   ScyllaDB port (default: 9042)\n"
+              << "  --demo-mode           Enable curated demo zone configuration\n"
+              << "  --zone-config <path>  Load zone configuration from JSON file\n"
               << "  --help, -h            Show this help\n";
 }
 
@@ -64,6 +66,15 @@ int main(int argc, char* argv[]) {
                 config.scyllaHost = argv[++i];
             } else if (arg == "--scylla-port" && i + 1 < argc) {
                 config.scyllaPort = static_cast<uint16_t>(std::atoi(argv[++i]));
+            } else if (arg == "--demo-mode") {
+                config.demoMode = true;
+                config.autoPopulateNPCs = true;
+                config.zoneId = 99;  // Demo zone ID
+                config.npcCount = 10;
+                config.npcBaseLevel = 1;
+            } else if (arg == "--zone-config" && i + 1 < argc) {
+                config.zoneConfigPath = argv[++i];
+                config.autoPopulateNPCs = true;
             } else {
                 std::cerr << "Unknown option: " << arg << "\n";
                 printUsage(argv[0]);

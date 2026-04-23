@@ -98,6 +98,10 @@ struct ZoneConfig {
     uint8_t npcBaseLevel{1};         // Base level for spawned NPCs
     uint16_t npcBaseDamage{10};      // Base damage
     uint32_t npcXpReward{50};        // XP per kill
+
+    // Demo mode configuration
+    bool demoMode{false};            // Enable curated demo zone
+    std::string zoneConfigPath;      // Path to JSON zone configuration file
 };
 
 struct TickMetrics {
@@ -181,6 +185,12 @@ public:
 
     // Populate zone with NPCs based on config
     void populateNPCs();
+
+    // Load demo zone configuration from JSON file
+    bool loadDemoConfig(const std::string& configPath);
+
+    // Populate NPCs from loaded demo configuration
+    void populateNPCsFromDemoConfig();
 
     // Despawn entity
     void despawnEntity(EntityID entity);
@@ -284,6 +294,9 @@ private:
 
     // Configuration
     ZoneConfig config_;
+
+    // Loaded demo zone configuration (JSON)
+    std::string demoConfigJson_;
 
     // State
     std::atomic<bool> running_{false};

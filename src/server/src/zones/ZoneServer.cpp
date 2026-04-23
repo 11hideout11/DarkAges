@@ -11,6 +11,7 @@
 #include "profiling/PerfettoProfiler.hpp"
 #include "profiling/PerformanceMonitor.hpp"
 #include "monitoring/MetricsExporter.hpp"
+#include <nlohmann/json.hpp>
 #include <iostream>
 #include <thread>
 #include <chrono>
@@ -22,6 +23,7 @@
 #include <memory>
 #include <string>
 #include <vector>
+#include <fstream>
 
 // Profiling macros that compile out when profiling is disabled
 #ifdef ENABLE_PROFILING
@@ -369,7 +371,21 @@ bool ZoneServer::initialize(const ZoneConfig& config) {
 
     // [GAMEPLAY_AGENT] Auto-populate zone with NPCs if configured
     if (config_.autoPopulateNPCs) {
-        populateNPCs();
+        if (config_.demoMode && !config_.zoneConfigPath.empty()) {
+            // Load demo configuration from JSON file
+            if (loadDemoConfig(config_.zoneConfigPath)) {
+                populateNPCsFromDemoConfig();
+            } else {
+                std::cerr << "[ZONE " << config_.zoneId << "] Failed to load demo config, falling back to default NPCs" << std::endl;
+                populateNPCs();
+            }
+        } else if (config_.demoMode) {
+            // Demo mode without config file — use default demo settings
+            std::cout << "[ZONE " << config_.zoneId << "] Demo mode active — spawning default demo NPCs" << std::endl;
+            populateNPCs();
+        } else {
+            populateNPCs();
+        }
     }
 
     return true;
@@ -1640,6 +1656,204 @@ uint32_t ZoneServer::findZoneByPosition(float x, float z) {
     zoneZ = std::min(zoneZ, 1u);
 
     return zoneZ * 2 + zoneX + 1;  // 1-indexed zone IDs
+}
+
+// [DEMO_AGENT] Load demo zone configuration from JSON file
+bool ZoneServer::loadDemoConfig(const std::string& configPath) {
+    std::ifstream file(configPath);
+    if (!file.is_open()) {
+        std::cerr << "[ZONE " << config_.zoneId << "] Failed to open demo config: " << configPath << std::endl;
+        return false;
+    }
+
+    try {
+        nlohmann::json j;
+        file >> j;
+        demoConfigJson_ = j.dump();
+
+        // Validate required fields
+        if (!j.contains("zone_id") || !j.contains("npc_presets")) {
+            std::cerr << "[ZONE " << config_.zoneId << "] Invalid demo config: missing zone_id or npc_presets" << std::endl;
+            return false;
+        }
+
+        // Update zone ID from config if present
+        if (j.contains("zone_id")) {
+            config_.zoneId = j["zone_id"].get<uint32_t>();
+        }
+
+        std::cout << "[ZONE " << config_.zoneId << "] Loaded demo config: " << j.value("name", "Unnamed") << std::endl;
+        std::cout << "[ZONE " << config_.zoneId << "] Description: " << j.value("description", "") << std::endl;
+        return true;
+    } catch (const std::exception& e) {
+        std::cerr << "[ZONE " << config_.zoneId << "] Failed to parse demo config: " << e.what() << std::endl;
+        return false;
+    }
+}
+
+// [DEMO_AGENT] Populate NPCs from loaded demo configuration
+void ZoneServer::populateNPCsFromDemoConfig() {
+    if (demoConfigJson_.empty()) {
+        std::cerr << "[ZONE " << config_.zoneId << "] No demo config loaded, falling back to default" << std::endl;
+        populateNPCs();
+        return;
+    }
+
+    try {
+        nlohmann::json j = nlohmann::json::parse(demoConfigJson_);
+        const auto& npcPresets = j["npc_presets"];
+
+        uint32_t totalSpawned = 0;
+        float centerX = (config_.minX + config_.maxX) / 2.0f;
+        float centerZ = (config_.minZ + config_.maxZ) / 2.0f;
+
+        for (const auto& preset : npcPresets) {
+            std::string archetypeName = preset.value("archetype", "wolf");
+            uint32_t count = preset.value("count", 1);
+            float radius = preset.value("radius", 25.0f);
+            uint8_t level = preset.value("level", 1);
+
+            // Map archetype string to enum
+            NPCArchetype archetype = NPCArchetype::Melee;
+            if (archetypeName == "bandit" || archetypeName == "ranged") {
+                archetype = NPCArchetype::Ranged;
+            } else if (archetypeName == "caster" || archetypeName == "mage") {
+                archetype = NPCArchetype::Caster;
+            } else if (archetypeName == "boss" || archetypeName == "boss_ogre") {
+                archetype = NPCArchetype::Boss;
+            }
+
+            // Spawn NPCs for this preset
+            for (uint32_t i = 0; i < count; ++i) {
+                float angle = static_cast<float>(std::rand()) / RAND_MAX * 2.0f * 3.14159f;
+                float dist = static_cast<float>(std::rand()) / RAND_MAX * radius;
+                float x = centerX + std::cos(angle) * dist;
+                float z = centerZ + std::sin(angle) * dist;
+
+                x = std::max(config_.minX + 1.0f, std::min(config_.maxX - 1.0f, x));
+                z = std::max(config_.minZ + 1.0f, std::min(config_.maxZ - 1.0f, z));
+
+                Position spawnPos = Position::fromVec3(glm::vec3(x, 0, z));
+
+                // Configure based on archetype
+                float aggroRange = 15.0f;
+                float leashRange = 30.0f;
+                float attackRange = 2.0f;
+                float preferredRange = 2.0f;
+                float retreatRange = 0.0f;
+                float fleeHP = 20.0f;
+                uint16_t baseDamage = config_.npcBaseDamage;
+                uint32_t xpReward = config_.npcXpReward;
+
+                switch (archetype) {
+                    case NPCArchetype::Melee:
+                        break;
+                    case NPCArchetype::Ranged:
+                        attackRange = 20.0f;
+                        preferredRange = 15.0f;
+                        retreatRange = 5.0f;
+                        baseDamage = static_cast<uint16_t>(baseDamage * 0.8f);
+                        xpReward = static_cast<uint32_t>(xpReward * 1.2f);
+                        break;
+                    case NPCArchetype::Caster:
+                        attackRange = 25.0f;
+                        preferredRange = 18.0f;
+                        retreatRange = 8.0f;
+                        baseDamage = static_cast<uint16_t>(baseDamage * 0.6f);
+                        fleeHP = 15.0f;
+                        xpReward = static_cast<uint32_t>(xpReward * 1.5f);
+                        break;
+                    case NPCArchetype::Boss:
+                        aggroRange = 25.0f;
+                        leashRange = 50.0f;
+                        baseDamage = static_cast<uint16_t>(baseDamage * 2.0f);
+                        fleeHP = 5.0f;
+                        xpReward = static_cast<uint32_t>(xpReward * 5.0f);
+                        level = static_cast<uint8_t>(level + 5);
+                        break;
+                }
+
+                EntityID npc = spawnNPC(spawnPos, level, baseDamage,
+                                       aggroRange, leashRange, attackRange,
+                                       xpReward, 10000);
+
+                // Apply archetype-specific configuration
+                if (auto* ai = registry_.try_get<NPCAIState>(npc)) {
+                    ai->preferredRange = preferredRange;
+                    ai->retreatRange = retreatRange;
+                    ai->fleeHealthPercent = fleeHP;
+                }
+                if (auto* stats = registry_.try_get<NPCStats>(npc)) {
+                    stats->archetype = archetype;
+
+                    if (auto* combat = registry_.try_get<CombatState>(npc)) {
+                        switch (archetype) {
+                            case NPCArchetype::Boss:
+                                combat->maxHealth = static_cast<int16_t>(combat->maxHealth * 5);
+                                combat->health = combat->maxHealth;
+                                break;
+                            case NPCArchetype::Caster:
+                                combat->maxHealth = static_cast<int16_t>(combat->maxHealth * 0.7f);
+                                combat->health = combat->maxHealth;
+                                break;
+                            default:
+                                break;
+                        }
+                    }
+                }
+
+                // Add loot tables
+                if (!registry_.all_of<LootTable>(npc)) {
+                    LootTable loot;
+                    loot.goldDropMin = 1.0f;
+                    loot.goldDropMax = 5.0f * level;
+
+                    if (archetype == NPCArchetype::Boss) {
+                        loot.entries[0] = LootEntry{3, 1, 1, 0.3f};
+                        loot.entries[1] = LootEntry{8, 1, 1, 0.2f};
+                        loot.entries[2] = LootEntry{22, 1, 3, 0.5f};
+                        loot.entries[3] = LootEntry{30, 1, 1, 0.05f};
+                        loot.count = 4;
+                        loot.goldDropMin = 50.0f;
+                        loot.goldDropMax = 200.0f;
+                    } else if (archetype == NPCArchetype::Caster) {
+                        loot.entries[0] = LootEntry{11, 1, 3, 0.4f};
+                        loot.entries[1] = LootEntry{4, 1, 1, 0.1f};
+                        loot.count = 2;
+                    } else {
+                        loot.entries[0] = LootEntry{10, 1, 2, 0.3f};
+                        loot.entries[1] = LootEntry{20, 1, 1, 0.2f};
+                        loot.entries[2] = LootEntry{21, 1, 2, 0.15f};
+                        loot.count = 3;
+                    }
+
+                    registry_.emplace<LootTable>(npc, loot);
+                }
+
+                totalSpawned++;
+            }
+        }
+
+        std::cout << "[ZONE " << config_.zoneId << "] Demo config: spawned " << totalSpawned << " NPCs" << std::endl;
+
+        // Load demo quest if present
+        if (j.contains("demo_quest")) {
+            const auto& quest = j["demo_quest"];
+            std::cout << "[ZONE " << config_.zoneId << "] Demo quest available: "
+                      << quest.value("title", "Untitled") << std::endl;
+        }
+
+        // Load zone event if present
+        if (j.contains("zone_event")) {
+            const auto& event = j["zone_event"];
+            std::cout << "[ZONE " << config_.zoneId << "] Zone event configured: "
+                      << event.value("id", "none") << std::endl;
+        }
+
+    } catch (const std::exception& e) {
+        std::cerr << "[ZONE " << config_.zoneId << "] Failed to populate from demo config: " << e.what() << std::endl;
+        populateNPCs();
+    }
 }
 
 } // namespace DarkAges

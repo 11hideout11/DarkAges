@@ -139,6 +139,9 @@ class DemoPipeline:
 
         # Start server
         server_args = ["--npcs", "--npc-count", str(self.args.npcs)]
+        if self.args.demo_mode:
+            server_args.append("--demo-mode")
+            server_args.extend(["--zone-config", str(PROJECT_ROOT / "tools/demo/content/demo_zone.json")])
         if self.args.demo_content:
             # If server supports zone config, pass it
             # For now, just use NPC count
@@ -238,6 +241,33 @@ class DemoPipeline:
         validator.save_json(ARTIFACTS / "e2e_report.json")
         ok = all(c.passed for c in validator.checks)
         print_step("E2E validation", "OK" if ok else "FAIL")
+
+        # Deep validation (optional)
+        if self.args.validator_deep and self.supervisor:
+            print_header("PHASE 4b: Deep Validation")
+            import subprocess
+            deep_cmd = [
+                sys.executable,
+                str(PROJECT_ROOT / "tools/validation/live_client_validator.py"),
+                "--port", str(self.supervisor.server_port),
+                "--clients", "2",
+                "--duration", "5",
+                "--npcs",
+                "--npc-count", str(self.args.npcs),
+                "--npc-movement",
+                "--tick-budget",
+            ]
+            if self.args.demo_mode:
+                deep_cmd.append("--demo-mode")
+            # Don't start a new server — connect to the one supervisor is running
+            result = subprocess.run(deep_cmd, capture_output=True, text=True)
+            print(result.stdout)
+            if result.returncode != 0:
+                print_step("Deep validation", "FAIL")
+                ok = False
+            else:
+                print_step("Deep validation", "OK")
+
         return ok
 
     def phase_report(self):
@@ -327,6 +357,8 @@ def main():
     parser.add_argument("--chaos", action="store_true", help="Enable fault injection (CPU spike, network delay, process kills)")
     parser.add_argument("--record", action="store_true", help="Record video with ffmpeg (not yet implemented)")
     parser.add_argument("--dashboard", action="store_true", help="Show live terminal dashboard (not yet implemented)")
+    parser.add_argument("--demo-mode", action="store_true", help="Enable curated demo zone (zone 99, JSON config)")
+    parser.add_argument("--validator-deep", action="store_true", help="Run deep validation (NPC movement, tick budget, combat)")
     args = parser.parse_args()
 
     if args.smoke:

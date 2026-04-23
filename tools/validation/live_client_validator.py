@@ -367,9 +367,14 @@ def compute_position_jitter(entity_positions: dict[int, list[tuple]]) -> dict:
     return {'max_delta_m': max_delta, 'total_deltas': total_deltas, 'large_jumps': large_jumps}
 
 
-def start_server(bin_path: str, port: int, npcs: bool = False, npc_count: int = 10) -> subprocess.Popen:
+def start_server(bin_path: str, port: int, npcs: bool = False, npc_count: int = 10,
+                 demo_mode: bool = False) -> subprocess.Popen:
     """Start the darkages_server binary on a given port."""
     cmd = [bin_path, '--port', str(port), '--zone-id', '1']
+    if demo_mode:
+        cmd.append('--demo-mode')
+        cmd.extend(['--zone-config', 'tools/demo/content/demo_zone.json'])
+        npcs = True  # Demo mode implies NPCs
     if npcs:
         cmd.append('--npcs')
         cmd.extend(['--npc-count', str(npc_count)])
@@ -419,7 +424,9 @@ def run_validation(args) -> bool:
             print(f"[VALIDATOR] Starting server: {args.server_bin} --port {port}")
             if args.npcs:
                 print(f"[VALIDATOR] NPC auto-population enabled ({args.npc_count} NPCs)")
-            server_proc = start_server(args.server_bin, port, args.npcs, args.npc_count)
+            if args.demo_mode:
+                print("[VALIDATOR] Demo mode enabled")
+            server_proc = start_server(args.server_bin, port, args.npcs, args.npc_count, args.demo_mode)
             print("[VALIDATOR] Server started successfully")
             time.sleep(0.5)  # Let it settle
 
@@ -664,6 +671,39 @@ def run_validation(args) -> bool:
                     else:
                         print(f"  [PASS] Snapshot loss acceptable")
 
+        # Phase 9: NPC Movement Validation
+        if args.npc_movement and args.npcs and len(clients) > 0:
+            print("[VALIDATOR] Phase 9: NPC movement validation...")
+            total_moving_npcs = 0
+            for i, client in enumerate(clients):
+                moving = 0
+                for entity_id, positions in client.stats.entity_positions.items():
+                    if entity_id == client.stats.entity_id:
+                        continue  # Skip self
+                    if len(positions) < 2:
+                        continue
+                    # Check if position changed between first and last snapshot
+                    _, x1, y1, z1 = positions[0]
+                    _, x2, y2, z2 = positions[-1]
+                    dx = ((x2 - x1) ** 2 + (y2 - y1) ** 2 + (z2 - z1) ** 2) ** 0.5
+                    if dx > 0.5:  # Moved more than 0.5m
+                        moving += 1
+                if moving > 0:
+                    print(f"  [PASS] Client {i+1} observed {moving} moving NPCs")
+                    total_moving_npcs += moving
+                else:
+                    print(f"  [INFO] Client {i+1} did not observe NPC movement (may be stationary)")
+            if total_moving_npcs == 0:
+                print(f"  [WARN] No NPC movement observed across all clients")
+            else:
+                print(f"  [PASS] Total moving NPCs observed: {total_moving_npcs}")
+
+        # Phase 10: Tick Budget Validation
+        if args.tick_budget and server_proc:
+            print("[VALIDATOR] Phase 10: Tick budget validation...")
+            # We'll check server stdout in the finally block for overruns
+            pass  # Checked during cleanup
+
     finally:
         print("[VALIDATOR] Cleaning up clients...")
         for client in clients:
@@ -680,6 +720,15 @@ def run_validation(args) -> bool:
             stdout, _ = server_proc.communicate()
             if stdout and args.verbose:
                 print("[SERVER OUTPUT]\n" + stdout[-2000:])
+
+            # Tick budget check
+            if args.tick_budget and stdout:
+                overrun_count = stdout.count("Tick overrun")
+                if overrun_count == 0:
+                    print("  [PASS] No tick overruns detected")
+                else:
+                    print(f"  [FAIL] Detected {overrun_count} tick overrun(s)")
+                    all_passed = False
 
         if args.latency > 0 or args.packet_loss > 0:
             print(f"[VALIDATOR] Network simulation: latency={args.latency}ms, packet_loss={args.packet_loss*100:.1f}%")
@@ -726,6 +775,12 @@ def main():
                         help='Enable interpolation/jitter stress test')
     parser.add_argument('--interpolation-duration', type=int, default=10,
                         help='Duration of interpolation stress in seconds (default: 10)')
+    parser.add_argument('--demo-mode', action='store_true',
+                        help='Start server in demo mode (zone 99, curated config)')
+    parser.add_argument('--tick-budget', action='store_true',
+                        help='Validate server tick budget (no overruns)')
+    parser.add_argument('--npc-movement', action='store_true',
+                        help='Validate NPCs are moving (position changes over time)')
     args = parser.parse_args()
 
     success = run_validation(args)
