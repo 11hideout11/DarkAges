@@ -24,6 +24,7 @@ void printUsage(const char* programName) {
               << "  --scylla-port <num>   ScyllaDB port (default: 9042)\n"
               << "  --demo-mode           Enable curated demo zone configuration\n"
               << "  --zone-config <path>  Load zone configuration from JSON file\n"
+              << "  --instrument          Enable server-side instrumentation (tick snapshots)\n"
               << "  --help, -h            Show this help\n";
 }
 
@@ -75,6 +76,8 @@ int main(int argc, char* argv[]) {
             } else if (arg == "--zone-config" && i + 1 < argc) {
                 config.zoneConfigPath = argv[++i];
                 config.autoPopulateNPCs = true;
+            } else if (arg == "--instrument") {
+                config.enableInstrumentation = true;
             } else {
                 std::cerr << "Unknown option: " << arg << "\n";
                 printUsage(argv[0]);
@@ -96,8 +99,9 @@ int main(int argc, char* argv[]) {
         std::cout << "Port: " << config.port << "\n";
         std::cout << "Redis: " << config.redisHost << ":" << config.redisPort << "\n";
         std::cout << "ScyllaDB: " << config.scyllaHost << ":" << config.scyllaPort << "\n";
-        std::cout << "World Bounds: [" << config.minX << ", " << config.maxX << "] x [" 
+        std::cout << "World Bounds: [" << config.minX << ", " << config.maxX << "] x ["
                   << config.minZ << ", " << config.maxZ << "]\n";
+        std::cout << "Instrumentation: " << (config.enableInstrumentation ? "enabled" : "disabled") << "\n";
         std::cout << "\nInitializing server...\n\n";
         
         // Create and initialize server
