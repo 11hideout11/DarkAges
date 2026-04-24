@@ -739,6 +739,14 @@ void ZoneServer::updateNetwork() {
         inputHandler_.onClientInput(input);
     }
 
+    // Process pending respawn requests
+    auto respawnRequests = network_->getPendingRespawnRequests();
+    for (EntityID entity : respawnRequests) {
+        // Default spawn at origin (MVP). In future, use spawn points.
+        Position spawnPos = Position::fromVec3(glm::vec3(0.0f, 0.0f, 0.0f));
+        combatSystem_.respawnEntity(registry_, entity, spawnPos);
+    }
+
     auto elapsed = std::chrono::steady_clock::now() - start;
     metrics_.networkTimeUs += std::chrono::duration_cast<std::chrono::microseconds>(elapsed).count();
 }

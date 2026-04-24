@@ -53,7 +53,7 @@ namespace DarkAges
         [Export] public bool ShowDebugLabel = true;
         
         // State
-        private uint _inputSequence = 1;  // Start at 1, 0 reserved for "no input processed"
+        private uint _inputSequence = 1;
         private Queue<PredictedInput> _inputBuffer = new();
         private Vector3 _serverPosition = Vector3.Zero;
         private Vector3 _serverVelocity = Vector3.Zero;
@@ -62,8 +62,25 @@ namespace DarkAges
         private bool _reconciling = false;
         private uint _lastProcessedServerInput = 0;
         private float _predictionError = 0.0f;
-        private int _reconciliationCount = 0;  // Debug counter
+        private int _reconciliationCount = 0;
         private uint _lastCorrectionTick = 0;
+        
+        // Dodge state
+        private bool _isDodging = false;
+        private double _dodgeTimer = 0.0;
+        private const double DODGE_DURATION = 0.4;
+        private const float DODGE_FORCE = 12.0f;
+        private double _invulnerableTimer = 0.0;
+        private const double INVULNERABLE_DURATION = 0.3;
+        
+        // Combat state
+        private bool _isAttacking = false;
+        private double _attackTimer = 0.0;
+        private const double ATTACK_DURATION = 0.5;
+        private bool _isHit = false;
+        private double _hitTimer = 0.0;
+        private const double HIT_DURATION = 0.3;
+        private bool _isDead = false;
         
         // Smooth correction state
         private Vector3 _correctionTargetPosition;
@@ -80,6 +97,8 @@ namespace DarkAges
         
         // Components
         private AnimationPlayer _animPlayer;
+        private AnimationTree _animTree;
+        private Dictionary<string, bool> _animParams = new();
         
         // Debug visualization
         private MeshInstance3D _serverGhost;
@@ -100,18 +119,26 @@ namespace DarkAges
         {
             _cameraRig = GetNode<Node3D>("CameraRig");
             _springArm = GetNode<SpringArm3D>("CameraRig/SpringArm3D");
-            _animPlayer = GetNode<AnimationPlayer>("AnimationPlayer");
-            
+            _animPlayer = GetNode<AnimationPlayer>("Model/AnimationPlayer");
+            _animTree = GetNode<AnimationTree>("Model/AnimationTree");
+
+            // Initialize animation parameters for state machine
+            if (_animTree != null)
+            {
+                var sm = _animTree.Get("parameters/StateMachine") as AnimationNodeStateMachine;
+                // Parameters are auto-created by the state machine, just ensure we have access
+            }
+
             _predictedPosition = GlobalPosition;
             _correctionTargetPosition = GlobalPosition;
             _correctionStartPosition = GlobalPosition;
-            
+
             // Hide mouse cursor for gameplay
             Input.MouseMode = Input.MouseModeEnum.Captured;
-            
+
             // Create debug visualization
             CreateDebugVisualization();
-            
+
             GD.Print("[PredictedPlayer] Initialized with prediction buffer (WP-7-2)");
         }
 
@@ -150,6 +177,37 @@ namespace DarkAges
             float dt = (float)delta;
             _timeSinceLastCorrection += dt;
             
+            // Update state timers
+            if (_isDodging)
+            {
+                _dodgeTimer -= delta;
+                if (_dodgeTimer <= 0)
+                {
+                    _isDodging = false;
+                    GD.Print("[PredictedPlayer] Dodge ended");
+                }
+            }
+            if (_isAttacking)
+            {
+                _attackTimer -= delta;
+                if (_attackTimer <= 0)
+                {
+                    _isAttacking = false;
+                }
+            }
+            if (_isHit)
+            {
+                _hitTimer -= delta;
+                if (_hitTimer <= 0)
+                {
+                    _isHit = false;
+                }
+            }
+            if (_invulnerableTimer > 0)
+            {
+                _invulnerableTimer -= delta;
+            }
+            
             // Update smooth correction if active
             if (_isSmoothingCorrection)
             {
@@ -166,7 +224,21 @@ namespace DarkAges
             // 1. Gather input
             var input = GatherInput();
             
-            // 2. Apply locally immediately (prediction)
+            // 2. Handle dodge trigger
+            if (Input.IsKeyPressed(Key.Q) && !_isDodging && !_isAttacking && !_isHit && !_isDead && IsOnFloor())
+            {
+                TriggerDodge(input);
+            }
+            
+            // 2b. Handle attack trigger
+            if (input.Attack && !_isAttacking && !_isDodging && !_isHit && !_isDead)
+            {
+                _isAttacking = true;
+                _attackTimer = ATTACK_DURATION;
+                GD.Print("[PredictedPlayer] Attack triggered");
+            }
+            
+            // 3. Apply locally immediately (prediction)
             ApplyMovement(input, dt);
             _predictedPosition = GlobalPosition;
             _predictedVelocity = Velocity;
@@ -662,6 +734,13 @@ namespace DarkAges
         /// </summary>
         private void ApplyMovement(InputState input, float dt)
         {
+            // If dead, stop all movement
+            if (_isDead)
+            {
+                Velocity = Vector3.Zero;
+                return;
+            }
+
             // Calculate input direction
             Vector3 direction = Vector3.Zero;
             
@@ -714,34 +793,123 @@ namespace DarkAges
             Velocity = new Vector3(Velocity.X, 0, Velocity.Z);  // Ensure Y stays 0
             MoveAndSlide();
         }
-
-        private void UpdateAnimation(InputState input)
+        
+        /// <summary>
+        /// Trigger a dodge roll in the current movement direction
+        /// </summary>
+        private void TriggerDodge(InputState input)
         {
-            if (_animPlayer == null) return;
+            _isDodging = true;
+            _dodgeTimer = DODGE_DURATION;
+            _invulnerableTimer = INVULNERABLE_DURATION;
             
-            // Simple animation state machine
-            if (!IsOnFloor())
+            // Determine dodge direction from input, default to backward
+            Vector3 dodgeDir = Vector3.Zero;
+            if (input.Forward) dodgeDir.Z -= 1;
+            if (input.Backward) dodgeDir.Z += 1;
+            if (input.Left) dodgeDir.X -= 1;
+            if (input.Right) dodgeDir.X += 1;
+            
+            if (dodgeDir.LengthSquared() > 0)
             {
-                // Falling/jumping
-            }
-            else if (Velocity.LengthSquared() > 0.1f)
-            {
-                if (input.Sprint)
-                {
-                    // Sprint animation
-                }
-                else
-                {
-                    // Walk animation
-                }
+                dodgeDir = dodgeDir.Normalized().Rotated(Vector3.Up, input.Yaw);
             }
             else
             {
-                // Idle
+                // Default dodge backward relative to facing
+                dodgeDir = new Vector3(0, 0, 1).Rotated(Vector3.Up, Rotation.Y);
+            }
+            
+            Velocity += dodgeDir * DODGE_FORCE;
+            GD.Print($"[PredictedPlayer] Dodge triggered! Dir={dodgeDir} Force={DODGE_FORCE}");
+        }
+        
+        /// <summary>
+        /// Public method to trigger hit reaction (called by CombatEventSystem)
+        /// </summary>
+        public void TriggerHitReaction()
+        {
+            if (_isDead) return;
+            _isHit = true;
+            _hitTimer = HIT_DURATION;
+            GD.Print("[PredictedPlayer] Hit reaction triggered");
+        }
+        
+        /// <summary>
+        /// Public method to trigger death state
+        /// </summary>
+        public void TriggerDeath()
+        {
+            _isDead = true;
+            _isDodging = false;
+            _isAttacking = false;
+            _isHit = false;
+            GD.Print("[PredictedPlayer] Death triggered");
+        }
+        
+        /// <summary>
+        /// Public method to respawn
+        /// </summary>
+        public void TriggerRespawn()
+        {
+            _isDead = false;
+            _isHit = false;
+            _isDodging = false;
+            _isAttacking = false;
+            GD.Print("[PredictedPlayer] Respawn triggered");
+        }
+        
+        public bool IsDodging => _isDodging;
+        public bool IsAttacking => _isAttacking;
+        public bool IsInvulnerable => _invulnerableTimer > 0;
+        public bool IsDead => _isDead;
+        public bool IsHit => _isHit;
+
+        
+        
+        private void UpdateAnimation(InputState input)
+        {
+            // AnimationTree state machine drives all visual state transitions cleanly
+            if (_animTree == null) return;
+
+            // Compute derived state booleans
+            float velocityLength = Velocity.Length();
+            bool isSprinting = input.Sprint && velocityLength > 0.1f;
+            bool isWalking = velocityLength > 0.1f && !isSprinting;
+            bool isJumping = !IsOnFloor();
+            bool hasMovement = isWalking || isSprinting;
+
+            // Set AnimationTree parameters — state machine uses these to transition
+            // Parameters are defined in the state machine transition conditions
+            _animTree.Set("parameters/Sprinting", isSprinting);
+            _animTree.Set("parameters/Jumping", isJumping);
+            _animTree.Set("parameters/Attacking", _isAttacking);
+            _animTree.Set("parameters/Dodging", _isDodging);
+            _animTree.Set("parameters/Hit", _isHit);
+            _animTree.Set("parameters/Dead", _isDead);
+            _animTree.Set("parameters/IsOnFloor", IsOnFloor());
+            _animTree.Set("parameters/VelocityLength", velocityLength);
+
+            // Fallback: also try to keep AnimationPlayer in sync if AnimationTree is missing
+            // This ensures basic feedback even if the tree fails to load
+            if (_animPlayer != null && !_animPlayer.IsPlaying())
+            {
+                string animState = "Idle";
+                if (_isDead) animState = "Death";
+                else if (_isHit) animState = "Hit";
+                else if (_isDodging) animState = "Dodge";
+                else if (_isAttacking) animState = "Attack";
+                else if (isJumping) animState = "Jump";
+                else if (isSprinting) animState = "Sprint";
+                else if (isWalking) animState = "Walk";
+
+                if (_animPlayer.HasAnimation(animState))
+                {
+                    _animPlayer.Play(animState);
+                }
             }
         }
-
-        private void UpdateDebugStats()
+private void UpdateDebugStats()
         {
             // Expose stats for debug UI
             GameState.Instance.CurrentPredictionError = _predictionError;

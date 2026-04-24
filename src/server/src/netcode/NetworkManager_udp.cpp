@@ -54,6 +54,8 @@ struct GNSInternal {
     std::atomic<uint64_t> totalBytesReceived{0};
     std::queue<ClientInputPacket> inputQueue;
     std::mutex inputMutex;
+    std::queue<EntityID> respawnRequestQueue;
+    std::mutex respawnMutex;
     uint32_t currentTimeMs{0};
 };
 
@@ -289,6 +291,19 @@ void NetworkManager::update(uint32_t currentTimeMs) {
                 }
                 break;
             }
+            case 9: { // PACKET_RESPAWN_REQUEST
+                if (received < 5) break;
+                uint32_t entityId = *reinterpret_cast<uint32_t*>(buffer + 1);
+                
+                {
+                    std::lock_guard<std::mutex> lock(udp->respawnMutex);
+                    udp->respawnRequestQueue.push(static_cast<EntityID>(entityId));
+                }
+                
+                // Optional: send confirmation event
+                // (actual respawn will happen on next server tick)
+                break;
+            }
             default:
                 break;
         }
@@ -321,6 +336,17 @@ std::vector<ClientInputPacket> NetworkManager::getPendingInputs() {
         udp->inputQueue.pop();
     }
     return inputs;
+}
+
+std::vector<EntityID> NetworkManager::getPendingRespawnRequests() {
+    auto* udp = static_cast<GNSInternal*>(internal_.get());
+    std::vector<EntityID> requests;
+    std::lock_guard<std::mutex> lock(udp->respawnMutex);
+    while (!udp->respawnRequestQueue.empty()) {
+        requests.push_back(udp->respawnRequestQueue.front());
+        udp->respawnRequestQueue.pop();
+    }
+    return requests;
 }
 
 void NetworkManager::clearProcessedInputs(uint32_t upToSequence) {

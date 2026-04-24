@@ -1,6 +1,7 @@
 [gd_scene load_steps=6 format=3 uid="uid://remoteplayer"]
 
 [ext_resource type="Script" path="res://src/entities/RemotePlayer.cs" id="1_remoteplayer"]
+[ext_resource type="AnimationLibrary" path="res://scenes/PlayerAnimations.tres" id="2_animlib"]
 
 [sub_resource type="CapsuleShape3D" id="CapsuleShape3D_remote"]
 radius = 0.3
@@ -43,6 +44,9 @@ tracks/0/keys = {
 "update": 0,
 "values": [Vector3(0, 0, 0)]
 }
+[sub_resource type="AnimationNodeStateMachine" id="AnimationTree_state_machine"]
+resource_name = "StateMachine"
+
 
 [node name="RemotePlayer" type="CharacterBody3D"]
 collision_layer = 4
@@ -67,6 +71,12 @@ surface_material_override/0 = SubResource("StandardMaterial3D_remote")
 [node name="AnimationPlayer" type="AnimationPlayer" parent="Model"]
 root_node = NodePath("..")
 anims/Idle = SubResource("Animation_default")
+[node name="AnimationTree" type="AnimationTree" parent="Model"]
+root_node = NodePath("..")
+tree_root = SubResource("AnimationTree_state_machine")
+anim_player = NodePath("../AnimationPlayer")
+library = ExtResource(2)
+
 
 [node name="NameLabel" type="Label3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.1, 0)

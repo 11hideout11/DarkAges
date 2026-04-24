@@ -62,6 +62,7 @@ namespace DarkAges.Entities
         private Node3D _modelRoot;
         private MeshInstance3D _meshInstance;
         private AnimationPlayer _animPlayer;
+        private AnimationTree _animTree;
         private Label3D _nameLabel;
         
         // Hit visualization
@@ -85,6 +86,17 @@ namespace DarkAges.Entities
         
         // Animation state tracking
         private byte _currentAnimState = 0;
+        private double _hitFlashTimer = 0.0;
+        private const double HIT_FLASH_DURATION = 0.3;
+        private StandardMaterial3D _hitFlashMaterial;
+        private StandardMaterial3D _deadMaterial;
+
+        // Death / combat state
+        public bool IsDead { get; private set; }
+        private Tween _hitTween;
+        private Tween _deathTween;
+        private Vector3 _originalMeshPosition;
+        private Vector3 _originalMeshScale;
 
         public override void _Ready()
         {
@@ -103,6 +115,10 @@ namespace DarkAges.Entities
             
             // Set up materials
             SetupMaterials();
+            
+            // Store original mesh transform for knockback/respawn restoration
+            _originalMeshPosition = _meshInstance.Position;
+            _originalMeshScale = _meshInstance.Scale;
             
             // Set name label
             _nameLabel.Text = PlayerName;
@@ -169,6 +185,9 @@ namespace DarkAges.Entities
         // Remove old states to keep buffer size limited
         while (_stateBuffer.Count > MaxBufferSize)
             _stateBuffer.Dequeue();
+
+        // Update visual animation state immediately based on latest snapshot
+        UpdateAnimationState(frame);
         
         // Track metrics
         double now = Time.GetTicksMsec() / 1000.0;
@@ -242,10 +261,18 @@ namespace DarkAges.Entities
             if (_modelRoot != null)
             {
                 _modelRoot.Quaternion = _displayRotation;
-                // Idle animation: subtle bobbing + slow rotation
-                float t = (float)currentTime;
-                _modelRoot.Position = new Vector3(0, Mathf.Sin(t * 2.0f + EntityId) * 0.05f, 0);
-                _modelRoot.RotateY(Mathf.Sin(t * 0.5f + EntityId * 0.7f) * 0.3f * (float)delta);
+                
+                if (!IsDead)
+                {
+                    // Idle animation: subtle bobbing + slow rotation
+                    float t = (float)currentTime;
+                    _modelRoot.Position = new Vector3(0, Mathf.Sin(t * 2.0f + EntityId) * 0.05f, 0);
+                    _modelRoot.RotateY(Mathf.Sin(t * 0.5f + EntityId * 0.7f) * 0.3f * (float)delta);
+                }
+                else
+                {
+                    _modelRoot.Position = Vector3.Zero;
+                }
             }
             else
             {
@@ -342,7 +369,7 @@ namespace DarkAges.Entities
         
         private void UpdateAnimation(byte newState)
         {
-            if (newState == _currentAnimState || _animPlayer == null) return;
+            if (newState == _currentAnimState) return;
             
             _currentAnimState = newState;
             
@@ -364,15 +391,111 @@ namespace DarkAges.Entities
                 _ => "Idle"
             };
             
-            // Play animation if it exists
-            if (_animPlayer.HasAnimation(animName))
+            // Procedural visual feedback for Hit and Death states
+            if (newState == 13) // Hit
+            {
+                PlayHitReaction();
+            }
+            else if (newState == 14) // Death
+            {
+                PlayDeathAnimation();
+            }
+            else if (newState == 15) // Respawn
+            {
+                PlayRespawnAnimation();
+            }
+            
+            // Play animation if AnimationPlayer has it
+            if (_animPlayer != null && _animPlayer.HasAnimation(animName))
             {
                 _animPlayer.Play(animName);
             }
-            else if (_animPlayer.HasAnimation("Idle"))
+        }
+        
+        /// <summary>
+        /// Procedural hit reaction: flash mesh red, brief knockback shake
+        /// </summary>
+        private void PlayHitReaction()
+        {
+            if (_meshInstance == null) return;
+            
+            _hitFlashTimer = HIT_FLASH_DURATION;
+            
+            // Flash red
+            _hitFlashMaterial = new StandardMaterial3D { AlbedoColor = Colors.Red, Emission = Colors.Red, EmissionEnergyMultiplier = 2.0f };
+            _meshInstance.MaterialOverride = _hitFlashMaterial;
+            
+            // Knockback shake tween
+            _hitTween?.Kill();
+            _hitTween = CreateTween();
+            _hitTween.SetTrans(Tween.TransitionType.Elastic);
+            _hitTween.SetEase(Tween.EaseType.Out);
+            _hitTween.TweenProperty(_meshInstance, "position", _originalMeshPosition + new Vector3(0.2f, 0, 0), 0.05f);
+            _hitTween.Chain().TweenProperty(_meshInstance, "position", _originalMeshPosition + new Vector3(-0.15f, 0, 0), 0.05f);
+            _hitTween.Chain().TweenProperty(_meshInstance, "position", _originalMeshPosition, 0.1f);
+            
+            // Schedule material restore
+            var restoreTimer = new Godot.Timer { WaitTime = HIT_FLASH_DURATION, OneShot = true };
+            restoreTimer.Timeout += () =>
             {
-                _animPlayer.Play("Idle");
-            }
+                if (!IsDead && _meshInstance != null)
+                    _meshInstance.MaterialOverride = _normalMaterial;
+                restoreTimer.QueueFree();
+            };
+            AddChild(restoreTimer);
+            restoreTimer.Start();
+        }
+        
+        /// <summary>
+        /// Procedural death: fall over and scale down
+        /// </summary>
+        public void PlayDeathAnimation()
+        {
+            if (_meshInstance == null || IsDead) return;
+            IsDead = true;
+            
+            _deathTween?.Kill();
+            _deathTween = CreateTween();
+            _deathTween.SetTrans(Tween.TransitionType.Expo);
+            _deathTween.SetEase(Tween.EaseType.Out);
+            
+            // Fall over
+            _deathTween.TweenProperty(_meshInstance, "rotation", new Vector3(Mathf.Pi / 2, _meshInstance.Rotation.Y, _meshInstance.Rotation.Z), 0.4f);
+            // Scale down
+            _deathTween.Parallel().TweenProperty(_meshInstance, "scale", Vector3.Zero, 1.0f);
+            
+            // Hide health bar
+            if (_healthBarBg != null) _healthBarBg.Visible = false;
+            if (_healthBarFill != null) _healthBarFill.Visible = false;
+            if (_nameLabel != null) _nameLabel.Visible = false;
+        }
+        
+        /// <summary>
+        /// Reset visuals after respawn
+        /// </summary>
+        public void PlayRespawnAnimation()
+        {
+            IsDead = false;
+            
+            if (_meshInstance == null) return;
+            
+            _deathTween?.Kill();
+            _deathTween = CreateTween();
+            _deathTween.SetTrans(Tween.TransitionType.Back);
+            _deathTween.SetEase(Tween.EaseType.Out);
+            
+            // Reset rotation and scale
+            _deathTween.TweenProperty(_meshInstance, "rotation", Vector3.Zero, 0.3f);
+            _deathTween.Parallel().TweenProperty(_meshInstance, "scale", _originalMeshScale, 0.3f);
+            _deathTween.Parallel().TweenProperty(_meshInstance, "position", _originalMeshPosition, 0.3f);
+            
+            // Show health bar
+            if (_healthBarBg != null) _healthBarBg.Visible = true;
+            if (_healthBarFill != null) _healthBarFill.Visible = true;
+            if (_nameLabel != null) _nameLabel.Visible = true;
+            
+            // Reset material
+            _meshInstance.MaterialOverride = _normalMaterial;
         }
         
         /// <summary>
@@ -532,4 +655,52 @@ namespace DarkAges.Entities
         public float AverageJitter;
         public int SnapshotsReceived;
     }
+
+        /// <summary>
+        /// Updates visual state from network snapshot (AnimationTree driven)
+        /// </summary>
+        private void UpdateAnimationState(EntityFrame frame)
+        {
+            if (_animTree == null) return;
+
+            // Map animation state byte to state machine parameter
+            // State enum from server: 0=Idle, 1=Walk, 2=Run, 3=Jump, 4=Attack, 5=Dodge, 6=Hit, 7=Death
+            string stateName = frame.AnimationState switch
+            {
+                0 => "Idle",
+                1 => "Walk",
+                2 => "Run",
+                3 => "Jump",
+                4 => "Attack",
+                5 => "Dodge",
+                6 => "Hit",
+                7 => "Death",
+                _ => "Idle"
+            };
+
+            // Travel to state via AnimationTree
+            // Direct state transition via tree state machine
+            var sm = _animTree.Get("parameters/StateMachine") as AnimationNodeStateMachine;
+            if (sm != null)
+            {
+                string current = sm.GetCurrentState();
+                if (current != stateName)
+                {
+                    sm.Travel(stateName);
+                }
+            }
+
+            // Maintain backward compatibility: also try AnimationPlayer
+            if (_animPlayer != null)
+            {
+                if (!_animPlayer.IsPlaying() || _animPlayer.CurrentAnimation != stateName)
+                {
+                    if (_animPlayer.HasAnimation(stateName))
+                    {
+                        _animPlayer.Play(stateName);
+                    }
+                }
+            }
+        }
+
 }

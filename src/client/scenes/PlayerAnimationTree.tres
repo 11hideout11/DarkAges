@@ -1,0 +1,52 @@
+
+[gd_resource type="AnimationTree" format=3 uid="uid://animation_tree"]
+
+[resource]
+root_mode = 0
+library = ExtResource(1)
+parameters/StateMachine/active = true
+
+[node name="StateMachine" type="AnimationNodeStateMachine" parent="."]
+node_path_parent = "Model"
+node_path_position = NodePath("")
+Params/State = "Idle"
+Transitions = [
+[ "Idle", "Walk", "VelocityLength > 0.1 and not Sprinting and not Attacking and not Dodging and not Jumping and not Hit and not Dead" ],
+[ "Walk", "Idle", "VelocityLength <= 0.1 and not Sprinting and not Attacking and not Dodging and not Jumping and not Hit and not Dead" ],
+[ "Walk", "Run", "Sprinting and VelocityLength > 0.1 and not Attacking and not Dodging and not Jumping and not Hit and not Dead" ],
+[ "Run", "Walk", "not Sprinting and VelocityLength > 0.1 and not Attacking and not Dodging and not Jumping and not Hit and not Dead" ],
+[ "Idle", "Jump", "Jumping and not Attacking and not Dodging and not Hit and not Dead" ],
+[ "Walk", "Jump", "Jumping and not Attacking and not Dodging and not Hit and not Dead" ],
+[ "Run", "Jump", "Jumping and not Attacking and not Dodging and not Hit and not Dead" ],
+[ "Jump", "Idle", "not Jumping and IsOnFloor and VelocityLength <= 0.1 and not Attacking and not Dodging and not Hit and not Dead" ],
+[ "Jump", "Walk", "not Jumping and IsOnFloor and VelocityLength > 0.1 and not Sprinting and not Attacking and not Dodging and not Hit and not Dead" ],
+[ "Jump", "Run", "not Jumping and IsOnFloor and VelocityLength > 0.1 and Sprinting and not Attacking and not Dodging and not Hit and not Dead" ],
+[ "Idle", "Attack", "Attacking and not Dodging and not Hit and not Dead and not Jumping" ],
+[ "Walk", "Attack", "Attacking and not Dodging and not Hit and not Dead and not Jumping" ],
+[ "Run", "Attack", "Attacking and not Dodging and not Hit and not Dead and not Jumping" ],
+[ "Attack", "Idle", "not Attacking and VelocityLength <= 0.1 and not Dodging and not Jumping and not Hit and not Dead" ],
+[ "Attack", "Walk", "not Attacking and VelocityLength > 0.1 and not Sprinting and not Dodging and not Jumping and not Hit and not Dead" ],
+[ "Attack", "Run", "not Attacking and VelocityLength > 0.1 and Sprinting and not Dodging and not Jumping and not Hit and not Dead" ],
+[ "Idle", "Dodge", "Dodging and not Attacking and not Hit and not Dead and not Jumping" ],
+[ "Walk", "Dodge", "Dodging and not Attacking and not Hit and not Dead and not Jumping" ],
+[ "Run", "Dodge", "Dodging and not Attacking and not Hit and not Dead and not Jumping" ],
+[ "Dodge", "Idle", "not Dodging and VelocityLength <= 0.1 and not Attacking and not Jumping and not Hit and not Dead" ],
+[ "Dodge", "Walk", "not Dodging and VelocityLength > 0.1 and not Sprinting and not Attacking and not Jumping and not Hit and not Dead" ],
+[ "Dodge", "Run", "not Dodging and VelocityLength > 0.1 and Sprinting and not Attacking and not Jumping and not Hit and not Dead" ],
+[ "Idle", "Hit", "Hit and not Attacking and not Dodging and not Dead and not Jumping" ],
+[ "Walk", "Hit", "Hit and not Attacking and not Dodging and not Dead and not Jumping" ],
+[ "Run", "Hit", "Hit and not Attacking and not Dodging and not Dead and not Jumping" ],
+[ "Hit", "Idle", "not Hit and not Attacking and not Dodging and not Dead and not Jumping and VelocityLength <= 0.1" ],
+[ "Hit", "Walk", "not Hit and not Attacking and not Dodging and not Dead and not Jumping and VelocityLength > 0.1 and not Sprinting" ],
+[ "Hit", "Run", "not Hit and not Attacking and not Dodging and not Dead and not Jumping and VelocityLength > 0.1 and Sprinting" ],
+[ "Idle", "Death", "Dead" ],
+[ "Walk", "Death", "Dead" ],
+[ "Run", "Death", "Dead" ],
+[ "Jump", "Death", "Dead" ],
+[ "Attack", "Death", "Dead" ],
+[ "Dodge", "Death", "Dead" ],
+[ "Hit", "Death", "Dead" ],
+[ "Death", "Idle", "not Dead and IsOnFloor and VelocityLength <= 0.1" ],
+[ "Death", "Walk", "not Dead and IsOnFloor and VelocityLength > 0.1 and not Sprinting" ],
+[ "Death", "Run", "not Dead and IsOnFloor and VelocityLength > 0.1 and Sprinting" ]
+]

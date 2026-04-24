@@ -21,15 +21,16 @@ namespace DarkAges.Client.Utils
  private PredictedPlayer _player;
  private double _attackTimer = 0.0;
  private uint _lastTargetId = 0;
- private int _abilityIndex = 0; // NEW: Tracks which ability to use next
- private const int AbilityCount = 4; // NEW: 0=melee, 1=fireball, 2=heal, 3=power_strike
+        private int _abilityIndex = 0; // NEW: Tracks which ability to use next
+        private const int AbilityCount = 4; // NEW: 0=melee, 1=fireball, 2=heal, 3=power_strike
+        private bool _forwardPressed = false;
         
         public override void _Ready()
         {
-            _player = GetNodeOrNull<PredictedPlayer>("../PredictedPlayer");
+            _player = GetNodeOrNull<PredictedPlayer>("../Players/Player");
             if (_player == null)
             {
-                _player = GetTree().Root.GetNodeOrNull<PredictedPlayer>("Main/PredictedPlayer");
+                _player = GetTree().Root.GetNodeOrNull<PredictedPlayer>("Main/Players/Player");
             }
             
             SetProcess(true);
@@ -49,6 +50,12 @@ namespace DarkAges.Client.Utils
                 if (nearest == null)
                 {
                     _lastTargetId = 0;
+                    // Release movement keys if no target
+                    if (_forwardPressed)
+                    {
+                        Input.ActionRelease("move_forward");
+                        _forwardPressed = false;
+                    }
                     return;
                 }
                 
@@ -71,10 +78,22 @@ namespace DarkAges.Client.Utils
                 // Move toward target if out of range
                 if (AutoMoveToTarget && distance > AttackRange)
                 {
-                    Vector3 moveDir = (targetPos - playerPos).Normalized();
-                    moveDir.Y = 0;
-                    _player.Velocity = new Vector3(moveDir.X * MoveSpeed, _player.Velocity.Y, moveDir.Z * MoveSpeed);
-                    _player.MoveAndSlide();
+                    // Use input simulation instead of direct velocity manipulation
+                    // to maintain prediction/reconciliation correctness
+                    if (!_forwardPressed)
+                    {
+                        Input.ActionPress("move_forward");
+                        _forwardPressed = true;
+                    }
+                }
+                else
+                {
+                    // Release forward when not moving
+                    if (_forwardPressed)
+                    {
+                        Input.ActionRelease("move_forward");
+                        _forwardPressed = false;
+                    }
                 }
                 
  // Attack periodically when in range
