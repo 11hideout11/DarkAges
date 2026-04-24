@@ -5,6 +5,7 @@ Runs: discover → implement → build → test → commit → merge
 No AI agent needed; this script drives the full cycle.
 """
 import subprocess, json, os, sys, re, time, shutil
+from typing import Tuple
 from datetime import datetime, timezone
 from pathlib import Path
 

@@ -51,14 +51,30 @@ def get_current_branch() -> str:
 
 
 def get_diff(branch: Optional[str] = None, base_ref: str = "main") -> str:
-    """Get the diff between branch and base_ref."""
+    """Get the diff between branch and base_ref, excluding runtime state files."""
     if branch:
         code, out, err = git("diff", f"{base_ref}...{branch}")
     else:
         code, out, err = git("diff", base_ref)
     if code != 0:
         return f"# Error getting diff: {err}"
-    return out
+    # Filter out runtime/state files that are not code changes
+    filtered_lines = []
+    skip_file = False
+    runtime_patterns = [
+        ".task_cache.json",
+        ".cron_state.json",
+        ".cron.lock",
+        ".edit_history.json",
+        "AUTONOMOUS_LOG.md",
+        "TASK_QUEUE.md",
+    ]
+    for line in out.split("\n"):
+        if line.startswith("diff --git "):
+            skip_file = any(p in line for p in runtime_patterns)
+        if not skip_file:
+            filtered_lines.append(line)
+    return "\n".join(filtered_lines)
 
 
 def get_agents_md() -> str:
