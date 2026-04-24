@@ -249,6 +249,24 @@ def evaluate(branch: Optional[str] = None, base_ref: str = "main") -> dict:
             result["overall"] = "FAIL"
             return result
 
+        # Pre-Completion Verification Checklist (LangChain Terminal Bench 2.0 pattern)
+        # Explicit checklist before declaring PASS — prevents premature "done"
+        checklist = {
+            "build_compiles": build_ok,
+            "tests_pass": test_ok,
+            "no_regression": not result["regression"],
+            "explicit_test_summary": is_explicit_pass,
+            "test_count_positive": cases > 0,
+            "assert_count_positive": asserts > 0,
+            "baseline_readable": base_cases > 0 or base_asserts > 0,
+        }
+        result["checklist"] = checklist
+        failed_checks = [k for k, v in checklist.items() if not v]
+        if failed_checks:
+            result["overall"] = "FAIL"
+            result["tests"]["error"] = f"PRE-COMPLETION CHECKLIST FAILED: {', '.join(failed_checks)}"
+            return result
+
         result["overall"] = "PASS"
         return result
 

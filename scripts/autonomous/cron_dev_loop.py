@@ -106,6 +106,19 @@ def run(cmd, cwd=None, timeout=300, capture=True):
     except Exception as e:
         return -1, "", str(e)
 
+
+def budgeted_read_text(path: Path, limit: int = None) -> str:
+    """Read file text with action budget accounting."""
+    _action_counter["count"] += 1
+    content = path.read_text()
+    return content[:limit] if limit else content
+
+
+def budgeted_write_text(path: Path, content: str):
+    """Write file text with action budget accounting."""
+    _action_counter["count"] += 1
+    path.write_text(content)
+
 def discover_tasks(limit=3):
     """Run discover_tasks.py and return parsed JSON list."""
     code, out, err = run(["python3", str(DISCOVER), "--json", "--limit", str(limit)])
@@ -300,7 +313,7 @@ def generate_test_file(task):
     
     # Read the header/source to understand what to test
     try:
-        content = source_path.read_text()[:8000]
+        content = budgeted_read_text(source_path, limit=8000)
     except Exception:
         return None
     
@@ -318,7 +331,7 @@ def generate_test_file(task):
         if Path(candidate).exists():
             header_for_content = str(Path(candidate).relative_to(REPO))
             try:
-                content = Path(candidate).read_text()[:8000]
+                content = budgeted_read_text(Path(candidate), limit=8000)
             except Exception:
                 pass
     
@@ -419,13 +432,13 @@ namespace test {{
 }} // namespace DarkAges
 '''
     
-    test_path.write_text(test_content)
+    budgeted_write_text(test_path, test_content)
     return test_path
 
 def add_test_to_cmake(test_file):
     """Add a test source file to CMakeLists.txt inside the TEST_SOURCES set()."""
     cmake_path = REPO / "CMakeLists.txt"
-    content = cmake_path.read_text()
+    content = budgeted_read_text(cmake_path)
     
     rel_path = str(test_file.relative_to(REPO))
     
@@ -469,7 +482,7 @@ def add_test_to_cmake(test_file):
             indent = match.group(1)
     
     lines.insert(insert_idx, f"{indent}{rel_path}")
-    cmake_path.write_text("\n".join(lines))
+    budgeted_write_text(cmake_path, "\n".join(lines))
     return True
 
 def implement_test_task(task):
@@ -497,7 +510,7 @@ def implement_refactor_task(task):
     if not source_path.exists():
         return False, f"File not found: {source_file}"
     
-    content = source_path.read_text()
+    content = budgeted_read_text(source_path)
     original = content
     changes = []
     
@@ -521,7 +534,7 @@ def implement_refactor_task(task):
     if content == original:
         return False, "No safe refactoring opportunities found"
     
-    source_path.write_text(content)
+    budgeted_write_text(source_path, content)
     desc = "; ".join(changes[:3])
     return True, f"Refactored {Path(source_file).name}: {desc}"
 
@@ -837,8 +850,8 @@ def implement_test_depth_task(task):
             header_file = str(Path(candidate_h).relative_to(REPO))
 
     try:
-        header_content = (REPO / header_file).read_text()[:12000]
-        source_content = source_path.read_text()[:12000]
+        header_content = budgeted_read_text(REPO / header_file, limit=12000)
+        source_content = budgeted_read_text(source_path, limit=12000)
     except Exception as e:
         return False, f"Could not read files: {e}"
 
@@ -846,7 +859,7 @@ def implement_test_depth_task(task):
     combined_content = header_content + "\n" + source_content
 
     basename = Path(source_file).stem
-    test_content = test_path.read_text()
+    test_content = budgeted_read_text(test_path)
 
     # Find what's already tested
     existing_test_names = set(re.findall(r'TEST_CASE\s*\(\s*"([^"]+)"', test_content))
@@ -874,7 +887,7 @@ def implement_test_depth_task(task):
         insert_point = len(test_content)
 
     new_content = test_content[:insert_point] + "\n".join(new_tests) + "\n\n" + test_content[insert_point:]
-    test_path.write_text(new_content)
+    budgeted_write_text(test_path, new_content)
 
     return True, f"Added {len(new_tests)} behavioral tests ({pattern_name} pattern) to {Path(test_file).name}"
 
@@ -1120,19 +1133,24 @@ def run_once(mode="once"):
     review_available = review_report.get("overall") != "UNAVAILABLE"
 
     if review_available:
-        review_pass = review_report["review"]["overall"] == "PASS"
+        issues = review_report["review"].get("issues", [])
+        critical_count = sum(1 for i in issues if i.get("severity") == "critical")
+        warning_count = sum(1 for i in issues if i.get("severity") == "warning")
+        info_count = len(issues) - critical_count - warning_count
+        review_pass = review_report["review"]["overall"] == "PASS" and critical_count == 0
         review_error = review_report["review"].get("notes", "")
-        issue_count = len(review_report["review"].get("issues", []))
         if review_pass:
-            print(f"[dev-loop] Subjective Reviewer PASS ({issue_count} notes)")
+            print(f"[dev-loop] Subjective Reviewer PASS ({info_count} info, {warning_count} warnings logged)")
+            if warning_count > 0:
+                print(f"[dev-loop] Reviewer warnings (non-blocking): {[i['message'][:80] for i in issues if i.get('severity') == 'warning']}")
         else:
-            print(f"[dev-loop] Subjective Reviewer FAIL ({issue_count} issues): {review_error[:300]}")
+            print(f"[dev-loop] Subjective Reviewer FAIL ({critical_count} critical, {warning_count} warning, {info_count} info): {review_error[:300]}")
     else:
         print(f"[dev-loop] OpenCode reviewer unavailable — proceeding with objective evaluator only")
         # OpenCode reviewer is optional; objective gate is mandatory
 
     # 7. Pre-Completion Verification Gate
-    # Do NOT commit if either evaluator failed or regression detected
+    # Do NOT commit if objective evaluator failed, regression detected, OR critical review issues found
     if not build_ok or not test_ok or regression:
         git("checkout", "main")
         git("branch", "-d", branch, "-f")

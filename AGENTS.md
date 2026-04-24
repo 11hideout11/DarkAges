@@ -7,12 +7,13 @@ cmake --build build_validate -j$(nproc)
 cd build_validate && ctest --output-on-failure -j8
 ```
 
-## State (2026-04-23)
+## State (2026-04-24)
 - Phase 8: COMPLETE — all core gameplay systems
 - Phase 9: COMPLETE — performance budgets pass (400 ents <20ms, 800 <30ms)
 - Networking: STABLE — live validator passes (1-10 clients, snapshots OK)
-- Tests: 1170+ cases / 88 files / 11 suites — ALL PASS
+- Tests: 1978 cases / 88 files / 11 suites — ALL PASS
 - Server: ~32K LOC (C++20, EnTT ECS, 60Hz tick) | Client: ~6.2K LOC (C# Godot 4.2)
+- Harness: Two-layer evaluator architecture operational (objective + subjective)
 
 ## Architecture
 - **ECS**: EnTT, `DarkAges::` namespace. Components in `ecs/`, systems in `combat/`, `physics/`, `zones/`
@@ -41,7 +42,8 @@ cd build_validate && ctest --output-on-failure -j8
 - **Schedule**: hourly quick (`once`), 6am/6pm UTC deep (`deep`, 3 tasks)
 - **Workflow**: feature branch `autonomous/YYYYMMDD-{slug}` → implement → loop-detect → budget-check → objective evaluator PASS → subjective reviewer PASS → commit → merge to main
 - **Loop Detection**: max 3 edits/file/day; exceeded → skip with "Consider reconsidering your approach"
-- **Pre-Completion Gate**: BOTH evaluators must report PASS + zero test regression before merge
+- **Pre-Completion Gate**: BOTH evaluators must report PASS + zero test regression before merge. Subjective reviewer: critical issues block merge; warnings are logged but non-blocking.
+- **Pre-Completion Checklist** (objective evaluator): explicit 7-item checklist (build_compiles, tests_pass, no_regression, explicit_test_summary, test_count_positive, assert_count_positive, baseline_readable) — prevents premature "done"
 - **Fail Closed**: if objective evaluator is missing, generator aborts — never falls back to inline self-test
 - **Reasoning Budget**: per-category wall-clock limits (test=10min, test-depth=15min, refactor=5min); hard abort if exceeded
 - **Operation Budget**: per-category action limits (subprocess+file ops as proxy for token ceiling); hard abort if exceeded
@@ -54,16 +56,16 @@ cd build_validate && ctest --output-on-failure -j8
 - Test Depth: ZoneServer tests flagged as shallow by ratio heuristic (source under active expansion)
 
 ## Recent Commits (last 10)
-1. Fix lag comp `calculateAttackTime` double-count latency; tests updated (124 combat tests pass)
-2. Validator: combat validation phase (`--combat`, `--combat-duration`)
-3. Fix C# `EntityFrame` visibility (private→public) for `RemotePlayerManager`
-4. Validator: NPC replication over network (`--npcs` + `--npc-count`)
-5. Validator: latency/packet-loss sim (30ms + 5% loss resilient)
-6. Fix live client validator: snapshot replication includes viewer, yaw/pitch clamp, threading crash fix, input dedup
-7. AchievementSystem + LeaderboardSystem + tests
-8. SpawnSystem refactor: single-entity spawn, forceSpawn tracking, per-zone positions, NavigationGrid wiring
-9. NPC Dialogue System (branching, conditions, quest hooks)
-10. Zone Event System (multi-phase world events)
+1. Harness engineering: two-layer evaluator architecture (objective + subjective) + tool subtraction
+2. Fix lag comp `calculateAttackTime` double-count latency; tests updated (124 combat tests pass)
+3. Validator: combat validation phase (`--combat`, `--combat-duration`)
+4. Fix C# `EntityFrame` visibility (private→public) for `RemotePlayerManager`
+5. Validator: NPC replication over network (`--npcs` + `--npc-count`)
+6. Validator: latency/packet-loss sim (30ms + 5% loss resilient)
+7. Fix live client validator: snapshot replication includes viewer, yaw/pitch clamp, threading crash fix, input dedup
+8. AchievementSystem + LeaderboardSystem + tests
+9. SpawnSystem refactor: single-entity spawn, forceSpawn tracking, per-zone positions, NavigationGrid wiring
+10. NPC Dialogue System (branching, conditions, quest hooks)
 
 ---
-Last updated: 2026-04-23
+Last updated: 2026-04-24
