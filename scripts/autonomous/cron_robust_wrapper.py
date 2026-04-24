@@ -25,22 +25,40 @@ MAX_CONSECUTIVE_FAILURES = 3  # Pause job after this many failures
 RETRY_DELAYS = [5, 15, 45, 120]  # Exponential backoff delays (seconds)
 EMPTY_QUEUE_SLOWDOWN = 4  # Run every Nth cycle when queue is empty
 
+# Global lock file descriptor (must be closed on release)
+_lock_fd = None
+
 
 def acquire_lock() -> bool:
     """Try to acquire the job lock. Returns True if acquired."""
+    global _lock_fd
     try:
         LOCK_FILE.parent.mkdir(parents=True, exist_ok=True)
-        lock_fd = open(LOCK_FILE, 'w')
-        fcntl.flock(lock_fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
-        lock_fd.write(str(os.getpid()))
-        lock_fd.flush()
+        _lock_fd = open(LOCK_FILE, 'w')
+        fcntl.flock(_lock_fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
+        _lock_fd.write(str(os.getpid()))
+        _lock_fd.flush()
         return True
     except (IOError, OSError):
+        if _lock_fd:
+            try:
+                _lock_fd.close()
+            except Exception:
+                pass
+            _lock_fd = None
         return False
 
 
 def release_lock():
-    """Release the job lock."""
+    """Release the job lock and close the file descriptor."""
+    global _lock_fd
+    try:
+        if _lock_fd:
+            fcntl.flock(_lock_fd, fcntl.LOCK_UN)
+            _lock_fd.close()
+            _lock_fd = None
+    except Exception:
+        pass
     try:
         LOCK_FILE.unlink(missing_ok=True)
     except Exception:
@@ -117,7 +135,7 @@ def record_success(state: dict):
 
 def record_failure(state: dict, error: str):
     """Record a failed run."""
-    state["consecutive_failures"] = state.get("0", 0) + 1
+    state["consecutive_failures"] = state.get("consecutive_failures", 0) + 1
     state["last_failure"] = datetime.now(timezone.utc).isoformat()
     save_state(state)
     

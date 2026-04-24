@@ -1,91 +1,69 @@
-# DarkAges MMO - Agent Context
+# DarkAges MMO — Agent Map
 
-## Project State (Updated 2026-04-22)
-
-**Phase 8: COMPLETE** — All core gameplay systems implemented.
-**Phase 9: COMPLETE** — Performance testing infrastructure operational, all budget checks passing.
-**Networking: STABLE** — Live client validator passes (1-3 clients, snapshots received, no crashes). Single-threaded main-tick driven I/O.
-**1170+ test cases** across **88 test files**. All passing (11 suites).
-**~32K LOC** in server core (C++20, EnTT ECS, 60Hz tick). Client: ~6.2K LOC (C# Godot).
-
-### Build
+## Build & Validate
 ```bash
-cmake -S . -B build_validate -DBUILD_TESTS=ON -DFETCH_DEPENDENCIES=ON \
-  -DENABLE_GNS=OFF -DENABLE_REDIS=OFF -DENABLE_SCYLLA=OFF
+cmake -S . -B build_validate -DBUILD_TESTS=ON -DFETCH_DEPENDENCIES=ON -DENABLE_GNS=OFF -DENABLE_REDIS=OFF -DENABLE_SCYLLA=OFF
 cmake --build build_validate -j$(nproc)
 cd build_validate && ctest --output-on-failure -j8
 ```
 
-### Architecture
+## State (2026-04-23)
+- Phase 8: COMPLETE — all core gameplay systems
+- Phase 9: COMPLETE — performance budgets pass (400 ents <20ms, 800 <30ms)
+- Networking: STABLE — live validator passes (1-10 clients, snapshots OK)
+- Tests: 1170+ cases / 88 files / 11 suites — ALL PASS
+- Server: ~32K LOC (C++20, EnTT ECS, 60Hz tick) | Client: ~6.2K LOC (C# Godot 4.2)
+
+## Architecture
 - **ECS**: EnTT, `DarkAges::` namespace. Components in `ecs/`, systems in `combat/`, `physics/`, `zones/`
-- **Netcode**: `NetworkManager` (single-threaded, main-tick driven UDP), `GNSNetworkManager` (conditionally compiled when ENABLE_GNS=ON), `ProtobufProtocol` — test builds use stubbed network layer; live builds can use GNS
-- **DB**: `RedisManager`, `ScyllaManager` — stubs when Redis/Scylla disabled
+- **Netcode**: `NetworkManager` (single-threaded, UDP, main-tick I/O). `GNSNetworkManager` gated by `ENABLE_GNS`. `ProtobufProtocol`. Test builds use stubbed net layer.
+- **DB**: `RedisManager`, `ScyllaManager` — stubs when disabled. Do NOT test real DB behavior in CI.
 - **Zones**: `ZoneServer`, `ZoneOrchestrator`, `EntityMigration`, `ZoneHandoff`
-- **Security**: `PacketValidator`, `AntiCheat`, `StatisticalDetector`, `MovementValidator`, `RateLimiter` (functional but not actively developed per current scope)
+- **Security**: `PacketValidator`, `AntiCheat`, `StatisticalDetector`, `MovementValidator`, `RateLimiter` (functional, not active scope)
 - **Monitoring**: `MetricsExporter` (Prometheus/Grafana format)
-- **Gameplay Systems**: `CombatSystem`, `AbilitySystem`, `NPCAISystem` + A* Pathfinding, `PartySystem`, `GuildSystem`, `LootSystem`, `XP`/Progression, `Inventory`, `ItemSystem`, `ConsumableSystem`, `QuestSystem`, `ChatSystem` (Party/Guild/Global/Whisper), `CraftingSystem`, `TradingSystem`, `ZoneEventSystem`, `DialogueSystem`, `SpawnSystem`
+- **Gameplay**: `CombatSystem`, `AbilitySystem`, `NPCAISystem` + A*, `PartySystem`, `GuildSystem`, `LootSystem`, `XP`/Progression, `Inventory`, `ItemSystem`, `ConsumableSystem`, `QuestSystem`, `ChatSystem` (Local/Global/Whisper/Party/Guild), `CraftingSystem`, `TradingSystem`, `ZoneEventSystem`, `DialogueSystem`, `SpawnSystem`
 
-### Key Gotchas
-- `Protocol.cpp` depends on GNS types — excluded when `ENABLE_GNS=OFF`; test builds use stubbed network layer
-- Redis/Scylla stubs are used when services disabled — don't test real behavior in CI
-- Forward-declared types (`struct Foo;`) can't use `sizeof()` in tests
-- Nested types like `RedisInternal::PendingCallback` need qualified names
-- Namespace is `DarkAges::` everywhere — don't use `darkages`
-- EnTT: use `registry.all_of<T>()` not `registry.has<T>()`; no `view.size()`; entity enum can't compare with int
-- **EnTT pointer invalidation**: After `registry.emplace<T>()`, existing pointers/references to component T may be invalidated. Always re-fetch after emplace calls. Use `registry.get<T>()` (reference) instead of `try_get<T>()` (pointer) when component must exist.
+## Critical Rules
+- Namespace is `DarkAges::` everywhere — never `darkages`
+- EnTT: use `registry.all_of<T>()` not `registry.has<T>()`; no `view.size()`; entity enum != int
+- **EnTT pointer invalidation**: after `registry.emplace<T>()`, re-fetch pointers/refs. Use `registry.get<T>()` when component must exist.
+- Forward-declared types (`struct Foo;`) cannot use `sizeof()` in tests
+- Nested types need qualified names (e.g., `RedisInternal::PendingCallback`)
+- `Protocol.cpp` excluded when `ENABLE_GNS=OFF`; test builds use stubbed network layer
+- Redis/Scylla stubs used when disabled — don't test real behavior in CI
 
-### Core Gameplay Systems (Implemented)
-- **Combat**: Melee/ranged attacks, damage, lag compensation, hit detection, status effects
-- **Abilities**: 4-slot loadout, casting, cooldowns, mana costs, damage/heal effects, status application
-- **NPC AI**: Idle/Wander/Chase/Attack/Flee behaviors, aggro, leash, archetype configuration via Lua
-- **NPC Pathfinding**: A* grid-based pathfinding with 8-directional movement, LOS checks, path caching; falls back to direct movement
-- **Loot**: Drop tables, loot entities, pickup, despawn timers, rarity tiers
-- **XP/Progression**: Kill XP, level-up thresholds, stat point allocation
-- **Inventory**: 24-slot grid, stacking limits, add/remove, equip/unequip, weight capacity
-- **Items**: Weapons, armor, accessories, consumables, materials, quest items; rarity and stats
-- **Consumables**: Health/mana potions, food buffs, cooldown-based use
-- **Quests**: Accept/track/complete, kill/collect/level objectives, multi-step chains, rewards
-- **Chat**: Local/Global/Whisper/Party/Guild channels, rate limiting, mute, color codes
-- **Crafting**: Recipe registry, material consumption, instant/timed crafting, profession XP, quality tiers
-- **Trading**: Player-to-player item and gold exchange, trade request/accept/decline, item escrow, lock/confirm flow, timeout handling
-- **Zone Events**: World bosses, wave defense, timed kill events. Multi-phase with objectives, participation tracking, scaled rewards, boss spawning via callbacks
-- **NPC Dialogue**: Branching conversation trees, conditional responses (quest state, level, items), quest integration (give/complete), item/gold rewards, multi-player independent conversations
-- **SpawnSystem**: NPC spawn groups, respawn timers, weighted selection, spawn regions, per-zone spawn positions, density limiting
+## Autonomous Loop
+- **Orchestrator**: `scripts/autonomous/cron_dev_loop.py` (Generator)
+- **Objective Evaluator**: `scripts/autonomous/evaluate_change.py` — NEVER modifies code; runs `cmake --build` + `ctest` independently on current tree
+- **Subjective Evaluator**: `scripts/autonomous/evaluate_change_review.py` — OpenCode CLI skeptical reviewer; reads diff + AGENTS.md and critiques without modifying code
+- **Discovery**: `scripts/autonomous/discover_tasks.py` — 77% of heuristics disabled (tool subtraction); cache at `.task_cache.json`
+- **Wrapper**: `scripts/autonomous/cron_robust_wrapper.py` — locks, retries, failure backoff
+- **Schedule**: hourly quick (`once`), 6am/6pm UTC deep (`deep`, 3 tasks)
+- **Workflow**: feature branch `autonomous/YYYYMMDD-{slug}` → implement → loop-detect → budget-check → objective evaluator PASS → subjective reviewer PASS → commit → merge to main
+- **Loop Detection**: max 3 edits/file/day; exceeded → skip with "Consider reconsidering your approach"
+- **Pre-Completion Gate**: BOTH evaluators must report PASS + zero test regression before merge
+- **Fail Closed**: if objective evaluator is missing, generator aborts — never falls back to inline self-test
+- **Reasoning Budget**: per-category wall-clock limits (test=10min, test-depth=15min, refactor=5min); hard abort if exceeded
+- **Operation Budget**: per-category action limits (subprocess+file ops as proxy for token ceiling); hard abort if exceeded
+- **Sprint Decomposition**: `once` mode skips tasks >2h estimated; `deep` mode allows up to 1.5x budget
+- **Harness Audit**: components in `HARNESS_COMPONENTS` dict with expiration dates; review quarterly
 
-### Recent Major Additions (Last 10 Commits)
-- Fix: Lag compensation `calculateAttackTime` double-counted one-way latency (caller `processAttackInput` already subtracts it). Fixed to return `clientTimestamp` as-is. Tests updated accordingly. All 124 combat tests pass.
-- Validator: Combat validation phase (`--combat`, `--combat-duration`) — sends attack inputs, tracks entity health changes, deaths, respawns over network
-- Fix: C# client `EntityFrame` visibility bug (private -> public) so `RemotePlayerManager` compiles in Godot
-- Validator: NPC replication over network validated (`--npcs` + `--npc-count` server flags, Phase 5 visibility check)
-- Validator: Latency/packet loss simulation (`--latency`, `--packet-loss`) — server resilient to 30ms + 5% loss with 3 clients + 10 NPCs
-- Fix: live client validator passes — snapshot replication now includes viewer entity, yaw/pitch clamped, threading crash resolved, input deduplication prevents anti-cheat false positives at 10 clients
-- AchievementSystem + LeaderboardSystem with comprehensive tests
-- SpawnSystem refactor: single-entity spawn design, forceSpawn tracking
-- Per-zone spawn positions and NavigationGrid wiring to NPCAISystem
-- NPC Dialogue System (branching, conditions, quest hooks)
-- Zone Event System (multi-phase world events)
-- Player Trading System (full lifecycle with escrow)
+## Gaps
+- Client/Server Integration: Godot client entity interpolation end-to-end (C# fixes applied, pending build test)
+- Documentation Sync: PROJECT_STATUS.md, DarkAges_Comprehensive_Review.md may be stale
+- Test Depth: ZoneServer tests flagged as shallow by ratio heuristic (source under active expansion)
 
-### Performance Testing (Phase 9 — Complete)
-- `TestLoadTesting.cpp`: 690 lines, 13 test cases covering 50/200/400/800/1000 entity ticks
-- Budgets validated: 400 entities < 20ms tick, 800 entities < 30ms, spatial hash < 5ms rebuild, AOI < 5ms per 500
-- All 7 budget checks PASS (April 19 report)
-- Test infrastructure: `tools/perf/phase9_report.py`, `docs/performance/reports/`
-
-### Remaining Strategic Gaps
-- **Client ↔ Server Integration**: Live client validator passes with 10 clients/10s. NPC replication validated (3 clients + 10 NPCs). Latency (30ms) and packet loss (5%) simulation confirmed server resilient. Next: validate Godot client entity interpolation end-to-end (C# fixes applied, pending Godot build test).
-- **Documentation Sync**: AGENTS.md (updated), PROJECT_STATUS.md (Jan 30), DarkAges_Comprehensive_Review.md (Feb 18) require updates to match current codebase state
-- **Test Depth**: Minor gaps in shallow test files (TestPartySystem 19 lines, TestGuildSystem 30 lines, TestProtocol 49 lines) — NOTE: actually comprehensive, AGENTS.md was stale
-
-### Autonomous Dev Loop
-- Hourly quick scan (c5d9): `once` mode, task discovery → implementation → validate
-- Twice-daily deep iteration (6ec7): 6am/6pm UTC, `deep` mode (3 tasks per run)
-- Orchestrator: `scripts/autonomous/cron_dev_loop.py`
-- Discovery: `scripts/autonomous/discover_tasks.py` with cache at `.task_cache.json`
-- Current queue: ZoneServer test-depth (P1), documentation updates (P2), include reduction (P3)
-- Branch workflow: all changes in feature branches → PR → merge to main after passing 11 test suites
+## Recent Commits (last 10)
+1. Fix lag comp `calculateAttackTime` double-count latency; tests updated (124 combat tests pass)
+2. Validator: combat validation phase (`--combat`, `--combat-duration`)
+3. Fix C# `EntityFrame` visibility (private→public) for `RemotePlayerManager`
+4. Validator: NPC replication over network (`--npcs` + `--npc-count`)
+5. Validator: latency/packet-loss sim (30ms + 5% loss resilient)
+6. Fix live client validator: snapshot replication includes viewer, yaw/pitch clamp, threading crash fix, input dedup
+7. AchievementSystem + LeaderboardSystem + tests
+8. SpawnSystem refactor: single-entity spawn, forceSpawn tracking, per-zone positions, NavigationGrid wiring
+9. NPC Dialogue System (branching, conditions, quest hooks)
+10. Zone Event System (multi-phase world events)
 
 ---
-
-**Last updated by autonomous review on 2026-04-22**
-
+Last updated: 2026-04-23

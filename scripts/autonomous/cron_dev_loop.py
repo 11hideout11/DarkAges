@@ -12,6 +12,69 @@ REPO = Path("/root/projects/DarkAges")
 BUILD_DIR = REPO / "build_validate"
 LOG_FILE = REPO / "AUTONOMOUS_LOG.md"
 DISCOVER = REPO / "scripts/autonomous" / "discover_tasks.py"
+EDIT_HISTORY_FILE = REPO / "scripts/autonomous" / ".edit_history.json"
+MAX_EDITS_PER_FILE_PER_DAY = 3  # Loop detection threshold
+
+AGENTS_MD = REPO / "AGENTS.md"
+
+# ── Reasoning Budget (harness engineering: limit compute per task) ──────────
+# Maps task category -> max wall-clock seconds. Hard abort if exceeded.
+REASONING_BUDGET = {
+    "test": 600,         # 10 min for test generation
+    "test-depth": 900,   # 15 min for behavioral test expansion
+    "refactor": 300,     # 5 min for safe whitespace cleanup
+    "fix": 0,            # Never auto-implemented (manual review required)
+    "docs": 0,           # Never auto-implemented
+    "cleanup": 300,      # 5 min for branch cleanup
+    "feature": 0,        # Never auto-implemented
+}
+# Budget multiplier for deep mode (more time allowed)
+DEEP_BUDGET_MULTIPLIER = 1.5
+
+# ── Operation Budget (proxy for token/compute consumption) ─────────────────
+# Counts subprocess calls + file reads/writes per task. Hard abort if exceeded.
+# This approximates the "token ceiling" from harness engineering research.
+ACTION_BUDGET = {
+    "test": 60,          # test gen: read source, write test, cmake, build, test
+    "test-depth": 80,    # behavioral expansion: more file ops
+    "refactor": 30,      # safe cleanup: few file ops
+    "cleanup": 20,       # branch cleanup: git commands only
+}
+ACTION_BUDGET_MULTIPLIER = 1.5  # applied in deep mode
+
+# Global action counter (incremented by run(), file reads, file writes)
+_action_counter = {"count": 0}
+
+# ── Harness Component Audit Trail ───────────────────────────────────────────
+# Each component encodes an assumption about model limitations.
+# Review periodically; remove if the assumption is proven stale.
+HARNESS_COMPONENTS = {
+    "external_evaluator": {
+        "added": "2026-04-23",
+        "hypothesis": "Self-evaluation bias persists across all models; generator cannot grade its own work",
+        "expires": None,  # permanent — bias is structural
+    },
+    "loop_detection": {
+        "added": "2026-04-23",
+        "hypothesis": "Agents get stuck in repetitive edit loops on the same file",
+        "expires": "2026-07-23",  # re-test with newer models
+    },
+    "pre_completion_gate": {
+        "added": "2026-04-23",
+        "hypothesis": "Agents declare 'done' before independent verification",
+        "expires": "2026-07-23",
+    },
+    "tool_subtraction": {
+        "added": "2026-04-23",
+        "hypothesis": "Too many discovery heuristics degrade task selection quality",
+        "expires": "2026-07-23",
+    },
+    "local_context_middleware": {
+        "added": "2026-04-23",
+        "hypothesis": "Agents waste tokens rediscovering environment state",
+        "expires": "2026-07-23",
+    },
+}
 
 # Prevent git from hanging on prompts (interactive SSH, credential helpers, etc.)
 os.environ.setdefault("GIT_TERMINAL_PROMPT", "0")
@@ -31,7 +94,8 @@ TEST_CMD = ["ctest", "--output-on-failure", "-j8"]
 MAX_RETRIES = 2
 
 def run(cmd, cwd=None, timeout=300, capture=True):
-    """Run a command and return (exit_code, stdout, stderr)."""
+    """Run a command and return (exit_code, stdout, stderr). Increments action budget."""
+    _action_counter["count"] += 1
     try:
         r = subprocess.run(cmd, cwd=cwd, timeout=timeout,
                            capture_output=capture, text=True)
@@ -125,6 +189,97 @@ def append_log(entry):
     """Append to AUTONOMOUS_LOG.md."""
     with open(LOG_FILE, "a") as f:
         f.write(entry + "\n")
+
+# ── Loop Detection Middleware ──────────────────────────────────────────────
+
+def load_edit_history() -> dict:
+    """Load per-file edit history for loop detection."""
+    if EDIT_HISTORY_FILE.exists():
+        try:
+            return json.loads(EDIT_HISTORY_FILE.read_text())
+        except (json.JSONDecodeError, IOError):
+            pass
+    return {}
+
+
+def save_edit_history(history: dict):
+    """Save per-file edit history."""
+    EDIT_HISTORY_FILE.write_text(json.dumps(history, indent=2))
+
+
+def record_edit(files: list):
+    """Record that the given files were edited in this run."""
+    history = load_edit_history()
+    today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+    for f in files:
+        if f not in history:
+            history[f] = {}
+        history[f][today] = history[f].get(today, 0) + 1
+    save_edit_history(history)
+
+
+def is_loop_detected(files: list) -> Tuple[bool, str]:
+    """
+    Check if any file has been edited too many times recently.
+    Returns (detected, reason).
+    """
+    history = load_edit_history()
+    today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+    for f in files:
+        counts = history.get(f, {})
+        today_count = counts.get(today, 0)
+        if today_count >= MAX_EDITS_PER_FILE_PER_DAY:
+            return True, f"Loop detected: {f} edited {today_count}x today (max {MAX_EDITS_PER_FILE_PER_DAY}) — Consider reconsidering your approach"
+    return False, ""
+
+
+# ── External Evaluator Integration ─────────────────────────────────────────
+
+def run_external_evaluator(branch: str) -> dict:
+    """
+    Run the standalone evaluator agent on the current working tree.
+    The generator is already on the feature branch; evaluator checks --current.
+    Returns parsed JSON report or fallback dict on error.
+    """
+    evaluator = REPO / "scripts/autonomous" / "evaluate_change.py"
+    if not evaluator.exists():
+        return {"overall": "UNAVAILABLE", "reason": "evaluate_change.py not found"}
+
+    code, out, err = run(
+        ["python3", str(evaluator), "--current", "--base", "main"],
+        timeout=900
+    )
+    try:
+        return json.loads(out)
+    except json.JSONDecodeError:
+        return {
+            "overall": "ERROR",
+            "reason": f"Evaluator returned non-JSON (exit {code}): {err[:200]}",
+        }
+
+
+def run_opencode_reviewer(branch: str) -> dict:
+    """
+    Run the OpenCode CLI subjective reviewer agent.
+    This is the skeptical code-review layer of the GAN-style architecture.
+    Returns parsed JSON report or fallback dict on error.
+    """
+    reviewer = REPO / "scripts/autonomous" / "evaluate_change_review.py"
+    if not reviewer.exists():
+        return {"overall": "UNAVAILABLE", "reason": "evaluate_change_review.py not found"}
+
+    code, out, err = run(
+        ["python3", str(reviewer), "--current", "--base", "main"],
+        timeout=300
+    )
+    try:
+        return json.loads(out)
+    except json.JSONDecodeError:
+        return {
+            "overall": "ERROR",
+            "reason": f"OpenCode reviewer returned non-JSON (exit {code}): {err[:200]}",
+        }
+
 
 def generate_test_file(task):
     """
@@ -753,16 +908,39 @@ def implement_cleanup_task(task):
         return False, "No merged branches to clean up"
     return True, f"Cleaned up {local_deleted} local + {remote_deleted} remote merged branches"
 
-def run_once():
+def run_once(mode="once"):
     """Run one iteration of the dev loop. Returns result string."""
+    _action_counter["count"] = 0  # reset operation budget counter
     start_time = time.time()
     print("=" * 60)
-    print(f"[dev-loop] Starting at {datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M UTC')}")
-    
+    print(f"[dev-loop] Starting at {datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M UTC')} [mode={mode}]")
+
+    # Agent Map Verification: AGENTS.md must exist and be legible
+    if not AGENTS_MD.exists():
+        print("[dev-loop] CRITICAL: AGENTS.md missing — aborting (agent map required)")
+        return "ABORTED: AGENTS.md missing"
+    agents_age_days = (datetime.now(timezone.utc) - datetime.fromtimestamp(AGENTS_MD.stat().st_mtime, tz=timezone.utc)).days
+    print(f"[dev-loop] Agent Map: {AGENTS_MD} (age={agents_age_days}d)")
+
+    # LocalContextMiddleware: inject environment state so agent doesn't rediscover
+    ctx = {
+        "cwd": str(REPO),
+        "build_ready": (REPO / "build_validate" / "CMakeCache.txt").exists(),
+        "git_branch": "unknown",
+        "git_head": "unknown",
+    }
+    code, out, _ = run(["git", "-C", str(REPO), "rev-parse", "--abbrev-ref", "HEAD"], timeout=5)
+    if code == 0:
+        ctx["git_branch"] = out.strip()
+    code, out, _ = run(["git", "-C", str(REPO), "rev-parse", "--short", "HEAD"], timeout=5)
+    if code == 0:
+        ctx["git_head"] = out.strip()
+    print(f"[dev-loop] Context: {ctx['git_branch']}@{ctx['git_head']} | build_ready={ctx['build_ready']}")
+
     # 1. Ensure we're on main
     git("checkout", "main")
     git("pull", "--ff-only", "origin", "main")
-    
+
     # 2. Discover tasks (bust cache to pick up any changes)
     cache_path = REPO / "scripts" / "autonomous" / ".task_cache.json"
     if cache_path.exists():
@@ -806,12 +984,27 @@ def run_once():
         task = candidate
         print(f"[dev-loop] Trying: [{candidate['priority']}] {candidate['title']}")
         
+        # Sprint Decomposition: in once mode, skip tasks too large to finish
+        est_hours = candidate.get("estimated_hours", 1.0)
+        if mode == "once" and est_hours > 2.0:
+            print(f"[dev-loop] Task too large for once mode ({est_hours}h > 2h) — decompose or run deep mode")
+            continue  # Try next task
+
         # Create branch
         date_str = datetime.now().strftime("%Y%m%d")
         slug = re.sub(r'[^a-z0-9]+', '-', candidate['title'].lower())[:40].strip('-')
         branch = f"autonomous/{date_str}-{slug}"
         git("checkout", "-b", branch)
-        
+
+        # Loop Detection Middleware: check if we've edited these files too much today
+        loop_files = [f for f in candidate.get("files", []) if f]
+        loop_detected, loop_reason = is_loop_detected(loop_files)
+        if loop_detected:
+            print(f"[dev-loop] {loop_reason} — skipping task")
+            git("checkout", "main")
+            git("branch", "-d", branch, "-f")
+            continue  # Try next task
+
         # Implement
         category = candidate.get("category", "")
         if category == "test":
@@ -836,43 +1029,120 @@ def run_once():
             continue  # Try next task
         
         print(f"[dev-loop] Implemented: {desc}")
-        break  # Got a valid task, proceed to build/test
+
+        # Record edits for loop detection
+        if loop_files:
+            record_edit(loop_files)
+
+        # Reasoning Budget check: abort if we've already burned too much time
+        budget_sec = REASONING_BUDGET.get(category, 600)
+        if mode == "deep":
+            budget_sec = int(budget_sec * DEEP_BUDGET_MULTIPLIER)
+        elapsed_so_far = time.time() - start_time
+        if elapsed_so_far > budget_sec:
+            print(f"[dev-loop] REASONING BUDGET EXCEEDED: {elapsed_so_far:.0f}s > {budget_sec}s ({category})")
+            git("checkout", "main")
+            git("branch", "-d", branch, "-f")
+            return f"BUDGET EXCEEDED: {elapsed_so_far:.0f}s > {budget_sec}s"
+
+        # Operation Budget check: abort if too many actions (proxy for token ceiling)
+        action_limit = ACTION_BUDGET.get(category, 60)
+        if mode == "deep":
+            action_limit = int(action_limit * ACTION_BUDGET_MULTIPLIER)
+        if _action_counter["count"] > action_limit:
+            print(f"[dev-loop] OPERATION BUDGET EXCEEDED: {_action_counter['count']} actions > {action_limit} ({category})")
+            git("checkout", "main")
+            git("branch", "-d", branch, "-f")
+            return f"OPERATION BUDGET EXCEEDED: {_action_counter['count']} actions > {action_limit}"
+
+        break  # Got a valid task, proceed to evaluation
     else:
         elapsed = time.time() - start_time
         skipped_count = sum(1 for c in tasks if c.get("category") == "refactor")
         print(f"[dev-loop] No implementable tasks found ({len(tasks)} tasks checked, {skipped_count} refactor skipped, {elapsed:.1f}s)")
         return f"No implementable tasks found ({skipped_count} refactor skipped)"
     
-    # 6. Build + Test (with retries)
-    for attempt in range(1, MAX_RETRIES + 1):
-        print(f"[dev-loop] Build attempt {attempt}...")
-        build_ok, build_err = build()
+    # 6. External Evaluation (GAN-style: generator never grades its own work)
+    print(f"[dev-loop] Running external evaluator on {branch}...")
+    eval_report = run_external_evaluator(branch)
+    eval_available = eval_report.get("overall") != "UNAVAILABLE"
+
+    # Reasoning Budget check post-evaluation
+    budget_sec = REASONING_BUDGET.get(category, 600)
+    if mode == "deep":
+        budget_sec = int(budget_sec * DEEP_BUDGET_MULTIPLIER)
+    elapsed_so_far = time.time() - start_time
+    if elapsed_so_far > budget_sec:
+        print(f"[dev-loop] REASONING BUDGET EXCEEDED after evaluation: {elapsed_so_far:.0f}s > {budget_sec}s ({category})")
+        git("checkout", "main")
+        git("branch", "-d", branch, "-f")
+        return f"BUDGET EXCEEDED: {elapsed_so_far:.0f}s > {budget_sec}s"
+
+    # Operation Budget check post-evaluation
+    action_limit = ACTION_BUDGET.get(category, 60)
+    if mode == "deep":
+        action_limit = int(action_limit * ACTION_BUDGET_MULTIPLIER)
+    if _action_counter["count"] > action_limit:
+        print(f"[dev-loop] OPERATION BUDGET EXCEEDED after evaluation: {_action_counter['count']} actions > {action_limit} ({category})")
+        git("checkout", "main")
+        git("branch", "-d", branch, "-f")
+        return f"OPERATION BUDGET EXCEEDED: {_action_counter['count']} actions > {action_limit}"
+
+    if eval_available:
+        build_ok = eval_report["build"]["pass"]
+        test_ok = eval_report["tests"]["pass"]
+        test_summary = eval_report["tests"]["summary"]
+        cases = eval_report["counts"]["cases"]
+        asserts = eval_report["counts"]["assertions"]
+        regression = eval_report["regression"]
+        eval_error = eval_report["tests"]["error"] or eval_report["build"]["error"]
+
         if not build_ok:
-            print(f"[dev-loop] BUILD FAILED:\n{build_err}")
-            if attempt < MAX_RETRIES:
-                # Try to fix common issues: re-run cmake
-                shutil.rmtree(str(BUILD_DIR), ignore_errors=True)
-                continue
-            else:
-                git("checkout", "main")
-                git("branch", "-d", branch, "-f")
-                return f"BUILD FAILED after {MAX_RETRIES} attempts"
-        
-        test_ok, test_summary, test_err = test()
-        if not test_ok:
-            print(f"[dev-loop] TESTS FAILED:\n{test_err}")
-            if attempt < MAX_RETRIES:
-                continue
-            else:
-                git("checkout", "main")
-                git("branch", "-d", branch, "-f")
-                return f"TESTS FAILED after {MAX_RETRIES} attempts"
-        
-        print(f"[dev-loop] BUILD + TEST PASS: {test_summary}")
-        break
-    
-    # 7. Commit + merge
-    cases, asserts = get_test_counts()
+            print(f"[dev-loop] BUILD FAILED (evaluator):\n{eval_report['build']['error']}")
+        elif not test_ok or regression:
+            print(f"[dev-loop] TESTS FAILED (evaluator):\n{eval_error}")
+        else:
+            print(f"[dev-loop] Objective Evaluator PASS: {test_summary}")
+    else:
+        # FAIL CLOSED: generator must NEVER grade its own work.
+        # If the external evaluator is unavailable, abort immediately.
+        print("[dev-loop] CRITICAL: External evaluator unavailable — cannot proceed")
+        git("checkout", "main")
+        git("branch", "-d", branch, "-f")
+        return "EVALUATION FAILED: external evaluator unavailable (fail-closed policy)"
+
+    # 6b. Subjective Review (OpenCode skeptical reviewer — GAN-style second layer)
+    review_pass = True
+    review_error = ""
+    print(f"[dev-loop] Running OpenCode subjective reviewer on {branch}...")
+    review_report = run_opencode_reviewer(branch)
+    review_available = review_report.get("overall") != "UNAVAILABLE"
+
+    if review_available:
+        review_pass = review_report["review"]["overall"] == "PASS"
+        review_error = review_report["review"].get("notes", "")
+        issue_count = len(review_report["review"].get("issues", []))
+        if review_pass:
+            print(f"[dev-loop] Subjective Reviewer PASS ({issue_count} notes)")
+        else:
+            print(f"[dev-loop] Subjective Reviewer FAIL ({issue_count} issues): {review_error[:300]}")
+    else:
+        print(f"[dev-loop] OpenCode reviewer unavailable — proceeding with objective evaluator only")
+        # OpenCode reviewer is optional; objective gate is mandatory
+
+    # 7. Pre-Completion Verification Gate
+    # Do NOT commit if either evaluator failed or regression detected
+    if not build_ok or not test_ok or regression:
+        git("checkout", "main")
+        git("branch", "-d", branch, "-f")
+        return f"EVALUATION FAILED: {eval_error or 'build/test failure'}"
+
+    if not review_pass:
+        git("checkout", "main")
+        git("branch", "-d", branch, "-f")
+        return f"REVIEW FAILED: {review_error or 'subjective review flagged critical issues'}"
+
+    # 8. Commit + merge
     msg = f"autonomous: {task['title']}"
     if commit_changes(branch, msg):
         print(f"[dev-loop] Committed and merged to main")
@@ -881,8 +1151,8 @@ def run_once():
         git("checkout", "main")
         git("branch", "-d", branch, "-f")
         return "No changes to commit"
-    
-    # 8. Log
+
+    # 9. Log
     log_entry = f"""
 ### {datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M UTC')}
 - **Task:** {task['title']}
@@ -892,7 +1162,7 @@ def run_once():
 - **Change:** {desc}
 """
     append_log(log_entry)
-    
+
     result = f"OK: {desc} | {cases} tests, {asserts} asserts"
     elapsed = time.time() - start_time
     print(f"[dev-loop] {result} ({elapsed:.1f}s)")
@@ -902,14 +1172,14 @@ if __name__ == "__main__":
     mode = sys.argv[1] if len(sys.argv) > 1 else "once"
     
     if mode == "once":
-        result = run_once()
+        result = run_once(mode="once")
         print(f"\nRESULT: {result}")
     elif mode == "deep":
         # Run up to 3 tasks in sequence — deep mode tries harder
         results = []
         for i in range(3):
             print(f"\n--- Deep iteration {i+1}/3 ---")
-            r = run_once()
+            r = run_once(mode="deep")
             results.append(r)
             # Stop if we've done everything or hit an error
             if "No tasks" in r:

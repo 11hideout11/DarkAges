@@ -8,6 +8,7 @@ import subprocess
 import os
 import re
 import json
+import shutil
 from pathlib import Path
 from dataclasses import dataclass, asdict
 from typing import List
@@ -16,6 +17,51 @@ PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
 SRC_DIR = PROJECT_ROOT / "src"
 CACHE_FILE = Path(__file__).resolve().parent / ".task_cache.json"
 CACHE_TTL_SECONDS = 1800  # 30 minutes
+
+
+def get_local_context() -> dict:
+    """
+    LocalContextMiddleware: inject live environment state so the agent
+    doesn't waste tokens discovering what tools/paths are available.
+    """
+    ctx = {
+        "cwd": str(PROJECT_ROOT),
+        "src_dir": str(SRC_DIR),
+        "build_dir_exists": (PROJECT_ROOT / "build_validate" / "CMakeCache.txt").exists(),
+        "git_head": "unknown",
+        "git_branch": "unknown",
+        "recent_commits": [],
+        "available_tools": {
+            "cmake": shutil.which("cmake") is not None,
+            "ctest": shutil.which("ctest") is not None,
+            "git": shutil.which("git") is not None,
+            "python3": shutil.which("python3") is not None,
+        },
+    }
+    try:
+        head = subprocess.run(
+            ["git", "rev-parse", "--short", "HEAD"],
+            capture_output=True, text=True, timeout=5, cwd=str(PROJECT_ROOT)
+        )
+        if head.returncode == 0:
+            ctx["git_head"] = head.stdout.strip()
+
+        branch = subprocess.run(
+            ["git", "rev-parse", "--abbrev-ref", "HEAD"],
+            capture_output=True, text=True, timeout=5, cwd=str(PROJECT_ROOT)
+        )
+        if branch.returncode == 0:
+            ctx["git_branch"] = branch.stdout.strip()
+
+        commits = subprocess.run(
+            ["git", "log", "--oneline", "-5"],
+            capture_output=True, text=True, timeout=5, cwd=str(PROJECT_ROOT)
+        )
+        if commits.returncode == 0:
+            ctx["recent_commits"] = [c.strip() for c in commits.stdout.strip().split("\n") if c.strip()]
+    except Exception:
+        pass
+    return ctx
 
 
 @dataclass
@@ -665,7 +711,9 @@ def main():
             print(json.dumps(cache["tasks"], indent=2))
         else:
             tasks = cache["tasks"]
+            ctx = get_local_context()
             print(f"=== DarkAges Task Queue ({len(tasks)} tasks) [cached] ===\n")
+            print(f"Context: {ctx['git_branch']}@{ctx['git_head']} | build_ready={ctx['build_dir_exists']}\n")
             for i, task in enumerate(tasks, 1):
                 print(f"{i}. [{task['priority']}] [~{task['estimated_hours']}h] [{task['category']}]")
                 print(f"   {task['title']}")
@@ -677,19 +725,19 @@ def main():
     # Discover tasks
     all_tasks = []
     all_tasks.extend(find_missing_tests())
-    all_tasks.extend(find_missing_header_tests())
+    # all_tasks.extend(find_missing_header_tests())  # DISABLED: redundant with find_missing_tests
     all_tasks.extend(find_shallow_tests())
-    all_tasks.extend(find_only_shallow_tests())
-    all_tasks.extend(find_large_files())
-    all_tasks.extend(find_include_deps())
+    # all_tasks.extend(find_only_shallow_tests())  # DISABLED: redundant with find_shallow_tests
+    # all_tasks.extend(find_large_files())  # DISABLED: refactor tasks are low-yield
+    # all_tasks.extend(find_include_deps())  # DISABLED: P3 include reduction, very low value
     all_tasks.extend(find_todos())
-    all_tasks.extend(find_stale_branches())
-    all_tasks.extend(find_doc_drift())
-    # NEW: Extended discovery patterns
-    all_tasks.extend(find_missing_include_guards())
-    all_tasks.extend(find_godot_client_gaps())
-    all_tasks.extend(find_performance_hotspots())
-    all_tasks.extend(find_api_unused_in_header())
+    # all_tasks.extend(find_stale_branches())  # DISABLED: low impact cleanup
+    # all_tasks.extend(find_doc_drift())  # DISABLED: docs not auto-implemented
+    # Disabled: low-yield discovery patterns (tool subtraction — 77% of heuristics disabled)
+    # all_tasks.extend(find_missing_include_guards())
+    # all_tasks.extend(find_godot_client_gaps())
+    # all_tasks.extend(find_performance_hotspots())
+    # all_tasks.extend(find_api_unused_in_header())
 
     # Deduplicate by title
     seen = set()
@@ -715,7 +763,9 @@ def main():
     if "--json" in sys.argv:
         print(json.dumps(task_dicts, indent=2))
     else:
+        ctx = get_local_context()
         print(f"=== DarkAges Task Queue ({len(task_dicts)} tasks) ===\n")
+        print(f"Context: {ctx['git_branch']}@{ctx['git_head']} | build_ready={ctx['build_dir_exists']}\n")
         for i, task in enumerate(task_dicts, 1):
             print(f"{i}. [{task['priority']}] [~{task['estimated_hours']}h] [{task['category']}]")
             print(f"   {task['title']}")
