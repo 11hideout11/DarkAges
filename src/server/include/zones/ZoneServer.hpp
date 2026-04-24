@@ -102,6 +102,7 @@ struct ZoneConfig {
     // Demo mode configuration
     bool demoMode{false};            // Enable curated demo zone
     std::string zoneConfigPath;      // Path to JSON zone configuration file
+    bool enableInstrumentation{false};  // Enable server tick-state export
 };
 
 struct TickMetrics {
