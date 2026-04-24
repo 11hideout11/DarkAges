@@ -132,13 +132,15 @@ def run_tests() -> tuple[bool, int]:
     return passed, total
 
 
-def start_server(port: int, demo_mode: bool = True, npcs: int = 10) -> subprocess.Popen:
+def start_server(port: int, demo_mode: bool = True, npcs: int = 10, instrument: bool = False) -> subprocess.Popen:
     cmd = [str(SERVER_BIN), "--port", str(port), "--npcs", "--npc-count", str(npcs)]
     if demo_mode:
         cmd.append("--demo-mode")
         zone_config = PROJECT_ROOT / "tools/demo/content/demo_zone.json"
         if zone_config.exists():
             cmd.extend(["--zone-config", str(zone_config)])
+    if instrument:
+        cmd.append("--instrument")
 
     LOGS.mkdir(parents=True, exist_ok=True)
     ts = datetime.now().strftime("%Y%m%d_%H%M%S")
@@ -150,7 +152,7 @@ def start_server(port: int, demo_mode: bool = True, npcs: int = 10) -> subproces
     return proc, log_path
 
 
-def start_godot_headless(port: int, duration: int, xauth_path: Path) -> tuple[subprocess.Popen, str, Path]:
+def start_godot_headless(port: int, duration: int, xauth_path: Path, instrument: bool = False) -> tuple[subprocess.Popen, str, Path]:
     """Start Godot client under xvfb-run with auth file for screenshot capture."""
     cmd = [
         "xvfb-run", "-a", "-f", str(xauth_path),
@@ -168,8 +170,14 @@ def start_godot_headless(port: int, duration: int, xauth_path: Path) -> tuple[su
     # Capture stderr separately to extract DISPLAY number from xvfb-run
     stderr_fd, stderr_path = tempfile.mkstemp(suffix=".xvfb.err")
     stderr_file = os.fdopen(stderr_fd, 'w')
+
+    # Build environment with instrumentation if enabled
+    client_env = os.environ.copy()
+    if instrument:
+        client_env["DARKAGES_INSTRUMENT"] = "1"
+
     proc = subprocess.Popen(
-        cmd, stdout=log_file, stderr=stderr_file, start_new_session=True
+        cmd, stdout=log_file, stderr=stderr_file, start_new_session=True, env=client_env
     )
     stderr_file.flush()
     stderr_file.close()
@@ -485,7 +493,7 @@ def run_full_demo(args: argparse.Namespace) -> int:
     # Phase 3: Deploy
     print_header("PHASE 3: Deploy")
     port = 7777
-    server_proc, server_log = start_server(port, demo_mode=True, npcs=args.npcs)
+    server_proc, server_log = start_server(port, demo_mode=True, npcs=args.npcs, instrument=args.instrument)
 
     print("  Waiting for server readiness...")
     if not wait_for_server_udp(port, timeout=15):
@@ -499,7 +507,7 @@ def run_full_demo(args: argparse.Namespace) -> int:
     demo_duration = args.duration
     godot_duration = max(3, demo_duration - 2)
     xauth_path = ARTIFACTS / ".xvfb_auth"
-    godot_proc, godot_display, godot_log = start_godot_headless(port, duration=godot_duration, xauth_path=xauth_path)
+    godot_proc, godot_display, godot_log = start_godot_headless(port, duration=godot_duration, xauth_path=xauth_path, instrument=args.instrument)
 
     # Wait a moment for client to start connecting
     time.sleep(3)
@@ -604,6 +612,17 @@ def run_full_demo(args: argparse.Namespace) -> int:
     summary_path.write_text(json.dumps(summary, indent=2))
     print(f"  JSON: {summary_path}")
 
+    # Post-run analysis for instrumentation
+    if args.instrument:
+        print("\n📊 Running tick-level analysis...")
+        subprocess.run([
+            sys.executable, "tools/analysis/unified_analysis.py",
+            "--model",
+            "--instrument-dir", "/tmp/darkages_snapshots",
+            "--output", "tools/analysis/reports/instrumented_run.json"
+        ])
+        print("📄 Instrumentation report: tools/analysis/reports/instrumented_run.json")
+
     # Return 0 if all critical checks passed
     success = godot_metrics["connected"] and validator_result.get("passed", False)
     return 0 if success else 1
@@ -617,6 +636,11 @@ def main():
     parser.add_argument("--no-tests", action="store_true", help="Skip test validation")
     parser.add_argument("--npcs", type=int, default=10, help="Number of NPCs")
     parser.add_argument("--duration", type=int, default=None, help="Override demo duration")
+    parser.add_argument(
+        "--instrument", "-i",
+        action="store_true",
+        help="Enable server + client instrumentation (writes tick snapshots to /tmp/darkages_snapshots)"
+    )
     args = parser.parse_args()
 
     if args.quick:
