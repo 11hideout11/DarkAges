@@ -17,9 +17,9 @@
 
 | Provider | Status | Root Cause |
 |----------|--------|----------|
-| Nous Research | ✅ Working | OAuth valid |
-| NVIDIA NIM | ⚠️ Broken | No provider config in config.yaml, credential not resolving |
-| StepFun | ❌ Broken | Subscription not provisioned (400 error) |
+| NVIDIA NIM | ✅ Active (primary) | Fixed: config+yaml + credentials + service restart |
+| Nous Research | ✅ Standby | OAuth valid; tertiary fallback |
+| StepFun | ⚠️ Disabled | Subscription not provisioned (400 error); support ticket open 2026-04-24 |
 
 ---
 
@@ -71,14 +71,22 @@ Please check step_plan scope/role attached to this key.
 
 ## Verification Commands
 
-Verification results (post-fix):
+Verification results (post-fix, 2026-04-25):
 
 ```bash
 $ python3 -c "from agent.auxiliary_client import resolve_provider_client; print(resolve_provider_client('nvidia'))"
-<client object ...>  # non-None
+<client nvidia meta/llama-3.1-8b-instruct>  ✅ RESOLVED
 
 $ python3 -c "from agent.auxiliary_client import resolve_provider_client; print(resolve_provider_client('stepfun'))"
-<client object ...>  # non-None (resolves but 400 from API)
+<client stepfun step-3.5-flash>  ⚠️ RESOLVES-but-400 (no step_plan scope)
+
+$ hermes ask "test" --model meta/llama-3.1-8b-instruct
+[USE NVIDIA]
+test  ✅ WORKS (NVIDIA primary)
+
+$ hermes ask "test" --model step-3.5-flash
+[USE STEPFUN]
+Error: 400 - no active step plan subscription  ⚠️ DISABLED
 ```
 
 ---

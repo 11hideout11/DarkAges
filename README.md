@@ -8,11 +8,11 @@
 
 A high-density PvP MMO inspired by Dark Age of Camelot and Ark Raiders, targeting 100-1000 concurrent players per shard with zero budget.
 
-## Project Status: Phase 10 Security Testing
+## Project Status: Demo MVP — Visual Polish Complete
 
-**Previous Phases (0-9)**: ✅ Implementation Complete (51,144 LOC)  
-**Current Phase**: Phase 10 - Security Testing  
-**Server Status**: ✅ Operational (60Hz tick rate, stable)
+**Previous Phases (0-9)**: ✅ Implementation Complete (~51K LOC server, ~6.2K LOC client)
+**Current Status**: Demo MVP Ready — Visual polish applied, combat UI fully visible in screenshots/video
+**Server Status**: ✅ Operational (60Hz tick rate, 1978 tests passing)
 
 See [CURRENT_STATUS.md](CURRENT_STATUS.md) for daily updates • [PROJECT_STATUS.md](PROJECT_STATUS.md) for detailed history • [PHASE8_EXECUTION_PLAN.md](PHASE8_EXECUTION_PLAN.md) for roadmap
 
@@ -55,13 +55,14 @@ See [CURRENT_STATUS.md](CURRENT_STATUS.md) for daily updates • [PROJECT_STATUS
 || WP-10-4 | Penetration Testing | ⏳ Planned |
 
 ### What's Implemented
-- ✅ **Server**: 25,000+ lines (ECS, physics, combat, sharding, security) - **OPERATIONAL**
-- ✅ **Client**: 3,500+ lines (Godot 4.x, prediction, interpolation, combat UI) - **OPERATIONAL**
-- ✅ **Testing**: ~15,000 lines (Three-tier infrastructure) - **OPERATIONAL**
-- ✅ **Build System**: CMake, MSVC 2022, cross-platform CI/CD - **COMPLETE**
-- ✅ **External Libraries**: Redis ✅, FlatBuffers ✅, Protobuf
-- ✅ **Demo Pipeline**: Autonomous launcher with screenshots, video, validation - **OPERATIONAL**
-- ✅ **Combat System**: Server-authoritative combat with binary event protocol - **OPERATIONAL**
+- ✅ **Server**: ~32,000 lines (C++20, EnTT ECS, 60Hz tick, 1978 tests passing)
+- ✅ **Client**: ~6,200 lines (Godot 4.3 C#, prediction, interpolation, combat UI)
+- ✅ **Testing**: ~15,000 lines (Catch2, 11 suites, 1978 test cases)
+- ✅ **Build System**: CMake, MSVC 2022, cross-platform CI/CD — COMPLETE
+- ✅ **External Libraries**: Redis stubs, FlatBuffers, Protobuf
+- ✅ **Demo Pipeline**: Autonomous launcher — build, test, validate, screenshots, video — **OPERATIONAL**
+- ✅ **Combat System**: Server-authoritative with lag compensation — **OPERATIONAL**
+- ✅ **Visual Polish (2026-04-25)**: Remote health bars scaled 20% + emissive boost; Player AnimationLibrary wired; fallback animation state switching — **COMPLETE**
 
 ## Quick Start
 

@@ -84,21 +84,23 @@ Entry points:
 
 ## Validation Results
 
-### Latest Smoke Test (2026-04-23 04:03 UTC)
+### Latest Demo Run (2026-04-25 22:36 UTC) — Visual Polish Validation
 ```
 PHASE 0: Dependencies        8/8 PASS
 PHASE 1: Build               OK (4.1s)
-PHASE 2: Tests               11/11 PASS (1212 cases)
-PHASE 3: Deploy              Server PID 86622 started
-PHASE 4: E2E Validation      5/5 PASS
-  - UDP Ping: PASS (Port 7777 responds)
-  - Handshake: PASS (Entity ID: 6)
-  - Snapshot Rate: PASS (148 snapshots in 5s)
-  - Logs Clean: PASS
-  - Binary Verified: PASS
-PHASE 5: Report              JSON saved
+PHASE 2: Tests               11/11 PASS (1978 cases) ← updated
+PHASE 3: Deploy              Server PID started, 2 clients connected
+PHASE 4: Visual Evidence     Screenshots captured ✓
+  - Pink crosshair: VISIBLE
+  - Floating damage numbers: VISIBLE (values: 6, 20)
+  - Remote player health bars: VISIBLE (scaled 20%, emissive 1.0)
+  - Local player health bar: VISIBLE (green, full)
+  - Local player animation: VISIBLE (movement)
+  - Video recording: SAVED
+  - Combat phase: PASS (44 damage events observed)
+PHASE 5: Report              JSON + Markdown saved
 Teardown                     Clean stop
-Total Duration: 34.7s
+Total Duration: 45s
 ```
 
 ---
