@@ -1,0 +1,40 @@
+{
+  "client": "godot_20260424_095746.log",
+  "server": "server_20260424_095745.log",
+  "generated": "2026-04-24T09:58:46.375147",
+  "summary": {
+    "duration_ticks": [0, 0],
+    "total_client_events": 80,
+    "total_server_events": 19
+  },
+  "combat": {
+    "client": {
+      "attacks_sent": 0,
+      "hits_received": 76,
+      "total_damage": 5810,
+      "unique_targets": 2,
+      "unique_attackers": 5
+    },
+    "server": {
+      "total_kills": 2,
+      "total_respawns": 2,
+      "unique_victims": 2,
+      "unique_killers": 2
+    },
+    "correlations": 8
+  },
+  "network": {
+    "client_messages": {
+      "Connected": 1,
+      "CombatEvent": 81,
+      "Snapshot": 41,
+      "StateChange": 1,
+      "ServerCorrection": 1
+    },
+    "prediction": {
+      "max_error": 0.0,
+      "avg_error": 0.0,
+      "samples": 0
+    }
+  }
+}

@@ -1,0 +1,29 @@
+{
+  "generated_at": "2026-04-24T13:24:03.230401",
+  "sources": {
+    "client_log": "godot_20260424_132345.log",
+    "server_log": "server_20260424_132345.log"
+  },
+  "timeline": {
+    "server_ticks": [
+      0,
+      0
+    ],
+    "server_total_ticks": 0
+  },
+  "entities": {
+    "connected_clients": 3,
+    "unique_combatants": 0
+  },
+  "combat": {
+    "client": {
+      "attacks_sent": 0,
+      "hits_received": 0,
+      "total_damage": 0
+    },
+    "server": {
+      "kills": 0,
+      "respawns": 0
+    }
+  }
+}

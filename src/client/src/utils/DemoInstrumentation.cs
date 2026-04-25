@@ -4,142 +4,133 @@ using System.IO;
 using System.Text.Json;
 using System.Collections.Generic;
 using DarkAges.Networking;
+using DarkAges.Entities;
+using DarkAges;
 
 namespace DarkAges.Utils
 {
     /// <summary>
-    /// [DEMO_INSTRUMENTATION] Real-time metrics collection for automated testing
-    /// Writes structured metrics to /tmp/darkages_instrumentation.json every 0.5s
+    /// [INSTRUMENTATION] Comprehensive client state recorder.
+    /// Captures entity states, local player data, and network info at 10 Hz.
+    /// Writes per-tick JSON snapshots when DARKAGES_INSTRUMENT=1.
     /// </summary>
     public partial class DemoInstrumentation : Node
     {
-        [Export] public float SampleIntervalSec = 0.5f;
-        [Export] public string OutputPath = "/tmp/darkages_instrumentation.json";
-        
+        [Export] public bool Enabled = false;
+        [Export] public float ExportIntervalSec = 0.1f;
+        [Export] public string OutputDir = "/tmp/darkages_snapshots/client";
+
         private float _timer = 0f;
-        private int _frameCount = 0;
-        private float _fpsAccumulator = 0f;
-        private List<MetricsSample> _samples = new();
+        private int _tickCount = 0;
+        private bool _initialized = false;
+
         private PredictedPlayer? _player;
-        private Camera3D? _camera;
-        
+        private RemotePlayerManager? _remoteManager;
+        private NetworkManager? _network;
+
+        private static readonly JsonSerializerOptions JsonOpts = new JsonSerializerOptions
+        {
+            WriteIndented = false,
+            DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull
+        };
+
         public override void _Ready()
         {
-            GD.Print("[DemoInstrumentation] Initialized — writing to " + OutputPath);
+            if (!Enabled)
+            {
+                var env = System.Environment.GetEnvironmentVariable("DARKAGES_INSTRUMENT");
+                if (env == "1" || env == "true") Enabled = true;
+            }
+
+            if (!Enabled) return;
+
+            Directory.CreateDirectory(OutputDir);
+
+            var scene = GetTree().CurrentScene;
+            if (scene == null) { GD.PrintErr("[Instrument] No current scene"); return; }
+
+            _player = scene.GetNodeOrNull<PredictedPlayer>("Players/Player");
+            _remoteManager = scene.GetNodeOrNull<RemotePlayerManager>("RemotePlayerManager");
+            _network = scene.GetNodeOrNull<NetworkManager>("NetworkManager");
+
+            GD.Print($"[ClientInstrument] Enabled → {OutputDir} @ {(1.0/ExportIntervalSec):F1}Hz");
+            _initialized = true;
         }
-        
+
         public override void _Process(double delta)
         {
-            float dt = (float)delta;
-            _timer += dt;
-            _frameCount++;
-            _fpsAccumulator += 1.0f / dt;
-            
-            // Find player and camera if not already cached
-            if (_player == null || !IsInstanceValid(_player))
+            if (!Enabled || !_initialized) return;
+
+            _timer += (float)delta;
+            if (_timer >= ExportIntervalSec)
             {
-                _player = GetTree().CurrentScene?.GetNode<PredictedPlayer>("Players/Player");
-            }
-            if (_camera == null || !IsInstanceValid(_camera))
-            {
-                _camera = _player?.GetNode<Camera3D>("CameraRig/SpringArm3D/Camera3D");
-            }
-            
-            if (_timer >= SampleIntervalSec)
-            {
-                RecordSample();
                 _timer = 0f;
+                CaptureAndExport();
             }
         }
-        
-        private void RecordSample()
-        {
-            var sample = new MetricsSample
-            {
-                TimestampSec = Time.GetTicksMsec() / 1000.0,
-                ConnectionState = GameState.Instance.CurrentConnectionState.ToString(),
-                LocalEntityId = GameState.Instance.LocalEntityId,
-                ServerTick = GameState.Instance.ServerTick,
-                EntityCount = GameState.Instance.Entities.Count,
-                Fps = _frameCount > 0 ? _fpsAccumulator / _frameCount : 0f,
-                SnapshotsReceived = GameState.Instance.ServerTick,
-            };
-            
-            if (_player != null && IsInstanceValid(_player))
-            {
-                sample.PlayerPosition = new float[] { _player.GlobalPosition.X, _player.GlobalPosition.Y, _player.GlobalPosition.Z };
-                sample.PlayerVelocity = new float[] { _player.Velocity.X, _player.Velocity.Y, _player.Velocity.Z };
-                sample.IsOnFloor = _player.IsOnFloor();
-                sample.PredictionError = _player.Get("_predictionError").AsSingle();
-                sample.LastProcessedServerInput = _player.Get("_lastProcessedServerInput").AsUInt32();
-            }
-            
-            if (_camera != null && IsInstanceValid(_camera))
-            {
-                sample.CameraPosition = new float[] { _camera.GlobalPosition.X, _camera.GlobalPosition.Y, _camera.GlobalPosition.Z };
-                sample.CameraLookAt = new float[] { _player?.GlobalPosition.X ?? 0, _player?.GlobalPosition.Y ?? 0, _player?.GlobalPosition.Z ?? 0 };
-            }
-            
-            _samples.Add(sample);
-            _frameCount = 0;
-            _fpsAccumulator = 0f;
-            
-            // Flush to disk every sample for real-time monitoring
-            FlushToDisk();
-        }
-        
-        private void FlushToDisk()
+
+        private void CaptureAndExport()
         {
             try
             {
-                var report = new InstrumentationReport
+                var snapshot = new Dictionary<string, object>
                 {
-                    SessionStart = _samples.Count > 0 ? _samples[0].TimestampSec : 0,
-                    LastUpdate = Time.GetTicksMsec() / 1000.0,
-                    SampleCount = _samples.Count,
-                    Samples = _samples.ToArray()
+                    ["tick"] = _tickCount++,
+                    ["timestamp_ms"] = (long)(Time.GetTicksMsec() * 10000),
+                    ["server_tick"] = GameState.Instance.ServerTick,
+                    ["entities"] = new List<object>(),
+                    ["player_count"] = 0,
+                    ["npc_count"] = 0
                 };
-                
-                string json = JsonSerializer.Serialize(report, new JsonSerializerOptions { WriteIndented = true });
-                File.WriteAllText(OutputPath, json);
+
+                // Iterate over GameState.Entities
+                foreach (var kvp in GameState.Instance.Entities)
+                {
+                    uint eid = kvp.Key;
+                    DarkAges.EntityData entity = kvp.Value;
+                    var entDict = new Dictionary<string, object>
+                    {
+                        ["entity_id"] = (int)eid,
+                        ["position"] = new float[] { entity.Position.X, entity.Position.Y, entity.Position.Z },
+                        ["velocity"] = new float[] { entity.Velocity.X, entity.Velocity.Y, entity.Velocity.Z },
+                        ["health"] = (int)(entity.HealthPercent * 100),
+                        ["state"] = (int)entity.AnimState
+                    };
+                    ((List<object>)snapshot["entities"]).Add(entDict);
+
+                    if (entity.Type == 1) snapshot["player_count"] = (int)snapshot["player_count"] + 1;
+                    else snapshot["npc_count"] = (int)snapshot["npc_count"] + 1;
+                }
+
+                // Local player details
+                if (_player != null && IsInstanceValid(_player))
+                {
+                    var localEntity = GameState.Instance.GetEntity(GameState.Instance.LocalEntityId);
+                    float health = localEntity?.HealthPercent ?? 0;
+                    var local = new Dictionary<string, object>
+                    {
+                        ["entity_id"] = (int)GameState.Instance.LocalEntityId,
+                        ["position"] = new float[] { _player.GlobalPosition.X, _player.GlobalPosition.Y, _player.GlobalPosition.Z },
+                        ["velocity"] = new float[] { _player.Velocity.X, _player.Velocity.Y, _player.Velocity.Z },
+                        ["health"] = (int)(health * 100),
+                        ["state"] = 0
+                    };
+                    ((List<object>)snapshot["entities"]).Add(local);
+                }
+
+                string json = JsonSerializer.Serialize(snapshot, JsonOpts);
+                string filename = Path.Combine(OutputDir, $"client_{_tickCount:012d}.json");
+                File.WriteAllText(filename, json);
             }
             catch (Exception ex)
             {
-                GD.PrintErr($"[DemoInstrumentation] Failed to write metrics: {ex.Message}");
+                GD.PrintErr($"[Instrument] Capture error: {ex.Message}");
             }
         }
-        
+
         public override void _ExitTree()
         {
-            FlushToDisk();
-            GD.Print($"[DemoInstrumentation] Session complete. {_samples.Count} samples written to {OutputPath}");
-        }
-        
-        // ── Data structures ───────────────────────────────────────────────
-        public struct MetricsSample
-        {
-            public double TimestampSec { get; set; }
-            public string ConnectionState { get; set; }
-            public uint LocalEntityId { get; set; }
-            public uint ServerTick { get; set; }
-            public int EntityCount { get; set; }
-            public float Fps { get; set; }
-            public uint SnapshotsReceived { get; set; }
-            public float[] PlayerPosition { get; set; }
-            public float[] PlayerVelocity { get; set; }
-            public bool IsOnFloor { get; set; }
-            public float PredictionError { get; set; }
-            public uint LastProcessedServerInput { get; set; }
-            public float[] CameraPosition { get; set; }
-            public float[] CameraLookAt { get; set; }
-        }
-        
-        public struct InstrumentationReport
-        {
-            public double SessionStart { get; set; }
-            public double LastUpdate { get; set; }
-            public int SampleCount { get; set; }
-            public MetricsSample[] Samples { get; set; }
+            GD.Print($"[ClientInstrument] Session complete. {_tickCount} ticks → {OutputDir}");
         }
     }
 }

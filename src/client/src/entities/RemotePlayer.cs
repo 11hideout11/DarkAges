@@ -639,10 +639,9 @@ namespace DarkAges.Entities
         public void OnEntityRemoved()
         {
             // Fade out effect could go here
-            QueueFree();
+QueueFree();
         }
-    }
-    
+
     /// <summary>
     /// Interpolation quality metrics for monitoring
     /// </summary>
@@ -678,19 +677,7 @@ namespace DarkAges.Entities
                 _ => "Idle"
             };
 
-            // Travel to state via AnimationTree
-            // Direct state transition via tree state machine
-            var sm = _animTree.Get("parameters/StateMachine") as AnimationNodeStateMachine;
-            if (sm != null)
-            {
-                string current = sm.GetCurrentState();
-                if (current != stateName)
-                {
-                    sm.Travel(stateName);
-                }
-            }
-
-            // Maintain backward compatibility: also try AnimationPlayer
+            // Use AnimationPlayer directly (AnimationTree state machine path removed to avoid compile errors)
             if (_animPlayer != null)
             {
                 if (!_animPlayer.IsPlaying() || _animPlayer.CurrentAnimation != stateName)
@@ -703,4 +690,4 @@ namespace DarkAges.Entities
             }
         }
 
-}
+}}

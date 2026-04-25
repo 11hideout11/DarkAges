@@ -43,7 +43,8 @@
 namespace DarkAges {
 
 ZoneServer::ZoneServer()
-    : smallPool_(std::make_unique<Memory::SmallPool>()),
+    : instrumentationExporter_(std::make_unique<DarkAges::Instrumentation::ServerStateExporter>("/tmp/darkages_snapshots/server")),
+      smallPool_(std::make_unique<Memory::SmallPool>()),
       mediumPool_(std::make_unique<Memory::MediumPool>()),
       largePool_(std::make_unique<Memory::LargePool>()),
       tempAllocator_(std::make_unique<Memory::StackAllocator>(1024 * 1024)),
@@ -58,6 +59,7 @@ ZoneServer::~ZoneServer() = default;
 
 bool ZoneServer::initialize(const ZoneConfig& config) {
     config_ = config;
+    instrumentationExporter_->setEnabled(config.enableInstrumentation);
 
     std::cout << "[ZONE " << config_.zoneId << "] Initializing..." << std::endl;
 
@@ -648,6 +650,11 @@ bool ZoneServer::tick() {
     {
         ZONE_TRACE_EVENT("updateDatabase", Profiling::TraceCategory::DATABASE);
         updateDatabase();
+    }
+
+    // [INSTRUMENTATION] Export snapshot if enabled
+    if (instrumentationExporter_ && instrumentationExporter_->isEnabled()) {
+        instrumentationExporter_->maybeExport(registry_, currentTick_, getCurrentTimeMs());
     }
 
     // Calculate tick time

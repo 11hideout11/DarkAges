@@ -2,6 +2,7 @@ using Godot;
 using System;
 using DarkAges.Networking;
 using DarkAges.Entities;
+using DarkAges.Client.Utils;
 
 namespace DarkAges
 {
@@ -39,7 +40,7 @@ namespace DarkAges
 			// Parse CLI args for bot mode
 			var args = OS.GetCmdlineUserArgs();
 			// DEBUG: print all args
-			GD.Print($"[Main] Cmdline args count={args.Count}");
+			GD.Print($"[Main] Cmdline args count={args.Length}");
 			foreach (var a in args) GD.Print($"[Main] Arg: {a}");
 			foreach (var arg in args)
 			{

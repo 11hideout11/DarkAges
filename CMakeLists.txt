@@ -453,6 +453,7 @@ set(SERVER_SOURCES
     src/server/src/combat/LagCompensatedCombat.cpp
     src/server/src/combat/AchievementSystem.cpp
     src/server/src/combat/LeaderboardSystem.cpp
+    src/server/src/instrumentation/ServerStateExporter.cpp
     src/server/src/zones/AreaOfInterest.cpp
     src/server/src/zones/AuraProjection.cpp
     src/server/src/zones/ReplicationOptimizer.cpp
@@ -610,6 +611,7 @@ target_include_directories(darkages_core PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}/src/shared/proto
     ${ENTT_INCLUDE_DIR}
     ${GLM_INCLUDE_DIR}
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/server/src
 )
 
 # FlatBuffers include directories - proper order: generated first, then library

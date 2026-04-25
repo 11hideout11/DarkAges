@@ -15,6 +15,7 @@ import time
 from dataclasses import asdict
 from datetime import datetime
 from pathlib import Path
+from typing import Optional
 
 # Add parent to path for imports
 sys.path.insert(0, str(Path(__file__).parent))
@@ -24,6 +25,7 @@ from realtime_analyzer import (
     CorrelationEngine, generate_analysis_report
 )
 from server_instrumentation import ServerInstrumentationParser
+from tick_correlator import TickCorrelator
 
 # ─────────────────────────────────────────────────────────────────────────────
 # UNIFIED ANALYSIS
@@ -32,28 +34,40 @@ from server_instrumentation import ServerInstrumentationParser
 class UnifiedAnalysis:
     """Combines all data sources into coherent model."""
     
-    def __init__(self, client_log: Path, server_log: Path):
+    def __init__(self, client_log: Path, server_log: Path, instrument_dir: Optional[Path] = None):
         self.client_log = client_log
         self.server_log = server_log
-        
+        self.instrument_dir = instrument_dir
+
         self.client = ClientLogParser(client_log)
         self.server = ServerLogParser(server_log)
         self.server_deep = ServerInstrumentationParser(server_log)
         self.correlation = CorrelationEngine(self.client, self.server)
+
+        # Load tick snapshots if provided
+        self.tick_correlator = None
+        self.unified_tick_model = {}
+        self.divergence = {}
+        if instrument_dir:
+            client_snap = instrument_dir / "client"
+            server_snap = instrument_dir / "server"
+            if client_snap.exists() and server_snap.exists():
+                self.tick_correlator = TickCorrelator(client_snap, server_snap)
+                self.tick_correlator.load_snapshots()
+                self.unified_tick_model = self.tick_correlator.to_unified_model()
+                self.divergence = self.tick_correlator.compute_divergence_metrics()
     
     def generate_model(self) -> dict:
         """Generate unified game state model."""
-        
-        # Get base statistics
+        # Start with log-based model
         client_combat = self.client.get_combat_events()
         server_combat = self.server_deep.get_combat_summary()
-        
-        # Build unified model
+
         model = {
             'generated_at': datetime.now().isoformat(),
             'sources': {
-                'client': str(self.client_log.name),
-                'server': str(self.server_log.name),
+                'client_log': str(self.client_log.name),
+                'server_log': str(self.server_log.name),
             },
             'timeline': {
                 'server_ticks': server_combat.get('tick_range', (0, 0)),
@@ -69,8 +83,7 @@ class UnifiedAnalysis:
             },
             'combat': {
                 'client': {
-                    'attacks_sent': len([e for e in self.client.events 
-                                        if e.event_type == 'auto_combat']),
+                    'attacks_sent': len([e for e in self.client.events if e.event_type == 'auto_combat']),
                     'hits_received': len(client_combat),
                     'total_damage': sum(e.get('damage', 0) for e in client_combat),
                 },
@@ -79,19 +92,13 @@ class UnifiedAnalysis:
                     'respawns': server_combat.get('respawns', 0),
                 },
             },
-            'network': {
-                'snapshots_sent': len([e for e in self.client.events 
-                                     if e.source == 'network' and 'Snapshot' in str(e.data)]),
-                'latency': 'See client logs',
-            },
-            'correlation': {
-                'combat_events_matched': len(self.correlation.correlate_combat()),
-            },
         }
-        
-        # Add entity timeline
-        model['entity_timeline'] = self._build_entity_timeline()
-        
+
+        # EXTENSION: If tick snapshots are available, augment with precise world model
+        if self.tick_correlator:
+            model['tick_model'] = self.unified_tick_model
+            model['divergence'] = self.divergence
+
         return model
     
     def _build_entity_timeline(self) -> list[dict]:
@@ -199,8 +206,9 @@ class UnifiedAnalysis:
 class ValidationSuite:
     """Run automated validation tests."""
     
-    def __init__(self, log_dir: Path):
+    def __init__(self, log_dir: Path, instrument_dir: Optional[Path] = None):
         self.log_dir = log_dir
+        self.instrument_dir = instrument_dir
     
     def find_latest_logs(self) -> tuple[Path, Path]:
         """Find most recent client and server logs."""
@@ -216,9 +224,13 @@ class ValidationSuite:
     
     def run_all_validations(self) -> dict:
         """Run all validation hypotheses."""
-        
+
         client_log, server_log = self.find_latest_logs()
-        analysis = UnifiedAnalysis(client_log, server_log)
+        analysis = UnifiedAnalysis(
+            client_log=client_log,
+            server_log=server_log,
+            instrument_dir=self.instrument_dir
+        )
         
         hypotheses = [
             'combat_works',
@@ -260,8 +272,10 @@ class ValidationSuite:
 
 def main():
     parser = argparse.ArgumentParser(description="Unified Game Analysis")
-    parser.add_argument('--log-dir', type=Path, 
+    parser.add_argument('--log-dir', type=Path,
                        default=Path("/root/projects/DarkAges/tools/demo/artifacts/logs"))
+    parser.add_argument('--instrument-dir', type=Path, default=Path('/tmp/darkages_snapshots'),
+                       help='Base directory containing client/ and server/ tick snapshots')
     parser.add_argument('--validate', action='store_true')
     parser.add_argument('--model', action='store_true')
     parser.add_argument('--output', type=Path)
@@ -271,7 +285,7 @@ def main():
     
     if args.validate:
         # Run validation suite
-        suite = ValidationSuite(args.log_dir)
+        suite = ValidationSuite(args.log_dir, args.instrument_dir)
         
         try:
             results = suite.run_all_validations()
@@ -312,36 +326,51 @@ def main():
     
     elif args.model:
         # Generate model
-        suite = ValidationSuite(args.log_dir)
+        suite = ValidationSuite(args.log_dir, args.instrument_dir)
         client_log, server_log = suite.find_latest_logs()
-        analysis = UnifiedAnalysis(client_log, server_log)
-        
+        analysis = UnifiedAnalysis(
+            client_log=client_log,
+            server_log=server_log,
+            instrument_dir=args.instrument_dir if args.instrument_dir else None
+        )
+
         model = analysis.generate_model()
-        
+
         if args.output:
             args.output.write_text(json.dumps(model, indent=2))
-        
+
         print(json.dumps(model, indent=2))
-        
+
         sys.exit(0)
     
     else:
         # Default: interactive analysis
-        suite = ValidationSuite(args.log_dir)
+        suite = ValidationSuite(args.log_dir, args.instrument_dir)
         client_log, server_log = suite.find_latest_logs()
-        analysis = UnifiedAnalysis(client_log, server_log)
-        
+        analysis = UnifiedAnalysis(
+            client_log=client_log,
+            server_log=server_log,
+            instrument_dir=args.instrument_dir if args.instrument_dir else None
+        )
+
         print(f"\nAnalyzing:")
         print(f"  Client: {client_log.name}")
         print(f"  Server: {server_log.name}")
-        
+
         model = analysis.generate_model()
         print(f"\nCombat:")
         print(f"  Client hits: {model['combat']['client']['hits_received']}")
         print(f"  Total damage: {model['combat']['client']['total_damage']}")
         print(f"  Server kills: {model['combat']['server']['kills']}")
         print(f"  Server respawns: {model['combat']['server']['respawns']}")
-        
+
+        # Print divergence if available
+        if analysis.divergence:
+            print(f"\nDivergence:")
+            print(f"  Avg position delta: {analysis.divergence.get('avg_position_delta_m', 0):.3f} m")
+            print(f"  Max delta: {analysis.divergence.get('max_delta_m', 0):.3f} m")
+            print(f"  Synchronized ticks: {analysis.divergence.get('tick_count', 0)}")
+
         if args.output:
             args.output.write_text(json.dumps(model, indent=2))
 
