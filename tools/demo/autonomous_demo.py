@@ -246,6 +246,12 @@ class AutonomousOrchestrator:
         self._video_proc: Optional[subprocess.Popen] = None
         self._video_path: Optional[Path] = None
         self._client_connected_time: Optional[float] = None
+        # Event screenshot support
+        self._screenshot_lock = threading.Lock()
+        self._log_watch_stop = threading.Event()
+        self._log_watch_thread: Optional[threading.Thread] = None
+        self._event_screenshot_count = 0
+        self._max_event_screenshots = args.max_event_screenshots if args.event_screenshots else 0
 
     # ── Phase 0: Dependencies ──────────────────────────────────────────
     def phase_dependencies(self) -> bool:
@@ -732,10 +738,18 @@ class AutonomousOrchestrator:
             return True
 
         SCREENSHOTS.mkdir(parents=True, exist_ok=True)
+
+        # Start event-triggered screenshot watcher if enabled
+        if self.args.event_screenshots and self._max_event_screenshots > 0:
+            self._log_watch_stop.clear()
+            self._log_watch_thread = threading.Thread(target=self._watch_client_log, daemon=True)
+            self._log_watch_thread.start()
+            log_info(f"Event screenshot watcher started (max {self._max_event_screenshots})")
+
         count = self.args.screenshot_count
         interval = self.args.duration / max(count, 1)
 
-        log_info(f"Capturing {count} screenshots over {self.args.duration}s")
+        log_info(f"Capturing {count} timed screenshots over {self.args.duration}s")
 
         for i in range(count):
             if self._shutdown_event.is_set():
@@ -743,17 +757,116 @@ class AutonomousOrchestrator:
             ts = datetime.now().strftime("%Y%m%d_%H%M%S")
             path = SCREENSHOTS / f"demo_{ts}_{i+1:02d}.png"
             if take_screenshot(path, self._xauth_path):
-                self._screenshot_paths.append(path)
+                with self._screenshot_lock:
+                    self._screenshot_paths.append(path)
                 log_ok(f"Screenshot {i+1}/{count}: {path.name}")
             else:
                 log_warn(f"Screenshot {i+1}/{count} failed")
             if i < count - 1:
-                # Sleep in small chunks so we can respond to shutdown quickly
                 slept = 0.0
                 while slept < interval and not self._shutdown_event.is_set():
                     time.sleep(0.5)
                     slept += 0.5
+
+        # Stop event screenshot watcher
+        if self._log_watch_thread and self._log_watch_thread.is_alive():
+            self._log_watch_stop.set()
+            self._log_watch_thread.join(timeout=5)
+            log_info("Event screenshot watcher stopped")
+
         return True
+
+    def _watch_client_log(self):
+        """Tail the client log and capture screenshots on combat events."""
+        if not self.client.log_path or not self.client.log_path.exists():
+            return
+        log_path = str(self.client.log_path)
+        try:
+            with open(log_path, 'r') as f:
+                f.seek(0, 2)  # go to end to avoid old lines
+                while not self._log_watch_stop.is_set():
+                    line = f.readline()
+                    if line:
+                        if self._should_capture_event_line(line):
+                            with self._screenshot_lock:
+                                if self._event_screenshot_count < self._max_event_screenshots:
+                                    ts = datetime.now().strftime("%Y%m%d_%H%M%S")
+                                    event_tag = self._event_tag_for_line(line)
+                                    filename = f"demo_event_{event_tag}_{ts}_{self._event_screenshot_count+1:02d}.png"
+                                    path = SCREENSHOTS / filename
+                                    if take_screenshot(path, self._xauth_path):
+                                        self._screenshot_paths.append(path)
+                                        self._event_screenshot_count += 1
+                                        log_ok(f"Event screenshot: {path.name}")
+                    else:
+                        time.sleep(0.1)
+        except Exception as e:
+            log_warn(f"Log watcher error: {e}")
+
+    def _should_capture_event_line(self, line: str) -> bool:
+        if '[NetworkManager] CombatEvent' in line:
+            if 'subtype=1' in line or 'subtype=2' in line:
+                return True
+        if 'LocalPlayerDied' in line:
+            return True
+        if 'DamageDealt' in line:
+            return True
+        return False
+
+    def _event_tag_for_line(self, line: str) -> str:
+        if 'subtype=1' in line:
+            return "hit"
+        if 'subtype=2' in line or 'LocalPlayerDied' in line:
+            return "death"
+        if 'DamageDealt' in line:
+            return "damage"
+        return "event"
+
+    def _watch_client_log(self):
+        """Tail the client log and capture screenshots on combat events."""
+        if not self.client.log_path or not self.client.log_path.exists():
+            return
+        log_path = str(self.client.log_path)
+        try:
+            with open(log_path, 'r') as f:
+                f.seek(0, 2)  # go to end to avoid old lines
+                while not self._log_watch_stop.is_set():
+                    line = f.readline()
+                    if line:
+                        if self._should_capture_event_line(line):
+                            with self._screenshot_lock:
+                                if self._event_screenshot_count < self._max_event_screenshots:
+                                    ts = datetime.now().strftime("%Y%m%d_%H%M%S")
+                                    event_tag = self._event_tag_for_line(line)
+                                    filename = f"demo_event_{event_tag}_{ts}_{self._event_screenshot_count+1:02d}.png"
+                                    path = SCREENSHOTS / filename
+                                    if take_screenshot(path, self._xauth_path):
+                                        self._screenshot_paths.append(path)
+                                        self._event_screenshot_count += 1
+                                        log_ok(f"Event screenshot: {path.name}")
+                    else:
+                        time.sleep(0.1)
+        except Exception as e:
+            log_warn(f"Log watcher error: {e}")
+
+    def _should_capture_event_line(self, line: str) -> bool:
+        if '[NetworkManager] CombatEvent' in line:
+            if 'subtype=1' in line or 'subtype=2' in line:
+                return True
+        if 'LocalPlayerDied' in line:
+            return True
+        if 'DamageDealt' in line:
+            return True
+        return False
+
+    def _event_tag_for_line(self, line: str) -> str:
+        if 'subtype=1' in line:
+            return "hit"
+        if 'subtype=2' in line or 'LocalPlayerDied' in line:
+            return "death"
+        if 'DamageDealt' in line:
+            return "damage"
+        return "event"
 
     # ── Phase 7: Instrumentation Validation ──────────────────────────────
     def phase_instrumentation(self) -> bool:
@@ -1068,7 +1181,9 @@ Examples:
     parser.add_argument("--duration", type=int, default=60, help="Demo duration in seconds")
     parser.add_argument("--npcs", type=int, default=10, help="Number of NPCs")
     parser.add_argument("--port", type=int, default=7777, help="Server base port")
-    parser.add_argument("--screenshot-count", type=int, default=5, help="Number of screenshots")
+    parser.add_argument("--screenshot-count", type=int, default=12, help="Number of timed screenshots")
+    parser.add_argument("--event-screenshots", action="store_true", help="Capture screenshots on combat events")
+    parser.add_argument("--max-event-screenshots", type=int, default=5, help="Maximum event-triggered screenshots")
     parser.add_argument("--validator-clients", type=int, default=2, help="Validator client count")
     parser.add_argument("--validator-deep", action="store_true", help="Run deep validation")
     parser.add_argument("--demo-mode", action="store_true", default=True, help="Use demo zone config")

@@ -54,6 +54,8 @@
 // [ZONE_AGENT] Main zone server class
 // Manages all systems for a single zone/shard
 
+#include "instrumentation/ServerStateExporter.hpp"
+
 namespace DarkAges {
 
 // Snapshot history entry for delta compression
@@ -102,6 +104,7 @@ struct ZoneConfig {
     // Demo mode configuration
     bool demoMode{false};            // Enable curated demo zone
     std::string zoneConfigPath;      // Path to JSON zone configuration file
+    bool enableInstrumentation{false};  // Enable server tick-state export
 };
 
 struct TickMetrics {
@@ -314,6 +317,9 @@ private:
     // [PERFORMANCE_AGENT] Profiling and monitoring
     std::unique_ptr<Profiling::PerformanceMonitor> perfMonitor_;
     bool profilingEnabled_{false};
+
+    // [INSTRUMENTATION_AGENT] Server state snapshot export
+    std::unique_ptr<DarkAges::Instrumentation::ServerStateExporter> instrumentationExporter_;
 
     // [PERFORMANCE_AGENT] Memory pools for zero-allocation tick processing
     // Heap-allocated to avoid stack overflow (pools are 640KB - 1.25MB each)

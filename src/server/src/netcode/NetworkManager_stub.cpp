@@ -24,6 +24,7 @@ void NetworkManager::broadcastEvent(std::span<const uint8_t>) {}
 void NetworkManager::sendToMultiple(const std::vector<ConnectionID>&, std::span<const uint8_t>) {}
 void NetworkManager::disconnect(ConnectionID, const char*) {}
 std::vector<ClientInputPacket> NetworkManager::getPendingInputs() { return {}; }
+std::vector<EntityID> NetworkManager::getPendingRespawnRequests() { return {}; }
 void NetworkManager::clearProcessedInputs(uint32_t) {}
 ConnectionQuality NetworkManager::getConnectionQuality(ConnectionID) const { return {}; }
 bool NetworkManager::isConnected(ConnectionID) const { return false; }

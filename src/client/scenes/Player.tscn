@@ -3,6 +3,7 @@
 [ext_resource type="Script" path="res://src/prediction/PredictedPlayer.cs" id="1_player"]
 [ext_resource type="Script" path="res://src/combat/AttackFeedbackSystem.cs" id="2_attack"]
 [ext_resource type="Script" path="res://src/utils/MovementTrailSystem.cs" id="3_trail"]
+[ext_resource type="AnimationLibrary" path="res://scenes/PlayerAnimations.tres" id="4_animlib"]
 
 [sub_resource type="CapsuleShape3D" id="CapsuleShape3D_1"]
 radius = 0.3
@@ -37,6 +38,17 @@ collision_mask = 1
 current = true
 
 [node name="AnimationPlayer" type="AnimationPlayer" parent="."]
+root_node = NodePath("..")
+anim_library = ExtResource("4_animlib")
+
+[node name="AnimationTree" type="AnimationTree" parent="."]
+tree_root_node_path = NodePath("StateMachine")
+library = ExtResource("4_animlib")
+active = true
+
+[node name="StateMachine" type="AnimationNodeStateMachine" parent="AnimationTree"]
+node_path_position = NodePath("")
+params/State = "Idle"
 
 [node name="AttackFeedback" type="Node3D" parent="."]
 script = ExtResource("2_attack")

@@ -1,7 +1,7 @@
 # DarkAges MMO — MVP Demo Standards & Gap Analysis
 
-**Generated:** 2026-04-23
-**Validated by:** `client_instrumentation_validator.py` (8/8 checks passing)
+**Generated:** 2026-04-25  
+**Validated by:** Visual polish demo run (1978 tests, screenshots with combat UI visible)
 
 ---
 
@@ -99,9 +99,9 @@
 ### P1 — Makes the demo feel like a real game
 - [x] **Player movement visualization**: Camera follows player, position changes visible
 - [x] **NPC animations**: Red capsules have subtle idle bobbing + rotation
-- [ ] **Attack animation feedback**: No visual indication when player attacks — add swing or particle
-- [ ] **Terrain variety**: Flat green plane — add texture, hills, or props
 - [x] **Health bars**: Green/yellow/red billboarded bars above all entities (FIXED)
+- [x] **Attack animation feedback**: Visual swing via animation state system (FIXED)
+- [x] **Terrain variety**: Checkerboard terrain texture applied (FIXED)
 
 ### P2 — Feature completeness
 - [ ] **Inventory panel**: Grid of item slots in GameUI

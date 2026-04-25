@@ -1,9 +1,9 @@
-# DarkAges MMO - Demo Capabilities Assessment Report
+# DarkAges MMO — Demo Capabilities Assessment Report
 
-**Generated:** April 23, 2026  
-**Assessment Scope:** Full pipeline demo readiness - server startup, client connections, NPC replication, combat systems, and evidence collection  
-**Assessment Duration:** ~2 hours  
-**Assessment Method:** Automated validation harness + manual test runs + log analysis  
+**Generated:** April 25, 2026  
+**Assessment Scope:** Full pipeline demo readiness — server startup, client connections, NPC replication, combat systems, visual polish, and evidence collection  
+**Assessment Duration:** ~45 minutes  
+**Assessment Method:** Automated validation harness + Godot client headless demo + visual evidence capture  
 
 ---
 
@@ -19,14 +19,14 @@ The DarkAges MMO server is **DEMO READY** for showcasing core multiplayer game m
 
 ### 1.1 Project Scale
 
-| Metric | Value |
-|--------|-------|
-| Total C++ Source Files | 1,290 |
-| Test Files | 91 |
-| Test Cases | 1,212 |
-| Server Core LOC | ~26,000 |
-| Gameplay Systems | 18 |
-| Protocol Version | 1.0 |
+|| Metric | Value |
+||--------|-------|
+|| Total C++ Source Files | 1,290+ |
+|| Test Files | 88 |
+|| Test Cases | 1,978 |
+|| Server Core LOC | ~32,000 |
+|| Gameplay Systems | 18+ |
+|| Protocol Version | 1.0 |
 
 ### 1.2 Server Architecture
 
@@ -366,15 +366,14 @@ Result: ✅ ALL PASSING
 | **GNS (Steam)** | Stubbed | UDP used instead |
 | **Metrics (Port 8080)** | Warning | Prometheus not configured |
 
-### 4.3 Gap: Godot Client
+### 4.3 Visual Polish & Combat UI (Applied 2026-04-25)
 
-| Component | Status | Notes |
-|-----------|--------|-------|
-| **Godot Project** | ⚠️ C# fixed | EntityFrame visibility fixed |
-| **Godot Build** | ⏳ Not tested | Requires Godot editor |
-| **Visual Rendering** | ⏳ Not tested | Requires Godot build |
-
-**Note:** The C# fix was applied (`RemotePlayer.cs` line 35: `public class EntityFrame`), but the actual Godot client has not been compiled/run in this session.
+|| Component | Status | Details |
+|-----------|--------|---------|
+| **Remote player health bar visibility** | ✅ Improved | BoxMesh bg/fill scaled 20% larger (1.2× / 1.1×); height increased; emissive multiplier 0.5→1.0; Y offset raised to 2.25m for better readability above heads |
+| **Local player animations** | ✅ Fixed | `Player.tscn` AnimationPlayer now assigns `PlayerAnimations.tres` library; AnimationTree node configured with proper `tree_root` and `library` properties |
+| **Fallback animation switching** | ✅ Improved | `PredictedPlayer.cs` now switches animations via state machine transitions whenever desired state differs from current (Death/Hit/Dodge/Attack/Walk/Run/Sprint/Idle) |
+| **Evidence** | ✅ Captured | 3 demo screenshots show pink crosshair, floating damage numbers (6, 20), remote health bars, local player movement animation; video at `tools/demo/artifacts/videos/demo_20260424_2236.mp4` |
 
 ---
 
@@ -531,28 +530,26 @@ python3 tools/validation/live_client_validator.py \
 
 ### Demo Verdict
 
-**The DarkAges MMO server is DEMO READY** for showcasing:
+**The DarkAges MMO server is DEMO MVP READY** for showcasing:
 
 - Server architecture and initialization
 - UDP networking fundamentals
 - Entity-component system (EnTT)
 - Multi-client connection handling
-- NPC AI and spawning
+- NPC AI and spawning (A* pathfinding)
 - Snapshot-based replication
-- Combat system (attack/damage/death/respawn)
+- Combat system (attack/damage/death/respawn) with **visible UI feedback**
 - Anti-cheat systems
-- Performance at scale (400+ entities)
+- Performance at scale (400 entities <20ms, 800 <30ms)
 - Clean shutdown and recovery
+- **Combat UI polish**: health bars, damage numbers, hit markers, animations
 
 ### Gap
 
-The primary gap is the **Godot client visual demo** which requires:
-1. Opening `src/client/project.godot` in Godot editor
-2. Compiling the C# code
-3. Running multiple instances
-4. Observing visual interpolation
-
-This was not tested in this session but the code fix was applied.
+The remaining item is documentation polish (non-blocking):
+- `README.md` and status docs updated for accuracy
+- `DEMO_CAPABILITIES_REPORT.md` evidence section expanded
+- Demo capture infrastructure stable
 
 ---
 

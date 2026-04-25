@@ -25,6 +25,7 @@ import socket
 import struct
 import subprocess
 import sys
+import re
 import tempfile
 import threading
 import time
@@ -131,13 +132,15 @@ def run_tests() -> tuple[bool, int]:
     return passed, total
 
 
-def start_server(port: int, demo_mode: bool = True, npcs: int = 10) -> subprocess.Popen:
+def start_server(port: int, demo_mode: bool = True, npcs: int = 10, instrument: bool = False) -> subprocess.Popen:
     cmd = [str(SERVER_BIN), "--port", str(port), "--npcs", "--npc-count", str(npcs)]
     if demo_mode:
         cmd.append("--demo-mode")
         zone_config = PROJECT_ROOT / "tools/demo/content/demo_zone.json"
         if zone_config.exists():
             cmd.extend(["--zone-config", str(zone_config)])
+    if instrument:
+        cmd.append("--instrument")
 
     LOGS.mkdir(parents=True, exist_ok=True)
     ts = datetime.now().strftime("%Y%m%d_%H%M%S")
@@ -149,7 +152,7 @@ def start_server(port: int, demo_mode: bool = True, npcs: int = 10) -> subproces
     return proc, log_path
 
 
-def start_godot_headless(port: int, duration: int, xauth_path: Path) -> subprocess.Popen:
+def start_godot_headless(port: int, duration: int, xauth_path: Path, instrument: bool = False) -> tuple[subprocess.Popen, str, Path]:
     """Start Godot client under xvfb-run with auth file for screenshot capture."""
     cmd = [
         "xvfb-run", "-a", "-f", str(xauth_path),
@@ -157,22 +160,61 @@ def start_godot_headless(port: int, duration: int, xauth_path: Path) -> subproce
         GODOT,
         "--path", str(CLIENT_DIR),
         "--", "--server", "127.0.0.1", "--port", str(port),
-        "--auto-connect", "--demo-duration", str(duration)
+        "--auto-connect", "--bot-mode", "--demo-duration", str(duration)
     ]
 
     ts = datetime.now().strftime("%Y%m%d_%H%M%S")
     log_path = LOGS / f"godot_{ts}.log"
     log_file = open(log_path, "w")
 
-    proc = subprocess.Popen(cmd, stdout=log_file, stderr=subprocess.STDOUT, start_new_session=True)
-    print_step(f"Godot client started (PID {proc.pid})", "OK")
-    return proc, log_path
+    # Capture stderr separately to extract DISPLAY number from xvfb-run
+    stderr_fd, stderr_path = tempfile.mkstemp(suffix=".xvfb.err")
+    stderr_file = os.fdopen(stderr_fd, 'w')
+
+    # Build environment with instrumentation if enabled
+    client_env = os.environ.copy()
+    if instrument:
+        client_env["DARKAGES_INSTRUMENT"] = "1"
+
+    proc = subprocess.Popen(
+        cmd, stdout=log_file, stderr=stderr_file, start_new_session=True, env=client_env
+    )
+    stderr_file.flush()
+    stderr_file.close()
+    
+    # Parse DISPLAY from xvfb-run stderr
+    display = ":99"  # fallback
+    try:
+        with open(stderr_path, 'r') as f:
+            stderr_text = f.read()
+            for line in stderr_text.split('\n'):
+                if 'Server =' in line:
+                    parts = line.split('=')
+                    if len(parts) > 1:
+                        display = parts[1].strip().split('.')[0]  # -> :99
+                        break
+                elif 'DISPLAY=' in line:
+                    match = re.search(r'DISPLAY=([^\s]+)', line)
+                    if match:
+                        display = match.group(1)
+                        break
+    except Exception:
+        pass
+    finally:
+        try:
+            os.unlink(stderr_path)
+        except Exception:
+            pass
+    
+    print_step(f"Godot client started (PID {proc.pid}, display {display})", "OK")
+    return proc, display, log_path
 
 
-def take_screenshot(output_path: Path, xauth_path: Path) -> bool:
+def take_screenshot(output_path: Path, xauth_path: Path, display: str = ":99") -> bool:
     """Capture screenshot using scrot with xvfb auth."""
     env = os.environ.copy()
     env["XAUTHORITY"] = str(xauth_path)
+    env["DISPLAY"] = display
 
     # Try scrot first
     try:
@@ -451,7 +493,7 @@ def run_full_demo(args: argparse.Namespace) -> int:
     # Phase 3: Deploy
     print_header("PHASE 3: Deploy")
     port = 7777
-    server_proc, server_log = start_server(port, demo_mode=True, npcs=args.npcs)
+    server_proc, server_log = start_server(port, demo_mode=True, npcs=args.npcs, instrument=args.instrument)
 
     print("  Waiting for server readiness...")
     if not wait_for_server_udp(port, timeout=15):
@@ -465,7 +507,7 @@ def run_full_demo(args: argparse.Namespace) -> int:
     demo_duration = args.duration
     godot_duration = max(3, demo_duration - 2)
     xauth_path = ARTIFACTS / ".xvfb_auth"
-    godot_proc, godot_log = start_godot_headless(port, duration=godot_duration, xauth_path=xauth_path)
+    godot_proc, godot_display, godot_log = start_godot_headless(port, duration=godot_duration, xauth_path=xauth_path, instrument=args.instrument)
 
     # Wait a moment for client to start connecting
     time.sleep(3)
@@ -487,7 +529,7 @@ def run_full_demo(args: argparse.Namespace) -> int:
         if time.time() >= next_screenshot:
             ts = datetime.now().strftime("%H%M%S")
             ss_path = SCREENSHOTS / f"demo_{ts}.png"
-            if take_screenshot(ss_path, xauth_path=xauth_path):
+            if take_screenshot(ss_path, xauth_path=xauth_path, display=godot_display):
                 screenshot_paths.append(ss_path)
                 print(f"  {GREEN}Screenshot captured: {ss_path.name}{RESET}")
             next_screenshot = time.time() + screenshot_interval
@@ -570,6 +612,17 @@ def run_full_demo(args: argparse.Namespace) -> int:
     summary_path.write_text(json.dumps(summary, indent=2))
     print(f"  JSON: {summary_path}")
 
+    # Post-run analysis for instrumentation
+    if args.instrument:
+        print("\n📊 Running tick-level analysis...")
+        subprocess.run([
+            sys.executable, "tools/analysis/unified_analysis.py",
+            "--model",
+            "--instrument-dir", "/tmp/darkages_snapshots",
+            "--output", "tools/analysis/reports/instrumented_run.json"
+        ])
+        print("📄 Instrumentation report: tools/analysis/reports/instrumented_run.json")
+
     # Return 0 if all critical checks passed
     success = godot_metrics["connected"] and validator_result.get("passed", False)
     return 0 if success else 1
@@ -583,6 +636,11 @@ def main():
     parser.add_argument("--no-tests", action="store_true", help="Skip test validation")
     parser.add_argument("--npcs", type=int, default=10, help="Number of NPCs")
     parser.add_argument("--duration", type=int, default=None, help="Override demo duration")
+    parser.add_argument(
+        "--instrument", "-i",
+        action="store_true",
+        help="Enable server + client instrumentation (writes tick snapshots to /tmp/darkages_snapshots)"
+    )
     args = parser.parse_args()
 
     if args.quick:

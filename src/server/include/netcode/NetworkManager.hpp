@@ -96,6 +96,9 @@ public:
     // Get pending inputs (call after update())
     [[nodiscard]] std::vector<ClientInputPacket> getPendingInputs();
     
+    // Get pending game events (respawn requests, etc.)
+    [[nodiscard]] std::vector<EntityID> getPendingRespawnRequests();
+    
     // Clear processed inputs up to a sequence number
     void clearProcessedInputs(uint32_t upToSequence);
     

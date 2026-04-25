@@ -2,6 +2,7 @@ using Godot;
 using System;
 using DarkAges.Networking;
 using DarkAges.Entities;
+using DarkAges.Client.Utils;
 
 namespace DarkAges
 {
@@ -22,10 +23,10 @@ namespace DarkAges
 		// Demo auto-combat state
 		private double _autoAttackTimer = 0.0;
 		private const double AUTO_ATTACK_INTERVAL = 0.8;
-		private bool _autoAttackEnabled = true;
+		private bool _autoAttackEnabled = false;
 		
 		// Demo auto-movement state
-		private bool _autoMoveEnabled = true;
+		private bool _autoMoveEnabled = false;
 		private double _movePhaseTimer = 0.0;
 		private int _movePhase = 0;
 		private const double MOVE_PHASE_DURATION = 3.0;
@@ -35,6 +36,30 @@ namespace DarkAges
 		public override void _Ready()
 		{
 			GD.Print("[Main] Game starting...");
+			
+			// Parse CLI args for bot mode
+			var args = OS.GetCmdlineUserArgs();
+			// DEBUG: print all args
+			GD.Print($"[Main] Cmdline args count={args.Length}");
+			foreach (var a in args) GD.Print($"[Main] Arg: {a}");
+			foreach (var arg in args)
+			{
+				if (arg == "--bot-mode")
+				{
+					_autoAttackEnabled = true;
+					_autoMoveEnabled = true;
+					GD.Print("[Main] Bot mode enabled (--bot-mode)");
+					break;
+				}
+				// Auto-enable bot mode for demo runs
+				if (arg == "--demo-duration")
+				{
+					_autoAttackEnabled = true;
+					_autoMoveEnabled = true;
+					GD.Print("[Main] Demo mode detected — auto-combat enabled");
+					// no break: continue in case also --bot-mode explicitly
+				}
+			}
 			
 			_playersContainer = GetNode<Node3D>("Players");
 			
@@ -190,6 +215,11 @@ namespace DarkAges
 			if (success)
 			{
 				GD.Print("[Main] Connected to server!");
+				
+				if (!_autoAttackEnabled && !_autoMoveEnabled)
+				{
+					GD.Print("[Main] Human control mode — WASD to move, Mouse to look, Space to jump, Left Click to attack, Shift to sprint, Q to dodge, E to lock-on");
+				}
 
 				// [DEMO] Auto-exit after duration if --demo-duration is specified
 				var args = OS.GetCmdlineUserArgs();

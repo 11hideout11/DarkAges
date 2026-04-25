@@ -86,6 +86,7 @@ class TestClient:
         self.receive_thread: Optional[threading.Thread] = None
         self.input_sequence = 1
         self.last_ping_time = 0.0
+        self.ping_timestamps: dict[int, float] = {}
         self._lock = threading.Lock()
 
     def _send_with_simulation(self, data: bytes) -> bool:
@@ -198,8 +199,9 @@ class TestClient:
         if not self.connected:
             return False
 
-        self.last_ping_time = time.time()
-        timestamp = int(self.last_ping_time * 1000) & 0xFFFFFFFF
+        now = time.time()
+        timestamp = int(now * 1000) & 0xFFFFFFFF
+        self.ping_timestamps[timestamp] = now
         data = struct.pack('<BI', PACKET_PING, timestamp)
         if self._send_with_simulation(data):
             with self._lock:
@@ -291,10 +293,17 @@ class TestClient:
                 self.stats.entity_health[entity_id] = health
 
     def _process_pong(self, data: bytes):
-        """Calculate RTT from pong packet."""
+        """Calculate RTT from pong packet using echoed timestamp."""
         if len(data) < 5:
             return
-        rtt = (time.time() - self.last_ping_time) * 1000.0
+        # Unpack echoed timestamp: same format as ping, 4 bytes after type
+        timestamp, = struct.unpack_from('<I', data, 1)
+        send_time = self.ping_timestamps.pop(timestamp, None)
+        if send_time is None:
+            # Stale or unknown ping; fall back to last_ping_time for backward compatibility
+            rtt = (time.time() - self.last_ping_time) * 1000.0
+        else:
+            rtt = (time.time() - send_time) * 1000.0
         with self._lock:
             self.stats.pongs_received += 1
             self.stats.rtt_ms = rtt
