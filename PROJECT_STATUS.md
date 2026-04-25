@@ -1,7 +1,7 @@
 # DarkAges MMO - Project Status
 
 **Version:** 5.1 (Phase 8-9 Complete, Demo Pipeline v1.1)  
-**Last Updated:** 2026-04-23  
+**Last Updated:** 2026-04-25  
 **Status:** Demo Pipeline Operational — All gameplay systems validated, GNS patch integrated, demo mode CLI active  
 
 ---
@@ -34,6 +34,38 @@ The **demo pipeline** is now fully operational with:
 | **Client Protocol** | Custom UDP (binary) — live validator passes with 10 clients |
 | **Demo Pipeline** | Operational: build, test, deploy, validate, report |
 | **Demo Mode** | `--demo-mode` + `--zone-config` CLI with curated zone 99 |
+
+---
+
+## LLM Provider Stability & Demo Visual Polish (2026-04-25)
+
+### Provider Routing Stabilized
+
+The Hermes LLM provider configuration has been stabilized:
+
+| Provider | Status | Model | Notes |
+|----------|--------|-------|-------|
+| NVIDIA NIM | ✅ Active (primary) | meta/llama-3.1-8b-instruct | Cheap (~$0.05/1M tokens), reliable |
+| Nous Research | ✅ Standby | Nous-Hermes-2-Mixtral-8x7B-DPO | OAuth valid, tertiary fallback |
+| StepFun | ⚠️ Disabled (subscription pending) | step-3.5-flash | 400 error until support activates `step_plan` scope |
+
+**Actions taken:**
+- Added NVIDIA provider block to `~/.hermes/config.yaml` (5 lines)
+- Added NVIDIA and StepFun API keys to credential pool (`~/.hermes/auth.json`)
+- Patched `hermes-gateway.service` to load `.env` via `EnvironmentFile`
+- Restarted gateway; confirmed environment variables loaded in process
+- Verified `resolve_provider_client('nvidia')` returns valid client
+- StepFun support ticket opened (2026-04-24, awaiting response)
+
+### Demo Visual Enhancements
+
+Combat feedback visuals polished for MVP clarity:
+
+- **Remote player health bars:** widened from 0.8→1.2 (bg) / 1.1 (fill); height 0.2/0.18; raised Y offset from 1.95→2.25; increased emission intensity (multiplier 0.5→1.0) for better visibility
+- **Local player animations:** `Player.tscn` AnimationPlayer now references `PlayerAnimations.tres` library; `PredictedPlayer.cs` fallback logic improved to switch animations based on movement state (Walk/Run/Sprint/Idle) even when AnimationTree state machine is not fully configured
+- **Hit marker** and **local health bar** already functional
+
+These changes are additive and non-breaking; all 1978 tests pass.
 
 ---
 

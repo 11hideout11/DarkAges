@@ -119,15 +119,11 @@ namespace DarkAges
         {
             _cameraRig = GetNode<Node3D>("CameraRig");
             _springArm = GetNode<SpringArm3D>("CameraRig/SpringArm3D");
-            _animPlayer = GetNode<AnimationPlayer>("Model/AnimationPlayer");
-            _animTree = GetNode<AnimationTree>("Model/AnimationTree");
+            _animPlayer = GetNode<AnimationPlayer>("AnimationPlayer");
+            _animTree = GetNodeOrNull<AnimationTree>("AnimationTree");
 
             // Initialize animation parameters for state machine
-            if (_animTree != null)
-            {
-                var sm = _animTree.Get("parameters/StateMachine") as AnimationNodeStateMachine;
-                // Parameters are auto-created by the state machine, just ensure we have access
-            }
+            // (state machine parameters are auto-created by the scene)
 
             _predictedPosition = GlobalPosition;
             _correctionTargetPosition = GlobalPosition;
@@ -890,9 +886,8 @@ namespace DarkAges
             _animTree.Set("parameters/IsOnFloor", IsOnFloor());
             _animTree.Set("parameters/VelocityLength", velocityLength);
 
-            // Fallback: also try to keep AnimationPlayer in sync if AnimationTree is missing
-            // This ensures basic feedback even if the tree fails to load
-            if (_animPlayer != null && !_animPlayer.IsPlaying())
+            // Fallback: keep AnimationPlayer in sync when AnimationTree state machine is not providing transitions
+            if (_animPlayer != null)
             {
                 string animState = "Idle";
                 if (_isDead) animState = "Death";
@@ -903,9 +898,14 @@ namespace DarkAges
                 else if (isSprinting) animState = "Sprint";
                 else if (isWalking) animState = "Walk";
 
-                if (_animPlayer.HasAnimation(animState))
+                // Only switch if different or not playing
+                string current = _animPlayer.CurrentAnimation;
+                if (current != animState)
                 {
-                    _animPlayer.Play(animState);
+                    if (_animPlayer.HasAnimation(animState))
+                    {
+                        _animPlayer.Play(animState);
+                    }
                 }
             }
         }

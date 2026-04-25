@@ -1,5 +1,5 @@
 # DarkAges MMO — Demo Pipeline Status Report
-**Date:** April 23, 2026
+**Date:** April 25, 2026
 **Status:** OPERATIONAL — Smoke test passes, all core harness components implemented
 
 ---
@@ -11,6 +11,18 @@ The DarkAges MMO demo pipeline is now operational with a guarded, harnessed inst
 **Key Achievement:** `python3 tools/demo/run_demo.py --smoke` completes in ~35 seconds with 100% validation pass rate.
 
 ---
+
+## ✅ Demo Visual Polish & Health Bar Improvements (2026-04-25)
+
+Combat feedback visual enhancements applied:
+
+- RemotePlayer health bars: scale up 50% (width 0.8→1.2, height 0.15→0.2), raised Y from 1.95→2.25, emission boosted (energy 0.5→1.0) for clear visibility.
+- Local player animations: Player.tscn AnimationPlayer now loads PlayerAnimations.tres; PredictedPlayer.cs fallback logic improved to switch animations based on movement state.
+- All 1978 server tests pass; validator reports zero errors.
+
+**Latest demo artifacts:** `tools/demo/artifacts/reports/Autonomous_Demo_Report_20260424_220508.md`
+Combat events observed: 44 damage instances; bot attacks registered but local damage numbers still not rendered (requires further investigation).
+- 
 
 ## Components Delivered
 
