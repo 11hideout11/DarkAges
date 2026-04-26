@@ -1249,17 +1249,30 @@ void ZoneServer::processPendingCombatActions() {
 void ZoneServer::processPendingLockOnRequests() {
     if (pendingLockOnRequests_.empty()) return;
 
-    uint32_t currentTimeMs = getCurrentTimeMs();
+    uint32_t now = getCurrentTimeMs();
     Registry& registry = getRegistry();
 
     for (const auto& request : pendingLockOnRequests_) {
         // Resolve player entity from connection
-        EntityID playerEntity = entt::null;
-        {
-            auto it = connectionToEntity_.find(request.connectionId);
-            if (it == connectionToEntity_.end()) continue;
-            playerEntity = it->second;
+        auto it = connectionToEntity_.find(request.connectionId);
+        if (it == connectionToEntity_.end()) continue;
+        EntityID playerEntity = it->second;
+
+        // Ensure we have a TargetLock component for rate limiting
+        TargetLock* lockComp = registry.try_get<TargetLock>(playerEntity);
+        if (!lockComp) {
+            lockComp = &registry.emplace<TargetLock>(playerEntity);
         }
+
+        // Rate limiting: reject if last attempt was too recent
+        if (lockComp->lastLockAttempt != 0 && now - lockComp->lastLockAttempt < TargetLockSystem::MIN_LOCK_INTERVAL_MS) {
+            lockComp->lastLockAttempt = now; // still record this attempt
+            network_->sendLockOnFailed(request.connectionId, request.targetEntity, 4); // BUSY
+            continue;
+        }
+
+        // Record this attempt (successful rate-limit clearance)
+        lockComp->lastLockAttempt = now;
 
         // Validate target exists and has Position
         if (!registry.valid(request.targetEntity) || !registry.try_get<Position>(request.targetEntity)) {
@@ -1267,7 +1280,7 @@ void ZoneServer::processPendingLockOnRequests() {
             continue;
         }
 
-        // Check if target is alive (has CombatState with health > 0 and not dead)
+        // Check if target is alive (CombatState health > 0 and not dead)
         if (auto* combat = registry.try_get<CombatState>(request.targetEntity)) {
             if (combat->health <= 0 || combat->isDead) {
                 network_->sendLockOnFailed(request.connectionId, request.targetEntity, 2); // NOT_ALIVE
@@ -1275,14 +1288,7 @@ void ZoneServer::processPendingLockOnRequests() {
             }
         }
 
-        // Rate limiting: check last lock attempt timestamp
-        auto* lockComp = registry.try_get<TargetLock>(playerEntity);
-        if (lockComp && lockComp->lastLockAttempt >= currentTimeMs - TargetLockSystem::MIN_LOCK_INTERVAL_MS) {
-            network_->sendLockOnFailed(request.connectionId, request.targetEntity, 4); // BUSY
-            continue;
-        }
-
-        // Range check (max lock range ~50m)
+        // Range check (~50m max lock range)
         constexpr float MAX_LOCK_RANGE = 50.0f;
         Position* playerPos = registry.try_get<Position>(playerEntity);
         Position* targetPos = registry.try_get<Position>(request.targetEntity);
@@ -1297,16 +1303,10 @@ void ZoneServer::processPendingLockOnRequests() {
             }
         }
 
-        // Acquire or create TargetLock component
-        if (!lockComp) {
-            lockComp = &registry.emplace<TargetLock>(playerEntity);
-        }
-
-        // Apply confirmed lock
+        // Success: apply confirmed lock
         lockComp->lockedTarget = request.targetEntity;
         lockComp->lockState = LockState::Confirmed;
-        lockComp->lockTimeMs = currentTimeMs;
-        lockComp->lastLockAttempt = currentTimeMs;
+        lockComp->lockTimeMs = now;
 
         network_->sendLockOnConfirmed(request.connectionId, request.targetEntity);
     }
