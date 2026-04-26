@@ -1,8 +1,8 @@
 # DarkAges MMO - Project Status
 
-**Version:** 5.2 (Demo MVP — Visual Polish & Research Standards Alignment)  
-**Last Updated:** 2026-04-25  
-**Status:** Demo MVP Ready — Visual polish applied, research standards alignment documented, 1978 tests passing  
+**Version:** 5.3 (Demo MVP — Animation Polish Complete)  
+**Last Updated:** 2026-04-26  
+**Status:** Demo MVP Ready — Full combat feel polish (hit stop, procedural leaning, animation blend) merged; research standards alignment up to date; 1978 tests passing  
 
 ---
 
@@ -34,7 +34,7 @@ The **demo pipeline** is now fully operational with:
 || **Client Protocol** | Custom UDP (binary) — live validator passes with 10 clients |
 || **Demo Pipeline** | Operational: build, test, deploy, validate, report |
 || **Demo Mode** | `--demo-mode` + `--zone-config` CLI with curated zone 99 |
-|| **Visual Polish** | Applied 2026-04-25: health bars, animations, combat feedback |
+|| **Visual Polish** | Applied 2026-04-25 + 2026-04-26: health bars, animations, floating damage, hit stop, procedural leaning, animation crossfade |
 || **Research Alignment** | COMPATIBILITY_ANALYSIS.md maps codebase to UE5/GASP/Godot standards |
 
 ---
@@ -66,6 +66,18 @@ Combat feedback visuals polished for MVP clarity:
 - **Remote player health bars:** widened from 0.8→1.2 (bg) / 1.1 (fill); height 0.2/0.18; raised Y offset from 1.95→2.25; increased emission intensity (multiplier 0.5→1.0) for better visibility
 - **Local player animations:** `Player.tscn` AnimationPlayer now references `PlayerAnimations.tres` library; `PredictedPlayer.cs` fallback logic improved to switch animations based on movement state (Walk/Run/Sprint/Idle) even when AnimationTree state machine is not fully configured
 - **Hit marker** and **local health bar** already functional
+
+### Animation Polish — Priority 2 (2026-04-26)
+
+Three high-impact feel improvements added:
+
+| Feature | Implementation | Impact |
+|---------|---------------|--------|
+| **Hit Stop** | `CombatEventSystem.ApplyHitStop()` — 0.05s time-scale freeze (0.1×) + `Camera3D` shake on damage | Punchy, responsive combat |
+| **Procedural Leaning** | `PredictedPlayer.UpdateProceduralLeaning()` — velocity-based spine tilt up to 12°, smooth per-frame lerp; suppressed during dodge/hit/death | Character feels planted and dynamic |
+| **Animation Blend** | Crossfade transitions via `AnimationPlayer.Play(..., 0.15)`; exported `AnimationBlendTime` | Eliminates popping between states |
+
+All changes additive; objective + subjective evaluator passed; PR #21 merged to `main`.
 
 These changes are additive and non-breaking; all 1978 tests pass.
 

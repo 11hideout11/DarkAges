@@ -1,8 +1,12 @@
 # DarkAges MMO - Comprehensive Project Review & Analysis
-**Date:** February 18, 2026  
-**Reviewer:** Claude  
-**Project Version:** 0.7.0  
-**Current Phase:** Phase 8 - Production Hardening (Week 1 of 8)
+
+> **⚠️ Superseded Notice** — This review was written on **2026-02-18** (v0.7.0, Phase 8 mid-point). The project has since completed **Phase 8 Production Hardening**, **Phase 9 Performance Testing**, and **Visual Polish**. For current status, see `PROJECT_STATUS.md` (v5.3, 2026-04-26) and `Research/COMPATIBILITY_ANALYSIS.md` (2026-04-26). This document is kept for historical reference but does NOT reflect recent combat polish (hit stop, procedural leaning, animation blend) or GNS/database progress.
+
+---
+**Original Report Date:** February 18, 2026  \
+**Reviewer:** Claude  \
+**Project Version:** 0.7.0  \
+**Current Phase (at time):** Phase 8 - Production Hardening (Week 1 of 8)
 
 ---
 
@@ -674,6 +678,29 @@ The project is positioned well for production deployment if the Phase 8 work pac
 **Estimated Production-Ready Date:** March 27, 2026 (end of Phase 8)
 
 ---
+
+## ADDENDUM — Current Status (2026-04-26)
+
+Since the original review, the project has achieved significant milestones:
+
+- **Phase 8 Production Hardening** — All 8 work packages complete; monitoring, security, chaos, auto-scaling, load testing, GNS integration (code present, CI uses stub), database hardening, documentation.
+- **Phase 9 Performance Testing** — All 7 budget checks pass (400 entities <20ms, 800 <30ms, 1000 <50ms).
+- **Visual Polish & Research Alignment** — Mapped codebase to UE5/GASP/Godot standards in `Research/COMPATIBILITY_ANALYSIS.md`; Priority 1–3 items implemented (hitboxes, GCD, server-authoritative RPC, hit stop, procedural leaning, animation blend, SSAO/SDFGI).
+- **Combat Feel Polish (Priority 2)** — Merged PR #21: hit stop (0.05s), procedural leaning (12°), animation crossfade (0.15s); all 1978 tests pass.
+- **Demo Pipeline** — One-command launcher, supervisor, chaos injection, persistent E2E validator; Godot client headless integration validated (11 entities, 288 inputs, 0 errors).
+- **Recent Commit History** (top 5):
+  1. combat(P2): hit stop + procedural leaning + animation blend polish (merged)
+  2. visual(P1): complete floating combat text for local player
+  3. Combat(P1): wire PredictedPlayer combat events for hit/die feedback (merged)
+  4. Combat(P1): server-authoritative RPC handshake with GCD (merged)
+  5. Harness engineering: two-layer evaluator architecture (objective + subjective)
+
+**Outstanding Gaps:**
+- **GNS Activation** — WebRTC submodule fetch blocked; stub UDP path functional.
+- **ZoneServer Test Depth** — Source expanded (6.5K LOC); tests flagged shallow; targeted coverage expansion needed.
+- **Documentation Drift** — Some older docs (this review pre-dates major changes) are superseded; AGENTS.md is the source of truth for agent workflow.
+
+**Next Focus:** Test depth improvement (ZoneServer), optional camera polish (Phantom Camera evaluation), GNS submodule resolution.
 
 **Report Prepared By:** Claude AI Assistant  
 **Date:** February 18, 2026  

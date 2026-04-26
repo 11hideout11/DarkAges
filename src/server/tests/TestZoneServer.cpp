@@ -918,3 +918,151 @@ TEST_CASE("ZoneConfig with extreme bounds", "[zones][zoneserver]") {
         REQUIRE_NOTHROW(obj.setupSignalHandlers());
     }
 
+
+// ============================================================================
+// ZoneServer Tick & Lifecycle Depth Tests (added 2026-04-26)
+// ============================================================================
+
+TEST_CASE("ZoneServer run loop increments tick counter", "[zones][zoneserver][depth]") {
+    ZoneServer server;
+    REQUIRE(server.initialize(ZoneConfig{}));
+    REQUIRE_FALSE(server.isRunning());
+
+    // Start server main loop in background thread
+    std::thread runThread([&server]() {
+        server.run();
+    });
+
+    // Allow some ticks to occur (100ms ≈ 6 ticks at 60Hz)
+    std::this_thread::sleep_for(std::chrono::milliseconds(100));
+
+    // Request shutdown and wait for thread exit
+    server.requestShutdown();
+    if (runThread.joinable()) {
+        runThread.join();
+    }
+
+    // After run, tick count must have advanced
+    REQUIRE(server.getCurrentTick() >= 1);
+    auto& metrics = server.getMetricsRef();
+    REQUIRE(metrics.tickCount == server.getCurrentTick());
+    REQUIRE(metrics.totalTickTimeUs > 0);
+    REQUIRE(metrics.maxTickTimeUs > 0);
+}
+
+TEST_CASE("ZoneServer getCurrentTimeMs is monotonic after initialize", "[zones][zoneserver][depth]") {
+    ZoneServer server;
+    server.initialize(ZoneConfig{});
+
+    uint32_t t1 = server.getCurrentTimeMs();
+    uint32_t t2 = server.getCurrentTimeMs();
+
+    // Should be non-decreasing
+    REQUIRE(t2 >= t1);
+
+    // Sleep a bit to ensure time moves forward
+    std::this_thread::sleep_for(std::chrono::milliseconds(5));
+    uint32_t t3 = server.getCurrentTimeMs();
+    REQUIRE(t3 > t1);
+}
+
+TEST_CASE("ZoneServer spawnPlayer creates entity with required components and mapping", "[zones][zoneserver][depth]") {
+    ZoneServer server;
+    REQUIRE(server.initialize(ZoneConfig{}));
+
+    ConnectionID connId = 42;
+    uint64_t playerId = 1001;
+    std::string username = "TestPlayer";
+    Position spawnPos{100, 0, 200};
+
+    EntityID e = server.spawnPlayer(connId, playerId, username, spawnPos);
+
+    auto& registry = server.getRegistry();
+    REQUIRE(registry.valid(e));
+    REQUIRE(registry.all_of<Position>(e));
+    REQUIRE(registry.all_of<Velocity>(e));
+    REQUIRE(registry.all_of<Rotation>(e));
+    REQUIRE(registry.all_of<BoundingVolume>(e));
+    REQUIRE(registry.all_of<InputState>(e));
+    REQUIRE(registry.all_of<CombatState>(e));
+    REQUIRE(registry.all_of<NetworkState>(e));
+    REQUIRE(registry.all_of<AntiCheatState>(e));
+    REQUIRE(registry.all_of<PlayerInfo>(e));
+    REQUIRE(registry.all_of<PlayerTag>(e));
+    REQUIRE(registry.all_of<PlayerProgression>(e));
+
+    auto& pos = registry.get<Position>(e);
+    REQUIRE(pos.x == 100);
+    REQUIRE(pos.z == 200);
+
+    auto& info = registry.get<PlayerInfo>(e);
+    REQUIRE(info.playerId == playerId);
+    REQUIRE(info.connectionId == connId);
+    REQUIRE(std::string(info.username) == username);
+
+    auto* connToEnt = server.getConnectionToEntityPtr();
+    REQUIRE(connToEnt->at(connId) == e);
+
+    auto* entToConn = server.getEntityToConnectionPtr();
+    REQUIRE(entToConn->at(e) == connId);
+}
+
+TEST_CASE("ZoneServer despawnEntity removes entity and cleans mappings", "[zones][zoneserver][depth]") {
+    ZoneServer server;
+    REQUIRE(server.initialize(ZoneConfig{}));
+
+    EntityID e = server.spawnPlayer(1, 1, "Temp", Position{0,0,0});
+    auto* connToEnt = server.getConnectionToEntityPtr();
+    auto* entToConn = server.getEntityToConnectionPtr();
+
+    REQUIRE(connToEnt->find(1) != connToEnt->end());
+    REQUIRE(entToConn->find(e) != entToConn->end());
+
+    server.despawnEntity(e);
+
+    auto& registry = server.getRegistry();
+    REQUIRE_FALSE(registry.valid(e));
+    REQUIRE(connToEnt->find(1) == connToEnt->end());
+    REQUIRE(entToConn->find(e) == entToConn->end());
+}
+
+TEST_CASE("ZoneServer metrics accumulate correctly across many ticks", "[zones][zoneserver][depth]") {
+    ZoneServer server;
+    REQUIRE(server.initialize(ZoneConfig{}));
+
+    auto& metrics = server.getMetricsRef();
+    const int numTicks = 1000;
+
+    for (int i = 0; i < numTicks; ++i) {
+        server.tick();
+    }
+
+    REQUIRE(metrics.tickCount == numTicks);
+    REQUIRE(metrics.totalTickTimeUs > 0);
+    REQUIRE(metrics.maxTickTimeUs > 0);
+    REQUIRE(metrics.overruns >= 0);
+    REQUIRE(metrics.networkTimeUs >= 0);
+    REQUIRE(metrics.physicsTimeUs >= 0);
+    REQUIRE(metrics.gameLogicTimeUs >= 0);
+    REQUIRE(metrics.replicationTimeUs >= 0);
+}
+
+TEST_CASE("ZoneServer metrics reset zeroes all counters", "[zones][zoneserver][depth]") {
+    ZoneServer server;
+    REQUIRE(server.initialize(ZoneConfig{}));
+
+    for (int i = 0; i < 10; ++i) server.tick();
+
+    auto& metrics = server.getMetricsRef();
+    REQUIRE(metrics.tickCount > 0);
+
+    metrics.reset();
+    REQUIRE(metrics.tickCount == 0);
+    REQUIRE(metrics.totalTickTimeUs == 0);
+    REQUIRE(metrics.maxTickTimeUs == 0);
+    REQUIRE(metrics.overruns == 0);
+    REQUIRE(metrics.networkTimeUs == 0);
+    REQUIRE(metrics.physicsTimeUs == 0);
+    REQUIRE(metrics.gameLogicTimeUs == 0);
+    REQUIRE(metrics.replicationTimeUs == 0);
+}
