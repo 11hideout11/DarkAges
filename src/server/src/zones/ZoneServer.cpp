@@ -110,6 +110,11 @@ bool ZoneServer::initialize(const ZoneConfig& config) {
         pendingRemoteCombatActions_.push_back(action);
     });
 
+    // [COMBAT_AGENT] Server-authoritative lock-on targeting: enqueue requests
+    network_->setOnLockOnRequest([this](const LockOnRequestPacket& request) {
+        pendingLockOnRequests_.push_back(request);
+    });
+
     // Initialize Redis
     redis_ = std::make_unique<RedisManager>();
     if (!redis_->initialize(config_.redisHost, config_.redisPort)) {
@@ -814,6 +819,7 @@ void ZoneServer::updateGameLogic() {
     // Process combat inputs (attacks triggered by client input)
     ZONE_TRACE_EVENT("Combat::process", Profiling::TraceCategory::GAME_LOGIC);
     processPendingCombatActions();
+    processPendingLockOnRequests();
     combatEventHandler_.processCombat();
 
     // Health regeneration
@@ -1098,6 +1104,15 @@ void ZoneServer::onClientDisconnected(ConnectionID connectionId) {
 
         // [ZONE_AGENT] Remove mappings via PlayerManager
         playerManager_.removeConnectionMapping(entity);
+
+        // [COMBAT_AGENT] Clear target locks that other entities have on this disconnecting entity
+        auto lockView = registry_.view<TargetLock>();
+        for (auto [other, lock] : lockView.each()) {
+            if (lock.lockedTarget == entity) {
+                TargetLockSystem::clearLock(registry_, other);
+                lock.lastLockAttempt = 0;
+            }
+        }
     }
 
     // Clean up client snapshot state
@@ -1231,6 +1246,73 @@ void ZoneServer::processPendingCombatActions() {
     pendingRemoteCombatActions_.clear();
 }
 
+void ZoneServer::processPendingLockOnRequests() {
+    if (pendingLockOnRequests_.empty()) return;
+
+    uint32_t currentTimeMs = getCurrentTimeMs();
+    Registry& registry = getRegistry();
+
+    for (const auto& request : pendingLockOnRequests_) {
+        // Resolve player entity from connection
+        EntityID playerEntity = entt::null;
+        {
+            auto it = connectionToEntity_.find(request.connectionId);
+            if (it == connectionToEntity_.end()) continue;
+            playerEntity = it->second;
+        }
+
+        // Validate target exists and has Position
+        if (!registry.valid(request.targetEntity) || !registry.try_get<Position>(request.targetEntity)) {
+            network_->sendLockOnFailed(request.connectionId, request.targetEntity, 3); // INVALID_TARGET
+            continue;
+        }
+
+        // Check if target is alive (has CombatState with health > 0 and not dead)
+        if (auto* combat = registry.try_get<CombatState>(request.targetEntity)) {
+            if (combat->health <= 0 || combat->isDead) {
+                network_->sendLockOnFailed(request.connectionId, request.targetEntity, 2); // NOT_ALIVE
+                continue;
+            }
+        }
+
+        // Rate limiting: check last lock attempt timestamp
+        auto* lockComp = registry.try_get<TargetLock>(playerEntity);
+        if (lockComp && lockComp->lastLockAttempt >= currentTimeMs - TargetLockSystem::MIN_LOCK_INTERVAL_MS) {
+            network_->sendLockOnFailed(request.connectionId, request.targetEntity, 4); // BUSY
+            continue;
+        }
+
+        // Range check (max lock range ~50m)
+        constexpr float MAX_LOCK_RANGE = 50.0f;
+        Position* playerPos = registry.try_get<Position>(playerEntity);
+        Position* targetPos = registry.try_get<Position>(request.targetEntity);
+        if (playerPos && targetPos) {
+            float dx = playerPos->x - targetPos->x;
+            float dy = playerPos->y - targetPos->y;
+            float dz = playerPos->z - targetPos->z;
+            float distSq = dx*dx + dy*dy + dz*dz;
+            if (distSq > MAX_LOCK_RANGE * MAX_LOCK_RANGE) {
+                network_->sendLockOnFailed(request.connectionId, request.targetEntity, 0); // OUT_OF_RANGE
+                continue;
+            }
+        }
+
+        // Acquire or create TargetLock component
+        if (!lockComp) {
+            lockComp = &registry.emplace<TargetLock>(playerEntity);
+        }
+
+        // Apply confirmed lock
+        lockComp->lockedTarget = request.targetEntity;
+        lockComp->lockState = LockState::Confirmed;
+        lockComp->lockTimeMs = currentTimeMs;
+        lockComp->lastLockAttempt = currentTimeMs;
+
+        network_->sendLockOnConfirmed(request.connectionId, request.targetEntity);
+    }
+
+    pendingLockOnRequests_.clear();
+}
 
 EntityID ZoneServer::spawnPlayer(ConnectionID connectionId, uint64_t playerId,
                                 const std::string& username, const Position& spawnPos) {

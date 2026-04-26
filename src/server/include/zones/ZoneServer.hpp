@@ -23,6 +23,7 @@
 #include "combat/CombatSystem.hpp"
 #include "combat/StatusEffectSystem.hpp"
 #include "combat/ProjectileSystem.hpp"
+#include "combat/TargetLockSystem.hpp"
 #include "combat/NPCAISystem.hpp"
 #include "combat/ExperienceSystem.hpp"
 #include "combat/AbilitySystem.hpp"
@@ -254,6 +255,7 @@ private:
     void logCombatEvent(const HitResult& hit, EntityID attacker, EntityID target);
     void processAttackInput(EntityID entity, const ClientInputPacket& input);
     void processPendingCombatActions();
+    void processPendingLockOnRequests();
 
     // Performance monitoring (delegated to PerformanceHandler)
 
@@ -340,6 +342,9 @@ private:
 
     // [COMBAT_AGENT] Remote combat actions awaiting processing (RPC)
     std::vector<CombatActionPacket> pendingRemoteCombatActions_;
+    // [COMBAT_AGENT] Pending lock-on requests awaiting validation
+    std::vector<LockOnRequestPacket> pendingLockOnRequests_;
+
     // Client entity mapping
     std::unordered_map<ConnectionID, EntityID> connectionToEntity_;
     std::unordered_map<EntityID, ConnectionID> entityToConnection_;

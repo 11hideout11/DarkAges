@@ -4,6 +4,7 @@
 #include "zones/CombatEventHandler.hpp"
 #include "zones/ZoneServer.hpp"
 #include "combat/SpawnSystem.hpp"
+#include "combat/TargetLockSystem.hpp"
 #include "netcode/NetworkManager.hpp"
 #include "netcode/ProtobufProtocol.hpp"
 #include "db/ScyllaManager.hpp"
@@ -173,6 +174,15 @@ void CombatEventHandler::onEntityDied(EntityID victim, EntityID killer) {
         }
     } else {
         pendingRespawns_.push_back({victim, getCurrentTimeMs() + RESPAWN_DELAY_MS});
+    }
+
+    // Clear target locks involving the victim (victim's own lock, and any locks that targeted victim)
+    TargetLockSystem::clearLock(registry, victim);
+    auto lockView = registry.view<TargetLock>();
+    for (auto [entity, lock] : lockView.each()) {
+        if (lock.lockedTarget == victim) {
+            TargetLockSystem::clearLock(registry, entity);
+        }
     }
 }
 

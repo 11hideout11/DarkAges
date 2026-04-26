@@ -453,6 +453,7 @@ set(SERVER_SOURCES
     src/server/src/combat/LagCompensatedCombat.cpp
     src/server/src/combat/AchievementSystem.cpp
     src/server/src/combat/LeaderboardSystem.cpp
+    src/server/src/combat/TargetLockSystem.cpp
     src/server/src/instrumentation/ServerStateExporter.cpp
     src/server/src/zones/AreaOfInterest.cpp
     src/server/src/zones/AuraProjection.cpp
@@ -727,6 +728,7 @@ endif()
 if(BUILD_TESTS AND TARGET Catch2::Catch2WithMain)
     set(TEST_SOURCES
         src/server/tests/TestSpatialHash.cpp
+        src/server/tests/TestTargetLockSystem.cpp
         src/server/tests/TestMovementSystem.cpp
         src/server/tests/TestMemoryPool.cpp
         src/server/tests/TestLeakDetector.cpp

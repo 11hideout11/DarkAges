@@ -62,6 +62,14 @@ struct CombatActionPacket {
     uint32_t receiveTimeMs{0};
 };
 
+// Lock-on request packet (client -> server)
+struct LockOnRequestPacket {
+    ConnectionID connectionId{INVALID_CONNECTION};
+    EntityID targetEntity{entt::null};
+    uint32_t clientTimestamp{0};
+    uint32_t receiveTimeMs{0};
+};
+
 // Snapshot packet for serialization
 struct SnapshotPacket {
     uint32_t serverTick{0};
@@ -76,6 +84,7 @@ public:
     using InputCallback = std::function<void(const ClientInputPacket&)>;
     using SnapshotCallback = std::function<void(ConnectionID, std::span<const uint8_t>)>;
     using CombatActionCallback = std::function<void(const CombatActionPacket&)>;
+    using LockOnRequestCallback = std::function<void(const LockOnRequestPacket&)>;
 
 public:
     NetworkManager();
@@ -109,6 +118,9 @@ public:
     // Get pending combat actions (call after update())
     [[nodiscard]] std::vector<CombatActionPacket> getPendingCombatActions();
     
+    // Get pending lock-on requests (call after update())
+    [[nodiscard]] std::vector<LockOnRequestPacket> getPendingLockOnRequests();
+    
     // Get pending game events (respawn requests, etc.)
     [[nodiscard]] std::vector<EntityID> getPendingRespawnRequests();
     
@@ -129,12 +141,22 @@ public:
     void setOnClientDisconnected(ConnectionCallback callback) { onDisconnected_ = std::move(callback); }
     void setOnInputReceived(InputCallback callback) { onInput_ = std::move(callback); }
     void setOnCombatAction(CombatActionCallback callback) { onCombatAction_ = std::move(callback); }
+    void setOnLockOnRequest(LockOnRequestCallback callback) { onLockOnRequest_ = std::move(callback); }
     
     // Send combat result to a specific client
     // Format: [type:1=11][result:1][damage:4][target_id:4][is_critical:1][timestamp:4]
     // Result codes: 0=hit, 1=miss, 2=blocked, 3=cooldown, 4=gcd_active
     void sendCombatResult(ConnectionID connectionId, uint8_t resultCode, int32_t damage, 
                           uint32_t targetId, bool isCritical, uint32_t timestamp);
+
+    // Send lock-on confirmation to client
+    // Format: [type:1=12][target_entity:4]
+    void sendLockOnConfirmed(ConnectionID connectionId, EntityID targetEntity);
+
+    // Send lock-on failure to client
+    // Format: [type:1=13][target_entity:4][reason:1]
+    // Reason codes: 0=out_of_range, 1=not_visible, 2=not_alive, 3=invalid_target, 4=busy, 5=error
+    void sendLockOnFailed(ConnectionID connectionId, EntityID targetEntity, uint8_t reason);
 
     // Statistics
     [[nodiscard]] size_t getConnectionCount() const;
@@ -165,8 +187,10 @@ private:
     ConnectionCallback onDisconnected_;
     InputCallback onInput_;
     CombatActionCallback onCombatAction_;
+    LockOnRequestCallback onLockOnRequest_;
     
     std::vector<ClientInputPacket> pendingInputs_;
+    std::vector<LockOnRequestPacket> pendingLockOnRequests_;
     
     bool initialized_{false};
 };
