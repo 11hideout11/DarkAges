@@ -1,6 +1,6 @@
 # DarkAges - Document Index
 
-**Updated:** 2026-02-02
+**Updated:** 2026-04-26
 
 ## Canonical Documents (Single Source of Truth)
 
@@ -48,6 +48,7 @@
 |----------|---------|
 | [ImplementationRoadmapGuide.md](../ImplementationRoadmapGuide.md) | Technical specifications |
 | [PHASES_6_7_8_ROADMAP.md](../PHASES_6_7_8_ROADMAP.md) | Work package definitions |
+| [NETWORK_PROTOCOL.md](NETWORK_PROTOCOL.md) | Network protocol wire format |
 | [docs/runbooks/](runbooks/) | Operational procedures |
 
 ## Archived (Historical Reference Only)

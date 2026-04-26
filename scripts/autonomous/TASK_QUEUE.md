@@ -19,7 +19,7 @@ Prioritized list of autonomous improvements for DarkAges.
 ## P2 — Documentation
 - [ ] Update stale documentation files (4 files reference old state)
 - [ ] Add inline documentation to key ECS components
-- [ ] Document network protocol message format
+- [x] Document network protocol message format ✅ 2026-04-26 (docs/NETWORK_PROTOCOL.md)
 
 ## P2 — Phase 9 Completion
 - [x] Performance test infrastructure ✅ (TestLoadTesting.cpp, phase9_report.py)

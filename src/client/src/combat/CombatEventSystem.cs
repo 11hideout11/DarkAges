@@ -33,11 +33,16 @@ namespace DarkAges.Combat
         // Configuration
         [Export] public float DamageNumberLifetime = 1.5f;
         [Export] public float HitMarkerLifetime = 0.3f;
+        [Export] public float HitStopDuration = 0.05f;      // Freeze time on hit (seconds)
+        [Export] public float HitStopTimescale = 0.1f;      // Time scale during freeze (0.1 = 10% speed)
+        [Export] public float HitStopShakeIntensity = 2.0f; // Camera shake strength
         
         // State
         private Queue<CombatEvent> pendingEvents = new();
         private HashSet<uint> recentHits = new();  // For hit marker deduplication
         private Timer? hitMarkerResetTimer;
+        private bool _hitStopActive = false;
+        private float _hitStopTimer = 0.0f;
 
         public override void _EnterTree()
         {
@@ -95,12 +100,15 @@ namespace DarkAges.Combat
                         Vector3 position = targetEntity?.Position ?? Vector3.Zero;
                         SpawnDamageNumber(damage, position, false);
                         ShowHitMarker(false);
+                        // Hit stop for impact feel
+                        ApplyHitStop();
                         EmitSignal(SignalName.DamageDealt, targetId, damage, false, position);
                     }
                     else if (targetId == localEntityId)
                     {
                         // We took damage
                         ShowDamageIndicator(damage, false);
+                        ApplyHitStop();  // Also freeze briefly on being hit
                         EmitSignal(SignalName.DamageTaken, damage, false);
                     }
                     break;
@@ -146,6 +154,9 @@ namespace DarkAges.Combat
             
             // Show hit marker on crosshair
             ShowHitMarker(isCritical);
+            
+            // Hit stop for impact feel (only when local player lands the hit)
+            ApplyHitStop();
             
             EmitSignal(SignalName.DamageDealt, targetId, damage, isCritical, position);
         }
@@ -264,7 +275,7 @@ namespace DarkAges.Combat
 
         private void ShowKillNotification(uint victimId, uint killerId)
         {
-            // Show "You killed [player]" notification
+            // Show "You killed [player]"" notification
             var notification = GetNodeOrNull<Label>("/root/Main/UI/KillNotification");
             if (notification == null) return;
             
@@ -276,6 +287,85 @@ namespace DarkAges.Combat
             var tween = CreateTween();
             tween.TweenInterval(3.0);
             tween.TweenCallback(Callable.From(() => notification.Hide()));
+        }
+
+        /// <summary>
+        /// Apply hit stop effect: freeze world briefly with camera shake for impact feel.
+        /// </summary>
+        private void ApplyHitStop()
+        {
+            if (_hitStopActive) return;
+            _hitStopActive = true;
+            _hitStopTimer = HitStopDuration;
+            
+            // Time scale freezes physics and animations (affects gameplay nodes)
+            Engine.TimeScale = HitStopTimescale;
+            
+            // Camera shake for impact kick
+            ShakeCamera(HitStopShakeIntensity, HitStopDuration);
+            
+            GD.Print($"[CombatEventSystem] Hit stop: {HitStopDuration}s @ {HitStopTimescale}x time scale");
+        }
+
+        /// <summary>
+        /// Camera shake helper — applies a one-shot shake to the current camera rig.
+        /// </summary>
+        private void ShakeCamera(float intensity, float duration)
+        {
+            // Find the player's camera (expected at /root/Main/Player/CameraRig)
+            var cameraRig = GetNodeOrNull<Node3D>("/root/Main/Player/CameraRig");
+            if (cameraRig == null) return;
+            
+            // Create a short-lived shake using a tween on the camera's rotation/position
+            var startRot = cameraRig.Rotation;
+            var startPos = cameraRig.Position;
+            
+            // Generate random offsets over the duration
+            var timer = new Timer();
+            timer.WaitTime = 0.016f; // ~60Hz updates
+            timer.OneShot = false;
+            float elapsed = 0.0f;
+            Random rand = new Random();
+            
+            timer.Timeout += () =>
+            {
+                if (elapsed >= duration)
+                {
+                    cameraRig.Rotation = startRot;
+                    cameraRig.Position = startPos;
+                    timer.QueueFree();
+                    return;
+                }
+                
+                // Random jitter
+                float shakeX = (float)(rand.NextDouble() - 0.5) * intensity * 0.01f;
+                float shakeY = (float)(rand.NextDouble() - 0.5) * intensity * 0.01f;
+                float shakeRot = (float)(rand.NextDouble() - 0.5) * intensity * 0.05f;
+                
+                cameraRig.Position = startPos + new Vector3(shakeX, shakeY, 0);
+                cameraRig.Rotation = startRot + new Vector3(shakeRot, 0, 0);
+                elapsed += 0.016f;
+            };
+            
+            AddChild(timer);
+            timer.Start();
+        }
+
+        /// <summary>
+        /// Update hit stop timer each frame (call from _Process).
+        /// </summary>
+        public override void _Process(double delta)
+        {
+            if (_hitStopActive)
+            {
+                _hitStopTimer -= (float)delta;
+                if (_hitStopTimer <= 0.0f)
+                {
+                    _hitStopActive = false;
+                    Engine.TimeScale = 1.0f;  // Restore normal time
+                    GD.Print("[CombatEventSystem] Hit stop ended");
+                }
+            }
         }
     }
 
