@@ -42,6 +42,13 @@ message AttackInput {
     float aim_z = 5;
 }
 
+// Lock-on targeting request - reliable
+// Sent by client when player initiates lock-on (e.g., pressing lock-on button)
+message LockOnRequest {
+    uint32 target_entity = 1;      // Target entity ID to lock onto
+}
+
+
 // Connection handshake - reliable
 message Handshake {
     uint32 protocol_version = 1;   // Protocol major.minor (packed)
@@ -151,6 +158,29 @@ message Pong {
     uint32 server_timestamp = 2;   // Server receive time
 }
 
+// Lock-on confirmation - reliable
+// Sent by server when lock-on is successfully established
+message LockOnConfirmed {
+    uint32 target_entity = 1;      // Confirmed locked target entity ID
+}
+
+
+// Lock-on failure - reliable
+// Sent by server when lock-on cannot be completed
+message LockOnFailed {
+    enum Reason {
+        OUT_OF_RANGE = 0;          // Target too far away
+        NOT_VISIBLE = 1;           // No line-of-sight
+        NOT_ALIVE = 2;             // Target is dead
+        INVALID_TARGET = 3;        // Target cannot be locked (NPC? friendly?)
+        BUSY = 4;                  // Already locked to another target
+        ERROR = 5;                 // Unexpected error
+    }
+    Reason reason = 1;
+    uint32 target_entity = 2;      // Target that was attempted
+}
+
+
 // Server info/configuration
 message ServerConfig {
     uint32 tick_rate = 1;          // Server tick rate (Hz)
@@ -189,6 +219,7 @@ message NetworkMessage {
         // Client -> Server
         CLIENT_INPUT = 0;
         ABILITY_REQUEST = 1;
+        LOCK_ON_REQUEST = 5;
         ATTACK_INPUT = 2;
         HANDSHAKE = 3;
         PING = 4;
@@ -201,6 +232,8 @@ message NetworkMessage {
         PONG = 14;
         SERVER_CONFIG = 15;
         DISCONNECT = 16;
+        LOCK_ON_CONFIRMED = 17;
+        LOCK_ON_FAILED = 18;
     }
     
     MessageType type = 1;
@@ -211,6 +244,7 @@ message NetworkMessage {
         ClientInput client_input = 10;
         AbilityRequest ability_request = 11;
         AttackInput attack_input = 12;
+        LockOnRequest lock_on_request = 15;
         Handshake handshake = 13;
         Ping ping = 14;
         
@@ -221,6 +255,8 @@ message NetworkMessage {
         Pong pong = 24;
         ServerConfig server_config = 25;
         Disconnect disconnect = 26;
+        LockOnConfirmed lock_on_confirmed = 27;
+        LockOnFailed lock_on_failed = 28;
     }
 }
 
