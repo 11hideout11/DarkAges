@@ -163,6 +163,21 @@ struct CombatState {
     }
 };
 
+// [COMBAT_AGENT] Target lock state for lock-on targeting system
+enum class LockState : uint8_t {
+    None = 0,       // No lock active
+    Pending = 1,    // Lock request sent, awaiting confirmation
+    Confirmed = 2   // Lock confirmed by server
+};
+
+// [COMBAT_AGENT] Component storing target lock information
+struct TargetLock {
+    EntityID lockedTarget{entt::null};   // Currently locked target entity
+    LockState lockState{LockState::None}; // Current lock state
+    uint32_t lockTimeMs{0};              // Timestamp when lock was confirmed
+    uint32_t lastLockAttempt{0};         // Timestamp of last lock attempt (for rate limiting)
+};
+
 // ============================================================================
 // SPATIAL COMPONENTS
 // ============================================================================

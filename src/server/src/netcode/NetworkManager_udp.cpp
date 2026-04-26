@@ -58,6 +58,8 @@ struct GNSInternal {
     std::mutex respawnMutex;
     std::queue<CombatActionPacket> combatActionQueue;
     std::mutex combatMutex;
+    std::queue<LockOnRequestPacket> lockOnRequestQueue;
+    std::mutex lockOnMutex;
     uint32_t currentTimeMs{0};
 };
 
@@ -293,6 +295,27 @@ void NetworkManager::update(uint32_t currentTimeMs) {
                 }
                 break;
             }
+            case 5: { // PACKET_LOCK_ON_REQUEST
+                if (received < 13) break;
+                uint32_t targetEntity = *reinterpret_cast<uint32_t*>(buffer + 1);
+                uint32_t clientTimestamp = *reinterpret_cast<uint32_t*>(buffer + 5);
+
+                LockOnRequestPacket pkt;
+                pkt.connectionId = connId;
+                pkt.targetEntity = static_cast<EntityID>(targetEntity);
+                pkt.clientTimestamp = clientTimestamp;
+                pkt.receiveTimeMs = currentTimeMs;
+
+                {
+                    std::lock_guard<std::mutex> lock(udp->lockOnMutex);
+                    udp->lockOnRequestQueue.push(pkt);
+                }
+
+                if (onLockOnRequest_) {
+                    onLockOnRequest_(pkt);
+                }
+                break;
+            }
             case 9: { // PACKET_RESPAWN_REQUEST
                 if (received < 5) break;
                 uint32_t entityId = *reinterpret_cast<uint32_t*>(buffer + 1);
@@ -375,6 +398,17 @@ std::vector<CombatActionPacket> NetworkManager::getPendingCombatActions() {
     return actions;
 }
 
+std::vector<LockOnRequestPacket> NetworkManager::getPendingLockOnRequests() {
+    auto* udp = static_cast<GNSInternal*>(internal_.get());
+    std::vector<LockOnRequestPacket> requests;
+    std::lock_guard<std::mutex> lock(udp->lockOnMutex);
+    while (!udp->lockOnRequestQueue.empty()) {
+        requests.push_back(udp->lockOnRequestQueue.front());
+        udp->lockOnRequestQueue.pop();
+    }
+    return requests;
+}
+
 std::vector<EntityID> NetworkManager::getPendingRespawnRequests() {
     auto* udp = static_cast<GNSInternal*>(internal_.get());
     std::vector<EntityID> requests;
@@ -451,6 +485,47 @@ void NetworkManager::sendCombatResult(ConnectionID connectionId, uint8_t resultC
     std::memcpy(buffer + 6, &targetId, sizeof(uint32_t));
     buffer[10] = isCritical ? 1 : 0;
     std::memcpy(buffer + 11, &timestamp, sizeof(uint32_t));
+
+    std::lock_guard<std::recursive_mutex> lock(udp->connectionsMutex);
+    auto it = udp->connections.find(connectionId);
+    if (it == udp->connections.end()) return;
+
+    sendto(udp->sockfd, buffer, sizeof(buffer), 0,
+           reinterpret_cast<sockaddr*>(&it->second.addr), sizeof(it->second.addr));
+    udp->totalBytesSent += sizeof(buffer);
+    it->second.quality.packetsSent++;
+    it->second.quality.bytesSent += sizeof(buffer);
+}
+
+void NetworkManager::sendLockOnConfirmed(ConnectionID connectionId, EntityID targetEntity) {
+    auto* udp = static_cast<GNSInternal*>(internal_.get());
+    if (udp->sockfd < 0) return;
+
+    uint8_t buffer[5];
+    buffer[0] = 12;  // PACKET_LOCK_ON_CONFIRMED
+    uint32_t target = static_cast<uint32_t>(targetEntity);
+    std::memcpy(buffer + 1, &target, sizeof(uint32_t));
+
+    std::lock_guard<std::recursive_mutex> lock(udp->connectionsMutex);
+    auto it = udp->connections.find(connectionId);
+    if (it == udp->connections.end()) return;
+
+    sendto(udp->sockfd, buffer, sizeof(buffer), 0,
+           reinterpret_cast<sockaddr*>(&it->second.addr), sizeof(it->second.addr));
+    udp->totalBytesSent += sizeof(buffer);
+    it->second.quality.packetsSent++;
+    it->second.quality.bytesSent += sizeof(buffer);
+}
+
+void NetworkManager::sendLockOnFailed(ConnectionID connectionId, EntityID targetEntity, uint8_t reason) {
+    auto* udp = static_cast<GNSInternal*>(internal_.get());
+    if (udp->sockfd < 0) return;
+
+    uint8_t buffer[6];
+    buffer[0] = 13;  // PACKET_LOCK_ON_FAILED
+    uint32_t target = static_cast<uint32_t>(targetEntity);
+    std::memcpy(buffer + 1, &target, sizeof(uint32_t));
+    buffer[5] = reason;
 
     std::lock_guard<std::recursive_mutex> lock(udp->connectionsMutex);
     auto it = udp->connections.find(connectionId);
