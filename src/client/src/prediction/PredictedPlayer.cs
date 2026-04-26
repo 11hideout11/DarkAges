@@ -869,6 +869,8 @@ namespace DarkAges
         private void OnDamageTaken(int damage, bool isCritical)
         {
             if (_isDead) return;
+            // Show floating damage number at local player position
+            CombatEventSystem.Instance.SpawnDamageNumber(damage, GlobalPosition, isCritical);
             TriggerHitReaction();
         }
         
