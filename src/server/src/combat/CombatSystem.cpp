@@ -7,6 +7,7 @@
 #include <algorithm>
 #include <cstdlib>
 #include <cstdint>
+#include <cstring>
 #include <glm/glm.hpp>
 #include <vector>
 
@@ -71,6 +72,10 @@ HitResult CombatSystem::processAttack(Registry& registry, EntityID attacker,
     // Update attack cooldown
     if (CombatState* combat = registry.try_get<CombatState>(attacker)) {
         combat->lastAttackTime = currentTimeMs;
+        // Set global cooldown on any successful action
+        if (result.hit || (result.hitType && std::strcmp(result.hitType, "cooldown") != 0)) {
+            combat->lastGlobalCooldownTime = currentTimeMs;
+        }
     }
 
     return result;
@@ -285,6 +290,14 @@ bool CombatSystem::canAttack(Registry& registry, EntityID attacker, uint32_t cur
     // lastAttackTime == 0 means never attacked, allow first attack
     if (combat->lastAttackTime == 0) {
         return true;
+    }
+
+    // Check global cooldown (blocks ALL abilities/attacks for 1.2s after any action)
+    if (combat->lastGlobalCooldownTime > 0) {
+        uint32_t timeSinceGCD = currentTimeMs - combat->lastGlobalCooldownTime;
+        if (timeSinceGCD < config_.globalCooldownMs) {
+            return false;  // Global cooldown still active
+        }
     }
 
     uint32_t timeSinceLastAttack = currentTimeMs - combat->lastAttackTime;

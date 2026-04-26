@@ -244,14 +244,17 @@ TEST_CASE("[core-types] CollisionLayerMask values", "[ecs]") {
     REQUIRE(CollisionLayerMask::NONE == 0);
     REQUIRE(CollisionLayerMask::PLAYER == 1);
     REQUIRE(CollisionLayerMask::NPC == 2);
-    REQUIRE(CollisionLayerMask::PROJECTILE == 4);
-    REQUIRE(CollisionLayerMask::STATIC == 8);
-    REQUIRE(CollisionLayerMask::TRIGGER == 16);
+    REQUIRE(CollisionLayerMask::HITBOX == 4);
+    REQUIRE(CollisionLayerMask::HURTBOX == 8);
+    REQUIRE(CollisionLayerMask::PROJECTILE == 16);
+    REQUIRE(CollisionLayerMask::STATIC == 32);
+    REQUIRE(CollisionLayerMask::TRIGGER == 64);
 }
 
 TEST_CASE("[core-types] CollisionLayerMask default masks", "[ecs]") {
-    REQUIRE(CollisionLayerMask::PLAYER_DEFAULT == (1 | 2 | 8));  // PLAYER | NPC | STATIC
-    REQUIRE(CollisionLayerMask::NPC_DEFAULT == (1 | 2 | 4 | 8));  // PLAYER | NPC | PROJECTILE | STATIC
+    // Updated: added HITBOX (4) and HURTBOX (8); STATIC moved to bit5 (32)
+    REQUIRE(CollisionLayerMask::PLAYER_DEFAULT == (1 | 2 | 4 | 8 | 32));  // PLAYER | NPC | HITBOX | HURTBOX | STATIC
+    REQUIRE(CollisionLayerMask::NPC_DEFAULT == (1 | 2 | 4 | 8 | 16 | 32));  // PLAYER | NPC | HITBOX | HURTBOX | PROJECTILE | STATIC
 }
 
 // ============================================================================

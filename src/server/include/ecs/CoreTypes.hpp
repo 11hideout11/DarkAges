@@ -155,6 +155,7 @@ struct CombatState {
     uint8_t classType{0};
     EntityID lastAttacker{entt::null};
     uint32_t lastAttackTime{0};
+    uint32_t lastGlobalCooldownTime{0};  // Last time any ability/attack was used (for GCD)
     bool isDead{false};
 
     [[nodiscard]] float healthPercent() const {
@@ -375,20 +376,24 @@ struct Mana {
  // ============================================================================
 
  // [PHYSICS_AGENT] Collision layer bitmasks
- namespace CollisionLayerMask {
-     constexpr uint32_t NONE     = 0;
-     constexpr uint32_t PLAYER   = 1 << 0;   // 1
-     constexpr uint32_t NPC      = 1 << 1;   // 2
-     constexpr uint32_t PROJECTILE = 1 << 2; // 4
-     constexpr uint32_t STATIC   = 1 << 3;   // 8
-     constexpr uint32_t TRIGGER  = 1 << 4;   // 16
+namespace CollisionLayerMask {
+    constexpr uint32_t NONE     = 0;
+    constexpr uint32_t PLAYER   = 1 << 0;   // 1
+    constexpr uint32_t NPC      = 1 << 1;   // 2
+    constexpr uint32_t HITBOX   = 1 << 2;   // 4 — attack hit detection area
+    constexpr uint32_t HURTBOX  = 1 << 3;   // 8 — damage reception area
+    constexpr uint32_t PROJECTILE = 1 << 4; // 16
+    constexpr uint32_t STATIC   = 1 << 5;   // 32
+    constexpr uint32_t TRIGGER  = 1 << 6;   // 64
 
-     // Default collidesWith masks
-     constexpr uint32_t PLAYER_DEFAULT   = PLAYER | NPC | STATIC;
-     constexpr uint32_t NPC_DEFAULT      = PLAYER | NPC | PROJECTILE | STATIC;
-     constexpr uint32_t PROJECTILE_DEFAULT = PLAYER | NPC | STATIC;
-     constexpr uint32_t STATIC_DEFAULT   = PLAYER | NPC;
- }
+    // Default collidesWith masks
+    constexpr uint32_t PLAYER_DEFAULT   = PLAYER | NPC | STATIC | HITBOX | HURTBOX;
+    constexpr uint32_t NPC_DEFAULT      = PLAYER | NPC | PROJECTILE | STATIC | HITBOX | HURTBOX;
+    constexpr uint32_t PROJECTILE_DEFAULT = PLAYER | NPC | STATIC | HURTBOX;
+    constexpr uint32_t STATIC_DEFAULT   = PLAYER | NPC;
+    constexpr uint32_t HITBOX_DEFAULT     = HURTBOX | STATIC;
+    constexpr uint32_t HURTBOX_DEFAULT    = HITBOX | PROJECTILE;
+}
 
  // [PHYSICS_AGENT] Collision layer for entities
  struct CollisionLayer {
@@ -402,9 +407,15 @@ struct Mana {
      static CollisionLayer makeNPC() {
          return CollisionLayer{CollisionLayerMask::NPC, CollisionLayerMask::NPC_DEFAULT, entt::null};
      }
-     static CollisionLayer makeProjectile(EntityID owner = entt::null) {
-         return CollisionLayer{CollisionLayerMask::PROJECTILE, CollisionLayerMask::PROJECTILE_DEFAULT, owner};
-     }
+static CollisionLayer makeProjectile(EntityID owner = entt::null) {
+        return CollisionLayer{CollisionLayerMask::PROJECTILE, CollisionLayerMask::PROJECTILE_DEFAULT, owner};
+    }
+    static CollisionLayer makeHitbox(EntityID owner = entt::null) {
+        return CollisionLayer{CollisionLayerMask::HITBOX, CollisionLayerMask::HITBOX_DEFAULT, owner};
+    }
+    static CollisionLayer makeHurtbox(EntityID owner = entt::null) {
+        return CollisionLayer{CollisionLayerMask::HURTBOX, CollisionLayerMask::HURTBOX_DEFAULT, owner};
+    }
     static CollisionLayer makeStatic() {
         return CollisionLayer{CollisionLayerMask::STATIC, CollisionLayerMask::STATIC_DEFAULT, entt::null};
     }
