@@ -51,9 +51,7 @@ cd build_validate && ctest --output-on-failure -j8
 - **Harness Audit**: components in `HARNESS_COMPONENTS` dict with expiration dates; review quarterly
 
 ## Gaps
-- Client/Server Integration: Godot client entity interpolation end-to-end (C# fixes applied, pending build test)
-- Documentation Sync: PROJECT_STATUS.md, DarkAges_Comprehensive_Review.md may be stale
-- Test Depth: ZoneServer tests flagged as shallow by ratio heuristic (source under active expansion)
+- (none — all previously noted gaps resolved as of 2026-04-26)
 
 ## Recent Commits (last 10)
 1. combat(P2): hit stop + procedural leaning + animation blend polish (merged)
