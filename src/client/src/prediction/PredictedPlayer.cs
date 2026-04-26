@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using DarkAges.Networking;
+using DarkAges.Combat;
 
 namespace DarkAges
 {
@@ -148,6 +149,10 @@ namespace DarkAges
 
             // Initialize Hitbox/Hurtbox Area3D nodes for collision layers
             SetupHitboxHurtbox();
+
+            // Subscribe to combat events for hit reaction and death
+            CombatEventSystem.Instance.DamageTaken += OnDamageTaken;
+            CombatEventSystem.Instance.LocalPlayerDied += OnLocalPlayerDied;
         }
 
         public override void _Input(InputEvent @event)
@@ -856,6 +861,16 @@ namespace DarkAges
             _hitTimer = HIT_DURATION;
             GD.Print("[PredictedPlayer] Hit reaction triggered");
         }
+
+        /// <summary>
+        /// Called when local player takes damage from server event.
+        /// Triggers hit reaction (stun) and UI feedback.
+        /// </summary>
+        private void OnDamageTaken(int damage, bool isCritical)
+        {
+            if (_isDead) return;
+            TriggerHitReaction();
+        }
         
         /// <summary>
         /// Public method to trigger death state
@@ -867,6 +882,11 @@ namespace DarkAges
             _isAttacking = false;
             _isHit = false;
             GD.Print("[PredictedPlayer] Death triggered");
+        }
+
+        private void OnLocalPlayerDied(uint killerId)
+        {
+            TriggerDeath();
         }
         
         /// <summary>
@@ -1036,6 +1056,9 @@ private void UpdateDebugStats()
         
         public override void _ExitTree()
         {
+            // Unsubscribe from combat events
+            CombatEventSystem.Instance.DamageTaken -= OnDamageTaken;
+            CombatEventSystem.Instance.LocalPlayerDied -= OnLocalPlayerDied;
             // Clean up debug visualization
             if (_serverGhost != null && IsInstanceValid(_serverGhost))
             {

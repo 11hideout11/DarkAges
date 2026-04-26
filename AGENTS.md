@@ -56,16 +56,16 @@ cd build_validate && ctest --output-on-failure -j8
 - Test Depth: ZoneServer tests flagged as shallow by ratio heuristic (source under active expansion)
 
 ## Recent Commits (last 10)
-1. Harness engineering: two-layer evaluator architecture (objective + subjective) + tool subtraction
-2. Fix lag comp `calculateAttackTime` double-count latency; tests updated (124 combat tests pass)
-3. Validator: combat validation phase (`--combat`, `--combat-duration`)
-4. Fix C# `EntityFrame` visibility (private→public) for `RemotePlayerManager`
-5. Validator: NPC replication over network (`--npcs` + `--npc-count`)
-6. Validator: latency/packet-loss sim (30ms + 5% loss resilient)
-7. Fix live client validator: snapshot replication includes viewer, yaw/pitch clamp, threading crash fix, input dedup
-8. AchievementSystem + LeaderboardSystem + tests
-9. SpawnSystem refactor: single-entity spawn, forceSpawn tracking, per-zone positions, NavigationGrid wiring
-10. NPC Dialogue System (branching, conditions, quest hooks)
+1. Combat(P1): server-authoritative RPC handshake with GCD (merged)
+2. Harness engineering: two-layer evaluator architecture (objective + subjective) + tool subtraction
+3. Fix lag comp `calculateAttackTime` double-count latency; tests updated (124 combat tests pass)
+4. Validator: combat validation phase (`--combat`, `--combat-duration`)
+5. Fix C# `EntityFrame` visibility (private→public) for `RemotePlayerManager`
+6. Validator: NPC replication over network (`--npcs` + `--npc-count`)
+7. Validator: latency/packet-loss sim (30ms + 5% loss resilient)
+8. Fix live client validator: snapshot replication includes viewer, yaw/pitch clamp, threading crash fix, input dedup
+9. AchievementSystem + LeaderboardSystem + tests
+10. SpawnSystem refactor: single-entity spawn, forceSpawn tracking, per-zone positions, NavigationGrid wiring
 
 ---
-Last updated: 2026-04-24
+Last updated: 2026-04-26
