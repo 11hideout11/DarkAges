@@ -110,6 +110,15 @@ namespace DarkAges
         private AnimationTree _animTree;
         private Dictionary<string, bool> _animParams = new();
         
+        // Animation blending
+        [Export] public float AnimationBlendTime = 0.15f;  // Crossfade duration (seconds)
+        
+        // Procedural Leaning — tilt character on movement for dynamic feel
+        [Export] public float MaxLeanAngle = 12.0f;         // Max tilt in degrees
+        [Export] public float LeanSmoothing = 8.0f;         // How fast lean interpolates
+        private float _currentLean = 0.0f;                  // Current applied lean (radians)
+        private float _targetLean = 0.0f;                   // Target lean angle (radians)
+        
         // Debug visualization
         private MeshInstance3D _serverGhost;
         private Label3D _debugLabel;
@@ -994,7 +1003,10 @@ namespace DarkAges
             _animTree.Set("parameters/Dead", _isDead);
             _animTree.Set("parameters/IsOnFloor", IsOnFloor());
             _animTree.Set("parameters/VelocityLength", velocityLength);
-
+            
+            // Update procedural leaning based on current movement
+            UpdateProceduralLeaning(dt);
+            
             // Fallback: keep AnimationPlayer in sync when AnimationTree state machine is not providing transitions
             if (_animPlayer != null)
             {
@@ -1013,12 +1025,13 @@ namespace DarkAges
                 {
                     if (_animPlayer.HasAnimation(animState))
                     {
-                        _animPlayer.Play(animState);
+                        // Use crossfade blend for smoother transitions
+                        _animPlayer.Play(animState, AnimationBlendTime);
                     }
                 }
             }
         }
-private void UpdateDebugStats()
+        private void UpdateDebugStats()
         {
             // Expose stats for debug UI
             GameState.Instance.CurrentPredictionError = _predictionError;
@@ -1026,7 +1039,47 @@ private void UpdateDebugStats()
             GameState.Instance.LastProcessedInput = _lastProcessedServerInput;
             GameState.Instance.ReconciliationCount = _reconciliationCount;
         }
-
+        
+        /// <summary>
+        /// Procedural Leaning: Tilt character spine/root based on horizontal velocity direction.
+        /// Subtle dynamic feel — leans into movement changes.
+        /// </summary>
+        private void UpdateProceduralLeaning(float dt)
+        {
+            if (_isDead || _isDodging || _isHit) return;  // No lean when incapacitated
+            
+            // Get horizontal velocity magnitude (XZ plane)
+            float speed = new Vector3(Velocity.X, 0, Velocity.Z).Length();
+            if (speed < 0.5f)
+            {
+                _targetLean = 0.0f;  // No movement = upright
+            }
+            else
+            {
+                // Determine lean direction from lateral movement
+                // Positive X (right) → lean right (positive Z rotation)
+                // Negative X (left) → lean left (negative Z rotation)
+                float direction = Mathf.Sign(Velocity.X);
+                if (Mathf.Abs(Velocity.X) < 0.2f)
+                {
+                    // Strafe forward/backward — minimal lean
+                    direction = 0.0f;
+                }
+                
+                // Lean intensity scales with speed fraction of MaxSpeed
+                float speedRatio = Mathf.Clamp(speed / MaxSpeed, 0.0f, 1.0f);
+                float maxLeanRad = Mathf.DegToRad(MaxLeanAngle);
+                _targetLean = direction * maxLeanRad * speedRatio;
+            }
+            
+            // Smooth interpolation (per-frame factor)
+            float lerpFactor = Mathf.Clamp(LeanSmoothing * dt, 0.0f, 1.0f);
+            _currentLean = Mathf.Lerp(_currentLean, _targetLean, lerpFactor);
+            
+            // Apply to rotation Z (bank angle) — entire body tilt
+            Rotation = new Vector3(Rotation.X, Rotation.Y, _currentLean);
+        }
+        
         // Public accessors for debug UI
         public float GetPredictionError() => _predictionError;
         public int GetInputBufferSize() => _inputBuffer.Count;
