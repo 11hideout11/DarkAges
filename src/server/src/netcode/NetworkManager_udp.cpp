@@ -56,6 +56,8 @@ struct GNSInternal {
     std::mutex inputMutex;
     std::queue<EntityID> respawnRequestQueue;
     std::mutex respawnMutex;
+    std::queue<CombatActionPacket> combatActionQueue;
+    std::mutex combatMutex;
     uint32_t currentTimeMs{0};
 };
 
@@ -304,6 +306,30 @@ void NetworkManager::update(uint32_t currentTimeMs) {
                 // (actual respawn will happen on next server tick)
                 break;
             }
+            case 10: { // PACKET_COMBAT_ACTION (RPC damage request)
+                if (received < 10) break;
+                uint8_t actionType = buffer[1];
+                uint32_t targetEntity = *reinterpret_cast<uint32_t*>(buffer + 2);
+                uint32_t clientTimestamp = *reinterpret_cast<uint32_t*>(buffer + 6);
+                
+                // Queue the combat action for processing on the main tick
+                CombatActionPacket cap;
+                cap.connectionId = connId;
+                cap.actionType = actionType;
+                cap.targetEntity = static_cast<EntityID>(targetEntity);
+                cap.clientTimestamp = clientTimestamp;
+                cap.receiveTimeMs = currentTimeMs;
+                
+                {
+                    std::lock_guard<std::mutex> lock(udp->combatMutex);
+                    udp->combatActionQueue.push(cap);
+                }
+                
+                if (onCombatAction_) {
+                    onCombatAction_(cap);
+                }
+                break;
+            }
             default:
                 break;
         }
@@ -336,6 +362,17 @@ std::vector<ClientInputPacket> NetworkManager::getPendingInputs() {
         udp->inputQueue.pop();
     }
     return inputs;
+}
+
+std::vector<CombatActionPacket> NetworkManager::getPendingCombatActions() {
+    auto* udp = static_cast<GNSInternal*>(internal_.get());
+    std::vector<CombatActionPacket> actions;
+    std::lock_guard<std::mutex> lock(udp->combatMutex);
+    while (!udp->combatActionQueue.empty()) {
+        actions.push_back(udp->combatActionQueue.front());
+        udp->combatActionQueue.pop();
+    }
+    return actions;
 }
 
 std::vector<EntityID> NetworkManager::getPendingRespawnRequests() {
@@ -400,6 +437,30 @@ void NetworkManager::sendToMultiple(const std::vector<ConnectionID>& conns, std:
     for (ConnectionID conn : conns) {
         sendSnapshot(conn, data);
     }
+}
+
+void NetworkManager::sendCombatResult(ConnectionID connectionId, uint8_t resultCode, int32_t damage, 
+                                       uint32_t targetId, bool isCritical, uint32_t timestamp) {
+    auto* udp = static_cast<GNSInternal*>(internal_.get());
+    if (udp->sockfd < 0) return;
+
+    uint8_t buffer[15];
+    buffer[0] = 11;  // PACKET_COMBAT_RESULT
+    buffer[1] = resultCode;
+    std::memcpy(buffer + 2, &damage, sizeof(int32_t));
+    std::memcpy(buffer + 6, &targetId, sizeof(uint32_t));
+    buffer[10] = isCritical ? 1 : 0;
+    std::memcpy(buffer + 11, &timestamp, sizeof(uint32_t));
+
+    std::lock_guard<std::recursive_mutex> lock(udp->connectionsMutex);
+    auto it = udp->connections.find(connectionId);
+    if (it == udp->connections.end()) return;
+
+    sendto(udp->sockfd, buffer, sizeof(buffer), 0,
+           reinterpret_cast<sockaddr*>(&it->second.addr), sizeof(it->second.addr));
+    udp->totalBytesSent += sizeof(buffer);
+    it->second.quality.packetsSent++;
+    it->second.quality.bytesSent += sizeof(buffer);
 }
 
 void NetworkManager::disconnect(ConnectionID connectionId, const char* reason) {

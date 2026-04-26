@@ -28,6 +28,7 @@ struct CombatConfig {
     
     // Attack timing
     uint32_t attackCooldownMs = 500;     // 0.5s between attacks
+    uint32_t globalCooldownMs = 1200;    // 1.2s global cooldown
     float meleeRange = 2.5f;             // meters
     float meleeAngle = 60.0f;            // degrees (cone in front)
     

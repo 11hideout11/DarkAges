@@ -82,6 +82,15 @@ namespace DarkAges
         private const double HIT_DURATION = 0.3;
         private bool _isDead = false;
         
+        // Global Cooldown (GCD) - 1.2s after any action
+        private double _lastGlobalCooldownTime = 0.0;
+        private const double GLOBAL_COOLDOWN_DURATION = 1.2;
+        private bool _isOnGlobalCooldown = false;
+        
+        // Hitbox/Hurtbox Area3D nodes
+        private Area3D _hitbox;
+        private Area3D _hurtbox;
+        
         // Smooth correction state
         private Vector3 _correctionTargetPosition;
         private Vector3 _correctionStartPosition;
@@ -136,6 +145,9 @@ namespace DarkAges
             CreateDebugVisualization();
 
             GD.Print("[PredictedPlayer] Initialized with prediction buffer (WP-7-2)");
+
+            // Initialize Hitbox/Hurtbox Area3D nodes for collision layers
+            SetupHitboxHurtbox();
         }
 
         public override void _Input(InputEvent @event)
@@ -204,6 +216,17 @@ namespace DarkAges
                 _invulnerableTimer -= delta;
             }
             
+            // Update global cooldown timer
+            if (_isOnGlobalCooldown)
+            {
+                double now = Time.GetTicksMsec() / 1000.0;
+                if (now - _lastGlobalCooldownTime >= GLOBAL_COOLDOWN_DURATION)
+                {
+                    _isOnGlobalCooldown = false;
+                    GD.Print("[PredictedPlayer] GCD expired");
+                }
+            }
+            
             // Update smooth correction if active
             if (_isSmoothingCorrection)
             {
@@ -226,12 +249,15 @@ namespace DarkAges
                 TriggerDodge(input);
             }
             
-            // 2b. Handle attack trigger
-            if (input.Attack && !_isAttacking && !_isDodging && !_isHit && !_isDead)
+            // 2b. Handle attack trigger (with GCD enforcement)
+            if (input.Attack && !_isAttacking && !_isDodging && !_isHit && !_isDead && !_isOnGlobalCooldown)
             {
                 _isAttacking = true;
                 _attackTimer = ATTACK_DURATION;
-                GD.Print("[PredictedPlayer] Attack triggered");
+                // Start global cooldown - blocks all actions for 1.2s
+                _isOnGlobalCooldown = true;
+                _lastGlobalCooldownTime = Time.GetTicksMsec() / 1000.0;
+                GD.Print("[PredictedPlayer] Attack triggered, GCD started");
             }
             
             // 3. Apply locally immediately (prediction)
@@ -861,8 +887,69 @@ namespace DarkAges
         public bool IsDead => _isDead;
         public bool IsHit => _isHit;
 
-        
-        
+        /// <summary>
+        /// Set up Hitbox (Layer 3) and Hurtbox (Layer 4) Area3D nodes.
+        /// Hitbox detects when our attacks hit enemies.
+        /// Hurtbox detects when enemy attacks hit us.
+        /// </summary>
+        private void SetupHitboxHurtbox()
+        {
+            // Hitbox — attack hit detection (Layer 3)
+            _hitbox = new Area3D
+            {
+                Name = "HitboxArea",
+                CollisionLayer = 1 << 2,  // Layer 3
+                CollisionMask = 1 << 3    // Detect Layer 4 (Hurtbox)
+            };
+            var hitboxShape = new CollisionShape3D
+            {
+                Shape = new CylinderShape3D { Radius = 0.8f, Height = 1.5f },
+                Position = new Vector3(0, 1.0f, 0.5f)  // Slightly in front
+            };
+            _hitbox.AddChild(hitboxShape);
+            _hitbox.AreaEntered += OnHitboxAreaEntered;
+            AddChild(_hitbox);
+
+            // Hurtbox — damage reception area (Layer 4)
+            _hurtbox = new Area3D
+            {
+                Name = "HurtboxArea",
+                CollisionLayer = 1 << 3,  // Layer 4
+                CollisionMask = 1 << 2    // Detect Layer 3 (Hitbox)
+            };
+            var hurtboxShape = new CollisionShape3D
+            {
+                Shape = new CylinderShape3D { Radius = 0.5f, Height = 1.8f },
+                Position = new Vector3(0, 0.9f, 0)
+            };
+            _hurtbox.AddChild(hurtboxShape);
+            _hurtbox.AreaEntered += OnHurtboxAreaEntered;
+            AddChild(_hurtbox);
+
+            GD.Print("[PredictedPlayer] Hitbox (Layer 3) and Hurtbox (Layer 4) initialized");
+        }
+
+        /// <summary>
+        /// Called when our hitbox overlaps an enemy hurtbox (we hit them).
+        /// Only processed on server authority via RPC; local prediction is visual-only.
+        /// </summary>
+        private void OnHitboxAreaEntered(Area3D area)
+        {
+            if (_isDead) return;
+            GD.Print($"[PredictedPlayer] Hitbox touched: {area.Name}");
+        }
+
+        /// <summary>
+        /// Called when an enemy hitbox overlaps our hurtbox (we got hit).
+        /// Actual damage application is server-authoritative.
+        /// </summary>
+        private void OnHurtboxAreaEntered(Area3D area)
+        {
+            if (_isDead || _isDodging) return;  // Invulnerable during dodge
+            GD.Print($"[PredictedPlayer] Hurtbox touched by: {area.Name}");
+        }
+
+
         private void UpdateAnimation(InputState input)
         {
             // AnimationTree state machine drives all visual state transitions cleanly

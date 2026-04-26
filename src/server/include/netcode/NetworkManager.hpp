@@ -53,6 +53,15 @@ struct ClientInputPacket {
     uint32_t receiveTimeMs{0};
 };
 
+// Combat action RPC packet (client -> server attack request)
+struct CombatActionPacket {
+    ConnectionID connectionId{INVALID_CONNECTION};
+    uint8_t actionType{0};     // 1=melee, 2=ranged, 3=ability
+    EntityID targetEntity{entt::null};
+    uint32_t clientTimestamp{0};
+    uint32_t receiveTimeMs{0};
+};
+
 // Snapshot packet for serialization
 struct SnapshotPacket {
     uint32_t serverTick{0};
@@ -66,6 +75,7 @@ public:
     using ConnectionCallback = std::function<void(ConnectionID)>;
     using InputCallback = std::function<void(const ClientInputPacket&)>;
     using SnapshotCallback = std::function<void(ConnectionID, std::span<const uint8_t>)>;
+    using CombatActionCallback = std::function<void(const CombatActionPacket&)>;
 
 public:
     NetworkManager();
@@ -96,6 +106,9 @@ public:
     // Get pending inputs (call after update())
     [[nodiscard]] std::vector<ClientInputPacket> getPendingInputs();
     
+    // Get pending combat actions (call after update())
+    [[nodiscard]] std::vector<CombatActionPacket> getPendingCombatActions();
+    
     // Get pending game events (respawn requests, etc.)
     [[nodiscard]] std::vector<EntityID> getPendingRespawnRequests();
     
@@ -115,6 +128,13 @@ public:
     void setOnClientConnected(ConnectionCallback callback) { onConnected_ = std::move(callback); }
     void setOnClientDisconnected(ConnectionCallback callback) { onDisconnected_ = std::move(callback); }
     void setOnInputReceived(InputCallback callback) { onInput_ = std::move(callback); }
+    void setOnCombatAction(CombatActionCallback callback) { onCombatAction_ = std::move(callback); }
+    
+    // Send combat result to a specific client
+    // Format: [type:1=11][result:1][damage:4][target_id:4][is_critical:1][timestamp:4]
+    // Result codes: 0=hit, 1=miss, 2=blocked, 3=cooldown, 4=gcd_active
+    void sendCombatResult(ConnectionID connectionId, uint8_t resultCode, int32_t damage, 
+                          uint32_t targetId, bool isCritical, uint32_t timestamp);
 
     // Statistics
     [[nodiscard]] size_t getConnectionCount() const;
@@ -144,6 +164,7 @@ private:
     ConnectionCallback onConnected_;
     ConnectionCallback onDisconnected_;
     InputCallback onInput_;
+    CombatActionCallback onCombatAction_;
     
     std::vector<ClientInputPacket> pendingInputs_;
     

@@ -44,9 +44,12 @@ namespace DarkAges.Networking
  [Signal]
  public delegate void ConnectedEventHandler(uint entityId);
  
- [Signal]
+[Signal]
  public delegate void InputSentEventHandler(bool attack, bool block);
- 
+
+[Signal]
+public delegate void CombatResultReceivedEventHandler(byte[] resultData);
+
  // Socket
         private UdpClient? _udpClient;
         private IPEndPoint? _serverEndPoint;
@@ -76,6 +79,8 @@ namespace DarkAges.Networking
         private const byte PACKET_CONNECTION_RESPONSE = 7;
         private const byte PACKET_SERVER_CORRECTION = 8;
         private const byte PACKET_RESPAWN_REQUEST = 9;
+        private const byte PACKET_COMBAT_ACTION = 10;   // Client -> Server: attack request
+        private const byte PACKET_COMBAT_RESULT = 11;   // Server -> Client: validated result
 
         public override void _EnterTree()
         {
@@ -396,6 +401,9 @@ namespace DarkAges.Networking
                 case PACKET_CONNECTION_RESPONSE:
                     ProcessConnectionResponse(data);
                     break;
+                case PACKET_COMBAT_RESULT:
+                    ProcessCombatResult(data);
+                    break;
                 default:
                     GD.Print($"[NetworkManager] Unknown packet type: {packetType}");
                     break;
@@ -663,5 +671,54 @@ namespace DarkAges.Networking
         /// Get current input sequence number
         /// </summary>
         public uint GetInputSequence() => _inputSequence;
+
+        /// <summary>
+        /// Send a combat action RPC to the server for validation.
+        /// Format: [type:1=10][action_type:1][target_id:4][timestamp:4]
+        /// Action types: 1=melee, 2=ranged, 3=ability
+        /// </summary>
+        public void SendCombatAction(byte actionType, uint targetEntityId)
+        {
+            if (_udpClient == null || _serverEndPoint == null) return;
+            if (GameState.Instance.CurrentConnectionState != GameState.ConnectionState.Connected) return;
+
+            byte[] data = new byte[10];
+            data[0] = PACKET_COMBAT_ACTION;
+            data[1] = actionType;  // 1=melee, 2=ranged, 3=ability
+            BitConverter.GetBytes(targetEntityId).CopyTo(data, 2);
+            uint now = (uint)Time.GetTicksMsec();
+            BitConverter.GetBytes(now).CopyTo(data, 6);
+
+            try
+            {
+                _udpClient.Send(data, data.Length);
+                GD.Print($"[NetworkManager] Sent combat action type={actionType} target={targetEntityId}");
+            }
+            catch (Exception ex)
+            {
+                GD.PrintErr($"[NetworkManager] Combat action send failed: {ex.Message}");
+            }
+        }
+
+        /// <summary>
+        /// Process combat result from server.
+        /// Format: [type:1=11][result:1][damage:4][target_id:4][is_critical:1][timestamp:4]
+        /// Result codes: 0=hit, 1=miss, 2=blocked, 3=cooldown, 4=gcd_active
+        /// </summary>
+        private void ProcessCombatResult(byte[] data)
+        {
+            if (data.Length < 14) return;
+
+            byte resultCode = data[1];
+            int damage = BitConverter.ToInt32(data, 2);
+            uint targetId = BitConverter.ToUInt32(data, 6);
+            bool isCritical = data[10] != 0;
+            uint timestamp = BitConverter.ToUInt32(data, 11);
+
+            GD.Print($"[NetworkManager] Combat result: code={resultCode} damage={damage} target={targetId}");
+
+            // Forward to CombatEventSystem for visual feedback
+            EmitSignal(SignalName.CombatResultReceived, data);
+        }
     }
 }

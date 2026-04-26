@@ -105,6 +105,11 @@ bool ZoneServer::initialize(const ZoneConfig& config) {
         onClientDisconnected(connId);
     });
 
+    // [COMBAT_AGENT] Server-authoritative combat RPC: enqueue remote actions
+    network_->setOnCombatAction([this](const CombatActionPacket& action) {
+        pendingRemoteCombatActions_.push_back(action);
+    });
+
     // Initialize Redis
     redis_ = std::make_unique<RedisManager>();
     if (!redis_->initialize(config_.redisHost, config_.redisPort)) {
@@ -808,6 +813,7 @@ void ZoneServer::updateGameLogic() {
 
     // Process combat inputs (attacks triggered by client input)
     ZONE_TRACE_EVENT("Combat::process", Profiling::TraceCategory::GAME_LOGIC);
+    processPendingCombatActions();
     combatEventHandler_.processCombat();
 
     // Health regeneration
@@ -1214,6 +1220,17 @@ void ZoneServer::processAttackInput(EntityID entity, const ClientInputPacket& in
         }
     }
 }
+
+void ZoneServer::processPendingCombatActions() {
+    if (pendingRemoteCombatActions_.empty()) return;
+
+    uint32_t currentTimeMs = getCurrentTimeMs();
+    for (const auto& action : pendingRemoteCombatActions_) {
+        combatEventHandler_.processCombatAction(action);
+    }
+    pendingRemoteCombatActions_.clear();
+}
+
 
 EntityID ZoneServer::spawnPlayer(ConnectionID connectionId, uint64_t playerId,
                                 const std::string& username, const Position& spawnPos) {

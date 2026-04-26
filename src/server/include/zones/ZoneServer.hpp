@@ -253,6 +253,7 @@ private:
     void sendCombatEvent(EntityID attacker, EntityID target, int16_t damage, const Position& location);
     void logCombatEvent(const HitResult& hit, EntityID attacker, EntityID target);
     void processAttackInput(EntityID entity, const ClientInputPacket& input);
+    void processPendingCombatActions();
 
     // Performance monitoring (delegated to PerformanceHandler)
 
@@ -337,6 +338,8 @@ private:
         size_t peakTempBytesUsed{0};
     } memoryStats_;
 
+    // [COMBAT_AGENT] Remote combat actions awaiting processing (RPC)
+    std::vector<CombatActionPacket> pendingRemoteCombatActions_;
     // Client entity mapping
     std::unordered_map<ConnectionID, EntityID> connectionToEntity_;
     std::unordered_map<EntityID, ConnectionID> entityToConnection_;

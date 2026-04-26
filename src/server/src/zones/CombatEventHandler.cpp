@@ -433,4 +433,156 @@ void CombatEventHandler::processAttackInput(EntityID entity, const ClientInputPa
     }
 }
 
+void CombatEventHandler::processCombatAction(const CombatActionPacket& action) {
+    auto& registry = server_.getRegistry();
+    uint32_t currentTimeMs = getCurrentTimeMs();
+
+    // Resolve connection → entity
+    auto connIt = connectionToEntity_->find(action.connectionId);
+    if (connIt == connectionToEntity_->end()) {
+        std::cerr << "[COMBAT] Unknown connection for combat action: " << action.connectionId << std::endl;
+        return;
+    }
+    EntityID attacker = connIt->second;
+
+    // Verify attacker still valid
+    if (!registry.valid(attacker)) {
+        std::cerr << "[COMBAT] Invalid attacker entity for combat action" << std::endl;
+        return;
+    }
+
+    // Build AttackInput from RPC
+    AttackInput attackInput;
+    attackInput.sequence = 0;  // Not used for RPC
+    attackInput.timestamp = action.clientTimestamp;
+
+    // Map action type
+    switch (action.actionType) {
+        case 1: attackInput.type = AttackInput::MELEE;   break;
+        case 2: attackInput.type = AttackInput::RANGED;  break;
+        case 3: attackInput.type = AttackInput::ABILITY; break;
+        default:
+            std::cerr << "[COMBAT] Unknown action type: " << (int)action.actionType << std::endl;
+            return;
+    }
+
+    attackInput.targetEntity = static_cast<uint32_t>(action.targetEntity);
+
+    // Aim direction: use attacker's facing if available
+    if (const Rotation* rot = registry.try_get<Rotation>(attacker)) {
+        float yaw = rot->yaw;
+        attackInput.aimDirection = glm::vec3(std::sin(yaw), 0.0f, std::cos(yaw));
+    } else {
+        attackInput.aimDirection = glm::vec3(0, 0, 1);  // Default forward
+    }
+
+    // Get RTT for lag compensation
+    uint32_t rttMs = 100;
+    if (const NetworkState* ns = registry.try_get<NetworkState>(attacker)) {
+        rttMs = ns->rttMs ? ns->rttMs : 100;
+    }
+
+    // Build lag-compensated attack
+    LagCompensatedAttack lagAttack;
+    lagAttack.attacker = attacker;
+    lagAttack.input = attackInput;
+    lagAttack.clientTimestamp = action.clientTimestamp;
+    lagAttack.serverTimestamp = currentTimeMs;
+    lagAttack.rttMs = rttMs;
+
+    if (!combatSystem_ || !lagCompensator_) {
+        std::cerr << "[COMBAT] Combat system or lag compensator not initialized" << std::endl;
+        return;
+    }
+
+    LagCompensatedCombat lagCombat(*combatSystem_, *lagCompensator_);
+    auto hits = lagCombat.processAttackWithRewind(registry, lagAttack);
+
+    // Process each hit result
+    for (const auto& hit : hits) {
+        // Determine RPC result code
+        uint8_t resultCode = 1;  // miss by default
+        if (hit.hit) {
+            resultCode = 0;  // hit
+            if (hit.hitType && std::strcmp(hit.hitType, "blocked") == 0) {
+                resultCode = 2;
+            } else if (hit.hitType && std::strcmp(hit.hitType, "cooldown") == 0) {
+                // Distinguish GCD vs attack cooldown
+                const CombatState* combat = registry.try_get<CombatState>(attacker);
+                if (combat && combat->lastGlobalCooldownTime > 0) {
+                    uint32_t timeSinceGCD = currentTimeMs - combat->lastGlobalCooldownTime;
+                    if (timeSinceGCD < combatSystem_->getConfig().globalCooldownMs) {
+                        resultCode = 4;  // GCD active
+                    } else {
+                        resultCode = 3;  // Attack cooldown
+                    }
+                } else {
+                    resultCode = 3;  // Attack cooldown (fallback)
+                }
+            }
+        }
+
+        // Send RPC result to attacker (always)
+        if (network_ && action.connectionId != INVALID_CONNECTION) {
+            network_->sendCombatResult(
+                action.connectionId,
+                resultCode,
+                hit.damageDealt,
+                hit.target != entt::null ? static_cast<uint32_t>(hit.target) : 0,
+                hit.isCritical,
+                currentTimeMs
+            );
+        }
+
+        // If hit, apply anti-cheat and broadcast event
+        if (hit.hit) {
+            // Anti-cheat validation
+            if (antiCheat_) {
+                Position attackerPos{0, 0, 0, 0};
+                if (const Position* pos = registry.try_get<Position>(attacker)) {
+                    attackerPos = *pos;
+                }
+                auto validation = antiCheat_->validateCombat(
+                    attacker, hit.target, hit.damageDealt, hit.hitLocation,
+                    attackerPos, registry
+                );
+                if (validation.detected) {
+                    std::cerr << "[ANTICHEAT] Combat validation failed: " << validation.description << std::endl;
+                    if (validation.severity == Security::ViolationSeverity::CRITICAL ||
+                        validation.severity == Security::ViolationSeverity::BAN) {
+                        if (network_) {
+                            network_->disconnect(action.connectionId, validation.description);
+                        }
+                        return;  // Stop processing this action entirely
+                    }
+                }
+            }
+
+            // Broadcast combat event to attacker and target
+            auto targetConnIt = entityToConnection_->find(hit.target);
+            auto attackerConnIt = entityToConnection_->find(attacker);
+            uint8_t targetHealthPct = 0;
+            if (auto* combat = registry.try_get<CombatState>(hit.target)) {
+                targetHealthPct = combat->maxHealth > 0
+                    ? static_cast<uint8_t>((combat->health * 100) / combat->maxHealth)
+                    : 0;
+            }
+            auto eventData = Protocol::serializeCombatEvent(
+                1,  // subtype = Damage
+                static_cast<uint32_t>(attacker),
+                static_cast<uint32_t>(hit.target),
+                static_cast<int32_t>(hit.damageDealt),
+                targetHealthPct,
+                currentTimeMs
+            );
+            if (targetConnIt != entityToConnection_->end()) {
+                network_->sendEvent(targetConnIt->second, eventData);
+            }
+            if (attackerConnIt != entityToConnection_->end() && attackerConnIt->second != targetConnIt->second) {
+                network_->sendEvent(attackerConnIt->second, eventData);
+            }
+        }
+    }
+}
+
 } // namespace DarkAges

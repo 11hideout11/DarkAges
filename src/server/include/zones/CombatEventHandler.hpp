@@ -59,6 +59,9 @@ public:
     // Process attack input with lag compensation and anti-cheat validation
     void processAttackInput(EntityID entity, const ClientInputPacket& input);
 
+    // Process combat action from RPC (server-authoritative damage request)
+    void processCombatAction(const CombatActionPacket& action);
+
     // Get current time from ZoneServer
     uint32_t getCurrentTimeMs() const;
 
