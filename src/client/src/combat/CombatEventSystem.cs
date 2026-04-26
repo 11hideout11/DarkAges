@@ -42,7 +42,8 @@ namespace DarkAges.Combat
         private HashSet<uint> recentHits = new();  // For hit marker deduplication
         private Timer? hitMarkerResetTimer;
         private bool _hitStopActive = false;
-        private float _hitStopTimer = 0.0f;
+        private double _hitStopEndTime = 0.0;       // Real-time end timestamp (ticks)
+        private Random _random = new Random();     // Shared RNG for effects
 
         public override void _EnterTree()
         {
@@ -275,7 +276,7 @@ namespace DarkAges.Combat
 
         private void ShowKillNotification(uint victimId, uint killerId)
         {
-            // Show "You killed [player]"" notification
+            // Show "You killed [player]" notification
             var notification = GetNodeOrNull<Label>("/root/Main/UI/KillNotification");
             if (notification == null) return;
             
@@ -296,7 +297,8 @@ namespace DarkAges.Combat
         {
             if (_hitStopActive) return;
             _hitStopActive = true;
-            _hitStopTimer = HitStopDuration;
+            // Set end time using real-time ticks (unscaled by Engine.TimeScale)
+            _hitStopEndTime = Time.GetTicksMsec() / 1000.0 + HitStopDuration;
             
             // Time scale freezes physics and animations (affects gameplay nodes)
             Engine.TimeScale = HitStopTimescale;
@@ -316,31 +318,41 @@ namespace DarkAges.Combat
             var cameraRig = GetNodeOrNull<Node3D>("/root/Main/Player/CameraRig");
             if (cameraRig == null) return;
             
-            // Create a short-lived shake using a tween on the camera's rotation/position
+            // Capture initial transform
             var startRot = cameraRig.Rotation;
             var startPos = cameraRig.Position;
             
-            // Generate random offsets over the duration
+            // Create a short-lived timer to drive shake updates (always process to resist time scale)
             var timer = new Timer();
-            timer.WaitTime = 0.016f; // ~60Hz updates
+            timer.WaitTime = 0.016f;
             timer.OneShot = false;
+            timer.ProcessMode = ProcessModeEnum.Always;
             float elapsed = 0.0f;
-            Random rand = new Random();
             
             timer.Timeout += () =>
             {
-                if (elapsed >= duration)
+                // Guard against camera rig becoming invalid (e.g., death cam, scene changes)
+                if (!IsInstanceValid(cameraRig))
                 {
-                    cameraRig.Rotation = startRot;
-                    cameraRig.Position = startPos;
+                    timer.Stop();
                     timer.QueueFree();
                     return;
                 }
                 
-                // Random jitter
-                float shakeX = (float)(rand.NextDouble() - 0.5) * intensity * 0.01f;
-                float shakeY = (float)(rand.NextDouble() - 0.5) * intensity * 0.01f;
-                float shakeRot = (float)(rand.NextDouble() - 0.5) * intensity * 0.05f;
+                if (elapsed >= duration)
+                {
+                    // Restore original position/rotation
+                    cameraRig.Rotation = startRot;
+                    cameraRig.Position = startPos;
+                    timer.Stop();
+                    timer.QueueFree();
+                    return;
+                }
+                
+                // Random jitter (shared _random)
+                float shakeX = (float)(_random.NextDouble() - 0.5) * intensity * 0.01f;
+                float shakeY = (float)(_random.NextDouble() - 0.5) * intensity * 0.01f;
+                float shakeRot = (float)(_random.NextDouble() - 0.5) * intensity * 0.05f;
                 
                 cameraRig.Position = startPos + new Vector3(shakeX, shakeY, 0);
                 cameraRig.Rotation = startRot + new Vector3(shakeRot, 0, 0);
@@ -358,8 +370,9 @@ namespace DarkAges.Combat
         {
             if (_hitStopActive)
             {
-                _hitStopTimer -= (float)delta;
-                if (_hitStopTimer <= 0.0f)
+                // Use real (unscaled) time to avoid time-scale affecting timer duration
+                double now = Time.GetTicksMsec() / 1000.0;
+                if (now >= _hitStopEndTime)
                 {
                     _hitStopActive = false;
                     Engine.TimeScale = 1.0f;  // Restore normal time
