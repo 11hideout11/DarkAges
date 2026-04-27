@@ -95,15 +95,15 @@ namespace DarkAges.Tests
             {
                 var targetLock = new TargetLockSystem();
                 
-                // Verify 100m range is set
-                if (targetLock.MaxLockRange == 100.0f)
+                // Verify 50m range is set (aligned with server)
+                if (targetLock.MaxLockRange == 50.0f)
                 {
-                    GD.Print("  ✅ Target lock range is 100m");
+                    GD.Print("  ✅ Target lock range is 50m");
                     _testsPassed++;
                 }
                 else
                 {
-                    GD.PrintErr($"  ❌ Range is {targetLock.MaxLockRange}, expected 100");
+                    GD.PrintErr($"  ❌ Range is {targetLock.MaxLockRange}, expected 50");
                     _testsFailed++;
                 }
                 

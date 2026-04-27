@@ -7,11 +7,11 @@ using DarkAges.Networking;
 namespace DarkAges.Client.UI
 {
     /// <summary>
-    /// [CLIENT_AGENT] WP-7-4 Target lock-on system with soft-lock and 100m range checking.
+    /// [CLIENT_AGENT] WP-7-4 Target lock-on system with soft-lock and range aligned to server (50m).
     /// </summary>
     public partial class TargetLockSystem : Node
     {
-        [Export] public float MaxLockRange = 100.0f;  // P0 requirement: 100m range
+        [Export] public float MaxLockRange = 50.0f;  // Aligned with server MAX_LOCK_RANGE = 50m
         [Export] public float LockAngle = 30.0f;  // Degrees from center for lock-on
         [Export] public float Stickiness = 0.5f;  // How long to keep lock after leaving cone
         [Export] public bool ShowDebugInfo = false;
@@ -263,7 +263,7 @@ namespace DarkAges.Client.UI
             {
                 if (!IsInstanceValid(player)) continue;
                 
-                // Check range (P0 requirement: 100m)
+                // Check range (aligned with server: 50m)
                 float distance = localPlayer.GlobalPosition.DistanceTo(player.GlobalPosition);
                 if (distance > MaxLockRange) continue;
                 
