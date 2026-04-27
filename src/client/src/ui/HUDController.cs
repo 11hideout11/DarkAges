@@ -19,6 +19,7 @@ namespace DarkAges.Client.UI
         private CombatTextSystem _combatTextSystem;
         private DeathRespawnUI _deathRespawnUI;
         private ChatPanel _chatPanel;
+        private QuestTracker _questTracker;
         
         // Crosshair
         private TextureRect _crosshair;
@@ -103,7 +104,15 @@ namespace DarkAges.Client.UI
                 _chatPanel = new ChatPanel();
                 AddChild(_chatPanel);
             }
-            
+
+            // Quest Tracker
+            _questTracker = GetNode<QuestTracker>("QuestTracker");
+            if (_questTracker == null)
+            {
+                _questTracker = new QuestTracker();
+                AddChild(_questTracker);
+            }
+
             // Crosshair
             _crosshair = GetNode<TextureRect>("SafeArea/MainLayout/Center/Crosshair");
             
@@ -132,6 +141,12 @@ namespace DarkAges.Client.UI
             if (Input.IsActionJustPressed("ui_accept") && _chatPanel != null && !_chatPanel.Visible)
             {
                 _chatPanel.ShowChat();
+            }
+
+            // Toggle quest tracker visibility
+            if (Input.IsActionJustPressed("quest_toggle") && _questTracker != null)
+            {
+                _questTracker.Visible = !_questTracker.Visible;
             }
         }
         

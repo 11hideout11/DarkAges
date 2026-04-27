@@ -24,6 +24,7 @@
     24|- **Health bars visible**: scaled 20%, emissive multiplier 1.0
     25|- **Animations wired**: AnimationPlayer + AnimationTree with fallback state switching
     26|- **Chat panel**: Enter-to-toggle UI, formatted messages (global/party/whisper), realtime network routing
+- **Quest tracker**: J-key toggle, objective list with progress bars, network-synced updates
     27|
     28|### Demo Pipeline
     29|- **All phases SUCCESS** (latest run: 45s)
@@ -42,6 +43,7 @@
     42|| Animation System | OPERATIONAL | Walk/Run/Sprint/Idle/Attack/Hit/Dodge transitions |
     43|| Combat Events | OPERATIONAL | Binary format, damage/death/heal all working |
     44|| Chat UI | OPERATIONAL | UDP chat messages, enter-to-toggle panel, channel formatting |
+|| Quest Tracker | OPERATIONAL | Network-synced objectives, J-key toggle, progress bars |
     45|| Demo Launcher | OPERATIONAL | `./tools/demo/demo --quick` |
     46|| Video Recording | OPERATIONAL | ffmpeg x11grab |
     47|| Validation | OPERATIONAL | E2E + instrumentation |

@@ -257,6 +257,7 @@ private:
     void processPendingCombatActions();
     void processPendingLockOnRequests();
     void processPendingChatMessages();
+    void processPendingQuestActions();
 
     // Performance monitoring (delegated to PerformanceHandler)
 
@@ -346,6 +347,7 @@ private:
     // [COMBAT_AGENT] Pending lock-on requests awaiting validation
     std::vector<LockOnRequestPacket> pendingLockOnRequests_;
     std::vector<std::pair<ConnectionID, ChatMessage>> pendingRemoteChatMessages_;
+    std::vector<QuestActionPacket> pendingQuestActions_;
 
 public:
     std::unordered_map<ConnectionID, EntityID> connectionToEntity_;

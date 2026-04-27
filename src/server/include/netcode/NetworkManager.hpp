@@ -71,6 +71,23 @@ struct LockOnRequestPacket {
     uint32_t receiveTimeMs{0};
 };
 
+// Quest action packet (client -> server)
+struct QuestActionPacket {
+    ConnectionID connectionId{INVALID_CONNECTION};
+    uint32_t questId{0};
+    uint8_t actionType{0};  // 0=accept, 1=complete
+    uint32_t receiveTimeMs{0};
+};
+
+// Quest update packet (server -> client)
+struct QuestUpdatePacket {
+    uint32_t questId{0};
+    uint8_t objectiveIndex{0};
+    uint32_t current{0};
+    uint32_t required{0};
+    uint8_t status{0};  // 0=in_progress, 1=complete, 2=rewarded
+};
+
 // Snapshot packet for serialization
 struct SnapshotPacket {
     uint32_t serverTick{0};
@@ -87,6 +104,8 @@ public:
     using CombatActionCallback = std::function<void(const CombatActionPacket&)>;
     using LockOnRequestCallback = std::function<void(const LockOnRequestPacket&)>;
     using ChatCallback = std::function<void(ConnectionID, const ChatMessage&)>;
+    using QuestUpdateCallback = std::function<void(const QuestUpdatePacket&)>;
+    using QuestActionCallback = std::function<void(const QuestActionPacket&)>;
 
 public:
     NetworkManager();
@@ -129,6 +148,9 @@ public:
     // Get pending chat messages (call after update)
     [[nodiscard]] std::vector<ChatMessage> getPendingChatMessages();
     
+    // Get pending quest actions from clients (accept/complete)
+    [[nodiscard]] std::vector<QuestActionPacket> getPendingQuestActions();
+    
     // Clear processed inputs up to a sequence number
     void clearProcessedInputs(uint32_t upToSequence);
     
@@ -148,6 +170,7 @@ public:
     void setOnCombatAction(CombatActionCallback callback) { onCombatAction_ = std::move(callback); }
     void setOnLockOnRequest(LockOnRequestCallback callback) { onLockOnRequest_ = std::move(callback); }
     void setOnChatReceived(ChatCallback callback) { onChat_ = std::move(callback); }
+    void setOnQuestActionReceived(QuestActionCallback callback) { onQuestAction_ = std::move(callback); }
     
     // Send combat result to a specific client
     // Format: [type:1=11][result:1][damage:4][target_id:4][is_critical:1][timestamp:4]
@@ -166,6 +189,9 @@ public:
 
     // Send chat message to a specific client
     void sendChatMessage(ConnectionID connectionId, const ChatMessage& msg);
+    
+    // Send quest update to a specific client
+    void sendQuestUpdate(ConnectionID connectionId, const QuestUpdatePacket& msg);
 
     // Statistics
     [[nodiscard]] size_t getConnectionCount() const;
@@ -197,10 +223,12 @@ private:
     InputCallback onInput_;
     CombatActionCallback onCombatAction_;
     LockOnRequestCallback onLockOnRequest_;
-    ChatCallback onChat_;  
+    ChatCallback onChat_;
+    QuestActionCallback onQuestAction_;  
     
     std::vector<ClientInputPacket> pendingInputs_;
     std::vector<LockOnRequestPacket> pendingLockOnRequests_;
+    std::vector<QuestActionPacket> pendingQuestActions_;
     
     bool initialized_{false};
 };

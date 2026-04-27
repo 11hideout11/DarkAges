@@ -123,6 +123,11 @@ bool ZoneServer::initialize(const ZoneConfig& config) {
             pendingRemoteChatMessages_.emplace_back(connId, msg);
         });
 
+        // Quest: receive inbound quest action packets from network
+        network_->setOnQuestActionReceived([this](const QuestActionPacket& action) {
+            pendingQuestActions_.push_back(action);
+        });
+
     // Initialize Redis
     redis_ = std::make_unique<RedisManager>();
     if (!redis_->initialize(config_.redisHost, config_.redisPort)) {
@@ -269,6 +274,33 @@ bool ZoneServer::initialize(const ZoneConfig& config) {
     // [GAMEPLAY_AGENT] Initialize quest system with default quests
     questSystem_.initializeDefaults();
     questSystem_.setItemSystem(&itemSystem_);
+
+    // [QUEST_AGENT] Wire quest progress/completion updates to network layer
+    questSystem_.setQuestProgressCallback([this](EntityID player, uint32_t questId,
+                                                  uint32_t objectiveIndex, uint32_t current, uint32_t required) {
+        auto it = entityToConnection_.find(player);
+        if (it != entityToConnection_.end()) {
+            QuestUpdatePacket update{};
+            update.questId = questId;
+            update.objectiveIndex = objectiveIndex;
+            update.current = current;
+            update.required = required;
+            update.status = 0; // in_progress
+            network_->sendQuestUpdate(it->second, update);
+        }
+    });
+    questSystem_.setQuestCompleteCallback([this](EntityID player, uint32_t questId) {
+        auto it = entityToConnection_.find(player);
+        if (it != entityToConnection_.end()) {
+            QuestUpdatePacket update{};
+            update.questId = questId;
+            update.objectiveIndex = 0;
+            update.current = 1;
+            update.required = 1;
+            update.status = 1; // complete
+            network_->sendQuestUpdate(it->second, update);
+        }
+    });
 
     // [GAMEPLAY_AGENT] Initialize chat system with connection lookup
     chatSystem_.setConnectionLookupCallback([this](EntityID entity) -> ConnectionID {
@@ -835,6 +867,7 @@ void ZoneServer::updateGameLogic() {
     processPendingCombatActions();
     processPendingLockOnRequests();
     processPendingChatMessages();
+    processPendingQuestActions();
     combatEventHandler_.processCombat();
 
     // Health regeneration
@@ -1358,6 +1391,30 @@ void ZoneServer::processPendingChatMessages() {
     }
 
     pendingRemoteChatMessages_.clear();
+}
+
+void ZoneServer::processPendingQuestActions() {
+    if (pendingQuestActions_.empty()) return;
+
+    Registry& registry = getRegistry();
+    uint32_t now = getCurrentTimeMs();
+
+    for (const auto& action : pendingQuestActions_) {
+        // Resolve player entity from connection (connectionId stored in action)
+        auto it = connectionToEntity_.find(action.connectionId);
+        if (it == connectionToEntity_.end()) continue;
+        EntityID player = it->second;
+
+        if (action.actionType == 0) {
+            // Accept quest
+            questSystem_.acceptQuest(registry, player, action.questId, now);
+        } else if (action.actionType == 1) {
+            // Attempt to complete quest
+            questSystem_.completeQuest(registry, player, action.questId);
+        }
+    }
+
+    pendingQuestActions_.clear();
 }
 
 EntityID ZoneServer::spawnPlayer(ConnectionID connectionId, uint64_t playerId,

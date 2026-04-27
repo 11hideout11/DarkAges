@@ -9,6 +9,9 @@ namespace DarkAges {
 // Forward declaration for the chat message struct, defined in CoreTypes.hpp
 struct ChatMessage;
 
+// Forward declaration for quest update packet
+struct QuestUpdatePacket;
+
 namespace Protocol {
 
 enum class MessageType : uint8_t {
@@ -27,11 +30,16 @@ enum class PacketType : uint8_t {
     Ping = 4,
     Handshake = 5,
     Disconnect = 6,
-    PACKET_CHAT = 14
+    PACKET_CHAT = 14,
+    PACKET_QUEST_UPDATE = 15,
+    PACKET_QUEST_ACTION = 16
 };
 
 // Serialize ChatMessage for UDP delivery
 std::vector<uint8_t> serializeChatMessage(const ChatMessage& msg);
+
+// Serialize QuestUpdatePacket to UDP buffer
+std::vector<uint8_t> serializeQuestUpdate(const QuestUpdatePacket& pkt);
 
 } // namespace Protocol
 } // namespace DarkAges

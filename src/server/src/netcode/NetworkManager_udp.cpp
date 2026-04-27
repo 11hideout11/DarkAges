@@ -63,6 +63,8 @@ struct GNSInternal {
     std::mutex lockOnMutex;
     std::queue<ChatMessage> chatQueue;
     std::mutex chatMutex;
+    std::queue<QuestActionPacket> questActionQueue;
+    std::mutex questActionMutex;
     uint32_t currentTimeMs{0};
 };
 
@@ -387,6 +389,24 @@ void NetworkManager::update(uint32_t currentTimeMs) {
                 }
                 break;
             }
+            case 16: { // PACKET_QUEST_ACTION (client -> server quest accept/complete)
+                if (received < 10) break; // questId:4, action:1
+                QuestActionPacket qap{};
+                qap.connectionId = connId;
+                std::memcpy(&qap.questId, buffer + 1, 4);
+                qap.actionType = buffer[5];
+                qap.receiveTimeMs = currentTimeMs;
+
+                {
+                    std::lock_guard<std::mutex> lock(udp->questActionMutex);
+                    udp->questActionQueue.push(qap);
+                }
+
+                if (onQuestAction_) {
+                    onQuestAction_(qap);
+                }
+                break;
+            }
             default:
                 break;
         }
@@ -452,6 +472,17 @@ std::vector<ChatMessage> NetworkManager::getPendingChatMessages() {
         udp->chatQueue.pop();
     }
     return chats;
+}
+
+std::vector<QuestActionPacket> NetworkManager::getPendingQuestActions() {
+    auto* udp = static_cast<GNSInternal*>(internal_.get());
+    std::vector<QuestActionPacket> actions;
+    std::lock_guard<std::mutex> lock(udp->questActionMutex);
+    while (!udp->questActionQueue.empty()) {
+        actions.push_back(udp->questActionQueue.front());
+        udp->questActionQueue.pop();
+    }
+    return actions;
 }
 
 std::vector<EntityID> NetworkManager::getPendingRespawnRequests() {
@@ -595,6 +626,32 @@ void NetworkManager::sendChatMessage(ConnectionID connectionId, const ChatMessag
     std::vector<uint8_t> packet;
     packet.reserve(1 + payload.size());
     packet.push_back(static_cast<uint8_t>(Protocol::PacketType::PACKET_CHAT));
+    packet.insert(packet.end(), payload.begin(), payload.end());
+
+    // Send via UDP
+    std::lock_guard<std::recursive_mutex> lock(udp->connectionsMutex);
+    auto it = udp->connections.find(connectionId);
+    if (it == udp->connections.end()) return;
+
+    sendto(udp->sockfd, packet.data(), packet.size(), 0,
+           reinterpret_cast<sockaddr*>(&it->second.addr), sizeof(it->second.addr));
+    udp->totalBytesSent += packet.size();
+    it->second.quality.packetsSent++;
+    it->second.quality.bytesSent += packet.size();
+}
+
+void NetworkManager::sendQuestUpdate(ConnectionID connectionId, const QuestUpdatePacket& update) {
+    auto* udp = static_cast<GNSInternal*>(internal_.get());
+    if (udp->sockfd < 0) return;
+
+    // Serialize quest update payload
+    auto payload = Protocol::serializeQuestUpdate(update);
+    if (payload.empty()) return;
+
+    // Build packet: [type:1][payload:N]
+    std::vector<uint8_t> packet;
+    packet.reserve(1 + payload.size());
+    packet.push_back(static_cast<uint8_t>(Protocol::PacketType::PACKET_QUEST_UPDATE));
     packet.insert(packet.end(), payload.begin(), payload.end());
 
     // Send via UDP
