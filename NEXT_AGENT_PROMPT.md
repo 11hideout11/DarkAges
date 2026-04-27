@@ -9,12 +9,12 @@
      9|- Last merged PRs:
     10|  * #21: combat(P2) — hit stop, procedural leaning, animation blend polish
     11|  * #22: docs+test(depth) — PROJECT/ComprehensiveReview sync; ZoneServer depth tests (6 new)
-    12|- Test status: 1284 cases / 7211 assertions — ALL PASS
+    12|- Test status: 2096 cases / 12585 assertions — ALL PASS
     13|- Build: `cmake -S . -B build_validate -DBUILD_TESTS=ON -DFETCH_DEPENDENCIES=ON -DENABLE_GNS=OFF -DENABLE_REDIS=OFF -DENABLE_SCYLLA=OFF && cmake --build build_validate -j$(nproc)` — passes
     14|
     15|**Read these files first:**
     16|1. AGENTS.md (architecture, critical rules, workflow)
-    17|2. PROJECT_STATUS.md (current version 5.4, what's done/remaining)
+    17|2. PROJECT_STATUS.md (current version 5.5, what's done/remaining)
     18|3. HERMES_HANDOFF_20260426.md (this handoff, created 2026-04-26)
     19|
     20|---
@@ -30,7 +30,7 @@
     30|  - Auto-attack integration merged (CombatSystem respects confirmed lock)
     31|  - Scope implemented: server-side TargetLockSystem + ZoneServer integration; client-side UI/input already complete
     32|
-    33|**Option B — Camera Polish** (recommended next)
+**Option B — Camera Polish** ✅ COMPLETED
     34|  - Smooth follow with configurable deadzone
     35|  - Collision avoidance (raycast push-in)
     36|  - Height/rotation smoothing
@@ -47,7 +47,7 @@
     47|3. After each logical change:
     48|   - Build: `cmake --build build_validate -j$(nproc)`
     49|   - Test: `ctest --output-on-failure -j8`
-    50|   - Verify zero regressions (compare test count/assert count to baseline 1284/7211)
+    50|   - Verify zero regressions (compare test count/assert count to baseline 2096/12585)
     51|4. When complete:
     52|   - Run objective evaluator: `python3 scripts/autonomous/evaluate_change.py autonomous/YYYYMMDD-{slug} --base main`
     53|   - Address any FAIL before proceeding
@@ -87,7 +87,7 @@
     87|
     88|Your PR must satisfy:
     89|1. Build compiles cleanly (zero errors; warnings OK but not ideal)
-    90|2. All tests pass (no regressions; baseline 1284 cases, 7211 assertions)
+    90|2. All tests pass (no regressions; baseline 2096 cases, 12585 assertions)
     91|3. No test count decrease
     92|4. No assertion count decrease
     93|5. Test summary explicitly listed in evaluator output

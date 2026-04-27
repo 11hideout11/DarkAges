@@ -12,7 +12,7 @@ cd build_validate && ctest --output-on-failure -j8
 - Phase 9: COMPLETE — performance budgets pass (400 ents <20ms, 800 <30ms)
 - Networking: STABLE — live validator passes (1-10 clients, snapshots OK)
 - Tests: 2096 cases / 94 files / 11 suites — ALL PASS
-+ Tests: 2096 cases / 94 files / 11 suites — ALL PASS (7211 assertions)
++ Tests: 2096 cases / 94 files / 11 suites — ALL PASS (12585 assertions)
 - Server: ~32K LOC (C++20, EnTT ECS, 60Hz tick) | Client: ~6.2K LOC (C# Godot 4.2)
 - Harness: Two-layer evaluator architecture operational (objective + subjective)
 
@@ -56,7 +56,7 @@ cd build_validate && ctest --output-on-failure -j8
 
 ## Recent Commits (last 10 — updated)
 
-1. feat(client): smooth third-person camera with deadzone, collision avoidance, and height/rotation smoothing (pending)
+1. feat(client): smooth third-person camera with deadzone, collision avoidance, and height/rotation smoothing (merged)
 2. feat(combat): integrate confirmed lock-on target into auto-attack selection (merged)
 3. docs: sync test metrics and completed tasks across status files (1284 tests, 7211 asserts) (merged)
 4. test(server): add unit tests for NetworkManager_udp (+27 tests) (merged)

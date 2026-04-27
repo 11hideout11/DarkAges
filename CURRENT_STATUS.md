@@ -12,7 +12,7 @@ cd /root/projects/DarkAges
 ## Latest Validation Results
 
 ### Server Tests (C++)
-- **11/11 test suites PASS** (1284 tests, 7211 assertions)
+- **11/11 test suites PASS** (2096 tests, 12585 assertions)
 - Build: cmake Release, 0 errors
 
 ### Godot Client (C#)
@@ -58,7 +58,7 @@ cd /root/projects/DarkAges
 2. **Lag-compensated validation**: `LagCompensatedCombat::processAttackWithRewind` honors forced `targetEntity` for melee and ranged, using same historical validation (range/angle/ray-sphere).
 3. **Test coverage**: Added integration tests to `TestLagCompensatedCombat.cpp` verifying exclusive hit on locked target.
 4. **Camera polish**: Replaced hard-coded `PredictedPlayer` camera logic with `CameraController` node — smooth follow with configurable deadzone, raycast push-in collision avoidance, height/rotation smoothing. Zero test regressions.
-5. **Documentation sync**: Updated AGENTS.md, PROJECT_STATUS.md, CURRENT_STATUS.md, NEXT_AGENT_PROMPT.md to current baseline (1284 tests, 7211 assertions, 94 files).
+5. **Documentation sync**: Updated AGENTS.md, PROJECT_STATUS.md, CURRENT_STATUS.md, NEXT_AGENT_PROMPT.md to current baseline (2096 tests, 12585 assertions, 94 files).
 6. **Metrics**: Test count 1283 → 1284; assertions 7205 → 7211; all 11 suites pass.
 
 ---
