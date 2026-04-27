@@ -23,7 +23,7 @@ The **demo pipeline** is now fully operational with:
 
 | Metric | Value |
 |--------|-------|
-|| **Total Test Cases** | 1284 |
+|| **Total Test Cases** | 2096 |
 || **Test Files** | 94 |
 || **Test Suites** | 11 (all passing) |
 || **Server Core LOC** | ~32K |
