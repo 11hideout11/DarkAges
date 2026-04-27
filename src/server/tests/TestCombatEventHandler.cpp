@@ -8,6 +8,7 @@
 #include <catch2/catch_approx.hpp>
 #include "combat/CombatSystem.hpp"
 #include "ecs/CoreTypes.hpp"
+#include "zones/CombatEventHandler.hpp"
 #include <entt/entt.hpp>
 #include <glm/glm.hpp>
 #include <string>
