@@ -11,7 +11,7 @@ cd build_validate && ctest --output-on-failure -j8
 - Phase 8: COMPLETE — all core gameplay systems
 - Phase 9: COMPLETE — performance budgets pass (400 ents <20ms, 800 <30ms)
 - Networking: STABLE — live validator passes (1-10 clients, snapshots OK)
-- Tests: 1386 cases / 92 files / 11 suites — ALL PASS
+- Tests: 1401 cases / 93 files / 11 suites — ALL PASS
 - Server: ~32K LOC (C++20, EnTT ECS, 60Hz tick) | Client: ~6.2K LOC (C# Godot 4.2)
 - Harness: Two-layer evaluator architecture operational (objective + subjective)
 
@@ -54,15 +54,16 @@ cd build_validate && ctest --output-on-failure -j8
 - (none — all previously noted gaps resolved as of 2026-04-26)
 
 ## Recent Commits (last 10)
-1. feat(client): server-validated lock-on targeting with confirmation/failure handling and range alignment (merged)
-2. combat(P2): hit stop + procedural leaning + animation blend polish (merged)
-3. visual(P1): complete floating combat text for local player
-4. Combat(P1): wire PredictedPlayer combat events for hit/die feedback (merged)
-5. Combat(P1): server-authoritative RPC handshake with GCD (merged)
-6. Harness engineering: two-layer evaluator architecture (objective + subjective) + tool subtraction
-7. Fix lag comp `calculateAttackTime` double-count latency; tests updated (124 combat tests pass)
-8. Validator: combat validation phase (`--combat`, `--combat-duration`)
-9. Fix C# `EntityFrame` visibility (private→public) for `RemotePlayerManager`
-10. Validator: NPC replication over network (`--npcs` + `--npc-count`)
+
+1. test(server): fix ZoneServer test failures from auto-populate and JSON schema (merged)
+2. test(server): add unit tests for ServerStateExporter (merged)
+3. docs: update test metrics after ZoneServer expansion (merged)
+4. test(server): expand ZoneServer unit tests (+13 tests, 58 assertions) (merged)
+5. docs: update state metrics and recent commits (2026-04-27) (merged)
+6. test(server): fix CombatEventHandler unit test compilation (merged)
+7. docs: update Recent Commits for lock-on client confirmation merge (merged)
+8. fix(client): align MaxLockRange with server (50m) and updateUITests (merged)
+9. fix(client): resolve PredictedPlayer.UpdateAnimation missing dt parameter (build fix) (merged)
+10. feat(client): implement server-validated lock-on targeting with confirmation/failure handling (merged)
 ---
 Last updated: 2026-04-27

@@ -1205,7 +1205,7 @@ TEST_CASE("ZoneServer client connection tracking updates maps", "[zones][zoneser
 
 TEST_CASE("ZoneServer populateNPCs respects config count", "[zones][zoneserver]") {
     ZoneConfig config;
-    config.autoPopulateNPCs = true;
+    config.autoPopulateNPCs = false;
     config.npcCount = 10;
     config.npcSpawnRadius = 20.0f;
     config.npcBaseLevel = 3;
@@ -1224,10 +1224,10 @@ TEST_CASE("ZoneServer loadDemoConfig parses JSON successfully", "[zones][zoneser
     std::string jsonPath = "/tmp/demo_config.json";
     std::ofstream ofs(jsonPath);
     ofs << R"({
-        "zoneId": 99,
+        "zone_id": 99,
         "port": 7777,
-        "npcs": [
-            { "level": 10, "x": 0, "z": 0, "count": 1 }
+        "npc_presets": [
+            { "level": 10, "count": 1 }
         ]
     })";
     ofs.close();
