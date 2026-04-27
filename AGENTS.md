@@ -11,8 +11,7 @@ cd build_validate && ctest --output-on-failure -j8
 - Phase 8: COMPLETE — all core gameplay systems
 - Phase 9: COMPLETE — performance budgets pass (400 ents <20ms, 800 <30ms)
 - Networking: STABLE — live validator passes (1-10 clients, snapshots OK)
-- Tests: 2096 cases / 94 files / 11 suites — ALL PASS
-+ Tests: 2096 cases / 94 files / 11 suites — ALL PASS (12585 assertions)
+- Tests: 2097 cases / 94 files / 11 suites — ALL PASS (12586 assertions)
 - Server: ~32K LOC (C++20, EnTT ECS, 60Hz tick) | Client: ~6.2K LOC (C# Godot 4.2)
 - Harness: Two-layer evaluator architecture operational (objective + subjective)
 
@@ -56,15 +55,15 @@ cd build_validate && ctest --output-on-failure -j8
 
 ## Recent Commits (last 10 — updated)
 
-1. feat(quest): add Quest Tracker UI with network synchronization (merged)
-2. docs: finalize post-merge baseline sync across all status files (merged)
-3. chore: untrack .task_cache.json — now ignored per .gitignore (merged)
-4. docs: update PROJECT_STATUS.md test metrics table to current baseline (merged)
-5. docs: correct post-merge status metrics and baseline references (3 files) (merged)
-6. docs: sync final test metrics and record infra fixes (merged)
-7. docs: update state metrics and recent commits (2026-04-27) (merged)
-8. test(server): expand ZoneServer unit tests (+13 tests, 58 assertions) (merged)
-9. docs: update test metrics after ZoneServer expansion (merged)
-10. test(server): add unit tests for ServerStateExporter (merged)
+1. docs: update AUTONOMOUS_LOG.md and reset cron state after ZoneServer test expansion (merged)
+2. Merge: autonomous: Expand tests for ZoneServer (52 tests for 2121 lines) (merged)
+3. feat(quest): add Quest Tracker UI with network synchronization (merged)
+4. docs: finalize post-merge baseline sync across all status files (merged)
+5. chore: untrack .task_cache.json — now ignored per .gitignore (merged)
+6. docs: update PROJECT_STATUS.md test metrics table to current baseline (merged)
+7. docs: correct post-merge status metrics and baseline references (3 files) (merged)
+8. docs: sync final test metrics and record infra fixes (merged)
+9. docs: update state metrics and recent commits (2026-04-27) (merged)
+10. test(server): expand ZoneServer unit tests (+13 tests, 58 assertions) (merged)
 ---
 Last updated: 2026-04-27

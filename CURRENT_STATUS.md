@@ -12,7 +12,7 @@
     12|## Latest Validation Results
     13|
     14|### Server Tests (C++)
-    15|- **11/11 test suites PASS** (2096 tests, 12585 assertions)
+    15|- **11/11 test suites PASS** (2097 tests, 12586 assertions)
     16|- Build: cmake Release, 0 errors
     17|
     18|### Godot Client (C#)
@@ -62,8 +62,8 @@
     60|2. **Lag-compensated validation**: `LagCompensatedCombat::processAttackWithRewind` honors forced `targetEntity` for melee and ranged, using same historical validation (range/angle/ray-sphere).
     61|3. **Test coverage**: Added integration tests to `TestLagCompensatedCombat.cpp` verifying exclusive hit on locked target.
     62|4. **Camera polish**: Replaced hard-coded `PredictedPlayer` camera logic with `CameraController` node — smooth follow with configurable deadzone, raycast push-in collision avoidance, height/rotation smoothing. Zero test regressions.
-    63|5. **Documentation sync**: Updated AGENTS.md, PROJECT_STATUS.md, CURRENT_STATUS.md, NEXT_AGENT_PROMPT.md to current baseline (2096 tests, 12585 assertions, 94 files).
-    64|6. **Metrics**: Final baseline established — 2096 tests, 12585 assertions across 11 suites; zero regressions throughout camera polish integration.
+    63|5. **Documentation sync**: Updated AGENTS.md, PROJECT_STATUS.md, CURRENT_STATUS.md, NEXT_AGENT_PROMPT.md to current baseline (2097 tests, 12586 assertions, 94 files).
+    64|6. **Metrics**: Final baseline established — 2097 tests, 12586 assertions across 11 suites; zero regressions throughout camera polish integration.
     65|
     66|---
     67|
@@ -83,4 +83,3 @@
     81|- [ ] Procedural leaning based on velocity
     82|- [ ] Foot IK (SkeletonIK3D) for terrain alignment
     83|- [ ] SDFGI/SSAO for lighting coherence
-    84|- [ ] Phantom Camera plugin evaluation
