@@ -56,15 +56,15 @@ cd build_validate && ctest --output-on-failure -j8
 
 ## Recent Commits (last 10 — updated)
 
-1. chore: untrack .task_cache.json — now ignored per .gitignore (merged)
-2. docs: update PROJECT_STATUS.md test metrics table to current baseline (merged)
-3. docs: correct post-merge status metrics and baseline references (3 files) (merged)
-4. docs: sync final test metrics and record infra fixes (merged)
-5. docs: update state metrics and recent commits (2026-04-27) (merged)
-6. test(server): expand ZoneServer unit tests (+13 tests, 58 assertions) (merged)
-7. docs: update test metrics after ZoneServer expansion (merged)
-8. test(server): add unit tests for ServerStateExporter (merged)
-9. test(server): fix ZoneServer test failures from auto-populate and JSON schema (merged)
+1. docs: finalize post-merge baseline sync across all status files (merged)
+2. chore: untrack .task_cache.json — now ignored per .gitignore (merged)
+3. docs: update PROJECT_STATUS.md test metrics table to current baseline (merged)
+4. docs: correct post-merge status metrics and baseline references (3 files) (merged)
+5. docs: sync final test metrics and record infra fixes (merged)
+6. docs: update state metrics and recent commits (2026-04-27) (merged)
+7. test(server): expand ZoneServer unit tests (+13 tests, 58 assertions) (merged)
+8. docs: update test metrics after ZoneServer expansion (merged)
+9. test(server): add unit tests for ServerStateExporter (merged)
 10. test(server): add unit tests for NetworkManager_udp (+27 tests) (merged)
 ---
 Last updated: 2026-04-27
