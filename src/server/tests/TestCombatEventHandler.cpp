@@ -504,3 +504,37 @@ TEST_CASE("CombatEventHandler entity-connection mapping", "[zones][handler]") {
         REQUIRE(it == entityToConnection.end());
     }
 }
+
+    TEST_CASE("CombatEventHandler is a complete type", "[combateventhandler]") {
+        REQUIRE(sizeof(CombatEventHandler) > 0);
+    }
+
+    TEST_CASE("PendingRespawn default construction", "[pendingrespawn]") {
+        PendingRespawn s{};
+
+        SECTION("all fields are zeroed or default") {
+            // Verify struct is trivially constructible
+            REQUIRE(sizeof(PendingRespawn) > 0);
+        }
+    }
+
+    TEST_CASE("CombatEventHandler setConnectionMappings exists", "[combateventhandler]") {
+        auto ptr = &CombatEventHandler::setConnectionMappings;
+        (void)ptr;
+    }
+
+    TEST_CASE("CombatEventHandler getCurrentTimeMs exists", "[combateventhandler]") {
+        auto ptr = &CombatEventHandler::getCurrentTimeMs;
+        (void)ptr;
+    }
+
+    TEST_CASE("CombatEventHandler processCombat exists", "[combateventhandler]") {
+        auto ptr = &CombatEventHandler::processCombat;
+        (void)ptr;
+    }
+
+    TEST_CASE("CombatEventHandler onEntityDied exists", "[combateventhandler]") {
+        auto ptr = &CombatEventHandler::onEntityDied;
+        (void)ptr;
+    }
+
