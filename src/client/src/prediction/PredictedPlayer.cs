@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using DarkAges.Networking;
 using DarkAges.Combat;
+using DarkAges.Camera;
 
 namespace DarkAges
 {
@@ -100,11 +101,8 @@ namespace DarkAges
         private float _correctionDuration = 0.0f;
         
         // Camera
-        private Node3D _cameraRig;
-        private SpringArm3D _springArm;
-        private float _cameraYaw = 0.0f;
-        private float _cameraPitch = 0.0f;
-        
+        private CameraController _cameraController;
+
         // Components
         private AnimationPlayer _animPlayer;
         private AnimationTree _animTree;
@@ -136,8 +134,7 @@ namespace DarkAges
 
         public override void _Ready()
         {
-            _cameraRig = GetNode<Node3D>("CameraRig");
-            _springArm = GetNode<SpringArm3D>("CameraRig/SpringArm3D");
+            _cameraController = GetNode<CameraController>("CameraRig");
             _animPlayer = GetNode<AnimationPlayer>("AnimationPlayer");
             _animTree = GetNodeOrNull<AnimationTree>("AnimationTree");
 
@@ -166,19 +163,6 @@ namespace DarkAges
 
         public override void _Input(InputEvent @event)
         {
-            if (@event is InputEventMouseMotion mouseMotion)
-            {
-                // Rotate camera with mouse
-                _cameraYaw -= mouseMotion.Relative.X * 0.003f;
-                _cameraPitch -= mouseMotion.Relative.Y * 0.003f;
-                _cameraPitch = Mathf.Clamp(_cameraPitch, -Mathf.Pi / 3, Mathf.Pi / 4);
-                
-                if (_cameraRig != null)
-                {
-                    _cameraRig.Rotation = new Vector3(_cameraPitch, _cameraYaw, 0);
-                }
-            }
-            
             if (@event.IsActionPressed("ui_cancel"))
             {
                 // Toggle mouse capture
@@ -759,8 +743,8 @@ namespace DarkAges
                 Sprint = Input.IsActionPressed("sprint"),
                 Attack = Input.IsActionPressed("attack"),
                 Block = Input.IsActionPressed("block"),
-                Yaw = _cameraYaw,
-                Pitch = _cameraPitch
+                Yaw = _cameraController.Yaw,
+                Pitch = _cameraController.Pitch
             };
         }
 

@@ -54,17 +54,17 @@ cd build_validate && ctest --output-on-failure -j8
 ## Gaps
 - (none — all previously noted gaps resolved as of 2026-04-26)
 
-## Recent Commits (last 10)
+## Recent Commits (last 10 — updated)
 
-1. feat(combat): integrate confirmed lock-on target into auto-attack selection (merged)
-2. docs: sync test metrics and completed tasks across status files (1284 tests, 7211 asserts) (merged)
-3. test(server): add unit tests for NetworkManager_udp (+27 tests) (merged)
-4. test(server): fix ZoneServer test failures from auto-populate and JSON schema (merged)
-5. test(server): add unit tests for ServerStateExporter (merged)
-6. docs: update test metrics after ZoneServer expansion (merged)
-7. test(server): expand ZoneServer unit tests (+13 tests, 58 assertions) (merged)
-8. docs: update state metrics and recent commits (2026-04-27) (merged)
-9. test(server): fix CombatEventHandler unit test compilation (merged)
-10. docs: update Recent Commits for lock-on client confirmation merge (merged)
+1. feat(client): smooth third-person camera with deadzone, collision avoidance, and height/rotation smoothing (pending)
+2. feat(combat): integrate confirmed lock-on target into auto-attack selection (merged)
+3. docs: sync test metrics and completed tasks across status files (1284 tests, 7211 asserts) (merged)
+4. test(server): add unit tests for NetworkManager_udp (+27 tests) (merged)
+5. test(server): fix ZoneServer test failures from auto-populate and JSON schema (merged)
+6. test(server): add unit tests for ServerStateExporter (merged)
+7. docs: update test metrics after ZoneServer expansion (merged)
+8. test(server): expand ZoneServer unit tests (+13 tests, 58 assertions) (merged)
+9. docs: update state metrics and recent commits (2026-04-27) (merged)
+10. test(server): fix CombatEventHandler unit test compilation (merged)
 ---
 Last updated: 2026-04-27

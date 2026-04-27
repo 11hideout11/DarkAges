@@ -4,6 +4,7 @@
 [ext_resource type="Script" path="res://src/combat/AttackFeedbackSystem.cs" id="2_attack"]
 [ext_resource type="Script" path="res://src/utils/MovementTrailSystem.cs" id="3_trail"]
 [ext_resource type="AnimationLibrary" path="res://scenes/PlayerAnimations.tres" id="4_animlib"]
+[ext_resource type="Script" path="res://src/camera/CameraController.cs" id="5_cameracontroller"]
 
 [sub_resource type="CapsuleShape3D" id="CapsuleShape3D_1"]
 radius = 0.3
@@ -28,6 +29,7 @@ mesh = SubResource("CapsuleMesh_1")
 
 [node name="CameraRig" type="Node3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.6, 0)
+script = ExtResource("5_cameracontroller")
 
 [node name="SpringArm3D" type="SpringArm3D" parent="CameraRig"]
 spring_length = 4.0

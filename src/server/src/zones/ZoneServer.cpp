@@ -4,10 +4,11 @@
 #include "zones/ZoneServer.hpp"
 #include "zones/ReplicationOptimizer.hpp"
 #include "zones/EntityMigration.hpp"
-#include "combat/LagCompensatedCombat.hpp"
-#ifdef DARKAGES_HAS_PROTOBUF
-#include "netcode/ProtobufProtocol.hpp"
-#endif
+ #include "combat/LagCompensatedCombat.hpp"
+ #include "combat/TargetLockSystem.hpp"
+ #ifdef DARKAGES_HAS_PROTOBUF
+ #include "netcode/ProtobufProtocol.hpp"
+ #endif
 #include "profiling/PerfettoProfiler.hpp"
 #include "profiling/PerformanceMonitor.hpp"
 #include "monitoring/MetricsExporter.hpp"
@@ -1137,6 +1138,9 @@ void ZoneServer::processAttackInput(EntityID entity, const ClientInputPacket& in
         0.0f,  // Ignore pitch for horizontal aim
         std::cos(input.input.yaw)
     );
+
+     // Integrate confirmed lock-on target as primary attack target
+     attackInput.targetEntity = static_cast<uint32_t>(TargetLockSystem::getLockedTarget(registry_, entity));
 
     // Get RTT for lag compensation
     uint32_t rttMs = 100;  // Default fallback

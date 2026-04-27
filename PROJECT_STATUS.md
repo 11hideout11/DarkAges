@@ -1,8 +1,8 @@
 # DarkAges MMO - Project Status
 
-**Version:** 5.4 (Demo MVP — Lock-on Targeting Complete)  
+**Version:** 5.5 (Demo MVP — Lock-on Targeting + Camera Polish Complete)  
 **Last Updated:** 2026-04-27  
-**Status:** Demo MVP Ready — Full combat feel polish (hit stop, procedural leaning, animation blend) merged; lock-on targeting integrated into auto-attack; research standards alignment up to date; 1284 tests passing  
+**Status:** Demo MVP Ready — Full combat feel polish (hit stop, procedural leaning, animation blend) merged; lock-on targeting integrated into auto-attack; smooth third-person camera with deadzone, collision avoidance, and height/rotation smoothing; research standards alignment up to date; 1284 tests passing  
 
 ---
 
@@ -232,6 +232,7 @@ The project has been systematically mapped against industry-standard third-perso
 - ~~C# client compilation errors~~ — Fixed: 37 errors resolved (API mismatches, missing usings, type casts). Godot editor build passes.
 - ~~GNS CMake "No known features" error~~ — Fixed: Patched `set_clientlib_target_properties` macro to use `target_compile_features(... c_std_99 cxx_std_11)` instead of empty feature variables.
 - ~~Lock-on targeting auto-attack integration~~ — Fixed: auto-attack now respects confirmed server-authoritative lock-on target; network protocol and client UI already complete. All 1284 tests pass.
+- ~~Camera polish (deadzone, collision avoidance, smoothing)~~ — Fixed: replaced hard-coded `PredictedPlayer` camera logic with `CameraController` node; smooth follow with configurable deadzone, raycast push-in collision avoidance, height/rotation smoothing. Zero test regressions.
 
 ---
 
