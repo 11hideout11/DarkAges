@@ -812,6 +812,7 @@ if(BUILD_TESTS AND TARGET Catch2::Catch2WithMain)
         src/server/tests/TestGuildSystem.cpp
         # New integration test for full gameplay loop
         src/server/tests/TestIntegration.cpp
+        src/server/tests/TestServerStateExporter.cpp
     )
 
     # Conditionally include tests for optional features
