@@ -11,7 +11,7 @@ cd build_validate && ctest --output-on-failure -j8
 - Phase 8: COMPLETE — all core gameplay systems
 - Phase 9: COMPLETE — performance budgets pass (400 ents <20ms, 800 <30ms)
 - Networking: STABLE — live validator passes (1-10 clients, snapshots OK)
-- Tests: 1995 cases / 89 files / 11 suites — ALL PASS
+- Tests: 1386 cases / 92 files / 11 suites — ALL PASS
 - Server: ~32K LOC (C++20, EnTT ECS, 60Hz tick) | Client: ~6.2K LOC (C# Godot 4.2)
 - Harness: Two-layer evaluator architecture operational (objective + subjective)
 
