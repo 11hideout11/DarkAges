@@ -1283,3 +1283,8 @@ TEST_CASE("ZoneServer spawnFromGroup registers NPC with spawn metadata", "[zones
 }
 
 // End of expanded ZoneServer tests
+
+    TEST_CASE("ZoneServer is a complete type", "[zoneserver]") {
+        REQUIRE(sizeof(ZoneServer) > 0);
+    }
+
