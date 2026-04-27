@@ -6,9 +6,11 @@
 #include "zones/EntityMigration.hpp"
  #include "combat/LagCompensatedCombat.hpp"
  #include "combat/TargetLockSystem.hpp"
- #ifdef DARKAGES_HAS_PROTOBUF
- #include "netcode/ProtobufProtocol.hpp"
- #endif
+#ifdef DARKAGES_HAS_PROTOBUF
+#include "netcode/ProtobufProtocol.hpp"
+#endif
+#include "netcode/Protocol.hpp"
+#include "ecs/CoreTypes.hpp"
 #include "profiling/PerfettoProfiler.hpp"
 #include "profiling/PerformanceMonitor.hpp"
 #include "monitoring/MetricsExporter.hpp"
@@ -112,9 +114,14 @@ bool ZoneServer::initialize(const ZoneConfig& config) {
     });
 
     // [COMBAT_AGENT] Server-authoritative lock-on targeting: enqueue requests
-    network_->setOnLockOnRequest([this](const LockOnRequestPacket& request) {
-        pendingLockOnRequests_.push_back(request);
-    });
+        network_->setOnLockOnRequest([this](const LockOnRequestPacket& request) {
+            pendingLockOnRequests_.push_back(request);
+        });
+
+        // Chat: receive inbound chat packets from network
+        network_->setOnChatReceived([this](ConnectionID connId, const ChatMessage& msg) {
+            pendingRemoteChatMessages_.emplace_back(connId, msg);
+        });
 
     // Initialize Redis
     redis_ = std::make_unique<RedisManager>();
@@ -267,6 +274,12 @@ bool ZoneServer::initialize(const ZoneConfig& config) {
     chatSystem_.setConnectionLookupCallback([this](EntityID entity) -> ConnectionID {
         auto it = entityToConnection_.find(entity);
         return (it != entityToConnection_.end()) ? it->second : 0;
+    });
+
+    // [CHAT_AGENT] Wire chat delivery to network layer
+    chatSystem_.setMessageDeliveryCallback([this](ConnectionID connId, const ChatMessage& msg) {
+        // Use sendChatMessage to dispatch UDP packet
+        network_->sendChatMessage(connId, msg);
     });
 
     // [GAMEPLAY_AGENT] Initialize crafting system
@@ -821,6 +834,7 @@ void ZoneServer::updateGameLogic() {
     ZONE_TRACE_EVENT("Combat::process", Profiling::TraceCategory::GAME_LOGIC);
     processPendingCombatActions();
     processPendingLockOnRequests();
+    processPendingChatMessages();
     combatEventHandler_.processCombat();
 
     // Health regeneration
@@ -1316,6 +1330,34 @@ void ZoneServer::processPendingLockOnRequests() {
     }
 
     pendingLockOnRequests_.clear();
+}
+
+void ZoneServer::processPendingChatMessages() {
+    if (pendingRemoteChatMessages_.empty()) return;
+
+    Registry& registry = getRegistry();
+    uint32_t now = getCurrentTimeMs();
+
+    for (const auto& [connId, chat] : pendingRemoteChatMessages_) {
+        // Resolve sender entity from connection
+        auto it = connectionToEntity_.find(connId);
+        if (it == connectionToEntity_.end()) continue;
+        EntityID senderEntity = it->second;
+
+        // Submit to ChatSystem for validation, routing, and delivery
+        // Note: chat.senderId is 0; ChatSystem will fill from PlayerInfo
+        // Content is null-terminated already
+        chatSystem_.sendMessage(
+            registry,
+            senderEntity,
+            static_cast<ChatChannel>(chat.channel),
+            chat.content,
+            now,
+            chat.targetId
+        );
+    }
+
+    pendingRemoteChatMessages_.clear();
 }
 
 EntityID ZoneServer::spawnPlayer(ConnectionID connectionId, uint64_t playerId,

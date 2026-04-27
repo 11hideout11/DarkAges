@@ -12,6 +12,7 @@
 #include <cstddef>
 #include <memory>
 #include <string>
+#include <cstring>
 
 // [NETWORK_AGENT] GameNetworkingSockets wrapper
 // Handles UDP connections, reliable/unreliable channels, and connection quality
@@ -85,6 +86,7 @@ public:
     using SnapshotCallback = std::function<void(ConnectionID, std::span<const uint8_t>)>;
     using CombatActionCallback = std::function<void(const CombatActionPacket&)>;
     using LockOnRequestCallback = std::function<void(const LockOnRequestPacket&)>;
+    using ChatCallback = std::function<void(ConnectionID, const ChatMessage&)>;
 
 public:
     NetworkManager();
@@ -124,6 +126,9 @@ public:
     // Get pending game events (respawn requests, etc.)
     [[nodiscard]] std::vector<EntityID> getPendingRespawnRequests();
     
+    // Get pending chat messages (call after update)
+    [[nodiscard]] std::vector<ChatMessage> getPendingChatMessages();
+    
     // Clear processed inputs up to a sequence number
     void clearProcessedInputs(uint32_t upToSequence);
     
@@ -142,6 +147,7 @@ public:
     void setOnInputReceived(InputCallback callback) { onInput_ = std::move(callback); }
     void setOnCombatAction(CombatActionCallback callback) { onCombatAction_ = std::move(callback); }
     void setOnLockOnRequest(LockOnRequestCallback callback) { onLockOnRequest_ = std::move(callback); }
+    void setOnChatReceived(ChatCallback callback) { onChat_ = std::move(callback); }
     
     // Send combat result to a specific client
     // Format: [type:1=11][result:1][damage:4][target_id:4][is_critical:1][timestamp:4]
@@ -157,6 +163,9 @@ public:
     // Format: [type:1=13][target_entity:4][reason:1]
     // Reason codes: 0=out_of_range, 1=not_visible, 2=not_alive, 3=invalid_target, 4=busy, 5=error
     void sendLockOnFailed(ConnectionID connectionId, EntityID targetEntity, uint8_t reason);
+
+    // Send chat message to a specific client
+    void sendChatMessage(ConnectionID connectionId, const ChatMessage& msg);
 
     // Statistics
     [[nodiscard]] size_t getConnectionCount() const;
@@ -188,6 +197,7 @@ private:
     InputCallback onInput_;
     CombatActionCallback onCombatAction_;
     LockOnRequestCallback onLockOnRequest_;
+    ChatCallback onChat_;  
     
     std::vector<ClientInputPacket> pendingInputs_;
     std::vector<LockOnRequestPacket> pendingLockOnRequests_;

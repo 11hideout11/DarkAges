@@ -18,6 +18,7 @@ namespace DarkAges.Client.UI
         private TargetLockSystem _targetLockSystem;
         private CombatTextSystem _combatTextSystem;
         private DeathRespawnUI _deathRespawnUI;
+        private ChatPanel _chatPanel;
         
         // Crosshair
         private TextureRect _crosshair;
@@ -94,6 +95,14 @@ namespace DarkAges.Client.UI
                 _deathRespawnUI = new DeathRespawnUI();
                 AddChild(_deathRespawnUI);
             }
+
+            // Chat Panel
+            _chatPanel = GetNode<ChatPanel>("ChatPanel");
+            if (_chatPanel == null)
+            {
+                _chatPanel = new ChatPanel();
+                AddChild(_chatPanel);
+            }
             
             // Crosshair
             _crosshair = GetNode<TextureRect>("SafeArea/MainLayout/Center/Crosshair");
@@ -118,6 +127,12 @@ namespace DarkAges.Client.UI
             
             // Show/hide hit marker
             UpdateHitMarker();
+
+            // Toggle chat panel
+            if (Input.IsActionJustPressed("ui_accept") && _chatPanel != null && !_chatPanel.Visible)
+            {
+                _chatPanel.ShowChat();
+            }
         }
         
         private void UpdateTargetHealthBar()
@@ -234,8 +249,9 @@ namespace DarkAges.Client.UI
             bool hasCombatText = _combatTextSystem != null;
             bool hasAbilityBar = _abilityBar != null;
             bool hasDeathUI = _deathRespawnUI != null;
+            bool hasChatPanel = _chatPanel != null;
             
-            return healthUpdateTimely && hasTargetSystem && hasCombatText && hasAbilityBar && hasDeathUI;
+            return healthUpdateTimely && hasTargetSystem && hasCombatText && hasAbilityBar && hasDeathUI && hasChatPanel;
         }
     }
 }

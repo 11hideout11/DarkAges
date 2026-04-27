@@ -15,6 +15,7 @@
 //   Correction:         [type:1=8][server_tick:4][pos_x:4][pos_y:4][pos_z:4][vel_x:4][vel_y:4][vel_z:4][last_input:4]
 
 #include "netcode/NetworkManager.hpp"
+#include "netcode/Protocol.hpp"
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
@@ -60,6 +61,8 @@ struct GNSInternal {
     std::mutex combatMutex;
     std::queue<LockOnRequestPacket> lockOnRequestQueue;
     std::mutex lockOnMutex;
+    std::queue<ChatMessage> chatQueue;
+    std::mutex chatMutex;
     uint32_t currentTimeMs{0};
 };
 
@@ -356,6 +359,34 @@ void NetworkManager::update(uint32_t currentTimeMs) {
                 }
                 break;
             }
+            case 14: { // PACKET_CHAT (client -> server chat message)
+                if (received < 8) break; // channel:1, target:4, len:2
+                uint8_t channel = buffer[1];
+                uint32_t targetEntity = *reinterpret_cast<uint32_t*>(buffer + 2);
+                uint16_t msgLen = *reinterpret_cast<uint16_t*>(buffer + 6);
+                if (msgLen >= CHAT_MESSAGE_MAX_LEN) break; // sanity limit
+                if (received < 8 + msgLen) break;
+
+                ChatMessage chat{};
+                chat.channel = static_cast<ChatChannel>(channel);
+                chat.targetId = targetEntity;
+                chat.timestampMs = currentTimeMs;
+                chat.senderId = 0; // will be filled from connection lookup in ZoneServer
+
+                // Copy message content (no null terminator guarantee)
+                std::memcpy(chat.content, buffer + 8, msgLen);
+                chat.content[msgLen] = '\0'; // ensure C-string termination
+
+                {
+                    std::lock_guard<std::mutex> lock(udp->chatMutex);
+                    udp->chatQueue.push(chat);
+                }
+
+                if (onChat_) {
+                    onChat_(connId, chat);
+                }
+                break;
+            }
             default:
                 break;
         }
@@ -410,6 +441,17 @@ std::vector<LockOnRequestPacket> NetworkManager::getPendingLockOnRequests() {
         udp->lockOnRequestQueue.pop();
     }
     return requests;
+}
+
+std::vector<ChatMessage> NetworkManager::getPendingChatMessages() {
+    auto* udp = static_cast<GNSInternal*>(internal_.get());
+    std::vector<ChatMessage> chats;
+    std::lock_guard<std::mutex> lock(udp->chatMutex);
+    while (!udp->chatQueue.empty()) {
+        chats.push_back(udp->chatQueue.front());
+        udp->chatQueue.pop();
+    }
+    return chats;
 }
 
 std::vector<EntityID> NetworkManager::getPendingRespawnRequests() {
@@ -539,6 +581,32 @@ void NetworkManager::sendLockOnFailed(ConnectionID connectionId, EntityID target
     udp->totalBytesSent += sizeof(buffer);
     it->second.quality.packetsSent++;
     it->second.quality.bytesSent += sizeof(buffer);
+}
+
+void NetworkManager::sendChatMessage(ConnectionID connectionId, const ChatMessage& msg) {
+    auto* udp = static_cast<GNSInternal*>(internal_.get());
+    if (udp->sockfd < 0) return;
+
+    // Serialize chat payload
+    auto payload = Protocol::serializeChatMessage(msg);
+    if (payload.empty()) return;
+
+    // Build packet: [type:1][payload:N]
+    std::vector<uint8_t> packet;
+    packet.reserve(1 + payload.size());
+    packet.push_back(static_cast<uint8_t>(Protocol::PacketType::PACKET_CHAT));
+    packet.insert(packet.end(), payload.begin(), payload.end());
+
+    // Send via UDP
+    std::lock_guard<std::recursive_mutex> lock(udp->connectionsMutex);
+    auto it = udp->connections.find(connectionId);
+    if (it == udp->connections.end()) return;
+
+    sendto(udp->sockfd, packet.data(), packet.size(), 0,
+           reinterpret_cast<sockaddr*>(&it->second.addr), sizeof(it->second.addr));
+    udp->totalBytesSent += packet.size();
+    it->second.quality.packetsSent++;
+    it->second.quality.bytesSent += packet.size();
 }
 
 void NetworkManager::disconnect(ConnectionID connectionId, const char* reason) {

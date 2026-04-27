@@ -1,0 +1,29 @@
+[gd_scene load_steps=2 format=3 uid="uid://chatpanel"]
+
+[ext_resource type="Script" path="res://src/ui/ChatPanel.cs" id="1_chat"]
+
+[node name="ChatPanel" type="CanvasLayer"]
+layer = 100
+visible = false
+
+[node name="Background" type="ColorRect" parent="."]
+anchor_right = 1.0
+anchor_bottom = 0.5
+color = Color(0, 0, 0, 0.7)
+
+[node name="History" type="RichTextLabel" parent="."]
+anchor_left = 0.02
+anchor_top = 0.02
+anchor_right = 0.98
+anchor_bottom = 0.85
+scroll_following = true
+fit_content = true
+text = ""
+
+[node name="Input" type="LineEdit" parent="."]
+anchor_left = 0.02
+anchor_top = 0.9
+anchor_right = 0.98
+anchor_bottom = 0.96
+placeholder_text = "Press Enter to chat..."
+max_length = 256

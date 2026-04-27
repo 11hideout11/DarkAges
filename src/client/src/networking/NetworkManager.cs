@@ -50,11 +50,14 @@ namespace DarkAges.Networking
  [Signal]
  public delegate void CombatResultReceivedEventHandler(byte[] resultData);
 
- [Signal]
- public delegate void LockOnConfirmedEventHandler(uint targetEntity);
+    [Signal]
+    public delegate void LockOnConfirmedEventHandler(uint targetEntity);
 
- [Signal]
- public delegate void LockOnFailedEventHandler(uint targetEntity, byte reason);
+    [Signal]
+    public delegate void LockOnFailedEventHandler(uint targetEntity, byte reason);
+
+    [Signal]
+    public delegate void ChatMessageReceivedEventHandler(uint senderId, byte channel, string senderName, string message);
 
  // Socket
         private UdpClient? _udpClient;
@@ -90,6 +93,7 @@ namespace DarkAges.Networking
         private const byte PACKET_LOCK_ON_REQUEST = 5;    // Client -> Server: lock-on request (same ID as PONG opposite direction)
         private const byte PACKET_LOCK_ON_CONFIRMED = 12; // Server -> Client: lock-on confirmed
         private const byte PACKET_LOCK_ON_FAILED = 13;   // Server -> Client: lock-on failed
+        private const byte PACKET_CHAT = 14;             // Client <-> Server: chat message
 
         public override void _EnterTree()
         {
@@ -419,6 +423,9 @@ namespace DarkAges.Networking
                 case PACKET_LOCK_ON_FAILED:
                     ProcessLockOnFailed(data);
                     break;
+                case PACKET_CHAT:
+                    ProcessChatMessage(data);
+                    break;
                 default:
                     GD.Print($"[NetworkManager] Unknown packet type: {packetType}");
                     break;
@@ -711,11 +718,41 @@ namespace DarkAges.Networking
             }
             catch (Exception ex)
             {
-                GD.PrintErr($"[NetworkManager] Combat action send failed: {ex.Message}");
+                GD.PrintErr($"[NetworkManager] Reliable send failed: {ex.Message}");
             }
         }
 
         /// <summary>
+        /// Send a chat message to the server.
+        /// Format: [type:1=14][channel:1][target_id:4][msgLen:2][msg bytes]
+        /// Channel: 0=System,1=Local,2=Global,3=Whisper,4=Party,5=Guild
+        /// </summary>
+        public void SendChatMessage(byte channel, uint targetEntityId, string message)
+        {
+            if (_udpClient == null || _serverEndPoint == null) return;
+            if (GameState.Instance.CurrentConnectionState != GameState.ConnectionState.Connected) return;
+
+            byte[] contentBytes = System.Text.Encoding.UTF8.GetBytes(message);
+            ushort len = (ushort)Math.Min(contentBytes.Length, 256);
+            byte[] data = new byte[8 + len];
+            data[0] = PACKET_CHAT;
+            data[1] = channel;
+            BitConverter.GetBytes(targetEntityId).CopyTo(data, 2);
+            BitConverter.GetBytes(len).CopyTo(data, 6);
+            Array.Copy(contentBytes, 0, data, 8, len);
+
+            try
+            {
+                _udpClient.Send(data, data.Length);
+                GD.Print($"[NetworkManager] Sent chat channel={channel} target={targetEntityId}");
+            }
+            catch (Exception ex)
+            {
+                GD.PrintErr($"[NetworkManager] Chat send failed: {ex.Message}");
+            }
+        }
+
+        private void ProcessPong
         /// Process combat result from server.
         /// Format: [type:1=11][result:1][damage:4][target_id:4][is_critical:1][timestamp:4]
         /// Result codes: 0=hit, 1=miss, 2=blocked, 3=cooldown, 4=gcd_active
@@ -777,6 +814,26 @@ namespace DarkAges.Networking
             byte reason = data[5];
             GD.Print($"[NetworkManager] Lock-on failed target={targetId} reason={reason}");
             EmitSignal(SignalName.LockOnFailed, targetId, reason);
+        }
+
+        /// <summary>
+        /// Process incoming chat message from server.
+        /// Fixed format: [type:1][channel:1][senderId:4][targetId:4][timestamp:4][senderName:32][content:256]
+        /// </summary>
+        private void ProcessChatMessage(byte[] data)
+        {
+            // Minimum 302 bytes for full fixed layout
+            if (data.Length < 302) return;
+
+            byte channel = data[1];
+            uint senderId = BitConverter.ToUInt32(data, 2);
+            uint targetId = BitConverter.ToUInt32(data, 6);
+            uint timestamp = BitConverter.ToUInt32(data, 10);
+            string senderName = System.Text.Encoding.UTF8.GetString(data, 14, 32).TrimEnd('\0');
+            string message = System.Text.Encoding.UTF8.GetString(data, 46, 256).TrimEnd('\0');
+
+            GD.Print($"[NetworkManager] Chat from {senderName} (chan:{channel}): {message}");
+            EmitSignal(SignalName.ChatMessageReceived, senderId, channel, senderName, message);
         }
     }
 }
