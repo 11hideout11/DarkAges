@@ -1,6 +1,7 @@
 // Protocol serialization helpers (stub implementation)
 // Used when GNS/FlatBuffers are not available
 
+#include "netcode/Protocol.hpp"
 #include "netcode/NetworkManager.hpp"
 #include <cstring>
 #include <unordered_map>
@@ -444,6 +445,35 @@ bool deserializeCombatEvent(
     std::memcpy(&outTimestampMs, &data[offset], sizeof(uint32_t));
 
     return true;
+}
+
+// [CHAT_AGENT] Serialize ChatMessage to raw UDP binary format
+// Format: [type:1=14][messageId:4][channel:1][senderId:4][targetId:4][timestamp:4][senderName:32][content:256]
+std::vector<uint8_t> serializeChatMessage(const ChatMessage& msg) {
+    std::vector<uint8_t> data;
+    data.reserve(1 + 4 + 1 + 4 + 4 + 4 + 32 + 256);
+
+    data.push_back(static_cast<uint8_t>(PacketType::PACKET_CHAT));
+
+    auto appendUInt32 = [&data](uint32_t value) {
+        const uint8_t* bytes = reinterpret_cast<const uint8_t*>(&value);
+        data.insert(data.end(), bytes, bytes + sizeof(uint32_t));
+    };
+
+    appendUInt32(msg.messageId);
+    data.push_back(static_cast<uint8_t>(msg.channel));
+    appendUInt32(msg.senderId);
+    appendUInt32(msg.targetId);
+    appendUInt32(msg.timestampMs);
+
+    // senderName fixed 32
+    for (int i = 0; i < CHAT_SENDER_NAME_MAX; ++i)
+        data.push_back(static_cast<uint8_t>(msg.senderName[i]));
+    // content fixed 256
+    for (int i = 0; i < CHAT_MESSAGE_MAX_LEN; ++i)
+        data.push_back(static_cast<uint8_t>(msg.content[i]));
+
+    return data;
 }
 
 } // namespace Protocol

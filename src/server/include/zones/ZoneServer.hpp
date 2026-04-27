@@ -252,10 +252,11 @@ private:
     void processCombat();
     void onEntityDied(EntityID victim, EntityID killer);
     void sendCombatEvent(EntityID attacker, EntityID target, int16_t damage, const Position& location);
-    void logCombatEvent(const HitResult& hit, EntityID attacker, EntityID target);
+    void logCombatEvent(const HitResult& hit, EntityID victim, EntityID killer);
     void processAttackInput(EntityID entity, const ClientInputPacket& input);
     void processPendingCombatActions();
     void processPendingLockOnRequests();
+    void processPendingChatMessages();
 
     // Performance monitoring (delegated to PerformanceHandler)
 
@@ -344,8 +345,9 @@ private:
     std::vector<CombatActionPacket> pendingRemoteCombatActions_;
     // [COMBAT_AGENT] Pending lock-on requests awaiting validation
     std::vector<LockOnRequestPacket> pendingLockOnRequests_;
+    std::vector<std::pair<ConnectionID, ChatMessage>> pendingRemoteChatMessages_;
 
-    // Client entity mapping
+public:
     std::unordered_map<ConnectionID, EntityID> connectionToEntity_;
     std::unordered_map<EntityID, ConnectionID> entityToConnection_;
 
