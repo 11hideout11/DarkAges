@@ -54,15 +54,16 @@ cd build_validate && ctest --output-on-failure -j8
 - (none — all previously noted gaps resolved as of 2026-04-26)
 
 ## Recent Commits (last 10)
-1. combat(P2): hit stop + procedural leaning + animation blend polish (merged)
-2. visual(P1): complete floating combat text for local player
-3. Combat(P1): wire PredictedPlayer combat events for hit/die feedback (merged)
-4. Combat(P1): server-authoritative RPC handshake with GCD (merged)
-5. Harness engineering: two-layer evaluator architecture (objective + subjective) + tool subtraction
-6. Fix lag comp `calculateAttackTime` double-count latency; tests updated (124 combat tests pass)
-7. Validator: combat validation phase (`--combat`, `--combat-duration`)
-8. Fix C# `EntityFrame` visibility (private→public) for `RemotePlayerManager`
-9. Validator: NPC replication over network (`--npcs` + `--npc-count`)
-10. Validator: latency/packet-loss sim (30ms + 5% loss resilient)
+1. feat(client): server-validated lock-on targeting with confirmation/failure handling and range alignment (merged)
+2. combat(P2): hit stop + procedural leaning + animation blend polish (merged)
+3. visual(P1): complete floating combat text for local player
+4. Combat(P1): wire PredictedPlayer combat events for hit/die feedback (merged)
+5. Combat(P1): server-authoritative RPC handshake with GCD (merged)
+6. Harness engineering: two-layer evaluator architecture (objective + subjective) + tool subtraction
+7. Fix lag comp `calculateAttackTime` double-count latency; tests updated (124 combat tests pass)
+8. Validator: combat validation phase (`--combat`, `--combat-duration`)
+9. Fix C# `EntityFrame` visibility (private→public) for `RemotePlayerManager`
+10. Validator: NPC replication over network (`--npcs` + `--npc-count`)
 ---
-Last updated: 2026-04-26
+Last updated: 2026-04-27
+
