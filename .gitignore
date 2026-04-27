@@ -162,3 +162,6 @@ src/server/build/
 # Build variants
 /build_*/
 .task_cache.json
+
+# Autonomous runtime state
+scripts/autonomous/.edit_history.json
