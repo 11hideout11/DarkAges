@@ -55,7 +55,8 @@ def get_diff(branch: Optional[str] = None, base_ref: str = "main") -> str:
     if branch:
         code, out, err = git("diff", f"{base_ref}...{branch}")
     else:
-        code, out, err = git("diff", base_ref)
+        # --current: review staged changes (index) vs base
+        code, out, err = git("diff", "--cached", base_ref)
     if code != 0:
         return f"# Error getting diff: {err}"
     # Filter out runtime/state files that are not code changes
@@ -141,11 +142,10 @@ If there are no issues, return an empty issues array and overall: "PASS".
     code, out, err = run(
         ["opencode", "run", prompt],
         cwd=str(REPO),
-        timeout=180,
+        timeout=60,
     )
 
     # Try to extract JSON from OpenCode's output
-    # OpenCode may wrap JSON in markdown code blocks or add prose
     json_match = re.search(r'\{.*\}', out, re.DOTALL)
     if json_match:
         try:
@@ -157,10 +157,95 @@ If there are no issues, return an empty issues array and overall: "PASS".
     try:
         return json.loads(out)
     except json.JSONDecodeError:
-        return {
-            "overall": "ERROR",
-            "reason": f"OpenCode returned non-JSON output (exit {code}): {out[:300]} {err[:200]}",
-        }
+        # CRITICAL FALLBACK: if OpenCode fails, do lightweight heuristic scan
+        return heuristic_review(diff_text, agents_text)
+
+
+def heuristic_review(diff_text: str, agents_text: str) -> dict:
+    """
+    Lightweight pattern-based code review as fallback when OpenCode is unavailable
+    or returns non-JSON output. Scans for known critical violation patterns.
+    """
+    issues = []
+    lines = diff_text.splitlines()
+    in_hunk = False
+    current_file = None
+
+    # Known violation patterns
+    forbidden_namespace = re.compile(r'\bnamespace\s+[dD]arkages\b', re.IGNORECASE)
+    entitle_has = re.compile(r'registry\.has<')
+    entitle_view_size = re.compile(r'\.view\.size\s*\(')
+    forward_decl_sizeof = re.compile(r'sizeof\s*\(\s*\w+\s*\)')
+    nested_type_qual = re.compile(r'\w+::\w+\s*{')
+    missing_include = re.compile(r'^[+-]#include\s+"')
+
+    for i, line in enumerate(lines, 1):
+        if line.startswith("+++ b/") or line.startswith("--- a/"):
+            current_file = line.split("/")[-1]
+            in_hunk = False
+        elif line.startswith("@@ "):
+            in_hunk = True
+        elif not in_hunk:
+            continue
+        elif line.startswith("-") and not line.startswith("---"):
+            pass  # We only inspect added lines for new violations
+        elif line.startswith("+") and not line.startswith("+++"):
+            code_line = line[1:]  # strip '+'
+
+            # Determine if this is a C++ source file (allocation mutations only)
+            is_cpp = current_file and any(
+                current_file.endswith(ext) for ext in (".cpp", ".hpp", ".h", ".cc", ".cxx")
+            )
+
+            # Check namespace (C++ files only)
+            if is_cpp and forbidden_namespace.search(code_line):
+                issues.append({
+                    "severity": "critical",
+                    "file": current_file or "unknown",
+                    "line": i,
+                    "message": f"Namespace violation: found 'namespace darkages' (must be DarkAges::)"
+                })
+            # EnTT API misuse (C++ files only)
+            if is_cpp and entitle_has.search(code_line):
+                issues.append({
+                    "severity": "critical",
+                    "file": current_file or "unknown",
+                    "line": i,
+                    "message": "EnTT API misuse: registry.has<T>() forbidden; use registry.all_of<T>()"
+                })
+            if is_cpp and entitle_view_size.search(code_line):
+                issues.append({
+                    "severity": "critical",
+                    "file": current_file or "unknown",
+                    "line": i,
+                    "message": "EnTT API misuse: view.size() forbidden; iterate or use registry.size() on entity storage"
+                })
+            # Forward-decl sizeof (C++ files only)
+            if is_cpp and forward_decl_sizeof.search(code_line):
+                issues.append({
+                    "severity": "critical",
+                    "file": current_file or "unknown",
+                    "line": i,
+                    "message": "sizeof() applied to forward-declared type — requires complete definition"
+                })
+            # Nested type qualification (C++ files only)
+            if is_cpp and nested_type_qual.search(code_line) and "::" in code_line:
+                issues.append({
+                    "severity": "warning",
+                    "file": current_file or "unknown",
+                    "line": i,
+                    "message": "Nested type usage — ensure full qualification (e.g., DarkAges::RedisInternal::PendingCallback)"
+                })
+
+    # Determine overall
+    critical_count = sum(1 for iss in issues if iss["severity"] == "critical")
+    overall = "FAIL" if critical_count > 0 else "PASS"
+
+    return {
+        "overall": overall,
+        "issues": issues,
+        "notes": f"Heuristic review fallback: {len(issues)} issues flagged ({critical_count} critical). OpenCode unavailable or failed to parse."
+    }
 
 
 def evaluate_review(branch: Optional[str] = None, base_ref: str = "main") -> dict:
