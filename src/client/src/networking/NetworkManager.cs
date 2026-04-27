@@ -47,8 +47,14 @@ namespace DarkAges.Networking
 [Signal]
  public delegate void InputSentEventHandler(bool attack, bool block);
 
-[Signal]
-public delegate void CombatResultReceivedEventHandler(byte[] resultData);
+ [Signal]
+ public delegate void CombatResultReceivedEventHandler(byte[] resultData);
+
+ [Signal]
+ public delegate void LockOnConfirmedEventHandler(uint targetEntity);
+
+ [Signal]
+ public delegate void LockOnFailedEventHandler(uint targetEntity, byte reason);
 
  // Socket
         private UdpClient? _udpClient;
@@ -81,6 +87,9 @@ public delegate void CombatResultReceivedEventHandler(byte[] resultData);
         private const byte PACKET_RESPAWN_REQUEST = 9;
         private const byte PACKET_COMBAT_ACTION = 10;   // Client -> Server: attack request
         private const byte PACKET_COMBAT_RESULT = 11;   // Server -> Client: validated result
+        private const byte PACKET_LOCK_ON_REQUEST = 5;    // Client -> Server: lock-on request (same ID as PONG opposite direction)
+        private const byte PACKET_LOCK_ON_CONFIRMED = 12; // Server -> Client: lock-on confirmed
+        private const byte PACKET_LOCK_ON_FAILED = 13;   // Server -> Client: lock-on failed
 
         public override void _EnterTree()
         {
@@ -404,6 +413,12 @@ public delegate void CombatResultReceivedEventHandler(byte[] resultData);
                 case PACKET_COMBAT_RESULT:
                     ProcessCombatResult(data);
                     break;
+                case PACKET_LOCK_ON_CONFIRMED:
+                    ProcessLockOnConfirmed(data);
+                    break;
+                case PACKET_LOCK_ON_FAILED:
+                    ProcessLockOnFailed(data);
+                    break;
                 default:
                     GD.Print($"[NetworkManager] Unknown packet type: {packetType}");
                     break;
@@ -705,6 +720,32 @@ public delegate void CombatResultReceivedEventHandler(byte[] resultData);
         /// Format: [type:1=11][result:1][damage:4][target_id:4][is_critical:1][timestamp:4]
         /// Result codes: 0=hit, 1=miss, 2=blocked, 3=cooldown, 4=gcd_active
         /// </summary>
+        /// <summary>
+        /// Send a lock-on target request to the server.
+        /// Format: [type:1=5][target_entity:4][client_timestamp:4]
+        /// </summary>
+        public void SendLockOnRequest(uint targetEntityId)
+        {
+            if (_udpClient == null || _serverEndPoint == null) return;
+            if (GameState.Instance.CurrentConnectionState != GameState.ConnectionState.Connected) return;
+
+            byte[] data = new byte[9];
+            data[0] = PACKET_LOCK_ON_REQUEST;
+            BitConverter.GetBytes(targetEntityId).CopyTo(data, 1);
+            uint timestamp = (uint)Time.GetTicksMsec();
+            BitConverter.GetBytes(timestamp).CopyTo(data, 5);
+
+            try
+            {
+                _udpClient.Send(data, data.Length);
+                GD.Print($"[NetworkManager] Sent lock-on request target={targetEntityId} ts={timestamp}");
+            }
+            catch (Exception ex)
+            {
+                GD.PrintErr($"[NetworkManager] Lock-on request send failed: {ex.Message}");
+            }
+        }
+
         private void ProcessCombatResult(byte[] data)
         {
             if (data.Length < 14) return;
@@ -719,6 +760,23 @@ public delegate void CombatResultReceivedEventHandler(byte[] resultData);
 
             // Forward to CombatEventSystem for visual feedback
             EmitSignal(SignalName.CombatResultReceived, data);
+        }
+
+        private void ProcessLockOnConfirmed(byte[] data)
+        {
+            if (data.Length < 5) return;
+            uint targetId = BitConverter.ToUInt32(data, 1);
+            GD.Print($"[NetworkManager] Lock-on confirmed target={targetId}");
+            EmitSignal(SignalName.LockOnConfirmed, targetId);
+        }
+
+        private void ProcessLockOnFailed(byte[] data)
+        {
+            if (data.Length < 6) return;
+            uint targetId = BitConverter.ToUInt32(data, 1);
+            byte reason = data[5];
+            GD.Print($"[NetworkManager] Lock-on failed target={targetId} reason={reason}");
+            EmitSignal(SignalName.LockOnFailed, targetId, reason);
         }
     }
 }

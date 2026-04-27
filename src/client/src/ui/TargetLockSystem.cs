@@ -33,6 +33,10 @@ namespace DarkAges.Client.UI
         // Target health tracking for UI
         private float _targetCurrentHealth = 100;
         private float _targetMaxHealth = 100;
+        private bool _lockRequestPending = false;
+        private uint? _pendingTarget = null;
+        private uint _lastLockAttemptTimeMs = 0;  // For client-side rate-limit mirroring
+        private const uint MIN_LOCK_INTERVAL_MS = 1000;  // Match server rate-limit
 
         public override void _Ready()
         {
@@ -42,6 +46,8 @@ namespace DarkAges.Client.UI
             // Subscribe to events
             NetworkManager.Instance.EntityStateReceived += OnEntityStateReceived;
             Combat.CombatEventSystem.Instance.EntityDied += OnEntityDied;
+            NetworkManager.Instance.LockOnConfirmed += OnLockOnConfirmed;
+            NetworkManager.Instance.LockOnFailed += OnLockOnFailed;
         }
 
         public override void _ExitTree()
@@ -50,12 +56,74 @@ namespace DarkAges.Client.UI
             {
                 NetworkManager.Instance.EntityStateReceived -= OnEntityStateReceived;
             }
+            if (NetworkManager.Instance != null)
+            {
+                NetworkManager.Instance.LockOnConfirmed -= OnLockOnConfirmed;
+                NetworkManager.Instance.LockOnFailed -= OnLockOnFailed;
+            }
             if (Combat.CombatEventSystem.Instance != null)
             {
                 Combat.CombatEventSystem.Instance.EntityDied -= OnEntityDied;
             }
         }
-        
+
+        /// <summary>
+        /// Handler: server confirmed lock-on. Apply target state.
+        /// </summary>
+        private void OnLockOnConfirmed(uint targetEntity)
+        {
+            _lockRequestPending = false;
+            _pendingTarget = null;
+            
+            // Look up the remote player for this entity
+            var remoteManager = RemotePlayerManager.Instance;
+            if (remoteManager == null)
+            {
+                GD.PrintErr("[TargetLockSystem] OnLockOnConfirmed: RemotePlayerManager not available");
+                return;
+            }
+            
+            var targetPlayer = remoteManager.GetAllPlayers()
+                .FirstOrDefault(p => IsInstanceValid(p) && p.EntityId == targetEntity);
+            
+            if (targetPlayer == null)
+            {
+                GD.PrintErr($"[TargetLockSystem] OnLockOnConfirmed: Entity {targetEntity} not found in remote players");
+                return;
+            }
+            
+            SetTarget(targetPlayer);
+            GD.Print($"[TargetLockSystem] Lock-on confirmed for {targetPlayer.PlayerName} ({targetEntity})");
+        }
+
+        /// <summary>
+        /// Handler: server rejected lock-on. Clear pending state, optional feedback.
+        /// </summary>
+        private void OnLockOnFailed(uint targetEntity, byte reason)
+        {
+            _lockRequestPending = false;
+            _pendingTarget = null;
+            
+            string reasonStr = reason switch
+            {
+                0 => "OUT_OF_RANGE",
+                1 => "NOT_VISIBLE",  
+                2 => "NOT_ALIVE",
+                3 => "INVALID_TARGET",
+                4 => "BUSY (rate-limited)",
+                _ => $"UNKNOWN({reason})"
+            };
+            
+            GD.Print($"[TargetLockSystem] Lock-on failed for entity {targetEntity}: {reasonStr}");
+            
+            // Optional: brief UI feedback for rate-limit
+            if (reason == 4) // BUSY
+            {
+                // Could flash reticle red or show toast; defer to UI layer
+                // For now, diagnostic only
+            }
+        }
+
         private void CreateTargetReticle()
         {
             _targetReticle = new MeshInstance3D
@@ -166,8 +234,11 @@ namespace DarkAges.Client.UI
             }
             else
             {
-                // Try to auto-acquire target in crosshair
-                TryAutoTarget();
+                // Only auto-acquire if not waiting for server confirmation
+                if (!_lockRequestPending)
+                {
+                    TryAutoTarget();
+                }
             }
         }
         
@@ -224,7 +295,7 @@ namespace DarkAges.Client.UI
             float threshold = GetViewport().GetVisibleRect().Size.Length() * 0.15f;
             if (bestTarget != null && bestScore < threshold)
             {
-                SetTarget(bestTarget);
+                RequestLockOn(bestTarget.EntityId);
             }
         }
         
@@ -250,15 +321,42 @@ namespace DarkAges.Client.UI
                 _targetMaxHealth = 100;
             }
             
-            // Notify server of target change
-            SendTargetLock(player.EntityId);
-            
             if (previousTarget != player.EntityId)
             {
                 GD.Print($"[TargetLockSystem] Target locked: {player.PlayerName} ({player.EntityId}) at range {GetTargetRange():F1}m");
             }
         }
         
+        /// <summary>
+        /// Request lock-on to a target entity from the server.
+        /// Sends PACKET_LOCK_ON_REQUEST and sets pending state.
+        /// </summary>
+        private void RequestLockOn(uint entityId)
+        {
+            // Rate-limit: prevent spamming requests
+            uint nowMs = (uint)Time.GetTicksMsec();
+            if (nowMs - _lastLockAttemptTimeMs < MIN_LOCK_INTERVAL_MS)
+            {
+                // Too soon — rate limit would reject anyway
+                GD.Print($"[TargetLock] Lock request too soon (rate-limited), last attempt={_lastLockAttemptTimeMs}, now={nowMs}");
+                return;
+            }
+
+            // If a previous request is still pending, don't send another
+            if (_lockRequestPending)
+            {
+                GD.Print("[TargetLock] Lock request already pending, skipping");
+                return;
+            }
+
+            _lockRequestPending = true;
+            _pendingTarget = entityId;
+            _lastLockAttemptTimeMs = nowMs;
+
+            NetworkManager.Instance.SendLockOnRequest(entityId);
+            GD.Print($"[TargetLock] Lock-on request sent for entity {entityId}");
+        }
+
         public void ClearTarget()
         {
             if (CurrentTarget.HasValue)
@@ -274,7 +372,9 @@ namespace DarkAges.Client.UI
                 _targetInfoPanel.Visible = false;
             }
             
-            SendTargetLock(0);  // 0 = no target
+            // Clear pending state
+            _lockRequestPending = false;
+            _pendingTarget = null;
         }
         
         /// <summary>
@@ -394,7 +494,7 @@ namespace DarkAges.Client.UI
                 
                 if (IsTargetValid(candidate.EntityId))
                 {
-                    SetTarget(candidate);
+                    RequestLockOn(candidate.EntityId);
                     return;
                 }
             }
@@ -410,16 +510,6 @@ namespace DarkAges.Client.UI
             {
                 TryAutoTarget();
             }
-        }
-        
-        private void SendTargetLock(uint entityId)
-        {
-            // Format: [packet_type:1][target_id:4]
-            var data = new byte[5];
-            data[0] = 11;  // PACKET_TARGET_LOCK
-            BitConverter.GetBytes(entityId).CopyTo(data, 1);
-            
-            NetworkManager.Instance.CallDeferred("SendReliable", data);
         }
         
         private void OnEntityStateReceived(uint entityId, Vector3 position, Vector3 velocity)
