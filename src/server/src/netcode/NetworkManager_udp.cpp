@@ -72,7 +72,10 @@ NetworkManager::~NetworkManager() {
 }
 
 bool NetworkManager::initialize(uint16_t port) {
-    auto* udp = static_cast<GNSInternal*>(internal_.get());
+    // Prevent re-initialization without shutdown
+    if (initialized_) return false;
+
+        auto* udp = static_cast<GNSInternal*>(internal_.get());
     udp->sockfd = socket(AF_INET, SOCK_DGRAM, 0);
     if (udp->sockfd < 0) {
         std::cerr << "[UDP] Failed to create socket: " << strerror(errno) << std::endl;
@@ -626,6 +629,18 @@ bool NetworkManager::processPacket(ConnectionID connectionId,
                                    const std::string& ipAddress,
                                    uint32_t packetSize,
                                    uint32_t currentTimeMs) {
+    auto* udp = static_cast<GNSInternal*>(internal_.get());
+    // Validate connection exists
+    {
+        std::lock_guard<std::recursive_mutex> lock(udp->connectionsMutex);
+        if (connectionId == INVALID_CONNECTION || udp->connections.find(connectionId) == udp->connections.end()) {
+            return false;
+        }
+    }
+    // Validate packet size (UDP max payload ~65507)
+    if (packetSize > 65507) {
+        return false;
+    }
     return ddosProtection_.processPacket(connectionId, ipAddress, packetSize, currentTimeMs);
 }
 
