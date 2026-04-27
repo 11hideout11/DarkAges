@@ -1,27 +1,17 @@
 {
-  "timestamp": 1777036546.886546,
-  "git_head": "90d92fbe7f1845fc33f67f84e1c3aa6c1b6a64e8",
+  "timestamp": 1777296116.7742157,
+  "git_head": "f8cfec70ba6f334a819cb03b757a7ccef5a9fd2b",
   "tasks": [
     {
-      "priority": "P1",
+      "priority": "P2",
       "category": "test-depth",
-      "title": "Expand tests for ZoneServer (34 tests for 1904 lines)",
-      "description": "Source file has 1904 lines but only 34 test cases \u2014 need 47+",
+      "title": "Expand tests for CombatEventHandler (11 tests for 598 lines)",
+      "description": "Source file has 598 lines but only 11 test cases \u2014 need 14+",
       "files": [
-        "src/server/src/zones/ZoneServer.cpp",
-        "src/server/tests/TestZoneServer.cpp"
+        "src/server/src/zones/CombatEventHandler.cpp",
+        "src/server/tests/TestCombatEventHandler.cpp"
       ],
       "estimated_hours": 2.0
-    },
-    {
-      "priority": "P2",
-      "category": "test",
-      "title": "Add tests for NetworkManager_udp",
-      "description": "No test file found for src/server/src/netcode/NetworkManager_udp.cpp",
-      "files": [
-        "src/server/src/netcode/NetworkManager_udp.cpp"
-      ],
-      "estimated_hours": 1.0
     }
   ]
 }

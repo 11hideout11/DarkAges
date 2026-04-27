@@ -11,7 +11,8 @@ cd build_validate && ctest --output-on-failure -j8
 - Phase 8: COMPLETE — all core gameplay systems
 - Phase 9: COMPLETE — performance budgets pass (400 ents <20ms, 800 <30ms)
 - Networking: STABLE — live validator passes (1-10 clients, snapshots OK)
-- Tests: 1434 cases / 94 files / 11 suites — ALL PASS
+- Tests: 1284 cases / 94 files / 11 suites — ALL PASS
++ Tests: 1284 cases / 94 files / 11 suites — ALL PASS (7211 assertions)
 - Server: ~32K LOC (C++20, EnTT ECS, 60Hz tick) | Client: ~6.2K LOC (C# Godot 4.2)
 - Harness: Two-layer evaluator architecture operational (objective + subjective)
 
@@ -55,15 +56,15 @@ cd build_validate && ctest --output-on-failure -j8
 
 ## Recent Commits (last 10)
 
-1. test(server): add unit tests for NetworkManager_udp (+27 tests) (merged)
-2. test(server): fix ZoneServer test failures from auto-populate and JSON schema (merged)
-3. test(server): add unit tests for ServerStateExporter (merged)
-4. docs: update test metrics after ZoneServer expansion (merged)
-5. test(server): expand ZoneServer unit tests (+13 tests, 58 assertions) (merged)
-6. docs: update state metrics and recent commits (2026-04-27) (merged)
-7. test(server): fix CombatEventHandler unit test compilation (merged)
-8. docs: update Recent Commits for lock-on client confirmation merge (merged)
-9. fix(client): align MaxLockRange with server (50m) and updateUITests (merged)
-10. fix(client): resolve PredictedPlayer.UpdateAnimation missing dt parameter (build fix) (merged)
+1. feat(combat): integrate confirmed lock-on target into auto-attack selection (merged)
+2. docs: sync test metrics and completed tasks across status files (1284 tests, 7211 asserts) (merged)
+3. test(server): add unit tests for NetworkManager_udp (+27 tests) (merged)
+4. test(server): fix ZoneServer test failures from auto-populate and JSON schema (merged)
+5. test(server): add unit tests for ServerStateExporter (merged)
+6. docs: update test metrics after ZoneServer expansion (merged)
+7. test(server): expand ZoneServer unit tests (+13 tests, 58 assertions) (merged)
+8. docs: update state metrics and recent commits (2026-04-27) (merged)
+9. test(server): fix CombatEventHandler unit test compilation (merged)
+10. docs: update Recent Commits for lock-on client confirmation merge (merged)
 ---
 Last updated: 2026-04-27
