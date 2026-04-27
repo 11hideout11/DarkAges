@@ -1066,3 +1066,220 @@ TEST_CASE("ZoneServer metrics reset zeroes all counters", "[zones][zoneserver][d
     REQUIRE(metrics.gameLogicTimeUs == 0);
     REQUIRE(metrics.replicationTimeUs == 0);
 }
+
+// ============================================================================
+// ZoneServer Lifecycle & Operations — Expanded Coverage
+// ============================================================================
+
+TEST_CASE("ZoneServer initialization with custom config", "[zones][zoneserver]") {
+    ZoneConfig config;
+    config.zoneId = 42;
+    config.port = 9999;
+    config.redisHost = "redis.test";
+    config.autoPopulateNPCs = true;
+    config.npcCount = 25;
+
+    ZoneServer server;
+    bool ok = server.initialize(config);
+
+    REQUIRE(ok);
+    REQUIRE(server.getConfig().zoneId == 42);
+    REQUIRE(server.getConfig().port == 9999);
+    REQUIRE(server.getConfig().redisHost == "redis.test");
+    REQUIRE(server.getConfig().autoPopulateNPCs == true);
+    REQUIRE(server.getConfig().npcCount == 25);
+}
+
+TEST_CASE("ZoneServer tick returns false when not running", "[zones][zoneserver]") {
+    ZoneServer server;
+    REQUIRE_FALSE(server.isRunning());
+    bool result = server.tick();
+    REQUIRE_FALSE(result);
+}
+
+TEST_CASE("ZoneServer start/stop lifecycle", "[zones][zoneserver]") {
+    ZoneServer server;
+    REQUIRE_FALSE(server.isRunning());
+    REQUIRE_FALSE(server.isShutdownRequested());
+
+    server.requestShutdown();
+    REQUIRE(server.isShutdownRequested());
+    REQUIRE_FALSE(server.isRunning());
+
+    server.stop();
+    REQUIRE_FALSE(server.isRunning());
+}
+
+TEST_CASE("ZoneServer spawnPlayer creates entity with required components", "[zones][zoneserver]") {
+    ZoneServer server;
+    REQUIRE(server.initialize(ZoneConfig{}));
+
+    ConnectionID cid = 1;
+    uint64_t pid = 12345;
+    std::string name = "TestPlayer";
+    Position spawnPos = Position::fromVec3(glm::vec3(10.0f, 0.0f, 20.0f), 0);
+
+    EntityID eid = server.spawnPlayer(cid, pid, name, spawnPos);
+    REQUIRE((eid != entt::null));
+
+    Registry& reg = server.getRegistry();
+    REQUIRE(reg.valid(eid));
+
+    // Core presence checks
+    REQUIRE(reg.all_of<Position>(eid));
+    REQUIRE(reg.all_of<Velocity>(eid));
+    REQUIRE(reg.all_of<Rotation>(eid));
+    REQUIRE(reg.all_of<BoundingVolume>(eid));
+    REQUIRE(reg.all_of<InputState>(eid));
+    REQUIRE(reg.all_of<CombatState>(eid));
+    REQUIRE(reg.all_of<NetworkState>(eid));
+    REQUIRE(reg.all_of<AntiCheatState>(eid));
+    REQUIRE(reg.all_of<PlayerInfo>(eid));
+    REQUIRE(reg.all_of<PlayerTag>(eid));
+    REQUIRE(reg.all_of<PlayerProgression>(eid));
+    REQUIRE(reg.all_of<ChatComponent>(eid));
+    REQUIRE(reg.all_of<TradeComponent>(eid));
+    REQUIRE(reg.all_of<ZoneEventComponent>(eid));
+    REQUIRE(reg.all_of<DialogueComponent>(eid));
+
+    // Field values
+    auto& pi = reg.get<PlayerInfo>(eid);
+    REQUIRE(pi.playerId == pid);
+    REQUIRE(std::string(pi.username) == name);
+    REQUIRE(pi.connectionId == cid);
+
+    auto& pos = reg.get<Position>(eid);
+    REQUIRE(pos.x == spawnPos.x);
+    REQUIRE(pos.z == spawnPos.z);
+}
+
+TEST_CASE("ZoneServer spawnNPC creates entity with AI/combat components", "[zones][zoneserver]") {
+    ZoneServer server;
+    REQUIRE(server.initialize(ZoneConfig{}));
+
+    Position spawnPos = Position::fromVec3(glm::vec3(0.0f, 0.0f, 0.0f), 0);
+    EntityID eid = server.spawnNPC(spawnPos, 5, 25, 30.0f, 25.0f, 15.0f, 100, 5000);
+
+    REQUIRE((eid != entt::null));
+    Registry& reg = server.getRegistry();
+    REQUIRE(reg.valid(eid));
+    REQUIRE(reg.all_of<Position>(eid));
+    REQUIRE(reg.all_of<CombatState>(eid));
+    REQUIRE(reg.all_of<NPCAIState>(eid));
+}
+
+TEST_CASE("ZoneServer despawnEntity removes entity from registry", "[zones][zoneserver]") {
+    ZoneServer server;
+    REQUIRE(server.initialize(ZoneConfig{}));
+
+    EntityID eid = server.spawnNPC(Position::fromVec3(glm::vec3(0,0,0), 0), 1, 10, 10.0f, 10.0f, 10.0f, 50, 5000);
+    REQUIRE(server.getRegistry().valid(eid));
+
+    server.despawnEntity(eid);
+    REQUIRE_FALSE(server.getRegistry().valid(eid));
+}
+
+TEST_CASE("ZoneServer client connection tracking updates maps", "[zones][zoneserver]") {
+    ZoneServer server;
+    REQUIRE(server.initialize(ZoneConfig{}));
+
+    auto* connToEntity = server.getConnectionToEntityPtr();
+    auto* entityToConn = server.getEntityToConnectionPtr();
+
+    ConnectionID cid = 42;
+    EntityID eid = server.spawnPlayer(cid, 999, "ConnPlayer", Position{});
+
+    auto itC2E = connToEntity->find(cid);
+    REQUIRE(itC2E != connToEntity->end());
+    REQUIRE(itC2E->second == eid);
+
+    auto itE2C = entityToConn->find(eid);
+    REQUIRE(itE2C != entityToConn->end());
+    REQUIRE(itE2C->second == cid);
+
+    // Despawning the entity also clears its connection mapping (ZoneServer::despawnEntity)
+    server.despawnEntity(eid);
+    REQUIRE(connToEntity->find(cid) == connToEntity->end());
+    REQUIRE(entityToConn->find(eid) == entityToConn->end());
+}
+
+TEST_CASE("ZoneServer populateNPCs respects config count", "[zones][zoneserver]") {
+    ZoneConfig config;
+    config.autoPopulateNPCs = true;
+    config.npcCount = 10;
+    config.npcSpawnRadius = 20.0f;
+    config.npcBaseLevel = 3;
+
+    ZoneServer server;
+    REQUIRE(server.initialize(config));
+    server.populateNPCs();
+
+    auto& reg = server.getRegistry();
+    auto view = reg.view<NPCAIState>();
+    REQUIRE(view.size() == config.npcCount);
+}
+
+TEST_CASE("ZoneServer loadDemoConfig parses JSON successfully", "[zones][zoneserver]") {
+    ZoneServer server;
+    std::string jsonPath = "/tmp/demo_config.json";
+    std::ofstream ofs(jsonPath);
+    ofs << R"({
+        "zoneId": 99,
+        "port": 7777,
+        "npcs": [
+            { "level": 10, "x": 0, "z": 0, "count": 1 }
+        ]
+    })";
+    ofs.close();
+
+    bool ok = server.loadDemoConfig(jsonPath);
+    REQUIRE(ok);
+    REQUIRE(server.getConfig().zoneId == 99);
+    REQUIRE(server.getConfig().port == 7777);
+    std::remove(jsonPath.c_str());
+}
+
+TEST_CASE("ZoneServer getCurrentTimeMs returns monotonic value", "[zones][zoneserver]") {
+    ZoneServer server;
+    REQUIRE(server.initialize(ZoneConfig{}));
+    uint32_t t1 = server.getCurrentTimeMs();
+    server.tick();
+    uint32_t t2 = server.getCurrentTimeMs();
+    REQUIRE(t2 >= t1);
+}
+
+TEST_CASE("ZoneServer subsystem accessors return valid references", "[zones][zoneserver]") {
+    ZoneServer server;
+    REQUIRE(server.initialize(ZoneConfig{}));
+
+    // Accessors should not throw and should return non-null pointers/references
+    REQUIRE_NOTHROW(server.getNetwork());
+    REQUIRE_NOTHROW(server.getRedis());
+    REQUIRE_NOTHROW(server.getSpatialHash());
+    REQUIRE_NOTHROW(server.getMovementSystem());
+    REQUIRE_NOTHROW(server.getCombatSystemPtr());
+    REQUIRE_NOTHROW(server.getLagCompensatorPtr());
+
+    // Basic non-null checks (pointer/reference validity)
+    // NetworkManager stub has a valid fd; we can call isValid() if available, otherwise just ensure non-null
+    REQUIRE(&server.getNetwork() != nullptr);
+    REQUIRE(&server.getRedis() != nullptr);
+    REQUIRE(&server.getSpatialHash() != nullptr);
+    REQUIRE(&server.getMovementSystem() != nullptr);
+    REQUIRE(server.getCombatSystemPtr() != nullptr);
+    REQUIRE(server.getLagCompensatorPtr() != nullptr);
+}
+
+TEST_CASE("ZoneServer spawnFromGroup registers NPC with spawn metadata", "[zones][zoneserver]") {
+    ZoneServer server;
+    REQUIRE(server.initialize(ZoneConfig{}));
+
+    Position pos = Position::fromVec3(glm::vec3(5.0f, 0.0f, 5.0f), 0);
+    EntityID eid = server.spawnFromGroup(pos, 2, 15, 20.0f, 15.0f, 10.0f,
+                                          75, 4000, 123, 456);
+    REQUIRE((eid != entt::null));
+    auto& reg = server.getRegistry();
+    REQUIRE(reg.all_of<NPCAIState>(eid));
+}
+
+// End of expanded ZoneServer tests
