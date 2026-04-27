@@ -18,7 +18,7 @@
     18|
     19|- RemotePlayer health bars: scale up 50% (width 0.8→1.2, height 0.15→0.2), raised Y from 1.95→2.25, emission boosted (energy 0.5→1.0) for clear visibility.
     20|- Local player animations: Player.tscn AnimationPlayer now loads PlayerAnimations.tres; PredictedPlayer.cs fallback logic improved to switch animations based on movement state.
-    21|- All 1284 server tests pass; validator reports zero errors.
+    21|- All 2096 server tests pass; validator reports zero errors.
     22|
     23|**Latest demo artifacts:** `tools/demo/artifacts/reports/Autonomous_Demo_Report_20260424_220508.md`
     24|Combat events observed: 44 damage instances; bot attacks registered but local damage numbers still not rendered (requires further investigation).
@@ -88,7 +88,7 @@
     88|```
     89|PHASE 0: Dependencies        8/8 PASS
     90|PHASE 1: Build               OK (4.1s)
-    91|PHASE 2: Tests               11/11 PASS (1284 cases)
+    91|PHASE 2: Tests               11/11 PASS (2096 cases)
     92|PHASE 3: Deploy              Server PID started, 2 clients connected
     93|PHASE 4: Visual Evidence     Screenshots captured ✓
     94|  - Pink crosshair: VISIBLE

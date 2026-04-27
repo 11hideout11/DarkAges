@@ -12,7 +12,7 @@ A high-density PvP MMO inspired by Dark Age of Camelot and Ark Raiders, targetin
 
 **Previous Phases (0-9)**: ✅ Implementation Complete (~51K LOC server, ~6.2K LOC client)
 **Current Status**: Demo MVP Ready — Visual polish applied, combat UI fully visible in screenshots/video
-**Server Status**: ✅ Operational (60Hz tick rate, 1284 tests passing)
+**Server Status**: ✅ Operational (60Hz tick rate, 2096 tests passing)
 
 See [CURRENT_STATUS.md](CURRENT_STATUS.md) for daily updates • [PROJECT_STATUS.md](PROJECT_STATUS.md) for detailed history • [PHASE8_EXECUTION_PLAN.md](PHASE8_EXECUTION_PLAN.md) for roadmap
 
@@ -55,9 +55,9 @@ See [CURRENT_STATUS.md](CURRENT_STATUS.md) for daily updates • [PROJECT_STATUS
 || WP-10-4 | Penetration Testing | ⏳ Planned |
 
 ### What's Implemented
-- ✅ **Server**: ~32,000 lines (C++20, EnTT ECS, 60Hz tick, 1284 tests passing)
+- ✅ **Server**: ~32,000 lines (C++20, EnTT ECS, 60Hz tick, 2096 tests passing)
 - ✅ **Client**: ~6,200 lines (Godot 4.3 C#, prediction, interpolation, combat UI)
-- ✅ **Testing**: ~15,000 lines (Catch2, 11 suites, 1284 test cases)
+- ✅ **Testing**: ~15,000 lines (Catch2, 11 suites, 2096 test cases)
 - ✅ **Build System**: CMake, MSVC 2022, cross-platform CI/CD — COMPLETE
 - ✅ **External Libraries**: Redis stubs, FlatBuffers, Protobuf
 - ✅ **Demo Pipeline**: Autonomous launcher — build, test, validate, screenshots, video — **OPERATIONAL**
