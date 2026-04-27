@@ -476,6 +476,26 @@ std::vector<uint8_t> serializeChatMessage(const ChatMessage& msg) {
     return data;
 }
 
+std::vector<uint8_t> serializeQuestUpdate(const QuestUpdatePacket& pkt) {
+    std::vector<uint8_t> data;
+    data.reserve(1 + 4 + 1 + 4 + 4 + 1);  // type + questId + objIdx + current + required + status
+
+    data.push_back(static_cast<uint8_t>(PacketType::PACKET_QUEST_UPDATE));
+
+    auto appendUInt32 = [&data](uint32_t value) {
+        const uint8_t* bytes = reinterpret_cast<const uint8_t*>(&value);
+        data.insert(data.end(), bytes, bytes + sizeof(uint32_t));
+    };
+
+    appendUInt32(pkt.questId);
+    data.push_back(pkt.objectiveIndex);
+    appendUInt32(pkt.current);
+    appendUInt32(pkt.required);
+    data.push_back(pkt.status);
+
+    return data;
+}
+
 } // namespace Protocol
 
 namespace Protocol {

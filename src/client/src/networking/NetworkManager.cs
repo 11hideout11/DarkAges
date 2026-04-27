@@ -58,6 +58,8 @@ namespace DarkAges.Networking
 
     [Signal]
     public delegate void ChatMessageReceivedEventHandler(uint senderId, byte channel, string senderName, string message);
+    [Signal]
+    public delegate void QuestUpdateReceivedEventHandler(uint questId, uint objectiveIndex, uint current, uint required, byte status);
 
  // Socket
         private UdpClient? _udpClient;
@@ -94,6 +96,8 @@ namespace DarkAges.Networking
         private const byte PACKET_LOCK_ON_CONFIRMED = 12; // Server -> Client: lock-on confirmed
         private const byte PACKET_LOCK_ON_FAILED = 13;   // Server -> Client: lock-on failed
         private const byte PACKET_CHAT = 14;             // Client <-> Server: chat message
+        private const byte PACKET_QUEST_UPDATE = 15;        // Server -> Client: quest objective progress/complete
+        private const byte PACKET_QUEST_ACTION = 16;        // Client -> Server: accept/complete quest
 
         public override void _EnterTree()
         {
@@ -425,6 +429,9 @@ namespace DarkAges.Networking
                     break;
                 case PACKET_CHAT:
                     ProcessChatMessage(data);
+                    break;
+                case PACKET_QUEST_UPDATE:
+                    ProcessQuestUpdate(data);
                     break;
                 default:
                     GD.Print($"[NetworkManager] Unknown packet type: {packetType}");
