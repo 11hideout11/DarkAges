@@ -283,7 +283,7 @@ namespace DarkAges
             StorePredictedInput(input, _predictedPosition, _predictedVelocity, dt);
             
             // 4. Update animations
-            UpdateAnimation(input);
+            UpdateAnimation(input, dt);
             
             // 5. Update debug stats and visualization
             UpdateDebugStats();
@@ -981,7 +981,7 @@ namespace DarkAges
         }
 
 
-        private void UpdateAnimation(InputState input)
+        private void UpdateAnimation(InputState input, float dt)
         {
             // AnimationTree state machine drives all visual state transitions cleanly
             if (_animTree == null) return;
