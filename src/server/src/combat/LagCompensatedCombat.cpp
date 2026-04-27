@@ -52,7 +52,30 @@ std::vector<HitResult> LagCompensatedCombat::processAttackWithRewind(
     }
     
     // Find valid targets at historical positions
-    auto targets = findHistoricalTargets(registry, attack.attacker, attackTime);
+    std::vector<EntityID> targets;
+
+    // If a specific target is forced (e.g., via confirmed lock-on), validate and use it exclusively
+    if (attack.input.targetEntity != 0 && attack.input.type != AttackInput::ABILITY) {
+        EntityID forced = static_cast<EntityID>(attack.input.targetEntity);
+        bool valid = false;
+        switch (attack.input.type) {
+            case AttackInput::MELEE:
+                valid = validateMeleeHitAtTime(registry, attack.attacker, forced, attackTime);
+                break;
+            case AttackInput::RANGED:
+                valid = validateRangedHitAtTime(registry, attack.attacker, forced,
+                                                attack.input.aimDirection, attackTime);
+                break;
+            default:
+                valid = false;
+        }
+        if (valid) {
+            targets.push_back(forced);
+        }
+    } else {
+        // Normal area-based target search
+        targets = findHistoricalTargets(registry, attack.attacker, attackTime);
+    }
     
     // Validate each potential hit at historical position
     for (EntityID target : targets) {

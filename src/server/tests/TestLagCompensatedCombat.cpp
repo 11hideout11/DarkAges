@@ -618,3 +618,90 @@ TEST_CASE("LagCompensatedCombat rapid attack sequence", "[combat][lag][rapid]") 
         REQUIRE(results.size() >= 1);
     }
 }
+
+// ============================================================================
+// Lock-on Target Priority Tests
+// ============================================================================
+
+TEST_CASE("LagCompensatedCombat respects forced target via lock-on", "[combat][lag][lockon]") {
+    Registry registry;
+    CombatSystem combatSystem;
+    LagCompensator lagCompensator;
+    LagCompensatedCombat lagCombat(combatSystem, lagCompensator);
+
+    // Create attacker entity
+    EntityID attacker = registry.create();
+    registry.emplace<Position>(attacker, Position::fromVec3(glm::vec3(0, 0, 0), 0));
+    registry.emplace<Velocity>(attacker, Velocity{0, 0, 0});
+    registry.emplace<Rotation>(attacker, Rotation{0, 0});  // Facing +Z
+    registry.emplace<CombatState>(attacker);
+    registry.emplace<BoundingVolume>(attacker);
+
+    // Create target A (the locked target) in front of attacker within melee range
+    EntityID targetA = registry.create();
+    registry.emplace<Position>(targetA, Position::fromVec3(glm::vec3(0, 0, 2.0f), 0));
+    registry.emplace<Velocity>(targetA, Velocity{0, 0, 0});
+    registry.emplace<Rotation>(targetA, Rotation{0, 0});
+    registry.emplace<CombatState>(targetA);
+    registry.emplace<BoundingVolume>(targetA);
+
+    // Create target B (another potential target) also in range but should be ignored
+    EntityID targetB = registry.create();
+    registry.emplace<Position>(targetB, Position::fromVec3(glm::vec3(2.0f, 0, 2.0f), 0)); // To the side
+    registry.emplace<Velocity>(targetB, Velocity{0, 0, 0});
+    registry.emplace<Rotation>(targetB, Rotation{0, 0});
+    registry.emplace<CombatState>(targetB);
+    registry.emplace<BoundingVolume>(targetB);
+
+    // Record position history for both entities at attack time (t=0)
+    lagCompensator.recordPosition(attacker, 0, registry.get<Position>(attacker), Velocity{0,0,0}, Rotation{0,0});
+    lagCompensator.recordPosition(targetA, 0, registry.get<Position>(targetA), Velocity{0,0,0}, Rotation{0,0});
+    lagCompensator.recordPosition(targetB, 0, registry.get<Position>(targetB), Velocity{0,0,0}, Rotation{0,0});
+
+    SECTION("Forced lock-on target is hit exclusively for melee") {
+        // Build attack input with forced targetEntity set to targetA
+        LagCompensatedAttack attack;
+        attack.attacker = attacker;
+        attack.input.type = AttackInput::MELEE;
+        attack.input.sequence = 1;
+        attack.input.targetEntity = static_cast<uint32_t>(targetA); // <--- forced lock
+        attack.input.aimDirection = glm::vec3(0, 0, 1);
+        attack.clientTimestamp = 0;
+        attack.serverTimestamp = 100;
+        attack.rttMs = 100; // 50ms one-way, rewind valid
+
+        auto results = lagCombat.processAttackWithRewind(registry, attack);
+
+        // Should hit exactly targetA, not targetB, and no other targets
+        REQUIRE(results.size() == 1);
+        REQUIRE(results[0].hit == true);
+        REQUIRE(results[0].target == targetA);
+    }
+
+    SECTION("Forced lock-on target works for ranged attacks") {
+        // Adjust positions: targetA at 10m straight ahead
+        registry.patch<Position>(targetA, [](Position& p) {
+            p = Position::fromVec3(glm::vec3(0, 0, 10.0f), 0);
+        });
+        // Record updated history
+        lagCompensator.recordPosition(targetA, 0, registry.get<Position>(targetA), Velocity{0,0,0}, Rotation{0,0});
+
+        LagCompensatedAttack attack;
+        attack.attacker = attacker;
+        attack.input.type = AttackInput::RANGED;
+        attack.input.sequence = 2;
+        attack.input.targetEntity = static_cast<uint32_t>(targetA); // forced lock
+        attack.input.aimDirection = glm::vec3(0, 0, 1); // aim at target
+        attack.clientTimestamp = 0;
+        attack.serverTimestamp = 100;
+        attack.rttMs = 100;
+
+        auto results = lagCombat.processAttackWithRewind(registry, attack);
+
+        // Should hit targetA
+        REQUIRE(results.size() >= 1);
+        REQUIRE(results[0].hit == true);
+        REQUIRE(results[0].target == targetA);
+    }
+}
+

@@ -1,14 +1,14 @@
 # DarkAges MMO - Project Status
 
-**Version:** 5.3 (Demo MVP — Animation Polish Complete)  
-**Last Updated:** 2026-04-26  
-**Status:** Demo MVP Ready — Full combat feel polish (hit stop, procedural leaning, animation blend) merged; research standards alignment up to date; 1978 tests passing  
+**Version:** 5.5 (Demo MVP — Lock-on Targeting + Camera Polish Complete)  
+**Last Updated:** 2026-04-27  
+**Status:** Demo MVP Ready — Full combat feel polish (hit stop, procedural leaning, animation blend) merged; lock-on targeting integrated into auto-attack; smooth third-person camera with deadzone, collision avoidance, and height/rotation smoothing; research standards alignment up to date; 1284 tests passing  
 
 ---
 
 ## Executive Summary
 
-DarkAges MMO has successfully completed **Phases 0-9** (all core gameplay systems + performance testing) and **Visual Polish Phase** (combat UI, animation, documentation sync). The server is production-stable at 60Hz with comprehensive test coverage (1978 test cases, 88 files, all passing). All gameplay loops — combat, abilities, loot, XP, inventory, crafting, trading, quests, chat, NPC AI with A* pathfinding, zone events, and dialogue — are fully implemented and validated.
+DarkAges MMO has successfully completed **Phases 0-9** (all core gameplay systems + performance testing) and **Visual Polish Phase** (combat UI, animation, documentation sync). The server is production-stable at 60Hz with comprehensive test coverage (1284 test cases, 94 files, all passing). All gameplay loops — combat, abilities, loot, XP, inventory, crafting, trading, quests, chat, NPC AI with A* pathfinding, zone events, and dialogue — are fully implemented and validated.
 
 The **demo pipeline** is now fully operational with:
 - One-command demo launcher (`tools/demo/run_demo.py`)
@@ -23,8 +23,8 @@ The **demo pipeline** is now fully operational with:
 
 | Metric | Value |
 |--------|-------|
-|| **Total Test Cases** | 1978 |
-|| **Test Files** | 88 |
+|| **Total Test Cases** | 1284 |
+|| **Test Files** | 94 |
 || **Test Suites** | 11 (all passing) |
 || **Server Core LOC** | ~32K |
 || **Client (Godot C#)** | ~6.2K lines |
@@ -79,7 +79,7 @@ Three high-impact feel improvements added:
 
 All changes additive; objective + subjective evaluator passed; PR #21 merged to `main`.
 
-These changes are additive and non-breaking; all 1978 tests pass.
+These changes are additive and non-breaking; all 1284 tests pass.
 
 ---
 
@@ -231,6 +231,8 @@ The project has been systematically mapped against industry-standard third-perso
 - ~~E2EValidator connection leak~~ — Fixed: E2EValidator now reuses a single persistent UDP socket across all checks instead of creating a new connection per check. Supervisor zombie-kills eliminated during smoke tests.
 - ~~C# client compilation errors~~ — Fixed: 37 errors resolved (API mismatches, missing usings, type casts). Godot editor build passes.
 - ~~GNS CMake "No known features" error~~ — Fixed: Patched `set_clientlib_target_properties` macro to use `target_compile_features(... c_std_99 cxx_std_11)` instead of empty feature variables.
+- ~~Lock-on targeting auto-attack integration~~ — Fixed: auto-attack now respects confirmed server-authoritative lock-on target; network protocol and client UI already complete. All 1284 tests pass.
+- ~~Camera polish (deadzone, collision avoidance, smoothing)~~ — Fixed: replaced hard-coded `PredictedPlayer` camera logic with `CameraController` node; smooth follow with configurable deadzone, raycast push-in collision avoidance, height/rotation smoothing. Zero test regressions.
 
 ---
 
