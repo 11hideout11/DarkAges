@@ -159,6 +159,10 @@ struct CombatState {
     uint32_t lastGlobalCooldownTime{0};  // Last time any ability/attack was used (for GCD)
     bool isDead{false};
 
+    // FSM state
+    uint8_t currentState{0};     // 0=Idle,1=AttackWindup,2=AttackActive,3=Cooldown,4=Stunned,5=Dead
+    float stateTimer{0.0f};      // Seconds elapsed in current state
+
     [[nodiscard]] float healthPercent() const {
         return static_cast<float>(health) / static_cast<float>(maxHealth) * 100.0f;
     }

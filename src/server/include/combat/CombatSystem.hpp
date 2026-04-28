@@ -130,6 +130,12 @@ public:
     const CombatConfig& getConfig() const { return config_; }
     void setConfig(const CombatConfig& config) { config_ = config; }
 
+    // ============================================================================
+    // FSM Update
+    // ============================================================================
+    // Per-tick state machine update for all combat entities
+    void updateFSM(Registry& registry, float deltaSec, uint32_t currentTimeMs);
+
 // Testing support - normally private, made public for unit tests
     // Find targets in melee cone
     std::vector<EntityID> findMeleeTargets(Registry& registry, EntityID attacker);

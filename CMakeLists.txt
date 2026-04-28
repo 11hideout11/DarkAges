@@ -110,12 +110,20 @@ set(FETCHCONTENT_QUIET ON)
 # ---------------------------------------------------------------------------
 
 # nlohmann/json (v3.11.3) - JSON serialization
-FetchContent_Declare(
-    json
-    GIT_REPOSITORY https://github.com/nlohmann/json.git
-    GIT_TAG v3.11.3
-    GIT_SHALLOW TRUE
-)
+if(EXISTS "${CMAKE_SOURCE_DIR}/deps/json/include/nlohmann/json.hpp")
+    message(STATUS "nlohmann/json found in deps/json")
+    set(JSON_INCLUDE_DIR "${CMAKE_SOURCE_DIR}/deps/json/include")
+    set(JSON_FOUND TRUE)
+    add_library(nlohmann_json INTERFACE)
+    target_include_directories(nlohmann_json INTERFACE ${JSON_INCLUDE_DIR})
+else()
+    FetchContent_Declare(
+        json
+        GIT_REPOSITORY https://github.com/nlohmann/json.git
+        GIT_TAG v3.11.3
+        GIT_SHALLOW TRUE
+    )
+endif()
 
 # FlatBuffers (v24.3.25) - Protocol serialization
 if(ENABLE_FLATBUFFERS)
@@ -165,13 +173,30 @@ if(ENABLE_SCYLLA AND NOT WIN32)
 endif()
 
 # Protobuf for network protocol
-FetchContent_Declare(
-    protobuf
-    GIT_REPOSITORY https://github.com/protocolbuffers/protobuf.git
-    GIT_TAG v3.21.12
-    GIT_SHALLOW TRUE
-    GIT_SUBMODULES ""
-)
+if(EXISTS "${CMAKE_SOURCE_DIR}/deps/protobuf/cmake/CMakeLists.txt")
+    message(STATUS "Protobuf found in deps/protobuf")
+    set(protobuf_SOURCE_DIR "${CMAKE_SOURCE_DIR}/deps/protobuf")
+    set(protobuf_BINARY_DIR "${CMAKE_BINARY_DIR}/_deps/protobuf-build")
+    # Disable all protobuf tests and examples
+    set(protobuf_BUILD_TESTS OFF CACHE BOOL "" FORCE)
+    set(protobuf_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
+    set(protobuf_BUILD_PROTOC_BINARIES ON CACHE BOOL "" FORCE)
+    set(protobuf_ABSL_PROVIDER "module" CACHE STRING "" FORCE)
+    set(protobuf_MSVC_STATIC_RUNTIME OFF CACHE BOOL "" FORCE)
+    set(ABSL_PROPAGATE_CXX_STD ON CACHE BOOL "" FORCE)
+    # Skip third_party checks
+    set(protobuf_LOCAL_DEPENDENCIES_ONLY ON CACHE BOOL "" FORCE)
+    add_subdirectory(${protobuf_SOURCE_DIR} ${protobuf_BINARY_DIR})
+    set(protobuf_FOUND TRUE)
+else()
+    FetchContent_Declare(
+        protobuf
+        GIT_REPOSITORY https://github.com/protocolbuffers/protobuf.git
+        GIT_TAG v3.21.12
+        GIT_SHALLOW TRUE
+        GIT_SUBMODULES ""
+    )
+endif()
 set(protobuf_BUILD_TESTS OFF CACHE BOOL "" FORCE)
 set(protobuf_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
 set(protobuf_BUILD_PROTOC_BINARIES ON CACHE BOOL "" FORCE)
@@ -181,12 +206,20 @@ set(ABSL_PROPAGATE_CXX_STD ON CACHE BOOL "" FORCE)
 
 # Catch2 for testing
 if(BUILD_TESTS)
-    FetchContent_Declare(
-        Catch2
-        GIT_REPOSITORY https://github.com/catchorg/Catch2.git
-        GIT_TAG v3.5.0
-        GIT_SHALLOW TRUE
-    )
+    if(EXISTS "${CMAKE_SOURCE_DIR}/deps/catch2/src/Catch2/CMakeLists.txt")
+        message(STATUS "Catch2 found in deps/catch2")
+        set(Catch2_SOURCE_DIR "${CMAKE_SOURCE_DIR}/deps/catch2")
+        set(Catch2_BINARY_DIR "${CMAKE_BINARY_DIR}/_deps/catch2-build")
+        add_subdirectory(${Catch2_SOURCE_DIR} ${Catch2_BINARY_DIR})
+        set(Catch2_FOUND TRUE)
+    else()
+        FetchContent_Declare(
+            Catch2
+            GIT_REPOSITORY https://github.com/catchorg/Catch2.git
+            GIT_TAG v3.5.0
+            GIT_SHALLOW TRUE
+        )
+    endif()
 endif()
 
 # ---------------------------------------------------------------------------
@@ -257,7 +290,17 @@ endif()
 # Make ALL dependencies available in ONE call
 # ---------------------------------------------------------------------------
 
-set(EXTERNAL_DEPS json protobuf)
+# Only add to EXTERNAL_DEPS if FetchContent_Declare was called
+# Local dependencies are already set up via add_subdirectory
+set(EXTERNAL_DEPS)
+
+if(NOT JSON_FOUND)
+    list(APPEND EXTERNAL_DEPS json)
+endif()
+
+if(NOT protobuf_FOUND)
+    list(APPEND EXTERNAL_DEPS protobuf)
+endif()
 
 if(ENABLE_FLATBUFFERS)
     list(APPEND EXTERNAL_DEPS flatbuffers)
@@ -275,11 +318,13 @@ if(ENABLE_SCYLLA AND NOT WIN32)
     list(APPEND EXTERNAL_DEPS cassandra)
 endif()
 
-if(BUILD_TESTS)
+if(BUILD_TESTS AND NOT Catch2_FOUND)
     list(APPEND EXTERNAL_DEPS Catch2)
 endif()
 
-FetchContent_MakeAvailable(${EXTERNAL_DEPS})
+if(EXTERNAL_DEPS)
+    FetchContent_MakeAvailable(${EXTERNAL_DEPS})
+endif()
 
 # ============================================================================
 # Create Library Target Aliases for Consistent Naming
