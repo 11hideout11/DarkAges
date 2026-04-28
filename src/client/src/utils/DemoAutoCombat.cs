@@ -11,7 +11,7 @@ namespace DarkAges.Client.Utils
     /// </summary>
  public partial class DemoAutoCombat : Node
  {
- [Export] public bool Enabled = true;
+    [Export] public bool Enabled = false;  // Disabled by default for human-playable demo
  [Export] public float AttackRange = 8.0f;
  [Export] public float AttackInterval = 0.8f;
  [Export] public float MoveSpeed = 4.0f;

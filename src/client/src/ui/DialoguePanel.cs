@@ -1,6 +1,7 @@
 using Godot;
 using System;
 using System.Text;
+using DarkAges.Networking;
 
 namespace DarkAges.Client.UI
 {
@@ -81,7 +82,7 @@ namespace DarkAges.Client.UI
                 }
 
                 optionBtn.Text = options[i];
-                optionBtn.SizeFlagsHorizontal = SizeFlags.ExpandFill;
+                optionBtn.SizeFlagsHorizontal = Control.SizeFlags.ExpandFill;
 
                 // Capture option index for click handler
                 int optionIndex = i;
