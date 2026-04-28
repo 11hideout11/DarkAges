@@ -55,15 +55,15 @@ cd build_validate && ctest --output-on-failure -j8
 
 ## Recent Commits (last 10 — updated)
 
-1. docs: update AUTONOMOUS_LOG.md and reset cron state after ZoneServer test expansion (merged)
-2. Merge: autonomous: Expand tests for ZoneServer (52 tests for 2121 lines) (merged)
-3. feat(quest): add Quest Tracker UI with network synchronization (merged)
-4. docs: finalize post-merge baseline sync across all status files (merged)
-5. chore: untrack .task_cache.json — now ignored per .gitignore (merged)
-6. docs: update PROJECT_STATUS.md test metrics table to current baseline (merged)
-7. docs: correct post-merge status metrics and baseline references (3 files) (merged)
-8. docs: sync final test metrics and record infra fixes (merged)
-9. docs: update state metrics and recent commits (2026-04-27) (merged)
-10. test(server): expand ZoneServer unit tests (+13 tests, 58 assertions) (merged)
+1. fix(demo): resolve demo config, network layer, and HUD initialization issues (merged)
+2. docs: sync test metrics and status files after autonomous ZoneServer test expansion (merged)
+3. docs: update AUTONOMOUS_LOG.md and reset cron state after ZoneServer test expansion (merged)
+4. Merge: autonomous: Expand tests for ZoneServer (52 tests for 2121 lines) (merged)
+5. feat(quest): add Quest Tracker UI with network synchronization (merged)
+6. docs: finalize post-merge baseline sync across all status files (merged)
+7. chore: untrack .task_cache.json — now ignored per .gitignore (merged)
+8. docs: update PROJECT_STATUS.md test metrics table to current baseline (merged)
+9. docs: correct post-merge status metrics and baseline references (3 files) (merged)
+10. docs: sync final test metrics and record infra fixes (merged)
 ---
-Last updated: 2026-04-27
+Last updated: 2026-04-28
