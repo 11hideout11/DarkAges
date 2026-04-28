@@ -1,0 +1,144 @@
+{
+  "zone_id": 98,
+  "name": "Training Grounds",
+  "description": "Tutorial zone for learning basic movement, combat, and quest mechanics",
+  "type": "tutorial",
+  "spawn_points": [
+    {
+      "x": 0,
+      "y": 0,
+      "z": 0,
+      "type": "player_start",
+      "name": "Training Start"
+    },
+    {
+      "x": 5,
+      "y": 0,
+      "z": 5,
+      "type": "npc_trainer",
+      "name": "Instructor Aldric"
+    },
+    {
+      "x": -5,
+      "y": 0,
+      "z": 10,
+      "type": "practice_dummy",
+      "name": "Training Dummy"
+    },
+    {
+      "x": 10,
+      "y": 0,
+      "z": -5,
+      "type": "item_chest",
+      "name": "Starter Gear"
+    }
+  ],
+  "npc_presets": [
+    {
+      "archetype": "training_dummy",
+      "count": 3,
+      "radius": 10,
+      "level": 1,
+      "immortal": true,
+      "loot_id": "tutorial"
+    },
+    {
+      "archetype": "rabbit",
+      "count": 5,
+      "radius": 20,
+      "level": 1,
+      "passive": true,
+      "loot_id": "tutorial"
+    }
+  ],
+  "loot_tables": {
+    "tutorial": {
+      "gold_min": 1,
+      "gold_max": 5,
+      "items": [
+        {
+          "id": 10,
+          "chance": 0.5,
+          "name": "Health Potion"
+        },
+        {
+          "id": 11,
+          "chance": 0.3,
+          "name": "Training Medal"
+        }
+      ]
+    }
+  },
+  "tutorial_quest": {
+    "id": "tutorial_movement",
+    "quest_id": 1,
+    "title": "First Steps",
+    "auto_start": true,
+    "objectives": [
+      {
+        "id": "move_wasd",
+        "type": "custom",
+        "description": "Move around using WASD",
+        "count": 1,
+        "hint": "Press W, A, S, D to move"
+      },
+      {
+        "id": "mouse_look",
+        "type": "custom",
+        "description": "Look around using mouse",
+        "count": 1,
+        "hint": "Move mouse to rotate camera"
+      },
+      {
+        "id": "attack_dummy",
+        "type": "damage",
+        "target": "training_dummy",
+        "count": 1,
+        "hint": "Click or press Attack to strike the dummy"
+      },
+      {
+        "id": "open_inventory",
+        "type": "custom",
+        "description": "Open your inventory",
+        "count": 1,
+        "hint": "Press I to open inventory"
+      }
+    ],
+    "rewards": {
+      "xp": 50,
+      "gold": 20,
+      "items": [
+        {
+          "id": 2,
+          "name": "Iron Dagger"
+        },
+        {
+          "id": 10,
+          "qty": 2,
+          "name": "Health Potion"
+        }
+      ]
+    }
+  },
+  "events": [
+    {
+      "id": "welcome_message",
+      "trigger": "player_join",
+      "type": "message",
+      "text": "Welcome to DarkAges! Speak with Instructor Aldric to begin your training."
+    },
+    {
+      "id": "trainer_greeting",
+      "trigger": "npc_interact",
+      "npc": "Instructor Aldric",
+      "type": "dialogue",
+      "lines": [
+        "Welcome, adventurer! I'm Aldric, your combat instructor.",
+        "First, let's practice movement. Use WASD to walk around.",
+        "Try looking around by moving your mouse.",
+        "When you're ready, attack that training dummy to test your skills!"
+      ],
+      "completes_objective": "move_wasd"
+    }
+  ]
+}

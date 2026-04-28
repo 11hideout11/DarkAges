@@ -29,6 +29,55 @@ namespace DarkAges
     /// </summary>
     public partial class PredictedPlayer : CharacterBody3D
     {
+        /// <summary>
+        /// Safely set GlobalPosition, rejecting NaN/infinity values
+        /// </summary>
+        private void SafeSetPosition(Vector3 pos)
+        {
+            if (float.IsNaN(pos.X) || float.IsInfinity(pos.X) ||
+                float.IsNaN(pos.Y) || float.IsInfinity(pos.Y) ||
+                float.IsNaN(pos.Z) || float.IsInfinity(pos.Z))
+            {
+                GD.PrintErr($"[PredictedPlayer] NaN/infinity position rejected: {pos}");
+                GD.PrintErr($"[PredictedPlayer] Stack trace: {System.Environment.StackTrace}");
+                return;
+            }
+            GlobalPosition = pos;
+        }
+        
+        /// <summary>
+        /// Safely set Velocity, rejecting NaN/infinity values
+        /// </summary>
+        private void SafeSetVelocity(Vector3 vel)
+        {
+            if (float.IsNaN(vel.X) || float.IsInfinity(vel.X) ||
+                float.IsNaN(vel.Y) || float.IsInfinity(vel.Y) ||
+                float.IsNaN(vel.Z) || float.IsInfinity(vel.Z))
+            {
+                GD.PrintErr($"[PredictedPlayer] NaN/infinity velocity rejected: {vel}");
+                GD.PrintErr($"[PredictedPlayer] Stack trace: {System.Environment.StackTrace}");
+                Velocity = Vector3.Zero;
+                return;
+            }
+            Velocity = vel;
+        }
+        
+        /// <summary>
+        /// Validate current position - call at start of _PhysicsProcess to detect when we become invalid
+        /// </summary>
+        private void ValidateCurrentPosition()
+        {
+            if (float.IsNaN(GlobalPosition.X) || float.IsInfinity(GlobalPosition.X) ||
+                float.IsNaN(GlobalPosition.Y) || float.IsInfinity(GlobalPosition.Y) ||
+                float.IsNaN(GlobalPosition.Z) || float.IsInfinity(GlobalPosition.Z))
+            {
+                GD.PrintErr($"[PredictedPlayer] INVALID position detected at start of frame: {GlobalPosition}");
+                GD.PrintErr($"[PredictedPlayer] Stack trace: {System.Environment.StackTrace}");
+                // Reset to zero to prevent crash
+                GlobalPosition = Vector3.Zero;
+            }
+        }
+        
         // Movement constants - MUST MATCH SERVER EXACTLY
         [Export] public float MaxSpeed = 6.0f;
         [Export] public float SprintMultiplier = 1.5f;
@@ -162,8 +211,26 @@ namespace DarkAges
 
         public override void _PhysicsProcess(double delta)
         {
+            // Validate position at start of every physics frame
+            ValidateCurrentPosition();
+            
             float dt = (float)delta;
             _timeSinceLastCorrection += dt;
+            
+            // Debug: check for NaN/Infinity every 60 frames (~1 second)
+            if (Engine.GetProcessFrames() % 60 == 0)
+            {
+                if (float.IsNaN(GlobalPosition.X) || float.IsNaN(GlobalPosition.Y) || float.IsNaN(GlobalPosition.Z) ||
+                    float.IsInfinity(GlobalPosition.X) || float.IsInfinity(GlobalPosition.Y) || float.IsInfinity(GlobalPosition.Z))
+                {
+                    GD.Print($"[PredictedPlayer] NaN/Inf detected in GlobalPosition: {GlobalPosition} (frame {Engine.GetProcessFrames()})");
+                }
+                if (float.IsNaN(Velocity.X) || float.IsNaN(Velocity.Y) || float.IsNaN(Velocity.Z) ||
+                    float.IsInfinity(Velocity.X) || float.IsInfinity(Velocity.Y) || float.IsInfinity(Velocity.Z))
+                {
+                    GD.Print($"[PredictedPlayer] NaN/Inf detected in Velocity: {Velocity} (frame {Engine.GetProcessFrames()})");
+                }
+            }
             
             // Update smooth correction if active
             if (_isSmoothingCorrection)
@@ -448,6 +515,14 @@ namespace DarkAges
         /// </summary>
         private void ApplyServerCorrection(uint serverTick, Vector3 serverPos, Vector3 serverVel, uint lastProcessedSeq)
         {
+            // NaN guard - reject invalid positions from server
+            if (float.IsNaN(serverPos.X) || float.IsNaN(serverPos.Y) || float.IsNaN(serverPos.Z) ||
+                float.IsInfinity(serverPos.X) || float.IsInfinity(serverPos.Y) || float.IsInfinity(serverPos.Z))
+            {
+                GD.Print($"[PredictedPlayer] Rejecting NaN/Infinity server position: {serverPos}");
+                return;
+            }
+            
             _serverPosition = serverPos;
             _serverVelocity = serverVel;
             _lastProcessedServerInput = lastProcessedSeq;
@@ -758,6 +833,14 @@ namespace DarkAges
             // Apply movement
             Velocity = new Vector3(Velocity.X, 0, Velocity.Z);  // Ensure Y stays 0
             MoveAndSlide();
+            
+            // NaN guard - check velocity after physics
+            if (float.IsNaN(Velocity.X) || float.IsNaN(Velocity.Y) || float.IsNaN(Velocity.Z) ||
+                float.IsInfinity(Velocity.X) || float.IsInfinity(Velocity.Y) || float.IsInfinity(Velocity.Z))
+            {
+                GD.Print($"[PredictedPlayer] NaN/Infinity detected in Velocity after MoveAndSlide: {Velocity}");
+                Velocity = Vector3.Zero;
+            }
         }
         
         /// <summary>

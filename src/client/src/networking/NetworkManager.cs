@@ -498,12 +498,30 @@ namespace DarkAges.Networking
                     float z = BitConverter.ToSingle(data, offset);
                     offset += 4;
                     
+                    // NaN guard - skip entities with invalid positions
+                    if (float.IsNaN(x) || float.IsNaN(y) || float.IsNaN(z) ||
+                        float.IsInfinity(x) || float.IsInfinity(y) || float.IsInfinity(z))
+                    {
+                        GD.Print($"[NetworkManager] Skipping entity {entityId} - invalid position ({x}, {y}, {z})");
+                        offset += 4 + 4 + 4 + 1 + 1 + 64 + 4; // Skip remaining fields
+                        continue;
+                    }
+                    
                     float vx = BitConverter.ToSingle(data, offset);
                     offset += 4;
                     float vy = BitConverter.ToSingle(data, offset);
                     offset += 4;
                     float vz = BitConverter.ToSingle(data, offset);
                     offset += 4;
+                    
+                    // NaN guard - skip entities with invalid velocity
+                    if (float.IsNaN(vx) || float.IsNaN(vy) || float.IsNaN(vz) ||
+                        float.IsInfinity(vx) || float.IsInfinity(vy) || float.IsInfinity(vz))
+                    {
+                        GD.Print($"[NetworkManager] Skipping entity {entityId} - invalid velocity ({vx}, {vy}, {vz})");
+                        offset += 1 + 1 + 64 + 4; // Skip remaining fields
+                        continue;
+                    }
                     
                     byte health = data[offset];
                     offset += 1;

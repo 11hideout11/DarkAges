@@ -1,67 +1,66 @@
-[gd_scene load_steps=4 format=3 uid="uid://zone99combat"]
+[gd_scene load_steps=4 format=3 uid="uid://zone99arena"]
 
-[ext_resource type="Script" path="res://src/entities/RemotePlayer.cs" id="1_player"]
-[ext_resource type="PackedScene" path="res://scenes/Player.tscn" id="2_player_scene"]
-[ext_resource type="Script" path="res://src/npc/NPCController.cs" id="3_npc"]
-[ext_resource type="Script" path="res://src/combat/CombatEventHandler.cs" id="4_combat"]
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_arena"]
+albedo_color = Color(0.4, 0.3, 0.2, 1)
 
-[node name="Zone99Combat" type="Node3D"]
+[sub_resource type="PlaneMesh" id="PlaneMesh_arena"]
+material = SubResource("StandardMaterial3D_arena")
+size = Vector2(60, 60)
 
-[node name="WorldEnvironment" type="WorldEnvironment" parent="."]
-environment = SubResource("Environment_1")
+[sub_resource type="BoxShape3D" id="BoxShape3D_arena"]
+size = Vector3(60, 1, 60)
 
-[node name="DirectionalLight3D" type="DirectionalLight3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 10, 0)
-light_energy = 1.2
-shadow_enabled = true
+[node name="Zone99Arena" type="Node3D"]
 
-[node name="Ground" type="StaticBody3D" parent="."]
-[node name="CollisionShape3D" type="CollisionShape3D" parent="Ground"]
-shape = SubResource("BoxShape3D_1")
+[node name="ArenaFloor" type="StaticBody3D" parent="."]
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="ArenaFloor"]
+mesh = SubResource("PlaneMesh_arena")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="ArenaFloor"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.5, 0)
+shape = SubResource("BoxShape3D_arena")
 
 [node name="PlayerSpawn" type="Marker3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 0)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 20)
 
-# Enemy spawn points
-[node name="EnemySpawn1" type="Marker3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 10, 1, 0)
+[node name="ArenaCenter" type="Marker3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0)
 
-[node name="EnemySpawn2" type="Marker3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -10, 1, 0)
+[node name="SpawnPoints" type="Node3D" parent="."]
 
-[node name="EnemySpawn3" type="Marker3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 10)
+[node name="NW" type="Marker3D" parent="SpawnPoints"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -12, 0, -12)
 
-# Loot chests
-[node name="LootChest1" type="StaticBody3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 5, 0.5, 5)
-[node name="CollisionShape3D" type="CollisionShape3D" parent="LootChest1"]
-shape = SubResource("BoxShape3D_2")
+[node name="NE" type="Marker3D" parent="SpawnPoints"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 12, 0, -12)
 
-[node name="LootChest2" type="StaticBody3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -5, 0.5, -5)
-[node name="CollisionShape3D" type="CollisionShape3D" parent="LootChest2"]
-shape = SubResource("BoxShape3D_2")
+[node name="SW" type="Marker3D" parent="SpawnPoints"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -12, 0, 12)
 
-# Boss area
-[node name="BossArea" type="Area3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 20)
-[node name="CollisionShape3D" type="CollisionShape3D" parent="BossArea"]
-shape = SubResource("BoxShape3D_3")
+[node name="SE" type="Marker3D" parent="SpawnPoints"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 12, 0, 12)
 
-# Combat Event Handler
-[node name="CombatHandler" type="Node3D" parent="."]
-script = ExtResource("4_combat")
+[node name="RewardChest" type="Marker3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 8, 0, 0)
 
-[sub_resource type="Environment" id="Environment_1"]
-background_mode = 2
-ambient_light_energy = 0.8
+[node name="WaveUI" type="CanvasLayer" parent="."]
 
-[sub_resource type="BoxShape3D" id="BoxShape3D_1"]
-size = Vector3(100, 1, 100)
+[node name="WavePanel" type="Panel" parent="WaveUI"]
+anchors_preset = 10
+anchor_right = 1.0
+offset_bottom = 60.0
+grow_horizontal = 2
 
-[sub_resource type="BoxShape3D" id="BoxShape3D_2"]
-size = Vector3(1, 1, 1)
-
-[sub_resource type="BoxShape3D" id="BoxShape3D_3"]
-size = Vector3(20, 5, 20)
+[node name="WaveLabel" type="Label" parent="WaveUI/WavePanel"]
+layout_mode = 1
+anchors_preset = 5
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -100.0
+offset_top = 15.0
+offset_right = 100.0
+offset_bottom = 45.0
+grow_horizontal = 2
+text = "Wave 1 - Enemies Approaching!"
+horizontal_alignment = 1

@@ -24,6 +24,7 @@ set(TEST_SOURCES
     TestLagCompensator.cpp
     TestLagCompensatedCombat.cpp
     TestCombatSystem.cpp
+    TestCombatFSMIntegration.cpp
     TestZoneOrchestrator.cpp
     TestEntityMigration.cpp
     TestMemoryPool.cpp
@@ -74,6 +75,7 @@ set(TEST_SOURCES
     TestSpawnSystemIntegration.cpp
     TestZoneServer.cpp
     TestProtocolStub.cpp
+    TestHitboxCollision.cpp
 )
 
 # Conditional test sources based on dependencies

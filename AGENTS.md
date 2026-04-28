@@ -52,13 +52,11 @@ cd build_validate && ctest --output-on-failure -j1
 - **Harness Audit**: components in `HARNESS_COMPONENTS` dict with expiration dates; review quarterly
 
 ## Gaps (Updated 2026-04-28 per new MVP criteria)
-- **MVP CRITICAL**: ✅ Full third-person combat multiplayer template COMPLETE
-  - ✅ Third-person combat template: complete FSM (AnimationStateMachine), hitbox/hurtbox system, server-authoritative combat validation
-  - ✅ Demo zones: zones 98 (tutorial), 99 (combat), 100 (boss) created with gameplay loops
-  - ✅ Gameplay: complete demo gameplay loop (combat, quest, loot, NPC interaction) in playable demo format
-- **MVP HIGH**: ✅ AnimationTree procedural features (hit stop) implemented
-- **MVP HIGH**: ✅ Demo zone content (zones 98/99/100) expanded with proper gameplay pacing
-- **MVP MEDIUM**: Visual polish (SDFGI, post-processing) configured, needs validation in demo context
+- **MVP CRITICAL**: Full third-person combat multiplayer template **COMPLETE** — FSM integrated with AnimationStateMachine
+- **MVP CRITICAL**: Demo zones — 3 zones created (tutorial.json, arena.json, boss.json) — IN PROGRESS
+- **MVP HIGH**: AnimationTree procedural features (Foot IK, blend spaces) incomplete
+- **MVP HIGH**: Demo zone content (zone 99) needs expansion with proper gameplay pacing
+- **MVP MEDIUM**: Visual polish (SDFGI, post-processing) configured but needs validation in demo context
 - **MVP MEDIUM**: Foot IK and blend spaces not yet implemented (can be added post-MVP)
 
 ## Recent Commits (last 10 — updated)

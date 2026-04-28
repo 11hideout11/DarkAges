@@ -245,6 +245,16 @@ namespace DarkAges.Entities
 
         public override void _Process(double delta)
         {
+            // Validate current position at start of frame
+            if (float.IsNaN(GlobalPosition.X) || float.IsInfinity(GlobalPosition.X) ||
+                float.IsNaN(GlobalPosition.Y) || float.IsInfinity(GlobalPosition.Y) ||
+                float.IsNaN(GlobalPosition.Z) || float.IsInfinity(GlobalPosition.Z))
+            {
+                GD.PrintErr($"[RemotePlayer] INVALID position detected at start of frame: {GlobalPosition}");
+                GD.PrintErr($"[RemotePlayer] Stack trace: {System.Environment.StackTrace}");
+                GlobalPosition = Vector3.Zero;
+            }
+            
             // Calculate render time (current time - interpolation delay)
             double currentTime = Time.GetTicksMsec() / 1000.0;
             double renderTime = currentTime - InterpolationDelay;
@@ -252,12 +262,30 @@ namespace DarkAges.Entities
             // Get interpolated/extrapolated state for render time
             (Vector3 targetPos, Quaternion targetRot) = GetInterpolatedState(renderTime);
             
+            // Validate interpolated state before using it
+            if (float.IsNaN(targetPos.X) || float.IsInfinity(targetPos.X) ||
+                float.IsNaN(targetPos.Y) || float.IsInfinity(targetPos.Y) ||
+                float.IsNaN(targetPos.Z) || float.IsInfinity(targetPos.Z))
+            {
+                GD.PrintErr($"[RemotePlayer] NaN/Inf in interpolated targetPos: {targetPos}, using current position");
+                targetPos = _displayPosition;
+            }
+            
             // Smoothly interpolate to target (double smoothing for extra smoothness)
             _displayPosition = _displayPosition.Lerp(targetPos, (float)delta * PositionSmoothing);
             _displayRotation = _displayRotation.Slerp(targetRot, (float)delta * RotationSmoothing).Normalized();
             
             // Apply to transform
-            GlobalPosition = _displayPosition;
+            // NaN guard - don't apply invalid positions
+            if (float.IsNaN(_displayPosition.X) || float.IsNaN(_displayPosition.Y) || float.IsNaN(_displayPosition.Z) ||
+                float.IsInfinity(_displayPosition.X) || float.IsInfinity(_displayPosition.Y) || float.IsInfinity(_displayPosition.Z))
+            {
+                GD.Print($"[RemotePlayer] NaN/Inf in _displayPosition, skipping update: {_displayPosition}");
+            }
+            else
+            {
+                GlobalPosition = _displayPosition;
+            }
             if (_modelRoot != null)
             {
                 _modelRoot.Quaternion = _displayRotation;

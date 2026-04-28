@@ -131,6 +131,18 @@ namespace DarkAges.Entities
                 byte animState = data[offset];
                 offset += 1;
                 
+                // Validate: skip entities with NaN/Infinity positions or velocities
+                if (float.IsNaN(x) || float.IsInfinity(x) ||
+                    float.IsNaN(y) || float.IsInfinity(y) ||
+                    float.IsNaN(z) || float.IsInfinity(z) ||
+                    float.IsNaN(vx) || float.IsInfinity(vx) ||
+                    float.IsNaN(vy) || float.IsInfinity(vy) ||
+                    float.IsNaN(vz) || float.IsInfinity(vz))
+                {
+                    GD.PrintErr($"[RemotePlayerManager] Skipping entity {entityId} - NaN/Infinity in position or velocity");
+                    continue;
+                }
+                
                 currentEntities.Add(entityId);
                 
                 // Get or create remote player
@@ -218,7 +230,17 @@ namespace DarkAges.Entities
             var player = RemotePlayerScene.Instantiate<RemotePlayer>();
             player.EntityId = entityId;
             player.PlayerName = $"Player {entityId}";
-            player.GlobalPosition = position;
+            if (float.IsNaN(position.X) || float.IsInfinity(position.X) ||
+                float.IsNaN(position.Y) || float.IsInfinity(position.Y) ||
+                float.IsNaN(position.Z) || float.IsInfinity(position.Z))
+            {
+                GD.PrintErr($"[RemotePlayerManager] NaN/infinity position for entity {entityId}, using zero");
+                player.GlobalPosition = Vector3.Zero;
+            }
+            else
+            {
+                player.GlobalPosition = position;
+            }
             player.Name = $"RemotePlayer_{entityId}";
             player.ShowDebugVisualization = ShowInterpolationDebug;
             

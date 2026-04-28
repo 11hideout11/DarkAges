@@ -1,0 +1,282 @@
+{
+  "zone_id": 100,
+  "name": "Boss Lair",
+  "description": "Epic boss encounter zone with phase mechanics and legendary rewards",
+  "type": "boss",
+  "spawn_points": [
+    {
+      "x": 0,
+      "y": 0,
+      "z": 20,
+      "type": "player_start",
+      "name": "Lair Entrance"
+    },
+    {
+      "x": 0,
+      "y": 0,
+      "z": 0,
+      "type": "boss_arena_center",
+      "name": "Boss Arena"
+    },
+    {
+      "x": -8,
+      "y": 0,
+      "z": -5,
+      "type": "minion_spawn_left",
+      "name": "Left Spawn"
+    },
+    {
+      "x": 8,
+      "y": 0,
+      "z": -5,
+      "type": "minion_spawn_right",
+      "name": "Right Spawn"
+    },
+    {
+      "x": 0,
+      "y": 0,
+      "z": -10,
+      "type": "boss_loot",
+      "name": "Legendary Chest"
+    }
+  ],
+  "boss_encounter": {
+    "enabled": true,
+    "boss": {
+      "archetype": "ogre_chieftain",
+      "name": "Gruk The Unstoppable",
+      "level": 10,
+      "health": 500,
+      "damage": 25,
+      "armor": 15,
+      "behavior": "boss"
+    },
+    "phases": [
+      {
+        "phase": 1,
+        "health_threshold": 100,
+        "name": "The Challenge",
+        "abilities": ["basic_melee", "ground_slam"],
+        "spawn_minions": false,
+        "dialogue": "You dare enter my lair? Prepare to be crushed!"
+      },
+      {
+        "phase": 2,
+        "health_threshold": 66,
+        "name": "Call The Pack",
+        "abilities": ["basic_melee", "ground_slam", "war_stomp"],
+        "spawn_minions": {
+          "archetype": "wolf",
+          "count": 4,
+          "location": "minion_spawn_left"
+        },
+        "dialogue": "You fight well... but I'm just getting started!"
+      },
+      {
+        "phase": 3,
+        "health_threshold": 33,
+        "name": "Blood Rage",
+        "abilities": ["basic_melee", "ground_slam", "war_stomp", "blood_rage"],
+        "modifiers": {
+          "damage_mult": 1.5,
+          "attack_speed": 1.3
+        },
+        "spawn_minions": {
+          "archetype": "bandit",
+          "count": 3,
+          "location": "minion_spawn_right"
+        },
+        "dialogue": "Now you face the TRUE power of Gruk! NO MERCY!"
+      },
+      {
+        "phase": 4,
+        "health_threshold": 10,
+        "name": "Final Desperation",
+        "abilities": ["desperate_slam", "enraged_strike"],
+        "modifiers": {
+          "damage_mult": 2.0,
+          "armor_penalty": -5
+        },
+        "dialogue": "I... will not... fall...!"
+      }
+    ],
+    "abilities": {
+      "basic_melee": {
+        "damage": 25,
+        "cooldown": 2.0,
+        "range": 3.0,
+        "telegraph_time": 0.5,
+        "dodgeable": true
+      },
+      "ground_slam": {
+        "damage": 40,
+        "cooldown": 8.0,
+        "radius": 8.0,
+        "telegraph_time": 1.2,
+        "dodgeable": true,
+        "knockback": 5.0
+      },
+      "war_stomp": {
+        "damage": 30,
+        "cooldown": 10.0,
+        "radius": 6.0,
+        "telegraph_time": 1.0,
+        "stun_duration": 2.0
+      },
+      "blood_rage": {
+        "type": "buff",
+        "duration": 15.0,
+        "effect": "damage_mult",
+        "value": 1.5
+      },
+      "desperate_slam": {
+        "damage": 60,
+        "cooldown": 4.0,
+        "radius": 5.0,
+        "telegraph_time": 0.8
+      },
+      "enraged_strike": {
+        "damage": 50,
+        "cooldown": 3.0,
+        "range": 4.0
+      }
+    },
+    "defeat_dialogue": "Nooooo! I am... defeated? This cannot be...",
+    "victory_chest": {
+      "enabled": true,
+      "spawns_at": [0, 0, -8],
+      "contents": {
+        "gold_min": 500,
+        "gold_max": 1000,
+        "items": [
+          {"id": 5001, "chance": 1.0, "name": "Ogre Slayer", "rarity": "legendary"},
+          {"id": 5002, "chance": 0.6, "name": "Chieftain's Armor", "rarity": "epic"},
+          {"id": 5003, "chance": 0.8, "name": "Giant's Ring", "rarity": "epic"},
+          {"id": 10, "chance": 1.0, "name": "Health Potion", "qty": 10}
+        ]
+      }
+    }
+  },
+  "loot_tables": {
+    "boss_epic": {
+      "gold_min": 200,
+      "gold_max": 500,
+      "items": [
+        {"id": 5001, "chance": 0.3, "name": "Ogre Slayer", "rarity": "legendary"},
+        {"id": 5002, "chance": 0.5, "name": "Chieftain's Armor", "rarity": "epic"},
+        {"id": 10, "chance": 0.8, "name": "Health Potion", "qty": 3}
+      ]
+    },
+    "minion_tier3": {
+      "gold_min": 25,
+      "gold_max": 60,
+      "items": [
+        {"id": 10, "chance": 0.6, "name": "Health Potion"},
+        {"id": 11, "chance": 0.4, "name": "Wolf Pelt"}
+      ]
+    }
+  },
+  "boss_quest": {
+    "id": "slay_the_chieftain",
+    "quest_id": 100,
+    "title": "Slay the Chieftain",
+    "auto_start": true,
+    "description": "Defeat Gruk The Unstoppable, the ogre chieftain",
+    "objectives": [
+      {
+        "id": "reach_lair",
+        "type": "custom",
+        "description": "Enter the boss lair",
+        "hint": "Walk into the center of the lair"
+      },
+      {
+        "id": "phase1_complete",
+        "type": "boss_phase",
+        "phase": 1,
+        "description": "Survive Phase 1 - The Challenge"
+      },
+      {
+        "id": "phase2_complete",
+        "type": "boss_phase",
+        "phase": 2,
+        "description": "Survive Phase 2 - Call The Pack"
+      },
+      {
+        "id": "phase3_complete",
+        "type": "boss_phase",
+        "phase": 3,
+        "description": "Survive Phase 3 - Blood Rage"
+      },
+      {
+        "id": "defeat_gruk",
+        "type": "boss_kill",
+        "target": "Gruk The Unstoppable",
+        "description": "Defeat Gruk The Unstoppable"
+      },
+      {
+        "id": "claim_reward",
+        "type": "interact",
+        "target": "legendary_chest",
+        "description": "Claim your legendary reward"
+      }
+    ],
+    "rewards": {
+      "xp": 2000,
+      "gold": 500,
+      "title": "Chieftain Slayer",
+      "achievement": "first_boss_kill",
+      "items": [
+        {"id": 5001, "name": "Ogre Slayer", "rarity": "legendary"}
+      ]
+    }
+  },
+  "events": [
+    {
+      "id": "lair_enter",
+      "trigger": "player_join",
+      "type": "message",
+      "text": "You stand before the lair of Gruk The Unstoppable. Prepare for the ultimate challenge!"
+    },
+    {
+      "id": "boss_intro",
+      "trigger": "combat_start",
+      "type": "cinematic",
+      "camera_focus": [0, 0, 0],
+      "dialogue": "Gruk The Unstoppable says: You dare enter my lair? Prepare to be crushed!",
+      "duration": 3.0
+    },
+    {
+      "id": "phase2_warning",
+      "trigger": "boss_health",
+      "health_threshold": 66,
+      "type": "warning",
+      "text": "Gruk enters Phase 2 - Minions are coming!",
+      "screen_flash": "red"
+    },
+    {
+      "id": "phase3_warning",
+      "trigger": "boss_health",
+      "health_threshold": 33,
+      "type": "warning",
+      "text": "Gruk enters Blood Rage - Prepare for massive damage!",
+      "screen_flash": "dark_red",
+      "shake": true
+    },
+    {
+      "id": "final_phase",
+      "trigger": "boss_health",
+      "health_threshold": 10,
+      "type": "cinematic",
+      "dialogue": "Gruk The Unstoppable roars: I will not fall!",
+      "slow_motion": true
+    },
+    {
+      "id": "victory_celebration",
+      "trigger": "boss_dead",
+      "type": "cinematic",
+      "dialogue": "Gruk falls! Victory is yours! The Legendary Chest appears!",
+      "screen_flash": "gold",
+      "particle_effect": "confetti"
+    }
+  ]
+}

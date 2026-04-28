@@ -736,6 +736,8 @@ if(BUILD_TESTS AND TARGET Catch2::Catch2WithMain)
         src/server/tests/TestAreaOfInterest.cpp
         src/server/tests/TestReplicationOptimizer.cpp
         src/server/tests/TestCombatSystem.cpp
+        src/server/tests/TestCombatFSMIntegration.cpp
+        src/server/tests/TestHitboxCollision.cpp
         src/server/tests/TestAbilitySystem.cpp
         src/server/tests/TestProjectileSystem.cpp
         src/server/tests/TestNPCAISystem.cpp

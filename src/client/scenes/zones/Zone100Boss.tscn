@@ -1,81 +1,91 @@
 [gd_scene load_steps=4 format=3 uid="uid://zone100boss"]
 
-[ext_resource type="Script" path="res://src/entities/RemotePlayer.cs" id="1_player"]
-[ext_resource type="PackedScene" path="res://scenes/Player.tscn" id="2_player_scene"]
-[ext_resource type="Script" path="res://src/npc/BossController.cs" id="3_boss"]
-[ext_resource type="Script" path="res://src/combat/CombatEventHandler.cs" id="4_combat"]
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_boss"]
+albedo_color = Color(0.3, 0.2, 0.15, 1)
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_boss"]
+material = SubResource("StandardMaterial3D_boss")
+top_radius = 25.0
+bottom_radius = 25.0
+height = 0.1
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_boss"]
+size = Vector3(60, 1, 60)
 
 [node name="Zone100Boss" type="Node3D"]
 
-[node name="WorldEnvironment" type="WorldEnvironment" parent="."]
-environment = SubResource("Environment_1")
+[node name="BossArenaFloor" type="StaticBody3D" parent="."]
 
-[node name="DirectionalLight3D" type="DirectionalLight3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 10, 0)
-light_energy = 0.8
-shadow_enabled = true
+[node name="MeshInstance3D" type="MeshInstance3D" parent="BossArenaFloor"]
+mesh = SubResource("CylinderMesh_boss")
 
-[node name="Ground" type="StaticBody3D" parent="."]
-[node name="CollisionShape3D" type="CollisionShape3D" parent="Ground"]
-shape = SubResource("BoxShape3D_1")
+[node name="CollisionShape3D" type="CollisionShape3D" parent="BossArenaFloor"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.5, 0)
+shape = SubResource("BoxShape3D_boss")
 
 [node name="PlayerSpawn" type="Marker3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 0)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 20)
 
-# Boss spawn
 [node name="BossSpawn" type="Marker3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 20)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0)
 
-[node name="Boss" type="Node3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 20)
-script = ExtResource("3_boss")
-boss_id = 100001
-boss_name = "Demon Lord"
-health = 5000
+[node name="MinionSpawnLeft" type="Marker3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -8, 0, -5)
 
-# Boss arena walls
-[node name="Wall1" type="StaticBody3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -25, 2, 0)
-[node name="CollisionShape3D" type="CollisionShape3D" parent="Wall1"]
-shape = SubResource("BoxShape3D_2")
+[node name="MinionSpawnRight" type="Marker3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 8, 0, -5)
 
-[node name="Wall2" type="StaticBody3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 25, 2, 0)
-[node name="CollisionShape3D" type="CollisionShape3D" parent="Wall2"]
-shape = SubResource("BoxShape3D_2")
+[node name="LegendaryChest" type="Marker3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -8)
 
-[node name="Wall3" type="StaticBody3D" parent="."]
-transform = Transform3D(0, 0, -1, 0, 1, 0, 1, 0, 0, 0, 2, -25)
-[node name="CollisionShape3D" type="CollisionShape3D" parent="Wall3"]
-shape = SubResource("BoxShape3D_3")
+[node name="BossCinematicPositions" type="Node3D" parent="."]
 
-[node name="Wall4" type="StaticBody3D" parent="."]
-transform = Transform3D(0, 0, 1, 0, 1, 0, 1, 0, 0, 0, 2, 25)
-[node name="CollisionShape3D" type="CollisionShape3D" parent="Wall4"]
-shape = SubResource("BoxShape3D_3")
+[node name="IntroCamera" type="Marker3D" parent="BossCinematicPositions"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -15, 5, 15)
 
-# Loot chest (drops after boss dies)
-[node name="LootChest" type="StaticBody3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.5, 22)
-[node name="CollisionShape3D" type="CollisionShape3D" parent="LootChest"]
-shape = SubResource("BoxShape3D_4")
+[node name="VictoryCamera" type="Marker3D" parent="BossCinematicPositions"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3, 10)
 
-# Combat Event Handler
-[node name="CombatHandler" type="Node3D" parent="."]
-script = ExtResource("4_combat")
+[node name="BossUI" type="CanvasLayer" parent="."]
 
-[sub_resource type="Environment" id="Environment_1"]
-background_mode = 3
-ambient_light_energy = 0.3
+[node name="BossHealthPanel" type="Panel" parent="BossUI"]
+anchors_preset = 10
+anchor_right = 1.0
+offset_bottom = 40.0
+grow_horizontal = 2
 
-[sub_resource type="BoxShape3D" id="BoxShape3D_1"]
-size = Vector3(50, 1, 50)
+[node name="BossName" type="Label" parent="BossUI/BossHealthPanel"]
+layout_mode = 1
+anchors_preset = 5
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -100.0
+offset_right = 100.0
+offset_bottom = 20.0
+grow_horizontal = 2
+text = "Gruk The Unstoppable"
+horizontal_alignment = 1
 
-[sub_resource type="BoxShape3D" id="BoxShape3D_2"]
-size = Vector3(1, 4, 50)
+[node name="HealthBar" type="ProgressBar" parent="BossUI/BossHealthPanel"]
+layout_mode = 1
+anchors_preset = 10
+anchor_right = 1.0
+offset_left = 200.0
+offset_top = 20.0
+offset_right = -200.0
+offset_bottom = 35.0
+grow_horizontal = 2
+max_value = 500.0
+value = 500.0
 
-[sub_resource type="BoxShape3D" id="BoxShape3D_3"]
-size = Vector3(50, 4, 1)
-
-[sub_resource type="BoxShape3D" id="BoxShape3D_4"]
-size = Vector3(2, 1, 2)
+[node name="PhaseLabel" type="Label" parent="BossUI"]
+layout_mode = 1
+anchors_preset = 5
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -150.0
+offset_top = 50.0
+offset_right = 150.0
+offset_bottom = 80.0
+grow_horizontal = 2
+horizontal_alignment = 1
