@@ -1,0 +1,43 @@
+[gd_scene load_steps=3 format=3 uid="uid://zone98tutorial"]
+
+[ext_resource type="Script" path="res://src/entities/RemotePlayer.cs" id="1_player"]
+[ext_resource type="PackedScene" path="res://scenes/Player.tscn" id="2_player_scene"]
+[ext_resource type="Script" path="res://src/npc/NPCController.cs" id="3_npc"]
+
+[node name="Zone98Tutorial" type="Node3D"]
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="."]
+environment = SubResource("Environment_1")
+
+[node name="DirectionalLight3D" type="DirectionalLight3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 10, 0)
+light_energy = 1.0
+shadow_enabled = true
+
+[node name="Ground" type="StaticBody3D" parent="."]
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Ground"]
+shape = SubResource("BoxShape3D_1")
+
+[node name="PlayerSpawn" type="Marker3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 0)
+
+[node name="TutorialNPC" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 5, 1, 0)
+script = ExtResource("3_npc")
+npc_id = 98001
+npc_name = "Tutorial Guide"
+dialogue_id = 98001
+
+[node name="QuestGiver" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 10, 1, 0)
+script = ExtResource("3_npc")
+npc_id = 98002
+npc_name = "Quest Giver"
+quest_id = 98001
+
+[sub_resource type="Environment" id="Environment_1"]
+background_mode = 1
+ambient_light_energy = 0.5
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_1"]
+size = Vector3(50, 1, 50)

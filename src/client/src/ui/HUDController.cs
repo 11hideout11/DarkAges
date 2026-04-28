@@ -43,7 +43,7 @@ namespace DarkAges.Client.UI
             // Defer component initialization to avoid "busy setting up children" warnings.
             // This ensures all child scene instances (ChatPanel, QuestTracker, etc.)
             // have fully completed their own _Ready() before we query them.
-            CallDeferred(MethodName.DeferredInitialize, new Godot.Variant());
+            CallDeferred(MethodName.DeferredInitialize);
 
             // Connect to game state immediately (singletons are safe)
             GameState.Instance.ConnectionStateChanged += OnConnectionStateChanged;
@@ -53,7 +53,7 @@ namespace DarkAges.Client.UI
             Visible = false;
         }
 
-        private void DeferredInitialize()
+        public void DeferredInitialize()
         {
             InitializeComponents();
         }

@@ -1,10 +1,11 @@
-[gd_scene load_steps=6 format=3 uid="uid://player"]
+[gd_scene load_steps=8 format=3 uid="uid://player"]
 
 [ext_resource type="Script" path="res://src/prediction/PredictedPlayer.cs" id="1_player"]
 [ext_resource type="Script" path="res://src/combat/AttackFeedbackSystem.cs" id="2_attack"]
 [ext_resource type="Script" path="res://src/utils/MovementTrailSystem.cs" id="3_trail"]
 [ext_resource type="AnimationLibrary" path="res://scenes/PlayerAnimations.tres" id="4_animlib"]
 [ext_resource type="Script" path="res://src/camera/CameraController.cs" id="5_cameracontroller"]
+[ext_resource type="Script" path="res://src/combat/fsm/AnimationStateMachine.cs" id="6_fsm"]
 
 [sub_resource type="CapsuleShape3D" id="CapsuleShape3D_1"]
 radius = 0.3
@@ -13,6 +14,8 @@ height = 1.8
 [sub_resource type="CapsuleMesh" id="CapsuleMesh_1"]
 radius = 0.3
 height = 1.8
+
+[sub_resource type="AnimationNodeStateMachine" id="AnimationNodeStateMachine_1"]
 
 [node name="Player" type="CharacterBody3D"]
 collision_layer = 2
@@ -44,13 +47,15 @@ root_node = NodePath("..")
 anim_library = ExtResource("4_animlib")
 
 [node name="AnimationTree" type="AnimationTree" parent="."]
-tree_root_node_path = NodePath("StateMachine")
-library = ExtResource("4_animlib")
+tree_root = SubResource("AnimationNodeStateMachine_1")
+anim_player = NodePath("../AnimationPlayer")
+libraries = {
+"": ExtResource("4_animlib")
+}
 active = true
 
-[node name="StateMachine" type="AnimationNodeStateMachine" parent="AnimationTree"]
-node_path_position = NodePath("")
-params/State = "Idle"
+[node name="AnimationStateMachine" type="Node" parent="."]
+script = ExtResource("6_fsm")
 
 [node name="AttackFeedback" type="Node3D" parent="."]
 script = ExtResource("2_attack")

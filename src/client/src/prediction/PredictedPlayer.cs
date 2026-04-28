@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using DarkAges.Networking;
 using DarkAges.Combat;
+using DarkAges.Combat.FSM;
 using DarkAges.Camera;
 
 namespace DarkAges
@@ -119,10 +120,8 @@ namespace DarkAges
             _animPlayer = GetNode<AnimationPlayer>("AnimationPlayer");
             _animTree = GetNodeOrNull<AnimationTree>("AnimationTree");
             
-            // Initialize AnimationStateMachine
-            _animStateMachine = new AnimationStateMachine();
-            _animStateMachine.Name = "AnimationStateMachine";
-            AddChild(_animStateMachine);
+            // Initialize AnimationStateMachine from scene
+            _animStateMachine = GetNode<AnimationStateMachine>("AnimationStateMachine");
 
             _predictedPosition = GlobalPosition;
             _correctionTargetPosition = GlobalPosition;
@@ -166,17 +165,6 @@ namespace DarkAges
             float dt = (float)delta;
             _timeSinceLastCorrection += dt;
             
-            // Update global cooldown timer
-            if (_isOnGlobalCooldown)
-            {
-                double now = Time.GetTicksMsec() / 1000.0;
-                if (now - _lastGlobalCooldownTime >= GLOBAL_COOLDOWN_DURATION)
-                {
-                    _isOnGlobalCooldown = false;
-                    GD.Print("[PredictedPlayer] GCD expired");
-                }
-            }
-            
             // Update smooth correction if active
             if (_isSmoothingCorrection)
             {
@@ -193,22 +181,15 @@ namespace DarkAges
             // 1. Gather input
             var input = GatherInput();
             
-            // 2. Handle dodge trigger
-            if (Input.IsKeyPressed(Key.Q) && !_isDodging && !_isAttacking && !_isHit && !_isDead && IsOnFloor())
-            {
-                TriggerDodge(input);
-            }
-            
             // 2b. Handle attack trigger (with GCD enforcement)
             if (input.Attack && _animStateMachine.CurrentState != AnimationStateMachine.StateType.Attacking && 
                 _animStateMachine.CurrentState != AnimationStateMachine.StateType.Dodging &&
                 _animStateMachine.CurrentState != AnimationStateMachine.StateType.Dead && 
-                !_isOnGlobalCooldown)
+                !_animStateMachine.IsOnGlobalCooldown)
             {
                 _animStateMachine.TriggerAttack();
                 // Start global cooldown - blocks all actions for 1.2s
-                _isOnGlobalCooldown = true;
-                _lastGlobalCooldownTime = Time.GetTicksMsec() / 1000.0;
+                _animStateMachine.StartGlobalCooldown();
                 GD.Print("[PredictedPlayer] Attack triggered, GCD started");
             }
             
@@ -216,7 +197,7 @@ namespace DarkAges
             if (Input.IsKeyPressed(Key.Q) && _animStateMachine.CurrentState != AnimationStateMachine.StateType.Dodging &&
                 _animStateMachine.CurrentState != AnimationStateMachine.StateType.Attacking &&
                 _animStateMachine.CurrentState != AnimationStateMachine.StateType.Dead &&
-                !_isOnGlobalCooldown && IsOnFloor())
+                !_animStateMachine.IsOnGlobalCooldown && IsOnFloor())
             {
                 _animStateMachine.TriggerDodge();
                 GD.Print("[PredictedPlayer] Dodge triggered");
@@ -278,7 +259,8 @@ namespace DarkAges
                 Position = new Vector3(0, 2.5f, 0),
                 Visible = ShowDebugLabel
             };
-            AddChild(_debugLabel);
+            // Defer AddChild to avoid "busy setting up children" error during _Ready()
+            CallDeferred(MethodName.AddChild, _debugLabel);
         }
         
         /// <summary>
@@ -719,7 +701,7 @@ namespace DarkAges
         private void ApplyMovement(InputState input, float dt)
         {
             // If dead, stop all movement
-            if (_isDead)
+            if (_animStateMachine != null && _animStateMachine.CurrentState == AnimationStateMachine.StateType.Dead)
             {
                 Velocity = Vector3.Zero;
                 return;
@@ -779,47 +761,6 @@ namespace DarkAges
         }
         
         /// <summary>
-        /// Trigger a dodge roll in the current movement direction
-        /// </summary>
-        private void TriggerDodge(InputState input)
-        {
-            _isDodging = true;
-            _dodgeTimer = DODGE_DURATION;
-            _invulnerableTimer = INVULNERABLE_DURATION;
-            
-            // Determine dodge direction from input, default to backward
-            Vector3 dodgeDir = Vector3.Zero;
-            if (input.Forward) dodgeDir.Z -= 1;
-            if (input.Backward) dodgeDir.Z += 1;
-            if (input.Left) dodgeDir.X -= 1;
-            if (input.Right) dodgeDir.X += 1;
-            
-            if (dodgeDir.LengthSquared() > 0)
-            {
-                dodgeDir = dodgeDir.Normalized().Rotated(Vector3.Up, input.Yaw);
-            }
-            else
-            {
-                // Default dodge backward relative to facing
-                dodgeDir = new Vector3(0, 0, 1).Rotated(Vector3.Up, Rotation.Y);
-            }
-            
-            Velocity += dodgeDir * DODGE_FORCE;
-            GD.Print($"[PredictedPlayer] Dodge triggered! Dir={dodgeDir} Force={DODGE_FORCE}");
-        }
-        
-        /// <summary>
-        /// Public method to trigger hit reaction (called by CombatEventSystem)
-        /// </summary>
-        public void TriggerHitReaction()
-        {
-            if (_isDead) return;
-            _isHit = true;
-            _hitTimer = HIT_DURATION;
-            GD.Print("[PredictedPlayer] Hit reaction triggered");
-        }
-
-        /// <summary>
         /// Called when local player takes damage from server event.
         /// Triggers hit reaction (stun) and UI feedback.
         /// </summary>
@@ -878,7 +819,8 @@ namespace DarkAges
             {
                 Name = "HitboxArea",
                 CollisionLayer = 1 << 2,  // Layer 3
-                CollisionMask = 1 << 3    // Detect Layer 4 (Hurtbox)
+                CollisionMask = 1 << 3,   // Detect Layer 4 (Hurtbox)
+                Monitoring = false  // Disabled by default, enabled during attacks
             };
             var hitboxShape = new CollisionShape3D
             {
@@ -887,7 +829,8 @@ namespace DarkAges
             };
             _hitbox.AddChild(hitboxShape);
             _hitbox.AreaEntered += OnHitboxAreaEntered;
-            AddChild(_hitbox);
+            // Defer AddChild to avoid "busy setting up children" error during _Ready()
+            CallDeferred(MethodName.AddChild, _hitbox);
 
             // Hurtbox — damage reception area (Layer 4)
             _hurtbox = new Area3D
@@ -903,7 +846,8 @@ namespace DarkAges
             };
             _hurtbox.AddChild(hurtboxShape);
             _hurtbox.AreaEntered += OnHurtboxAreaEntered;
-            AddChild(_hurtbox);
+            // Defer AddChild to avoid "busy setting up children" error during _Ready()
+            CallDeferred(MethodName.AddChild, _hurtbox);
 
             GD.Print("[PredictedPlayer] Hitbox (Layer 3) and Hurtbox (Layer 4) initialized");
         }
@@ -914,17 +858,19 @@ namespace DarkAges
         /// </summary>
         private void OnHitboxAreaEntered(Area3D area)
         {
-            if (_isDead) return;
+            if (_animStateMachine != null && _animStateMachine.CurrentState == AnimationStateMachine.StateType.Dead) return;
             GD.Print($"[PredictedPlayer] Hitbox touched: {area.Name}");
         }
-
+        
         /// <summary>
         /// Called when an enemy hitbox overlaps our hurtbox (we got hit).
         /// Actual damage application is server-authoritative.
         /// </summary>
         private void OnHurtboxAreaEntered(Area3D area)
         {
-            if (_isDead || _isDodging) return;  // Invulnerable during dodge
+            if (_animStateMachine != null && 
+                (_animStateMachine.CurrentState == AnimationStateMachine.StateType.Dead || 
+                 _animStateMachine.CurrentState == AnimationStateMachine.StateType.Dodging)) return;  // Invulnerable during dodge
             GD.Print($"[PredictedPlayer] Hurtbox touched by: {area.Name}");
         }
 
@@ -933,7 +879,14 @@ namespace DarkAges
         {
             // AnimationTree state machine drives all visual state transitions cleanly
             if (_animTree == null) return;
-
+            
+            // Toggle hitbox based on attack state (only active during attacks)
+            if (_hitbox != null && _animStateMachine != null)
+            {
+                bool isAttacking = _animStateMachine.CurrentState == AnimationStateMachine.StateType.Attacking;
+                _hitbox.Monitoring = isAttacking;
+            }
+            
             // Compute derived state booleans
             float velocityLength = Velocity.Length();
             bool isSprinting = input.Sprint && velocityLength > 0.1f;
