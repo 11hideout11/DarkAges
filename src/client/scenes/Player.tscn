@@ -6,6 +6,7 @@
 [ext_resource type="AnimationLibrary" path="res://scenes/PlayerAnimations.tres" id="4_animlib"]
 [ext_resource type="Script" path="res://src/camera/CameraController.cs" id="5_cameracontroller"]
 [ext_resource type="Script" path="res://src/combat/fsm/AnimationStateMachine.cs" id="6_fsm"]
+[ext_resource type="Script" path="res://src/combat/FootIKController.cs" id="7_footik"]
 
 [sub_resource type="CapsuleShape3D" id="CapsuleShape3D_1"]
 radius = 0.3
@@ -58,16 +59,24 @@ active = true
 script = ExtResource("6_fsm")
 
 [node name="LeftFootIK" type="SkeletonIK3D" parent="."]
-root_bone = &"Hips"
+root_bone = &"Root"
 tip_bone = &"LeftFoot"
 use_magnet = true
 magnet = Vector3(0, 1, 0)
 
 [node name="RightFootIK" type="SkeletonIK3D" parent="."]
-root_bone = &"Hips"
+root_bone = &"Root"
 tip_bone = &"RightFoot"
 use_magnet = true
 magnet = Vector3(0, 1, 0)
+
+[node name="FootIKController" type="Node" parent="."]
+script = ExtResource("7_footik")
+EnableFootIK = true
+RaycastDistance = 1.5
+InterpolationSpeed = 10.0
+MaxFootAngle = 40.0
+IKUpdateInterval = 2
 
 [node name="AttackFeedback" type="Node3D" parent="."]
 script = ExtResource("2_attack")
