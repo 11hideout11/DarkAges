@@ -7,7 +7,7 @@ cmake --build build_validate -j$(nproc)
 cd build_validate && ctest --output-on-failure -j8
 ```
 
-## State (2026-04-27)
+## State (2026-04-28)
 - Phase 8: COMPLETE — all core gameplay systems
 - Phase 9: COMPLETE — performance budgets pass (400 ents <20ms, 800 <30ms)
 - Networking: STABLE — live validator passes (1-10 clients, snapshots OK)
