@@ -166,37 +166,6 @@ namespace DarkAges
             float dt = (float)delta;
             _timeSinceLastCorrection += dt;
             
-            // Update state timers
-            if (_isDodging)
-            {
-                _dodgeTimer -= delta;
-                if (_dodgeTimer <= 0)
-                {
-                    _isDodging = false;
-                    GD.Print("[PredictedPlayer] Dodge ended");
-                }
-            }
-            if (_isAttacking)
-            {
-                _attackTimer -= delta;
-                if (_attackTimer <= 0)
-                {
-                    _isAttacking = false;
-                }
-            }
-            if (_isHit)
-            {
-                _hitTimer -= delta;
-                if (_hitTimer <= 0)
-                {
-                    _isHit = false;
-                }
-            }
-            if (_invulnerableTimer > 0)
-            {
-                _invulnerableTimer -= delta;
-            }
-            
             // Update global cooldown timer
             if (_isOnGlobalCooldown)
             {
@@ -856,10 +825,14 @@ namespace DarkAges
         /// </summary>
         private void OnDamageTaken(int damage, bool isCritical)
         {
-            if (_isDead) return;
+            if (_animStateMachine == null) return;
+            if (_animStateMachine.CurrentState == AnimationStateMachine.StateType.Dead) return;
+            
             // Show floating damage number at local player position
             CombatEventSystem.Instance.SpawnDamageNumber(damage, GlobalPosition, isCritical);
-            TriggerHitReaction();
+            
+            // Trigger hit state in AnimationStateMachine
+            _animStateMachine.TriggerHit();
         }
         
         /// <summary>
@@ -867,13 +840,11 @@ namespace DarkAges
         /// </summary>
         public void TriggerDeath()
         {
-            _isDead = true;
-            _isDodging = false;
-            _isAttacking = false;
-            _isHit = false;
+            if (_animStateMachine == null) return;
+            _animStateMachine.TriggerDeath();
             GD.Print("[PredictedPlayer] Death triggered");
         }
-
+        
         private void OnLocalPlayerDied(uint killerId)
         {
             TriggerDeath();
@@ -884,18 +855,16 @@ namespace DarkAges
         /// </summary>
         public void TriggerRespawn()
         {
-            _isDead = false;
-            _isHit = false;
-            _isDodging = false;
-            _isAttacking = false;
+            if (_animStateMachine == null) return;
+            _animStateMachine.TriggerRespawn();
             GD.Print("[PredictedPlayer] Respawn triggered");
         }
         
-        public bool IsDodging => _isDodging;
-        public bool IsAttacking => _isAttacking;
-        public bool IsInvulnerable => _invulnerableTimer > 0;
-        public bool IsDead => _isDead;
-        public bool IsHit => _isHit;
+        public bool IsDodging => _animStateMachine != null && _animStateMachine.CurrentState == AnimationStateMachine.StateType.Dodging;
+        public bool IsAttacking => _animStateMachine != null && _animStateMachine.CurrentState == AnimationStateMachine.StateType.Attacking;
+        public bool IsInvulnerable => _animStateMachine != null && _animStateMachine.CurrentState == AnimationStateMachine.StateType.Dodging;
+        public bool IsDead => _animStateMachine != null && _animStateMachine.CurrentState == AnimationStateMachine.StateType.Dead;
+        public bool IsHit => _animStateMachine != null && _animStateMachine.CurrentState == AnimationStateMachine.StateType.Hit;
 
         /// <summary>
         /// Set up Hitbox (Layer 3) and Hurtbox (Layer 4) Area3D nodes.
