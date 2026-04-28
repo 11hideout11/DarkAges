@@ -57,6 +57,18 @@ active = true
 [node name="AnimationStateMachine" type="Node" parent="."]
 script = ExtResource("6_fsm")
 
+[node name="LeftFootIK" type="SkeletonIK3D" parent="."]
+root_bone = &"Hips"
+tip_bone = &"LeftFoot"
+use_magnet = true
+magnet = Vector3(0, 1, 0)
+
+[node name="RightFootIK" type="SkeletonIK3D" parent="."]
+root_bone = &"Hips"
+tip_bone = &"RightFoot"
+use_magnet = true
+magnet = Vector3(0, 1, 0)
+
 [node name="AttackFeedback" type="Node3D" parent="."]
 script = ExtResource("2_attack")
 
