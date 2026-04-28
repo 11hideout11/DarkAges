@@ -260,11 +260,11 @@ namespace DarkAges
                 GD.Print("[PredictedPlayer] Attack triggered, GCD started");
             }
             
-            // 2c. Handle dodge trigger (Q key)
-            if (Input.IsKeyPressed(Key.Q) && _animStateMachine.CurrentState != AnimationStateMachine.StateType.Dodging &&
-                _animStateMachine.CurrentState != AnimationStateMachine.StateType.Attacking &&
-                _animStateMachine.CurrentState != AnimationStateMachine.StateType.Dead &&
-                !_animStateMachine.IsOnGlobalCooldown && IsOnFloor())
+        // 2c. Handle dodge trigger (Q key)
+        if (Input.IsActionPressed("dodge") && _animStateMachine.CurrentState != AnimationStateMachine.StateType.Dodging &&
+            _animStateMachine.CurrentState != AnimationStateMachine.StateType.Attacking &&
+            _animStateMachine.CurrentState != AnimationStateMachine.StateType.Dead &&
+            !_animStateMachine.IsOnGlobalCooldown && IsOnFloor())
             {
                 _animStateMachine.TriggerDodge();
                 GD.Print("[PredictedPlayer] Dodge triggered");

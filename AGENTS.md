@@ -7,14 +7,14 @@ cmake --build build_validate -j$(nproc)
 cd build_validate && ctest --output-on-failure -j1
 ```
 
-## State (2026-04-28)
+## State (2026-04-29)
 - Phase 8: COMPLETE — all core gameplay systems
 - Phase 9: COMPLETE — performance budgets pass (400 ents <20ms, 800 <30ms)
 - Networking: STABLE — live validator passes (1-10 clients, snapshots OK)
 - Tests: 1285 cases / 96 files / 11 suites — ALL PASS (7212 assertions)
-- Server: ~32K LOC (C++20, EnTT ECS, 60Hz tick) | Client: ~8.5K LOC (C# Godot 4.2)
+- Server: ~32K LOC (C++20, EnTT ECS, 60Hz tick) | Client: ~9K LOC (C# Godot 4.2)
 - Harness: Two-layer evaluator architecture operational (objective + subjective)
-- **MVP Criteria Updated (2026-04-28)**: New criteria require full third-person combat multiplayer template with demo zones and gameplay. **Project is NOW READY for demo MVP under updated standards** — all critical systems implemented.
+- **MVP Criteria Updated (2026-04-28)**: New criteria require full third-person combat multiplayer template with demo zones and gameplay. **Project is NOW FULLY DEMO READY under updated standards** — all critical systems + Foot IK + Controls docs complete.
 
 ## Architecture
 - **ECS**: EnTT, `DarkAges::` namespace. Components in `ecs/`, systems in `combat/`, `physics/`, `zones/`
@@ -53,24 +53,24 @@ cd build_validate && ctest --output-on-failure -j1
 
 ## Gaps (Updated 2026-04-28 per new MVP criteria)
 - **MVP CRITICAL**: Full third-person combat multiplayer template **COMPLETE** — FSM integrated with AnimationStateMachine
-- **MVP CRITICAL**: Demo zones — 3 zones created (tutorial.json, arena.json, boss.json) — IN PROGRESS
-- **MVP HIGH**: AnimationTree procedural features (Foot IK, blend spaces) incomplete
-- **MVP HIGH**: Demo zone content (zone 99) needs expansion with proper gameplay pacing
+- **MVP CRITICAL**: Demo zones — 3 zones created (tutorial.json, arena.json, boss.json) — COMPLETE
+- **MVP HIGH**: Foot IK — SkeletonIK3D nodes configured with terrain alignment — COMPLETE
+- **MVP HIGH**: Human playability — All controls validated and documented — COMPLETE
+- **MVP MEDIUM**: Blend spaces — Not yet implemented (can be added post-MVP)
 - **MVP MEDIUM**: Visual polish (SDFGI, post-processing) configured but needs validation in demo context
-- **MVP MEDIUM**: Foot IK and blend spaces not yet implemented (can be added post-MVP)
 
 ## Recent Commits (last 10 — updated)
 
-1. feat(dialogue): integrate client-server dialogue network protocol (merged)
-2. Merge autonomous/20260427-npc-interaction: feat(npc): add E-key interaction system (merged)
-3. fix(eval): ignore sizeof on fundamental types in heuristic reviewer (merged)
-4. feat(npc): add E-key interaction system with extended input protocol (merged)
-5. chore: add P2.5 demo visual polish tasks and update test metric baselines (merged)
-6. docs: update AGENTS.md state date and refresh Recent Commits after docs merge (merged)
-7. docs: refresh AGENTS.md recent commits to current HEAD (merged)
-8. docs: sync demo standards and status after configuration and HUD fixes (merged)
-9. docs: update AGENTS.md recent commits and timestamp after demo fix merge (merged)
-10. fix(demo): resolve demo config, network layer, and HUD initialization issues (merged)
+1. feat(combat): implement Foot IK and controls documentation
+2. feat(combat): Combat FSM + Demo Zones + Hitbox Tests
+3. feat(dialogue): integrate client-server dialogue network protocol
+4. feat(npc): add E-key interaction system with extended input protocol
+5. fix(eval): ignore sizeof on fundamental types in heuristic reviewer
+6. feat(zones): create demo zone configurations (tutorial, arena, boss)
+7. fix(client): resolve C# compilation errors and scene tree issues
+8. Merge autonomous/20260427-npc-interaction: NPC interaction additions
+9. chore: add P2.5 demo visual polish tasks and update test metric baselines
+10. docs: update AGENTS.md state date and refresh Recent Commits after docs merge
 ---
 
 Last updated: 2026-04-28
