@@ -65,6 +65,8 @@ struct GNSInternal {
     std::mutex chatMutex;
     std::queue<QuestActionPacket> questActionQueue;
     std::mutex questActionMutex;
+    std::queue<DarkAges::Protocol::DialogueResponsePacket> dialogueResponseQueue;
+    std::mutex dialogueResponseMutex;
     uint32_t currentTimeMs{0};
 };
 
@@ -362,6 +364,25 @@ void NetworkManager::update(uint32_t currentTimeMs) {
                 }
                 break;
             }
+            case 8: { // PACKET_DIALOGUE_RESPONSE (client -> server dialogue option)
+                if (received < 6) break; // dialogueId:4, option:1
+                Protocol::DialogueResponsePacket drp{};
+                drp.connectionId = connId;
+                std::memcpy(&drp.dialogueId, buffer + 1, sizeof(uint32_t));
+                drp.selectedOption = buffer[5];
+                drp.receiveTimeMs = currentTimeMs;
+
+                {
+                    std::lock_guard<std::mutex> lock(udp->dialogueResponseMutex);
+                    udp->dialogueResponseQueue.push(drp);
+                }
+
+                if (onDialogueResponse_) {
+                    onDialogueResponse_(drp);
+                }
+                break;
+            }
+
             case 14: { // PACKET_CHAT (client -> server chat message)
                 if (received < 8) break; // channel:1, target:4, len:2
                 uint8_t channel = buffer[1];
@@ -485,6 +506,7 @@ std::vector<QuestActionPacket> NetworkManager::getPendingQuestActions() {
     }
     return actions;
 }
+
 
 std::vector<EntityID> NetworkManager::getPendingRespawnRequests() {
     auto* udp = static_cast<GNSInternal*>(internal_.get());
@@ -653,6 +675,58 @@ void NetworkManager::sendQuestUpdate(ConnectionID connectionId, const QuestUpdat
     std::vector<uint8_t> packet;
     packet.reserve(1 + payload.size());
     packet.push_back(static_cast<uint8_t>(Protocol::PacketType::PACKET_QUEST_UPDATE));
+    packet.insert(packet.end(), payload.begin(), payload.end());
+
+    // Send via UDP
+    std::lock_guard<std::recursive_mutex> lock(udp->connectionsMutex);
+    auto it = udp->connections.find(connectionId);
+    if (it == udp->connections.end()) return;
+
+    sendto(udp->sockfd, packet.data(), packet.size(), 0,
+           reinterpret_cast<sockaddr*>(&it->second.addr), sizeof(it->second.addr));
+    udp->totalBytesSent += packet.size();
+    it->second.quality.packetsSent++;
+    it->second.quality.bytesSent += packet.size();
+}
+
+void NetworkManager::sendDialogueStart(ConnectionID connectionId, const Protocol::DialogueStartPacket& pkt) {
+    auto* udp = static_cast<GNSInternal*>(internal_.get());
+    if (udp->sockfd < 0) return;
+
+    // Serialize payload
+    auto payload = Protocol::serializeDialogueStart(pkt);
+    if (payload.empty()) return;
+
+    // Build packet: [type:1][payload:N]
+    std::vector<uint8_t> packet;
+    packet.reserve(1 + payload.size());
+    packet.push_back(static_cast<uint8_t>(Protocol::PacketType::DialogueStart));
+    packet.insert(packet.end(), payload.begin(), payload.end());
+
+    // Send via UDP
+    std::lock_guard<std::recursive_mutex> lock(udp->connectionsMutex);
+    auto it = udp->connections.find(connectionId);
+    if (it == udp->connections.end()) return;
+
+    sendto(udp->sockfd, packet.data(), packet.size(), 0,
+           reinterpret_cast<sockaddr*>(&it->second.addr), sizeof(it->second.addr));
+    udp->totalBytesSent += packet.size();
+    it->second.quality.packetsSent++;
+    it->second.quality.bytesSent += packet.size();
+}
+
+void NetworkManager::sendDialogueResponse(ConnectionID connectionId, const Protocol::DialogueResponsePacket& pkt) {
+    auto* udp = static_cast<GNSInternal*>(internal_.get());
+    if (udp->sockfd < 0) return;
+
+    // Serialize payload
+    auto payload = Protocol::serializeDialogueResponse(pkt);
+    if (payload.empty()) return;
+
+    // Build packet: [type:1][payload:N]
+    std::vector<uint8_t> packet;
+    packet.reserve(1 + payload.size());
+    packet.push_back(static_cast<uint8_t>(Protocol::PacketType::DialogueResponse));
     packet.insert(packet.end(), payload.begin(), payload.end());
 
     // Send via UDP

@@ -1,5 +1,7 @@
 # DarkAges UE5.5+ Combat Standards Alignment
 
+**MVP Criteria Updated (2026-04-28)**: New MVP requires full third-person combat multiplayer template with demo zones and gameplay. This document now aligns with updated criteria.
+
 ## Executive Summary
 
 This document maps the existing DarkAges codebase to the UE5.5+/GASP/ALGS combat standards defined in `Research/ThirdPersonCombatStandardsResearch/`. It identifies implemented features, gaps, and prioritized action items to achieve industry-standard quality.

@@ -258,6 +258,7 @@ private:
     void processPendingLockOnRequests();
     void processPendingChatMessages();
     void processPendingQuestActions();
+    void processPendingDialogueResponses();
 
     // Performance monitoring (delegated to PerformanceHandler)
 
@@ -295,6 +296,16 @@ private:
     ZoneEventSystem zoneEventSystem_;
     DialogueSystem dialogueSystem_;
     SpawnSystem spawnSystem_;
+
+    // Pending dialogue data for network transmission (filled by text callback, consumed by responses callback)
+    struct PendingDialogue {
+        EntityID npcId;
+        std::string npcName;
+        std::string text;
+        bool isEnd;
+    };
+    std::unordered_map<EntityID, PendingDialogue> pendingDialogueStarts_;
+
     LagCompensator lagCompensator_;
 
     // [SECURITY_AGENT] Anti-cheat system
@@ -348,6 +359,7 @@ private:
     std::vector<LockOnRequestPacket> pendingLockOnRequests_;
     std::vector<std::pair<ConnectionID, ChatMessage>> pendingRemoteChatMessages_;
     std::vector<QuestActionPacket> pendingQuestActions_;
+    std::vector<Protocol::DialogueResponsePacket> pendingDialogueResponses_;
 
 public:
     std::unordered_map<ConnectionID, EntityID> connectionToEntity_;

@@ -1,6 +1,7 @@
 #pragma once
 
 #include "ecs/CoreTypes.hpp"
+#include "netcode/Protocol.hpp"
 #include "security/DDoSProtection.hpp"
 #include <vector>
 #include <functional>
@@ -34,6 +35,8 @@ enum class PacketType : uint8_t {
     Ping = 4,             // Bidirectional: latency measurement
     Handshake = 5,        // Connection setup
     Disconnect = 6,       // Graceful disconnect
+    DialogueStart = 7,    // Server -> Client: Begin dialogue with NPC
+    DialogueResponse = 8  // Client -> Server: Player selected dialogue option
 };
 
 // Connection quality metrics
@@ -106,6 +109,7 @@ public:
     using ChatCallback = std::function<void(ConnectionID, const ChatMessage&)>;
     using QuestUpdateCallback = std::function<void(const QuestUpdatePacket&)>;
     using QuestActionCallback = std::function<void(const QuestActionPacket&)>;
+    using DialogueResponseCallback = std::function<void(const DarkAges::Protocol::DialogueResponsePacket&)>;
 
 public:
     NetworkManager();
@@ -172,6 +176,7 @@ public:
     void setOnChatReceived(ChatCallback callback) { onChat_ = std::move(callback); }
     void setOnQuestActionReceived(QuestActionCallback callback) { onQuestAction_ = std::move(callback); }
     
+    void setOnDialogueResponseReceived(DialogueResponseCallback callback) { onDialogueResponse_ = std::move(callback); }
     // Send combat result to a specific client
     // Format: [type:1=11][result:1][damage:4][target_id:4][is_critical:1][timestamp:4]
     // Result codes: 0=hit, 1=miss, 2=blocked, 3=cooldown, 4=gcd_active
@@ -192,6 +197,12 @@ public:
     
     // Send quest update to a specific client
     void sendQuestUpdate(ConnectionID connectionId, const QuestUpdatePacket& msg);
+
+    // Send dialogue start (NPC conversation) to a specific client
+    void sendDialogueStart(ConnectionID connectionId, const Protocol::DialogueStartPacket& pkt);
+
+    // Send dialogue response (player's choice) — typically client->server, but server may use for relay/validation
+    void sendDialogueResponse(ConnectionID connectionId, const Protocol::DialogueResponsePacket& pkt);
 
     // Statistics
     [[nodiscard]] size_t getConnectionCount() const;
@@ -225,6 +236,7 @@ private:
     LockOnRequestCallback onLockOnRequest_;
     ChatCallback onChat_;
     QuestActionCallback onQuestAction_;  
+    DialogueResponseCallback onDialogueResponse_;
     
     std::vector<ClientInputPacket> pendingInputs_;
     std::vector<LockOnRequestPacket> pendingLockOnRequests_;
@@ -251,7 +263,12 @@ namespace Protocol {
         uint8_t animState{0};
         uint8_t entityType{0};  // 0=player, 1=projectile, 2=loot, 3=NPC
         uint32_t timestamp{0};  // For lag compensation and reconciliation
-        
+
+        // Interactable component data (for NPCs and interactable objects)
+        float interactionRange{0.0f};          // Interaction distance (meters); 0 = non-interactable
+        char promptText[64]{"Press E to interact"}; // Prompt shown to player
+        uint32_t dialogueTreeId{0};            // Dialogue tree identifier
+
         // Equality comparison for delta detection
         [[nodiscard]] bool equalsPosition(const EntityStateData& other) const;
         [[nodiscard]] bool equalsRotation(const EntityStateData& other) const;
@@ -268,6 +285,10 @@ namespace Protocol {
         uint8_t healthPercent;   // Only valid if bit 3 set
         uint8_t animState;       // Only valid if bit 4 set
         uint8_t entityType;      // Only valid if bit 5 set (for new entities)
+        // DELTA_INTERACTABLE_RANGE (6), DELTA_INTERACTABLE_PROMPT (7), DELTA_INTERACTABLE_TREEID (8)
+        float interactionRange;  // Only valid if DELTA_INTERACTABLE_RANGE set
+        char promptText[64];     // Only valid if DELTA_INTERACTABLE_PROMPT set
+        uint32_t dialogueTreeId; // Only valid if DELTA_INTERACTABLE_TREEID set
     };
     
     // Bit masks for changedFields
@@ -278,6 +299,9 @@ namespace Protocol {
         DELTA_HEALTH = 1 << 3,
         DELTA_ANIM_STATE = 1 << 4,
         DELTA_ENTITY_TYPE = 1 << 5,
+        DELTA_INTERACTABLE_RANGE = 1 << 6,
+        DELTA_INTERACTABLE_PROMPT = 1 << 7,
+        DELTA_INTERACTABLE_TREEID = 1 << 8,
         DELTA_NEW_ENTITY = 0xFFFF  // All fields for new entities
     };
     

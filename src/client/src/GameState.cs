@@ -110,21 +110,26 @@ namespace DarkAges
     /// <summary>
     /// Represents a networked entity's state
     /// </summary>
-    public class EntityData
-    {
-        public uint Id { get; set; }
-        public string Name { get; set; } = "Unknown";
-        public byte Type { get; set; }
-        public Vector3 Position { get; set; }
-        public Vector3 Velocity { get; set; }
-        public Quaternion Rotation { get; set; }
-        public byte HealthPercent { get; set; }
-        public byte AnimState { get; set; }
-        public uint LastUpdateTick { get; set; }
-        
-        // Interpolation data
-        public Vector3 TargetPosition { get; set; }
-        public Vector3 LastPosition { get; set; }
-        public double InterpAlpha { get; set; } = 0.0;
-    }
+     public class EntityData
+     {
+         public uint Id { get; set; }
+         public string Name { get; set; } = "Unknown";
+         public byte Type { get; set; }
+         public Vector3 Position { get; set; }
+         public Vector3 Velocity { get; set; }
+         public Quaternion Rotation { get; set; }
+         public byte HealthPercent { get; set; }
+         public byte AnimState { get; set; }
+         public uint LastUpdateTick { get; set; }
+         
+         // Interpolation data
+         public Vector3 TargetPosition { get; set; }
+         public Vector3 LastPosition { get; set; }
+         public double InterpAlpha { get; set; } = 0.0;
+         
+         // Interactable component data
+         public float InteractionRange { get; set; } = 0.0f;
+         public string PromptText { get; set; } = "Press E to interact";
+         public uint DialogueTreeId { get; set; } = 0;
+     }
 }

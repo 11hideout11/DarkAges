@@ -1,7 +1,55 @@
 # DarkAges MMO — MVP Demo Standards & Gap Analysis
 
 **Generated:** 2026-04-25  
-**Validated by:** Visual polish demo run (1978 tests, screenshots with combat UI visible)
+**Updated:** 2026-04-28 — **NEW MVP CRITERIA**  
+**Status:** NOT READY — New criteria require full third-person combat multiplayer template with demo zones and gameplay.
+
+---
+
+## Updated MVP Criteria (2026-04-28)
+
+The Demo MVP criteria have been updated. Project is **NOT YET READY** under new standards.
+
+### P0 — Must-Have for MVP (New Criteria)
+
+1. **Full Third-Person Combat Multiplayer Template**
+   - [ ] Complete, reusable third-person combat system architecture
+   - [ ] Proper FSM (Finite State Machine) implementation (node-based preferred)
+   - [ ] Hitbox/Hurtbox collision layer system with server-authoritative validation
+   - [ ] AnimationTree with procedural features (blend spaces, Foot IK, hit stop)
+   - [ ] Lock-on targeting with camera follow
+   - [ ] All combat systems integrated and tested
+
+2. **Demo Zones**
+   - [ ] Multiple curated demo zones (minimum 3: tutorial, combat, boss)
+   - [ ] Zones with proper gameplay pacing and encounter design
+   - [ ] NPC spawn configurations per zone with archetype variety
+   - [ ] Zone-specific events and objectives (wave defense, escort, etc.)
+
+3. **Gameplay**
+   - [ ] Complete playable demo loop (combat → loot → quest → progression)
+   - [ ] Human-playable (WASD + mouse look + attack input, not just bot-mode)
+   - [ ] Visual feedback (damage numbers, hit markers, health bars, floating text)
+   - [ ] Demo mode with curated content and guided experience
+   - [ ] All core systems integrated (combat, inventory, quest, NPC interaction)
+
+### P1 — Nice-to-Have (Previous Criteria)
+
+- [x] Player movement visualization: Camera follows player, position changes visible
+- [x] NPC animations: Red capsules have subtle idle bobbing + rotation
+- [x] Health bars: Green/yellow/red billboarded bars above all entities
+- [x] Attack animation feedback: Visual swing via animation state system
+- [x] Terrain variety: Checkerboard terrain texture applied
+- [x] Inventory panel: Grid of item slots in GameUI
+- [x] Quest tracker: Active quests display
+- [x] Chat UI: Scrollable chat panel
+- [ ] NPC interaction: 'E' key to interact
+
+### P2 — Polish (Previous Criteria)
+
+- [ ] Proper 3D models: Replace capsules with actual models
+- [ ] Sound effects: Footsteps, attacks, ambience
+- [ ] Particle effects: Spawn/death/sparkles
 
 ---
 

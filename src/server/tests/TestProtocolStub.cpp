@@ -23,7 +23,7 @@ TEST_CASE("Protocol stub - createFullSnapshot basic format", "[protocol][network
 
     auto data = Protocol::createFullSnapshot(1000, 42, entities);
 
-    REQUIRE(data.size() == 13 + 30);  // header + 1 entity
+    REQUIRE(data.size() == 13 + 102);  // header + 1 entity (102 bytes with Interactable)
     REQUIRE(data[0] == static_cast<uint8_t>(PacketType::ServerSnapshot));
 
     uint32_t tick, lastInput, count;
@@ -89,7 +89,7 @@ TEST_CASE("Protocol stub - createFullSnapshot multiple entities", "[protocol][ne
     }
 
     auto data = Protocol::createFullSnapshot(2000, 99, entities);
-    REQUIRE(data.size() == 13 + 5 * 30);
+    REQUIRE(data.size() == 13 + 5 * 102);  // header + 5 entities (102 bytes each with Interactable)
 
     uint32_t count;
     std::memcpy(&count, &data[9], 4);

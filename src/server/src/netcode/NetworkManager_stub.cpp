@@ -22,6 +22,8 @@ void NetworkManager::sendEvent(ConnectionID, std::span<const uint8_t>) {}
 void NetworkManager::broadcastSnapshot(std::span<const uint8_t>) {}
 void NetworkManager::broadcastEvent(std::span<const uint8_t>) {}
 void NetworkManager::sendToMultiple(const std::vector<ConnectionID>&, std::span<const uint8_t>) {}
+void NetworkManager::sendDialogueStart(ConnectionID, const Protocol::DialogueStartPacket&) {}
+void NetworkManager::sendDialogueResponse(ConnectionID, const Protocol::DialogueResponsePacket&) {}
 void NetworkManager::disconnect(ConnectionID, const char*) {}
 std::vector<ClientInputPacket> NetworkManager::getPendingInputs() { return {}; }
 std::vector<EntityID> NetworkManager::getPendingRespawnRequests() { return {}; }

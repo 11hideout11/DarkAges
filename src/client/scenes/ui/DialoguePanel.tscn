@@ -1,0 +1,33 @@
+[gd_scene load_steps=2 format=3 uid="uid://dialoguepanel1"]
+
+[ext_resource type="Script" path="res://src/ui/DialoguePanel.cs" id="1_dialog"]
+
+[node name="DialoguePanel" type="CanvasLayer"]
+script = ExtResource("1_dialog")
+layer = 101
+visible = false
+
+[node name="Panel" type="ColorRect" parent="."]
+anchor_left = 0.25
+anchor_top = 0.15
+anchor_right = 0.75
+anchor_bottom = 0.85
+color = Color(0.1, 0.1, 0.1, 0.9)
+
+[node name="VBox" type="VBoxContainer" parent="Panel"]
+offset_left = 20.0
+offset_top = 20.0
+offset_right = -20.0
+offset_bottom = -20.0
+
+[node name="NPCName" type="Label" parent="VBox"]
+text = "NPC Name"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="DialogueText" type="RichTextLabel" parent="VBox"]
+text = ""
+fit_content = true
+scroll_active = false
+
+[node name="OptionsContainer" type="VBoxContainer" parent="VBox"]

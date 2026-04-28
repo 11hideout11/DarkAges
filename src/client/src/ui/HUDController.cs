@@ -20,6 +20,7 @@ namespace DarkAges.Client.UI
         private DeathRespawnUI _deathRespawnUI;
         private ChatPanel _chatPanel;
         private QuestTracker _questTracker;
+        private DialoguePanel _dialoguePanel;
         
         // Crosshair
         private TextureRect _crosshair;
@@ -30,7 +31,7 @@ namespace DarkAges.Client.UI
         
         // Interaction Prompt
         private Label _interactionPrompt;
-        private const float INTERACT_RANGE = 3.5f; // World units
+        // Replaced by per-NPC InteractionRange: private const float INTERACT_RANGE = 3.5f; // DEPRECATED // World units
 
         // Configuration
         [Export] public bool ShowDebugInfo = false;
@@ -122,6 +123,25 @@ namespace DarkAges.Client.UI
             {
                 _questTracker = new QuestTracker();
                 AddChild(_questTracker);
+            }
+
+
+            // Dialogue Panel
+            _dialoguePanel = GetNode<DialoguePanel>("DialoguePanel");
+            if (_dialoguePanel == null)
+            {
+                var dialogueScene = GD.Load<PackedScene>("res://scenes/ui/DialoguePanel.tscn");
+                if (dialogueScene != null)
+                {
+                    _dialoguePanel = (DialoguePanel)dialogueScene.Instantiate();
+                    AddChild(_dialoguePanel);
+                }
+            }
+
+            // Connect to dialogue events
+            if (NetworkManager.Instance != null)
+            {
+                NetworkManager.Instance.DialogueStartReceived += OnDialogueStart;
             }
 
             // Interaction Prompt (Phase 2.5)
@@ -228,23 +248,29 @@ namespace DarkAges.Client.UI
             }
 
             Vector3 playerPos = playerEntity.Position;
-            bool nearInteractable = false;
+            string? closestPrompt = null;
+            float closestDist = float.MaxValue;
 
             foreach (var entity in GameState.Instance.Entities.Values)
             {
-                // EntityType: 3 = NPC
-                if (entity.Type == 3)
+                // Interactable NPC: has DialogueTreeId set (replicated from server)
+                if (entity.DialogueTreeId > 0)
                 {
+                    float interactRange = entity.InteractionRange > 0 ? entity.InteractionRange : 3.5f;
                     float dist = playerPos.DistanceTo(entity.Position);
-                    if (dist <= INTERACT_RANGE)
+                    if (dist <= interactRange && dist < closestDist)
                     {
-                        nearInteractable = true;
-                        break;
+                        closestDist = dist;
+                        closestPrompt = entity.PromptText;
                     }
                 }
             }
 
-            _interactionPrompt.Visible = nearInteractable;
+            _interactionPrompt.Visible = closestPrompt != null;
+            if (closestPrompt != null)
+            {
+                _interactionPrompt.Text = closestPrompt;
+            }
         }
 
         private void OnConnectionStateChanged(GameState.ConnectionState state)
@@ -257,6 +283,12 @@ namespace DarkAges.Client.UI
             // Show hit marker on crosshair
             ShowHitMarker(isCritical);
         }
+
+        private void OnDialogueStart(uint npcId, uint dialogueId, string npcName, string dialogueText, string[] options)
+        {
+            _dialoguePanel?.ShowDialogue(npcId, npcName, dialogueText, options, dialogueId);
+        }
+
         
         private void ShowHitMarker(bool isCritical)
         {

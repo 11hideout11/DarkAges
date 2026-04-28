@@ -170,6 +170,18 @@ std::vector<Protocol::EntityStateData> ReplicationOptimizer::buildEntityStates(
             data.entityType = 2;  // Loot/other
         }
         
+        // Extract Interactable component if present (NPCs and interactive objects)
+        if (const Interactable* interactable = registry.try_get<Interactable>(entity)) {
+            data.interactionRange = interactable->interactionRange;
+            // Copy fixed-size prompt text buffer (truncate if needed, but struct has same size)
+            std::memcpy(data.promptText, interactable->promptText, sizeof(data.promptText));
+            data.dialogueTreeId = interactable->dialogueTreeId;
+        } else {
+            data.interactionRange = 0.0f;
+            data.promptText[0] = '\0';
+            data.dialogueTreeId = 0;
+        }
+        
         // Set timestamp for lag compensation and reconciliation
         data.timestamp = currentTick;
         

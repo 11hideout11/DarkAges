@@ -127,6 +127,9 @@ bool ZoneServer::initialize(const ZoneConfig& config) {
         network_->setOnQuestActionReceived([this](const QuestActionPacket& action) {
             pendingQuestActions_.push_back(action);
         });
+        network_->setOnDialogueResponseReceived([this](const Protocol::DialogueResponsePacket& response) {
+            pendingDialogueResponses_.push_back(response);
+        });
 
     // Initialize Redis
     redis_ = std::make_unique<RedisManager>();
@@ -341,6 +344,45 @@ bool ZoneServer::initialize(const ZoneConfig& config) {
     
     // Wire dialogue text delivery to chat system ( NPC dialogue appears in chat )
     dialogueSystem_.setDialogueTextCallback([this](EntityID player, const char* npcName, const char* text, bool isEnd) {
+        // Send DialogueStart packet to client for non-terminal nodes
+        if (!isEnd) {
+            const DialogueComponent* dc = registry_.try_get<DialogueComponent>(player);
+            if (dc) {
+                Protocol::DialogueStartPacket pkt{};
+                pkt.npcId = dc->npcEntity;
+                pkt.dialogueId = dc->activeTreeId;
+                std::strncpy(pkt.npcName, npcName, sizeof(pkt.npcName) - 1);
+                std::strncpy(pkt.dialogueText, text, sizeof(pkt.dialogueText) - 1);
+
+                // Collect available response options
+                auto available = dialogueSystem_.getAvailableResponses(registry_, player);
+                const DialogueTree* tree = dialogueSystem_.getTree(pkt.dialogueId);
+                if (tree) {
+                    const DialogueNode* currentNode = tree->findNode(dc->currentNodeId);
+                    if (currentNode) {
+                        for (uint32_t idx : available) {
+                            if (idx < currentNode->responseCount) {
+                                pkt.options.emplace_back(currentNode->responses[idx].text);
+                            }
+                        }
+                    }
+                }
+
+                // Cap option count and set final count
+                if (pkt.options.size() > 6) {
+                    pkt.options.resize(6);
+                }
+                pkt.optionCount = static_cast<uint8_t>(pkt.options.size());
+
+                // Resolve connection and send
+                auto it = entityToConnection_.find(player);
+                if (it != entityToConnection_.end()) {
+                    network_->sendDialogueStart(it->second, pkt);
+                }
+            }
+        }
+
+        // Local system message (unchanged)
         std::string msg = std::string(npcName) + ": " + text;
         chatSystem_.sendSystemMessage(registry_, player, msg.c_str(), getCurrentTimeMs());
     });
@@ -875,6 +917,7 @@ void ZoneServer::updateGameLogic() {
     processPendingLockOnRequests();
     processPendingChatMessages();
     processPendingQuestActions();
+    processPendingDialogueResponses();
     combatEventHandler_.processCombat();
 
     // Health regeneration
@@ -1422,6 +1465,24 @@ void ZoneServer::processPendingQuestActions() {
     }
 
     pendingQuestActions_.clear();
+}
+
+void ZoneServer::processPendingDialogueResponses() {
+    if (pendingDialogueResponses_.empty()) return;
+
+    Registry& registry = getRegistry();
+
+    for (const auto& response : pendingDialogueResponses_) {
+        // Resolve player entity from connection ID
+        auto connIt = connectionToEntity_.find(response.connectionId);
+        if (connIt == connectionToEntity_.end()) continue;
+        EntityID player = connIt->second;
+
+        // Advance dialogue
+        dialogueSystem_.selectResponse(registry, player, response.selectedOption);
+    }
+
+    pendingDialogueResponses_.clear();
 }
 
 EntityID ZoneServer::spawnPlayer(ConnectionID connectionId, uint64_t playerId,

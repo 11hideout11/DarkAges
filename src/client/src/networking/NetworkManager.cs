@@ -1,5 +1,6 @@
 using Godot;
 using System;
+using System.Text;
 using System.Collections.Generic;
 using System.Net;
 using System.Net.Sockets;
@@ -60,6 +61,9 @@ namespace DarkAges.Networking
     public delegate void ChatMessageReceivedEventHandler(uint senderId, byte channel, string senderName, string message);
     [Signal]
     public delegate void QuestUpdateReceivedEventHandler(uint questId, uint objectiveIndex, uint current, uint required, byte status);
+    [Signal]
+    public delegate void DialogueStartReceivedEventHandler(uint npcId, uint dialogueId, string npcName, string dialogueText, string[] options);
+
 
  // Socket
         private UdpClient? _udpClient;
@@ -98,6 +102,8 @@ namespace DarkAges.Networking
         private const byte PACKET_CHAT = 14;             // Client <-> Server: chat message
         private const byte PACKET_QUEST_UPDATE = 15;        // Server -> Client: quest objective progress/complete
         private const byte PACKET_QUEST_ACTION = 16;        // Client -> Server: accept/complete quest
+        private const byte PACKET_DIALOGUE_START = 17;      // Server -> Client: begin NPC dialogue
+        private const byte PACKET_DIALOGUE_RESPONSE = 8;  // Client -> Server: dialogue option selected
 
         public override void _EnterTree()
         {
@@ -436,6 +442,12 @@ namespace DarkAges.Networking
                 case PACKET_QUEST_UPDATE:
                     ProcessQuestUpdate(data);
                     break;
+                case PACKET_DIALOGUE_START:
+
+                    ProcessDialogueStart(data);
+
+                    break;
+
                 default:
                     GD.Print($"[NetworkManager] Unknown packet type: {packetType}");
                     break;
@@ -471,8 +483,8 @@ namespace DarkAges.Networking
                 
                 var currentEntities = new HashSet<uint>();
                 
-                // Each entity: [entity_id:4][pos_x:4][pos_y:4][pos_z:4][vel_x:4][vel_y:4][vel_z:4][health:1][anim:1]
-                const int ENTITY_DATA_SIZE = 30;
+                // Each entity: [id:4][pos_x:4][pos_y:4][pos_z:4][vel_x:4][vel_y:4][vel_z:4][health:1][anim:1][range:4][prompt:64][treeId:4]
+                const int ENTITY_DATA_SIZE = 102;
                 
                 for (int i = 0; i < entityCount && offset + ENTITY_DATA_SIZE <= data.Length; i++)
                 {
@@ -499,6 +511,17 @@ namespace DarkAges.Networking
                     byte animState = data[offset];
                     offset += 1;
                     
+                    // Interactable fields
+                    float interactionRange = BitConverter.ToSingle(data, offset);
+                    offset += 4;
+                    
+                    // Fixed 64-byte null-terminated prompt text
+                    string promptText = Encoding.UTF8.GetString(data, offset, 64).TrimEnd('\0');
+                    offset += 64;
+                    
+                    uint dialogueTreeId = BitConverter.ToUInt32(data, offset);
+                    offset += 4;
+                    
                     currentEntities.Add(entityId);
                     
                     // Update or create entity
@@ -515,6 +538,9 @@ namespace DarkAges.Networking
                             LastPosition = new Vector3(x, y, z),
                             HealthPercent = health,
                             AnimState = animState,
+                            InteractionRange = interactionRange,
+                            PromptText = promptText,
+                            DialogueTreeId = dialogueTreeId,
                             LastUpdateTick = serverTick
                         };
                         GameState.Instance.RegisterEntity(entityId, entityData);
@@ -528,6 +554,9 @@ namespace DarkAges.Networking
                         entityData.Velocity = new Vector3(vx, vy, vz);
                         entityData.HealthPercent = health;
                         entityData.AnimState = animState;
+                        entityData.InteractionRange = interactionRange;
+                        entityData.PromptText = promptText;
+                        entityData.DialogueTreeId = dialogueTreeId;
                         entityData.LastUpdateTick = serverTick;
                     }
                     
@@ -800,6 +829,61 @@ namespace DarkAges.Networking
             {
                 GD.PrintErr($"[NetworkManager] Lock-on request send failed: {ex.Message}");
             }
+        }
+
+        /// <summary>
+        /// Send dialogue response to server.
+        /// </summary>
+        public void SendDialogueResponse(uint dialogueId, byte optionIndex)
+        {
+            if (_udpClient == null || _serverEndPoint == null) return;
+            if (GameState.Instance.CurrentConnectionState != GameState.ConnectionState.Connected) return;
+
+            byte[] data = new byte[6];
+            data[0] = PACKET_DIALOGUE_RESPONSE;
+            BitConverter.GetBytes(dialogueId).CopyTo(data, 1);
+            data[5] = optionIndex;
+
+            try
+            {
+                _udpClient.Send(data, data.Length, _serverEndPoint);
+                GD.Print($"[NetworkManager] Sent dialogue response dialogueId={dialogueId} option={optionIndex}");
+            }
+            catch (Exception ex)
+            {
+                GD.PrintErr($"[NetworkManager] Dialogue response send failed: {ex.Message}");
+            }
+        }
+
+        
+        /// <summary>
+        /// Process dialogue start packet from server.
+        /// Format: [npcId:4][dialogueId:4][npcName:32][dialogueText:256][optionCount:1][options...]
+        /// Each option: length:1 + text:length
+        /// </summary>
+        private void ProcessDialogueStart(byte[] data)
+        {
+            if (data.Length < 297) return; // minimum payload size before options
+            
+            uint npcId = BitConverter.ToUInt32(data, 0);
+            uint dialogueId = BitConverter.ToUInt32(data, 4);
+            string npcName = Encoding.UTF8.GetString(data, 8, 32).TrimEnd('\0');
+            string dialogueText = Encoding.UTF8.GetString(data, 40, 256).TrimEnd('\0');
+            
+            byte optionCount = data[296];
+            string[] options = new string[optionCount];
+            int offset = 297;
+            for (int i = 0; i < optionCount; i++)
+            {
+                if (offset >= data.Length) break;
+                byte len = data[offset++];
+                if (offset + len > data.Length) break;
+                options[i] = Encoding.UTF8.GetString(data, offset, len);
+                offset += len;
+            }
+            
+            GD.Print($"[NetworkManager] Dialogue start from {npcName}");
+            EmitSignal(SignalName.DialogueStartReceived, npcId, dialogueId, npcName, dialogueText, options);
         }
 
         private void ProcessCombatResult(byte[] data)

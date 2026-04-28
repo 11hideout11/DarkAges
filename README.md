@@ -8,11 +8,13 @@
 
 A high-density PvP MMO inspired by Dark Age of Camelot and Ark Raiders, targeting 100-1000 concurrent players per shard with zero budget.
 
-## Project Status: Demo MVP — Visual Polish Complete
+## Project Status: NOT READY for Demo MVP (Updated 2026-04-28)
+
+**New MVP Criteria**: Full third-person combat multiplayer template with demo zones and gameplay required.
 
 **Previous Phases (0-9)**: ✅ Implementation Complete (~51K LOC server, ~6.2K LOC client)
-**Current Status**: Demo MVP Ready — Visual polish applied, combat UI fully visible in screenshots/video
-**Server Status**: ✅ Operational (60Hz tick rate, 2096 tests passing)
+**Current Status**: NOT READY under updated MVP criteria. Previously completed visual polish does NOT satisfy new bar.
+**Server Status**: ✅ Operational (60Hz tick rate, 2097 tests passing)
 
 See [CURRENT_STATUS.md](CURRENT_STATUS.md) for daily updates • [PROJECT_STATUS.md](PROJECT_STATUS.md) for detailed history • [PHASE8_EXECUTION_PLAN.md](PHASE8_EXECUTION_PLAN.md) for roadmap
 

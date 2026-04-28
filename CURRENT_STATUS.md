@@ -1,7 +1,9 @@
      1|# DarkAges MMO — Current Status
      2|**Last Updated:** April 27, 2026
      3|
-     4|## Demo Readiness: DEMO MVP READY
+     4|## Demo Readiness: NOT READY FOR MVP (Updated 2026-04-28)
+     5|
+     6|**New MVP Criteria**: Full third-person combat multiplayer template with demo zones and gameplay required.
      5|
      6|The autonomous demo pipeline is fully operational with visual polish applied. Run:
      7|```bash

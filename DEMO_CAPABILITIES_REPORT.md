@@ -530,7 +530,9 @@ python3 tools/validation/live_client_validator.py \
 
 ### Demo Verdict
 
-**The DarkAges MMO server is DEMO MVP READY** for showcasing:
+**The DarkAges MMO server is NOT READY for Demo MVP under updated 2026-04-28 criteria.**
+
+New requirements: full third-person combat multiplayer template with demo zones and gameplay.
 
 - Server architecture and initialization
 - UDP networking fundamentals

@@ -11,9 +11,10 @@ cd build_validate && ctest --output-on-failure -j1
 - Phase 8: COMPLETE — all core gameplay systems
 - Phase 9: COMPLETE — performance budgets pass (400 ents <20ms, 800 <30ms)
 - Networking: STABLE — live validator passes (1-10 clients, snapshots OK)
-- Tests: 2097 cases / 94 files / 11 suites — ALL PASS (12586 assertions)
+- Tests: 1285 cases / 96 files / 11 suites — ALL PASS (7212 assertions)
 - Server: ~32K LOC (C++20, EnTT ECS, 60Hz tick) | Client: ~6.2K LOC (C# Godot 4.2)
 - Harness: Two-layer evaluator architecture operational (objective + subjective)
+- **MVP Criteria Updated (2026-04-28)**: New criteria require full third-person combat multiplayer template with demo zones and gameplay. Project is NOT yet ready for demo MVP under updated standards.
 
 ## Architecture
 - **ECS**: EnTT, `DarkAges::` namespace. Components in `ecs/`, systems in `combat/`, `physics/`, `zones/`
@@ -50,8 +51,14 @@ cd build_validate && ctest --output-on-failure -j1
 - **Sprint Decomposition**: `once` mode skips tasks >2h estimated; `deep` mode allows up to 1.5x budget
 - **Harness Audit**: components in `HARNESS_COMPONENTS` dict with expiration dates; review quarterly
 
-## Gaps
-- (none — all previously noted gaps resolved as of 2026-04-26)
+## Gaps (Updated 2026-04-28 per new MVP criteria)
+- **MVP CRITICAL**: Full third-person combat multiplayer template not yet complete
+  - Third-person combat template: needs complete FSM, hitbox/hurtbox system, server-authoritative combat validation
+  - Demo zones: current zone 99 is basic; need multiple curated demo zones with gameplay loops
+  - Gameplay: need complete demo gameplay loop (combat, quest, loot, NPC interaction) in playable demo format
+- **MVP HIGH**: AnimationTree procedural features (Foot IK, blend spaces) incomplete
+- **MVP HIGH**: Demo zone content (zone 99) needs expansion with proper gameplay pacing
+- **MVP MEDIUM**: Visual polish (SDFGI, post-processing) configured but needs validation in demo context
 
 ## Recent Commits (last 10 — updated)
 

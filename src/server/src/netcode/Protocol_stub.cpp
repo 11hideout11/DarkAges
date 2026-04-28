@@ -132,6 +132,10 @@ std::vector<uint8_t> createDeltaSnapshot(
             if (!current.equalsRotation(*baseline)) changed |= 0x0004;
             if (current.healthPercent != baseline->healthPercent) changed |= 0x0008;
             if (current.animState != baseline->animState) changed |= 0x0010;
+            // Interactable component changes
+            if (current.interactionRange != baseline->interactionRange) changed |= 0x0040;
+            if (std::memcmp(current.promptText, baseline->promptText, sizeof(current.promptText)) != 0) changed |= 0x0080;
+            if (current.dialogueTreeId != baseline->dialogueTreeId) changed |= 0x0100;
             if (changed != 0) {
                 entitiesToSend.push_back({&current, changed});
             }
@@ -167,6 +171,15 @@ std::vector<uint8_t> createDeltaSnapshot(
         }
         if (changedFields & 0x0010) {
             data.push_back(entity.animState);
+        }
+        if (changedFields & 0x0040) {
+            appendFloat(entity.interactionRange);
+        }
+        if (changedFields & 0x0080) {
+            data.insert(data.end(), entity.promptText, entity.promptText + sizeof(entity.promptText));
+        }
+        if (changedFields & 0x0100) {
+            appendUInt32(entity.dialogueTreeId);
         }
         if (changedFields == 0xFFFF) {
             data.push_back(entity.entityType);
@@ -251,6 +264,19 @@ bool applyDeltaSnapshot(
             if (offset + 1 > data.size()) return false;
             entity.animState = data[offset++];
         }
+        if (changedFields & 0x0040) {
+            if (offset + 4 > data.size()) return false;
+            entity.interactionRange = readFloat();
+        }
+        if (changedFields & 0x0080) {
+            if (offset + 64 > data.size()) return false;
+            std::memcpy(entity.promptText, &data[offset], 64);
+            offset += 64;
+        }
+        if (changedFields & 0x0100) {
+            if (offset + 4 > data.size()) return false;
+            entity.dialogueTreeId = readUInt32();
+        }
         if (changedFields == 0xFFFF) {
             if (offset + 1 > data.size()) return false;
             entity.entityType = data[offset++];
@@ -283,9 +309,9 @@ std::vector<uint8_t> createFullSnapshot(
     std::span<const EntityStateData> entities) {
 
     std::vector<uint8_t> data;
-    // Header: 1 + 4 + 4 + 4 = 13 bytes
-    // Per entity: 4*7 + 1 + 1 = 30 bytes
-    data.reserve(13 + entities.size() * 30);
+    // Header: 1 (type) + 4 (tick) + 4 (input) + 4 (count) = 13 bytes
+    // Per entity (with Interactable): 4(id) + 3*4(pos) + 3*4(vel) + 1(health) + 1(anim) + 4(range) + 64(prompt) + 4(treeId) = 102 bytes
+    data.reserve(13 + entities.size() * 102);
 
     data.push_back(static_cast<uint8_t>(PacketType::ServerSnapshot));
 
@@ -324,6 +350,11 @@ std::vector<uint8_t> createFullSnapshot(
 
         data.push_back(entity.healthPercent);
         data.push_back(entity.animState);
+
+        // Interactable fields
+        appendFloat(entity.interactionRange);
+        data.insert(data.end(), entity.promptText, entity.promptText + sizeof(entity.promptText));
+        appendUInt32(entity.dialogueTreeId);
     }
 
     return data;
@@ -494,6 +525,108 @@ std::vector<uint8_t> serializeQuestUpdate(const QuestUpdatePacket& pkt) {
     data.push_back(pkt.status);
 
     return data;
+}
+
+// ============================================================================
+// Dialogue Packet Serialization (stub implementation)
+// ============================================================================
+
+std::vector<uint8_t> serializeDialogueStart(const DialogueStartPacket& pkt) {
+    std::vector<uint8_t> data;
+    // Fixed header size: npcId(4) + dialogueId(4) + npcName[32] + dialogueText[256] + optionCount(1) = 297
+    size_t optionsSize = 0;
+    for (const auto& opt : pkt.options) {
+        optionsSize += 1 + opt.size(); // length byte + data
+    }
+    data.reserve(297 + optionsSize);
+
+    auto appendUInt32 = [&data](uint32_t value) {
+        const uint8_t* bytes = reinterpret_cast<const uint8_t*>(&value);
+        data.insert(data.end(), bytes, bytes + sizeof(uint32_t));
+    };
+
+    // npcId (EntityID is 32-bit)
+    appendUInt32(static_cast<uint32_t>(pkt.npcId));
+    // dialogueId
+    appendUInt32(pkt.dialogueId);
+    // npcName fixed 32
+    data.insert(data.end(), pkt.npcName, pkt.npcName + sizeof(pkt.npcName));
+    // dialogueText fixed 256
+    data.insert(data.end(), pkt.dialogueText, pkt.dialogueText + sizeof(pkt.dialogueText));
+    // optionCount
+    uint8_t optCount = static_cast<uint8_t>(pkt.options.size());
+    data.push_back(optCount);
+    // Options: each as length-prefixed string
+    for (const auto& opt : pkt.options) {
+        uint8_t len = static_cast<uint8_t>(opt.size());
+        data.push_back(len);
+        data.insert(data.end(), opt.begin(), opt.end());
+    }
+
+    return data;
+}
+
+bool deserializeDialogueStart(std::span<const uint8_t> data, DialogueStartPacket& outPkt) {
+    size_t offset = 0;
+    auto readUInt32 = [&](uint32_t& out) -> bool {
+        if (offset + 4 > data.size()) return false;
+        std::memcpy(&out, &data[offset], sizeof(uint32_t));
+        offset += 4;
+        return true;
+    };
+    auto readBytes = [&](void* dst, size_t count) -> bool {
+        if (offset + count > data.size()) return false;
+        std::memcpy(dst, &data[offset], count);
+        offset += count;
+        return true;
+    };
+
+    // npcId
+    uint32_t npcIdTemp = 0;
+    if (!readUInt32(npcIdTemp)) return false;
+    outPkt.npcId = static_cast<EntityID>(npcIdTemp);
+    // dialogueId
+    if (!readUInt32(outPkt.dialogueId)) return false;
+    // npcName
+    if (!readBytes(outPkt.npcName, sizeof(outPkt.npcName))) return false;
+    // dialogueText
+    if (!readBytes(outPkt.dialogueText, sizeof(outPkt.dialogueText))) return false;
+    // optionCount
+    if (offset >= data.size()) return false;
+    outPkt.optionCount = data[offset++];
+    // Options
+    outPkt.options.clear();
+    for (uint8_t i = 0; i < outPkt.optionCount; ++i) {
+        if (offset >= data.size()) return false;
+        uint8_t len = data[offset++];
+        if (offset + len > data.size()) return false;
+        outPkt.options.emplace_back(reinterpret_cast<const char*>(&data[offset]), len);
+        offset += len;
+    }
+    return true;
+}
+
+std::vector<uint8_t> serializeDialogueResponse(const DialogueResponsePacket& pkt) {
+    std::vector<uint8_t> data;
+    data.reserve(1 + 4 + 1); // type byte not included? Actually payload only.
+
+    auto appendUInt32 = [&data](uint32_t value) {
+        const uint8_t* bytes = reinterpret_cast<const uint8_t*>(&value);
+        data.insert(data.end(), bytes, bytes + sizeof(uint32_t));
+    };
+    appendUInt32(pkt.dialogueId);
+    data.push_back(pkt.selectedOption);
+    return data;
+}
+
+bool deserializeDialogueResponse(std::span<const uint8_t> data, DialogueResponsePacket& outPkt) {
+    size_t offset = 0;
+    if (offset + 4 > data.size()) return false;
+    std::memcpy(&outPkt.dialogueId, &data[offset], sizeof(uint32_t));
+    offset += 4;
+    if (offset >= data.size()) return false;
+    outPkt.selectedOption = data[offset++];
+    return true;
 }
 
 } // namespace Protocol
