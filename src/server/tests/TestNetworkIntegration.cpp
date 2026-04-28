@@ -228,15 +228,16 @@ TEST_CASE("Network integration - client input received by server", "[network][in
     // Clear any pending inputs
     (void)server.getPendingInputs();
 
-    // Send client input: [type:1=1][sequence:4][timestamp:4][flags:1][yaw:2][pitch:2][target:4]
-    uint8_t input[18];
+    // Send client input: [type:1=1][sequence:4][timestamp:4][flags:2][yaw:2][pitch:2][target:4]
+    uint8_t input[19];
     input[0] = PACKET_CLIENT_INPUT;
     *reinterpret_cast<uint32_t*>(input + 1) = 1; // sequence
     *reinterpret_cast<uint32_t*>(input + 5) = 1000; // timestamp
-    input[9] = 0x01 | 0x08; // forward + right
-    *reinterpret_cast<int16_t*>(input + 10) = 1500; // yaw
-    *reinterpret_cast<int16_t*>(input + 12) = 200; // pitch
-    *reinterpret_cast<uint32_t*>(input + 14) = 0; // target
+    input[9] = 0x01 | 0x08; // forward + right (low byte of flags)
+    input[10] = 0x00;        // high byte (no interact)
+    *reinterpret_cast<int16_t*>(input + 11) = 1500; // yaw
+    *reinterpret_cast<int16_t*>(input + 13) = 200;  // pitch
+    *reinterpret_cast<uint32_t*>(input + 15) = 0;   // target
     REQUIRE(client.send(input, sizeof(input)));
     server.update(0);
 

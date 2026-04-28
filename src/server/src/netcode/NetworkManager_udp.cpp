@@ -243,19 +243,19 @@ void NetworkManager::update(uint32_t currentTimeMs) {
 
         switch (packetType) {
             case 1: { // PACKET_CLIENT_INPUT
-                if (received < 18) break;
+                if (received < 19) break;
                 ClientInputPacket pkt;
                 pkt.connectionId = connId;
                 pkt.receiveTimeMs = currentTimeMs;
 
                 // Parse client's input format:
-                // [type:1][sequence:4][timestamp:4][flags:1][yaw:2][pitch:2][target:4]
+                // [type:1][sequence:4][timestamp:4][flags:2][yaw:2][pitch:2][target:4]
                 uint32_t sequence = *reinterpret_cast<uint32_t*>(buffer + 1);
                 uint32_t timestamp = *reinterpret_cast<uint32_t*>(buffer + 5);
-                uint8_t flags = buffer[9];
-                int16_t yawQ = *reinterpret_cast<int16_t*>(buffer + 10);
-                int16_t pitchQ = *reinterpret_cast<int16_t*>(buffer + 12);
-                uint32_t target = *reinterpret_cast<uint32_t*>(buffer + 14);
+                uint16_t flags = static_cast<uint16_t>(buffer[9]) | (static_cast<uint16_t>(buffer[10]) << 8);
+                int16_t yawQ = *reinterpret_cast<int16_t*>(buffer + 11);
+                int16_t pitchQ = *reinterpret_cast<int16_t*>(buffer + 13);
+                uint32_t target = *reinterpret_cast<uint32_t*>(buffer + 15);
 
                 pkt.input.sequence = sequence;
                 pkt.input.timestamp_ms = timestamp;
@@ -267,6 +267,7 @@ void NetworkManager::update(uint32_t currentTimeMs) {
                 pkt.input.attack = (flags >> 5) & 1;
                 pkt.input.block = (flags >> 6) & 1;
                 pkt.input.sprint = (flags >> 7) & 1;
+                pkt.input.interact = (flags >> 8) & 1;
                 pkt.input.yaw = static_cast<float>(yawQ) / 10000.0f;
                 pkt.input.pitch = static_cast<float>(pitchQ) / 10000.0f;
                 pkt.input.targetEntity = target;

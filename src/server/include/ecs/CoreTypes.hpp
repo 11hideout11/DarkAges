@@ -100,6 +100,7 @@ struct InputState {
     uint8_t attack : 1;
     uint8_t block : 1;
     uint8_t sprint : 1;
+    uint8_t interact{0};  // Interact with NPCs (E key)
 
     // Camera rotation
     float yaw{0.0f};
@@ -348,7 +349,14 @@ struct Mana {
      NPCArchetype archetype{NPCArchetype::Melee}; // Combat archetype
  };
 
- // Loot table entry
+
+ struct Interactable {
+     float interactionRange{3.0f};          // Max interaction distance (meters)
+     char promptText[64]{"Press E to interact"}; // Prompt shown to player
+     uint32_t dialogueTreeId{0};           // Associated dialogue tree ID
+ };
+
+// Loot table entry
  struct LootEntry {
      uint32_t itemId{0};
      uint32_t minQuantity{1};

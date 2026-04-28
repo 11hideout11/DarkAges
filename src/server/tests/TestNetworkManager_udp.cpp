@@ -106,8 +106,9 @@ std::vector<uint8_t> makeConnectionRequest(uint32_t version = 1, uint32_t player
 }
 
 // Helper: create a client input packet [type:1=1][sequence:4][timestamp:4][flags:1][yaw:2][pitch:2][target:4]
-std::vector<uint8_t> makeClientInput(uint32_t sequence, uint32_t timestamp, uint8_t flags, float yawDeg, float pitchDeg, EntityID target = entt::null) {
+std::vector<uint8_t> makeClientInput(uint32_t sequence, uint32_t timestamp, uint16_t flags, float yawDeg, float pitchDeg, EntityID target = entt::null) {
     std::vector<uint8_t> pkt;
+    pkt.reserve(19);
     pkt.push_back(static_cast<uint8_t>(PacketType::ClientInput));
     // sequence (LE)
     pkt.push_back(sequence & 0xFF);
@@ -119,8 +120,9 @@ std::vector<uint8_t> makeClientInput(uint32_t sequence, uint32_t timestamp, uint
     pkt.push_back((timestamp >> 8) & 0xFF);
     pkt.push_back((timestamp >> 16) & 0xFF);
     pkt.push_back((timestamp >> 24) & 0xFF);
-    // flags
-    pkt.push_back(flags);
+    // flags (2 bytes LE)
+    pkt.push_back(static_cast<uint8_t>(flags & 0xFF));
+    pkt.push_back(static_cast<uint8_t>((flags >> 8) & 0xFF));
     // yaw quantized to int16 (yawQ = yaw * 10000), little-endian
     int16_t yawQ = static_cast<int16_t>(yawDeg * 10000.0f);
     pkt.push_back(static_cast<uint8_t>(yawQ & 0xFF));

@@ -17,6 +17,8 @@
 #include <cmath>
 #include <algorithm>
 #include <glm/glm.hpp>
+#include "combat/DialogueSystem.hpp"
+#include <limits>
 
 namespace DarkAges {
 
@@ -191,6 +193,32 @@ void InputHandler::validateAndApplyInput(EntityID entity, const ClientInputPacke
     // Process trade action (separate from combat/item actions)
     if (input.input.tradeAction > 0) {
         processTradeInput(entity, input, currentTimeMs);
+    }
+
+    // [INTERACTION] Process NPC interaction via E key
+    if (input.input.interact) {
+        // Only allow interaction for player entities
+        if (const PlayerInfo* playerInfo = registry.try_get<PlayerInfo>(entity)) {
+            if (const Position* playerPos = registry.try_get<Position>(entity)) {
+                float nearestDistSq = std::numeric_limits<float>::max();
+                EntityID nearestNPC = entt::null;
+                auto view = registry.view<NPCTag, Position, Interactable>();
+                for (auto entity : view) {
+                    auto& npcPos = view.get<Position>(entity);
+                    auto& interactable = view.get<Interactable>(entity);
+                    glm::vec3 delta = playerPos->toVec3() - npcPos.toVec3();
+                    float distSq = delta.x * delta.x + delta.y * delta.y + delta.z * delta.z;
+                    float rangeSq = interactable.interactionRange * interactable.interactionRange;
+                    if (distSq <= rangeSq && distSq < nearestDistSq && interactable.dialogueTreeId > 0) {
+                        nearestDistSq = distSq;
+                        nearestNPC = entity;
+                    }
+                }
+                if (nearestNPC != entt::null && dialogueSystem_) {
+                    dialogueSystem_->startConversation(registry, entity, nearestNPC);
+                }
+            }
+        }
     }
 }
 

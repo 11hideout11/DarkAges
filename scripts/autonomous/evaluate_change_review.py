@@ -221,13 +221,37 @@ def heuristic_review(diff_text: str, agents_text: str) -> dict:
                     "message": "EnTT API misuse: view.size() forbidden; iterate or use registry.size() on entity storage"
                 })
             # Forward-decl sizeof (C++ files only)
+            # Ignore sizeof on known complete fundamental types to avoid false positives
             if is_cpp and forward_decl_sizeof.search(code_line):
-                issues.append({
-                    "severity": "critical",
-                    "file": current_file or "unknown",
-                    "line": i,
-                    "message": "sizeof() applied to forward-declared type — requires complete definition"
-                })
+                # Extract the type name inside sizeof(...)
+                m = re.search(r'sizeof\s*\(\s*(\w+)\s*\)', code_line)
+                if m:
+                    typename = m.group(1)
+                    # Whitelist of types that are always complete
+                    complete_types = {
+                        'float', 'double', 'int', 'unsigned', 'char', 'bool',
+                        'uint32_t', 'int32_t', 'uint16_t', 'int16_t',
+                        'uint8_t', 'int8_t', 'size_t', 'void', 'long', 'short',
+                        'long long', 'unsigned long', 'unsigned char',
+                    }
+                    if typename in complete_types:
+                        # Skip false positive
+                        pass
+                    else:
+                        issues.append({
+                            "severity": "critical",
+                            "file": current_file or "unknown",
+                            "line": i,
+                            "message": f"sizeof() applied to forward-declared type '{typename}' — requires complete definition"
+                        })
+                else:
+                    # Could not extract type; flag conservatively
+                    issues.append({
+                        "severity": "critical",
+                        "file": current_file or "unknown",
+                        "line": i,
+                        "message": "sizeof() applied to forward-declared type — requires complete definition"
+                    })
             # Nested type qualification (C++ files only)
             if is_cpp and nested_type_qual.search(code_line) and "::" in code_line:
                 issues.append({
