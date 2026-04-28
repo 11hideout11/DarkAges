@@ -40,9 +40,18 @@ Prioritized list of autonomous improvements for DarkAges.
 - [ ] Database failure recovery
 - [ ] Process crash resilience
 
+## P2.5 — Demo Visual Polish & Missing Interactions
+- [ ] NPC interaction system (E key to interact, interaction prompt UI, dialogue trigger)
+- [ ] Sound effects integration (footsteps, weapon attacks, ambient, UI sounds)
+- [ ] Particle effects for combat/hits/spells/deaths
+- [ ] Replace capsule placeholder models with proper 3D character/monster models
+- [ ] Full UI style overhaul (consistent theme, animations, visual polish)
+- [ ] Foot IK for terrain alignment
+- [ ] Lighting upgrades (SDFGI/SSAO) for visual fidelity
+
 ## Completed
 - [x] All Phase 8 work packages ✅
 - [x] All source files have test coverage ✅
 - [x] Performance infrastructure ✅
 - [x] Linux build passes ✅
-- [x] 864 test cases, 67 test files, 11 suites all passing ✅
+- [x] 2097 test cases, 94 test files, 11 suites all passing ✅
