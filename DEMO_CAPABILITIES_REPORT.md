@@ -324,7 +324,7 @@ Result: ✅ SUCCESS - Clean shutdown with no crashes
 ### 3.10 Test Suite Results
 
 ```
-Test Command: ctest --output-on-failure -j8
+Test Command: ctest --output-on-failure -j1
 Test Suites: 11
 Test Files: 91
 Test Cases: 1,212
@@ -562,7 +562,7 @@ cmake -S . -B build_validate -DBUILD_TESTS=ON -DFETCH_DEPENDENCIES=ON \
 cmake --build build_validate -j4
 
 # Run tests
-cd build_validate && ctest --output-on-failure -j8
+cd build_validate && ctest --output-on-failure -j1
 
 # Run demo
 python3 tools/validation/live_client_validator.py \

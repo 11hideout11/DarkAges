@@ -4,7 +4,7 @@
 ```bash
 cmake -S . -B build_validate -DBUILD_TESTS=ON -DFETCH_DEPENDENCIES=ON -DENABLE_GNS=OFF -DENABLE_REDIS=OFF -DENABLE_SCYLLA=OFF
 cmake --build build_validate -j$(nproc)
-cd build_validate && ctest --output-on-failure -j8
+cd build_validate && ctest --output-on-failure -j1
 ```
 
 ## State (2026-04-28)
@@ -55,15 +55,17 @@ cd build_validate && ctest --output-on-failure -j8
 
 ## Recent Commits (last 10 — updated)
 
-1. docs: sync demo standards and status after configuration and HUD fixes (merged)
-2. docs: update AGENTS.md recent commits and timestamp after demo fix merge (merged)
-3. fix(demo): resolve demo config, network layer, and HUD initialization issues (merged)
-4. docs: sync test metrics and status files after autonomous ZoneServer test expansion (merged)
-5. docs: update AUTONOMOUS_LOG.md and reset cron state after ZoneServer test expansion (merged)
-6. Merge: autonomous: Expand tests for ZoneServer (52 tests for 2121 lines) (merged)
-7. autonomous: Expand tests for ZoneServer (52 tests for 2121 lines) (merged)
-8. docs: update AGENTS.md Recent Commits after quest tracker merge (merged)
-9. Merge autonomous/20260427-quest-tracker into main (merged)
-10. feat(quest): add Quest Tracker UI with network synchronization (merged)
+1. Merge autonomous/20260427-npc-interaction: feat(npc): add E-key interaction system (merged)
+2. fix(eval): ignore sizeof on fundamental types in heuristic reviewer (merged)
+3. feat(npc): add E-key interaction system with extended input protocol (merged)
+4. chore: add P2.5 demo visual polish tasks and update test metric baselines (merged)
+5. docs: update AGENTS.md state date and refresh Recent Commits after docs merge (merged)
+6. docs: refresh AGENTS.md recent commits to current HEAD (merged)
+7. docs: sync demo standards and status after configuration and HUD fixes (merged)
+8. docs: update AGENTS.md recent commits and timestamp after demo fix merge (merged)
+9. fix(demo): resolve demo config, network layer, and HUD initialization issues (merged)
+10. docs: sync test metrics and status files after autonomous ZoneServer test expansion (merged)
+
 ---
+
 Last updated: 2026-04-28

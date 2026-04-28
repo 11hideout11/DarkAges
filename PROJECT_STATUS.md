@@ -298,7 +298,7 @@ Test: `python3 tools/validation/godot_integration_test.py`
 2. Check `CURRENT_STATUS.md` for latest dev loop output
 3. Review `scripts/autonomous/TASK_QUEUE.md` for prioritized backlog
 4. Load relevant skills (autonomous-dev-loop-debugging, darkages-codebase-conventions, test-driven-development)
-5. Ensure build passes: `cmake -S . -B build_validate -DENABLE_GNS=OFF -DENABLE_REDIS=OFF -DENABLE_SCYLLA=OFF && cmake --build build_validate -j$(nproc) && cd build_validate && ctest --output-on-failure -j8`
+5. Ensure build passes: `cmake -S . -B build_validate -DENABLE_GNS=OFF -DENABLE_REDIS=OFF -DENABLE_SCYLLA=OFF && cmake --build build_validate -j$(nproc) && cd build_validate && ctest --output-on-failure -j1`
 
 ---
 

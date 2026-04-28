@@ -27,7 +27,7 @@ level are resolved. Use the automatic dev loop pattern:
 2. Create feature branch: autonomous/YYYYMMDD-{short-slug}
 3. Make changes following TDD (test first, then implement)
 4. Build with: cmake -S . -B build_validate -DBUILD_TESTS=ON -DFETCH_DEPENDENCIES=ON -DENABLE_GNS=OFF -DENABLE_REDIS=OFF -DENABLE_SCYLLA=OFF && cmake --build build_validate -j$(nproc)
-5. Test with: cd build_validate && ctest --output-on-failure -j8
+5. Test with: cd build_validate && ctest --output-on-failure -j1
 6. If tests fail, fix them (all 1978 must pass)
 7. Push branch and create PR
 8. Merge to main only when build + all tests pass

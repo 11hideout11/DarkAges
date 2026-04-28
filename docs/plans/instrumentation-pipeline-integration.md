@@ -615,7 +615,7 @@ git commit -m "feat(instrumentation): complete server tick exporter integration 
 
 1. **Objective evaluator:** Build + test must pass
    ```bash
-   cmake --build build_validate -j$(nproc) && ctest --output-on-failure -j8
+   cmake --build build_validate -j$(nproc) && ctest --output-on-failure -j1
    ```
 
 2. **Subjective reviewer:** Run via OpenCode (or simulate review):

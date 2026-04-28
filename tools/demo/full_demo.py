@@ -113,7 +113,7 @@ def run_tests() -> tuple[bool, int]:
     print_header("PHASE 2: Run Test Suites")
     build_dir = PROJECT_ROOT / "build_validate"
     r = subprocess.run(
-        ["ctest", "--output-on-failure", "-j8"],
+        ["ctest", "--output-on-failure", "-j1"],
         cwd=str(build_dir),
         capture_output=True, text=True
     )

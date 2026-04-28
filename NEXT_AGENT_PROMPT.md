@@ -46,7 +46,7 @@
     46|2. Implement in small, testable increments
     47|3. After each logical change:
     48|   - Build: `cmake --build build_validate -j$(nproc)`
-    49|   - Test: `ctest --output-on-failure -j8`
+    49|   - Test: `ctest --output-on-failure -j1`
     50|   - Verify zero regressions (compare test count/assert count to baseline 2096/12585)
     51|4. When complete:
     52|   - Run objective evaluator: `python3 scripts/autonomous/evaluate_change.py autonomous/YYYYMMDD-{slug} --base main`

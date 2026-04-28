@@ -91,7 +91,7 @@ CMAKE_CMD = [
     "-DENABLE_GNS=OFF", "-DENABLE_REDIS=OFF", "-DENABLE_SCYLLA=OFF"
 ]
 BUILD_CMD = ["cmake", "--build", str(BUILD_DIR), "-j", str(os.cpu_count() or 4)]
-TEST_CMD = ["ctest", "--output-on-failure", "-j8"]
+TEST_CMD = ["ctest", "--output-on-failure", "-j1"]
 MAX_RETRIES = 2
 
 def run(cmd, cwd=None, timeout=300, capture=True):
