@@ -62,17 +62,16 @@ cd build_validate && ctest --output-on-failure -j1
 
 ## Recent Commits (last 10 — updated)
 
-1. Merge autonomous/20260427-npc-interaction: feat(npc): add E-key interaction system (merged)
-2. fix(eval): ignore sizeof on fundamental types in heuristic reviewer (merged)
-3. feat(npc): add E-key interaction system with extended input protocol (merged)
-4. chore: add P2.5 demo visual polish tasks and update test metric baselines (merged)
-5. docs: update AGENTS.md state date and refresh Recent Commits after docs merge (merged)
-6. docs: refresh AGENTS.md recent commits to current HEAD (merged)
-7. docs: sync demo standards and status after configuration and HUD fixes (merged)
-8. docs: update AGENTS.md recent commits and timestamp after demo fix merge (merged)
-9. fix(demo): resolve demo config, network layer, and HUD initialization issues (merged)
-10. docs: sync test metrics and status files after autonomous ZoneServer test expansion (merged)
-
+1. feat(dialogue): integrate client-server dialogue network protocol (merged)
+2. Merge autonomous/20260427-npc-interaction: feat(npc): add E-key interaction system (merged)
+3. fix(eval): ignore sizeof on fundamental types in heuristic reviewer (merged)
+4. feat(npc): add E-key interaction system with extended input protocol (merged)
+5. chore: add P2.5 demo visual polish tasks and update test metric baselines (merged)
+6. docs: update AGENTS.md state date and refresh Recent Commits after docs merge (merged)
+7. docs: refresh AGENTS.md recent commits to current HEAD (merged)
+8. docs: sync demo standards and status after configuration and HUD fixes (merged)
+9. docs: update AGENTS.md recent commits and timestamp after demo fix merge (merged)
+10. fix(demo): resolve demo config, network layer, and HUD initialization issues (merged)
 ---
 
 Last updated: 2026-04-28
