@@ -1,42 +1,109 @@
      1|Hermes Agent — DarkAges MMO Continuation Session
      2|Start date: 2026-04-28 (or later)
      3|
-     4|## Immediate Context
-     5|
-     6|- Repository: /root/projects/DarkAges
-     7|- Branch: main (up to date with origin)
-     8|- Working tree: clean
-     9|- Last merged PRs:
-    10|  * #21: combat(P2) — hit stop, procedural leaning, animation blend polish
-    11|  * #22: docs+test(depth) — PROJECT/ComprehensiveReview sync; ZoneServer depth tests (6 new)
-    12|- Test status: 2096 cases / 12585 assertions — ALL PASS
-    13|- Build: `cmake -S . -B build_validate -DBUILD_TESTS=ON -DFETCH_DEPENDENCIES=ON -DENABLE_GNS=OFF -DENABLE_REDIS=OFF -DENABLE_SCYLLA=OFF && cmake --build build_validate -j$(nproc)` — passes
-    14|
-    15|**Read these files first:**
-    16|1. AGENTS.md (architecture, critical rules, workflow)
-    17|2. PROJECT_STATUS.md (current version 5.5, what's done/remaining)
-    18|3. HERMES_HANDOFF_20260426.md (this handoff, created 2026-04-26)
-    19|
-    20|---
-    21|
-    22|## Your Mission
-    23|
-    24|Phase 2 (Lock-on Targeting + Camera Polish) is COMPLETE. Choose ONE item from the Phase 3/4 backlog (abilities, inventory enhancements, sound, particle effects, proper 3D models, NPC interaction) and implement it following the autonomous workflow:
+## Immediate Context
+
+- Repository: /root/projects/DarkAges
+- Branch: main (up to date with origin)
+- Working tree: clean
+- **MVP Criteria Updated (2026-04-28)**: See MVP_DEMO_STANDARDS.md for NEW requirements
+- **PROJECT NOT READY for Demo MVP**: Requires full third-person combat multiplayer template with demo zones and gameplay
+- Last merged PRs:
+  * #21: combat(P2) — hit stop, procedural leaning, animation blend polish
+  * #22: docs+test(depth) — PROJECT/ComprehensiveReview sync; ZoneServer depth tests (6 new)
+  * #23: feat(npc) — E-key interaction system
+- Test status: 2097 cases / 12586 assertions — ALL PASS
+- Build: `cmake -S . -B build_validate -DBUILD_TESTS=ON -DFETCH_DEPENDENCIES=ON -DENABLE_GNS=OFF -DENABLE_REDIS=OFF -DENABLE_SCYLLA=OFF && cmake --build build_validate -j$(nproc)` — passes
+
+**Read these files first:**
+1. AGENTS.md (architecture, critical rules, **GAPS section for updated MVP criteria**)
+2. MVP_DEMO_STANDARDS.md (**NEW criteria**: third-person combat template, demo zones, gameplay loop)
+3. MVP_IMPLEMENTATION_PLAN.md (**implementation roadmap** for new criteria)
+4. PROJECT_STATUS.md — Current state summary
+
+---
+
+## Your Mission (UPDATED: 2026-04-28)
+
+**The demo MVP criteria have been updated since project start.** Previous completion of Phases 0-9 and visual polish does NOT satisfy the new MVP bar.
+
+### NEW MVP Requirements:
+
+1. **Full Third-Person Combat Multiplayer Template**
+   - Complete FSM (node-based state machine) - NOT YET DONE
+   - Hitbox/hurtbox server-authoritative validation - NEEDS VALIDATION
+   - AnimationTree procedural features (Foot IK) - PARTIAL
+   - Lock-on targeting - COMPLETED
+
+2. **Demo Zones (minimum 3)**
+   - Tutorial zone - NOT YET DONE
+   - Combat arena - NOT YET DONE  
+   - Boss zone - NOT YET DONE
+   - Current: Only basic zone 99 exists
+
+3. **Complete Gameplay Loop**
+   - Human-playable (WASD + mouse + attack) - NEEDS VALIDATION
+   - Combat → loot → quest → progression - NEEDS INTEGRATION
+   - Curated demo experience - NOT YET DONE
+
+**Choose ONE item from the CRITICAL gaps and implement following autonomous workflow:**
     25|
-    26|**Option A — Lock-on Targeting** ✅ COMPLETED (2026-04-27)
-    27|  - Server-authoritative target locking system
-    28|  - Client prediction + server validation
-    29|  - Glow/ping UI indicator on locked target
-    30|  - Auto-attack integration merged (CombatSystem respects confirmed lock)
-    31|  - Scope implemented: server-side TargetLockSystem + ZoneServer integration; client-side UI/input already complete
-    32|
+**Option A — Lock-on Targeting** ✅ COMPLETED (2026-04-27)
+ - Server-authoritative target locking system
+ - Client prediction + server validation
+ - Glow/ping UI indicator on locked target
+ - Auto-attack integration merged (CombatSystem respects confirmed lock)
+ - Scope implemented: server-side TargetLockSystem + ZoneServer integration; client-side UI/input already complete
+
 **Option B — Camera Polish** ✅ COMPLETED
-    34|  - Smooth follow with configurable deadzone
-    35|  - Collision avoidance (raycast push-in)
-    36|  - Height/rotation smoothing
-    37|  - Scope: modify `CameraController` (C#) + optional server-side camera state replication
-    38|
-    39|**Phase 3/4 backlog** (abilities, inventory, full UI overhaul) remains after P2 completion.
+ - Smooth follow with configurable deadzone
+ - Collision avoidance (raycast push-in)
+ - Height/rotation smoothing
+ - Scope: CameraController node
+
+**Option C — NPC Interaction** ✅ COMPLETED (2026-04-27)
+ - E-key interaction system
+ - Extended input protocol
+ - Dialogue system integration
+
+---
+
+## Current CRITICAL Gaps (2026-04-28)
+
+### 1. CombatStateMachine (FSM) — CRITICAL
+Status: CombatSystem exists but lacks formal node-based state machine
+Action: Create CombatStateMachine.tscn with Idle, Moving, Attacking, Hit, Dodging, Dead states
+
+### 2. Demo Zones — CRITICAL
+Status: Only zone 99 exists
+Action: Create tutorial.json, arena.json, boss.json zone configs with proper pacing
+
+### 3. Hitbox/Hurtbox Validation — CRITICAL
+Status: Collision layers exist, need server-authoritative validation tests
+Action: Add comprehensive tests, document collision layer matrix
+
+### 4. Foot IK — HIGH
+Status: AnimationTree operational but no Foot IK
+Action: Add SkeletonIK3D node, configure terrain alignment
+
+---
+
+## Suggested Next Tasks
+
+**Recommended:** CombatStateMachine (FSM)
+- High impact on "third-person combat template"
+- Creates reusable architecture
+- Foundation for other combat polish features
+
+**Alternative:** Demo Zones
+- Tangible progress toward MVP bar
+- Can be done in parallel with combat work
+- Clear definition of done
+
+**Alternative:** Hitbox/Hurtbox Validation
+- Required for "server-authoritative validation"
+- Test-focused, low risk
+- Solid foundation for combat tuning
     40|
     41|---
     42|
