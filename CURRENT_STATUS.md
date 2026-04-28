@@ -43,7 +43,8 @@
     42|| Animation System | OPERATIONAL | Walk/Run/Sprint/Idle/Attack/Hit/Dodge transitions |
     43|| Combat Events | OPERATIONAL | Binary format, damage/death/heal all working |
     44|| Chat UI | OPERATIONAL | UDP chat messages, enter-to-toggle panel, channel formatting |
-|| Quest Tracker | OPERATIONAL | Network-synced objectives, J-key toggle, progress bars |
+|| Quest Tracker | OPERATIONAL | Network-synced objectives, J-key toggle, progress bars ||
+|| Inventory UI | OPERATIONAL | 24-slot grid with I-key toggle, randomized demo items |
     45|| Demo Launcher | OPERATIONAL | `./tools/demo/demo --quick` |
     46|| Video Recording | OPERATIONAL | ffmpeg x11grab |
     47|| Validation | OPERATIONAL | E2E + instrumentation |

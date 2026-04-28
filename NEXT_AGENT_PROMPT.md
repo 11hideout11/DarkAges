@@ -1,5 +1,5 @@
      1|Hermes Agent — DarkAges MMO Continuation Session
-     2|Start date: 2026-04-27 (or later)
+     2|Start date: 2026-04-28 (or later)
      3|
      4|## Immediate Context
      5|
@@ -21,7 +21,7 @@
     21|
     22|## Your Mission
     23|
-    24|Choose ONE of the remaining Phase 2 (P2) items and implement it following the autonomous workflow:
+    24|Phase 2 (Lock-on Targeting + Camera Polish) is COMPLETE. Choose ONE item from the Phase 3/4 backlog (abilities, inventory enhancements, sound, particle effects, proper 3D models, NPC interaction) and implement it following the autonomous workflow:
     25|
     26|**Option A — Lock-on Targeting** ✅ COMPLETED (2026-04-27)
     27|  - Server-authoritative target locking system
@@ -87,8 +87,8 @@
     87|
     88|Your PR must satisfy:
     89|1. Build compiles cleanly (zero errors; warnings OK but not ideal)
-    90|2. All tests pass (no regressions; baseline 2096 cases, 12585 assertions)
-    91|3. No test count decrease
+    90|2. All tests pass (no regressions; baseline 2097 cases, 12586 assertions)
+    91|3. No test count decrease from baseline 2097/12586
     92|4. No assertion count decrease
     93|5. Test summary explicitly listed in evaluator output
     94|6. Baseline metrics readable (build_validate test log)

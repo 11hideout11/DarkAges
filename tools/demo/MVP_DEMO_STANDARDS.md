@@ -72,11 +72,11 @@
 | Auto-exit (`--demo-duration`) | WORKING | Graceful demo termination |
 | Real-time instrumentation | WORKING | JSON export to `/tmp/darkages_instrumentation.json` |
 | 3D models/art | BASIC | Capsule meshes only (gray player, red NPCs) |
-| Animation | MINIMAL | No walk/run/attack animations |
-| UI panels | MINIMAL | Connection + debug panels only |
-| Inventory/loot UI | MISSING | Not implemented |
-| Quest UI | MISSING | Not implemented |
-| Chat UI | MISSING | Not implemented |
+| Animation | OPERATIONAL | Walk/Run/Sprint/Idle/Attack/Hit/Dodge via AnimationTree state machine |
+| UI panels | OPERATIONAL | HUD with Health, Abilities, TargetLock, CombatText, DeathRespawn, Inventory, Chat, Quest |
+| Inventory/loot UI | OPERATIONAL | 24-slot grid with I-key toggle, randomized demo items |
+| Quest UI | OPERATIONAL | J-key toggle, objective list with progress bars, network-synced updates |
+| Chat UI | OPERATIONAL | Enter-toggle, formatted per-channel messages, UDP routing |
 | Health bars | **MISSING** → **WORKING** | Billboarded 3D bars above entities (green/yellow/red) |
 | NPC name labels | **PRESENT** | Label3D above RemotePlayers |
 | Death/respawn | PARTIAL | DeathRespawnUI exists, not demoed |
@@ -104,9 +104,9 @@
 - [x] **Terrain variety**: Checkerboard terrain texture applied (FIXED)
 
 ### P2 — Feature completeness
-- [ ] **Inventory panel**: Grid of item slots in GameUI
-- [ ] **Quest tracker**: Active quests display
-- [ ] **Chat UI**: Scrollable chat panel
+- [x] **Inventory panel**: Grid of item slots in GameUI
+- [x] **Quest tracker**: Active quests display
+- [x] **Chat UI**: Scrollable chat panel
 - [ ] **NPC interaction**: 'E' key to interact
 
 ### P3 — Polish & production readiness  
