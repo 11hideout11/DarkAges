@@ -55,15 +55,15 @@ cd build_validate && ctest --output-on-failure -j8
 
 ## Recent Commits (last 10 — updated)
 
-1. fix(demo): resolve demo config, network layer, and HUD initialization issues (merged)
-2. docs: sync test metrics and status files after autonomous ZoneServer test expansion (merged)
-3. docs: update AUTONOMOUS_LOG.md and reset cron state after ZoneServer test expansion (merged)
-4. Merge: autonomous: Expand tests for ZoneServer (52 tests for 2121 lines) (merged)
-5. feat(quest): add Quest Tracker UI with network synchronization (merged)
-6. docs: finalize post-merge baseline sync across all status files (merged)
-7. chore: untrack .task_cache.json — now ignored per .gitignore (merged)
-8. docs: update PROJECT_STATUS.md test metrics table to current baseline (merged)
-9. docs: correct post-merge status metrics and baseline references (3 files) (merged)
-10. docs: sync final test metrics and record infra fixes (merged)
+1. docs: sync demo standards and status after configuration and HUD fixes (merged)
+2. docs: update AGENTS.md recent commits and timestamp after demo fix merge (merged)
+3. fix(demo): resolve demo config, network layer, and HUD initialization issues (merged)
+4. docs: sync test metrics and status files after autonomous ZoneServer test expansion (merged)
+5. docs: update AUTONOMOUS_LOG.md and reset cron state after ZoneServer test expansion (merged)
+6. Merge: autonomous: Expand tests for ZoneServer (52 tests for 2121 lines) (merged)
+7. autonomous: Expand tests for ZoneServer (52 tests for 2121 lines) (merged)
+8. docs: update AGENTS.md Recent Commits after quest tracker merge (merged)
+9. Merge autonomous/20260427-quest-tracker into main (merged)
+10. feat(quest): add Quest Tracker UI with network synchronization (merged)
 ---
 Last updated: 2026-04-28
