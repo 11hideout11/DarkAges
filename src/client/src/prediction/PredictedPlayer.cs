@@ -67,27 +67,8 @@ namespace DarkAges
         private int _reconciliationCount = 0;
         private uint _lastCorrectionTick = 0;
         
-        // Dodge state
-        private bool _isDodging = false;
-        private double _dodgeTimer = 0.0;
-        private const double DODGE_DURATION = 0.4;
-        private const float DODGE_FORCE = 12.0f;
-        private double _invulnerableTimer = 0.0;
-        private const double INVULNERABLE_DURATION = 0.3;
-        
-        // Combat state
-        private bool _isAttacking = false;
-        private double _attackTimer = 0.0;
-        private const double ATTACK_DURATION = 0.5;
-        private bool _isHit = false;
-        private double _hitTimer = 0.0;
-        private const double HIT_DURATION = 0.3;
-        private bool _isDead = false;
-        
-        // Global Cooldown (GCD) - 1.2s after any action
-        private double _lastGlobalCooldownTime = 0.0;
-        private const double GLOBAL_COOLDOWN_DURATION = 1.2;
-        private bool _isOnGlobalCooldown = false;
+        // Animation State Machine (replaces individual state booleans)
+        private AnimationStateMachine _animStateMachine;
         
         // Hitbox/Hurtbox Area3D nodes
         private Area3D _hitbox;
@@ -137,9 +118,11 @@ namespace DarkAges
             _cameraController = GetNode<CameraController>("CameraRig");
             _animPlayer = GetNode<AnimationPlayer>("AnimationPlayer");
             _animTree = GetNodeOrNull<AnimationTree>("AnimationTree");
-
-            // Initialize animation parameters for state machine
-            // (state machine parameters are auto-created by the scene)
+            
+            // Initialize AnimationStateMachine
+            _animStateMachine = new AnimationStateMachine();
+            _animStateMachine.Name = "AnimationStateMachine";
+            AddChild(_animStateMachine);
 
             _predictedPosition = GlobalPosition;
             _correctionTargetPosition = GlobalPosition;
@@ -248,25 +231,37 @@ namespace DarkAges
             }
             
             // 2b. Handle attack trigger (with GCD enforcement)
-            if (input.Attack && !_isAttacking && !_isDodging && !_isHit && !_isDead && !_isOnGlobalCooldown)
+            if (input.Attack && _animStateMachine.CurrentState != AnimationStateMachine.StateType.Attacking && 
+                _animStateMachine.CurrentState != AnimationStateMachine.StateType.Dodging &&
+                _animStateMachine.CurrentState != AnimationStateMachine.StateType.Dead && 
+                !_isOnGlobalCooldown)
             {
-                _isAttacking = true;
-                _attackTimer = ATTACK_DURATION;
+                _animStateMachine.TriggerAttack();
                 // Start global cooldown - blocks all actions for 1.2s
                 _isOnGlobalCooldown = true;
                 _lastGlobalCooldownTime = Time.GetTicksMsec() / 1000.0;
                 GD.Print("[PredictedPlayer] Attack triggered, GCD started");
             }
             
+            // 2c. Handle dodge trigger (Q key)
+            if (Input.IsKeyPressed(Key.Q) && _animStateMachine.CurrentState != AnimationStateMachine.StateType.Dodging &&
+                _animStateMachine.CurrentState != AnimationStateMachine.StateType.Attacking &&
+                _animStateMachine.CurrentState != AnimationStateMachine.StateType.Dead &&
+                !_isOnGlobalCooldown && IsOnFloor())
+            {
+                _animStateMachine.TriggerDodge();
+                GD.Print("[PredictedPlayer] Dodge triggered");
+            }
+            
             // 3. Apply locally immediately (prediction)
             ApplyMovement(input, dt);
             _predictedPosition = GlobalPosition;
             _predictedVelocity = Velocity;
-            
-            // 3. Store for reconciliation and network sending
+
+            // 4. Store for reconciliation and network sending
             StorePredictedInput(input, _predictedPosition, _predictedVelocity, dt);
-            
-            // 4. Update animations
+
+            // 5. Update animations
             UpdateAnimation(input, dt);
             
             // 5. Update debug stats and visualization
@@ -975,33 +970,52 @@ namespace DarkAges
             bool isSprinting = input.Sprint && velocityLength > 0.1f;
             bool isWalking = velocityLength > 0.1f && !isSprinting;
             bool isJumping = !IsOnFloor();
-            bool hasMovement = isWalking || isSprinting;
 
-            // Set AnimationTree parameters — state machine uses these to transition
-            // Parameters are defined in the state machine transition conditions
-            _animTree.Set("parameters/Sprinting", isSprinting);
+            // Set AnimationTree parameters that aren't handled by AnimationStateMachine
             _animTree.Set("parameters/Jumping", isJumping);
-            _animTree.Set("parameters/Attacking", _isAttacking);
-            _animTree.Set("parameters/Dodging", _isDodging);
-            _animTree.Set("parameters/Hit", _isHit);
-            _animTree.Set("parameters/Dead", _isDead);
             _animTree.Set("parameters/IsOnFloor", IsOnFloor());
             _animTree.Set("parameters/VelocityLength", velocityLength);
             
+            // Update AnimationStateMachine based on movement
+            if (_animStateMachine != null)
+            {
+                _animStateMachine.SetMovementState(isWalking || isSprinting, isSprinting);
+            }
+
             // Update procedural leaning based on current movement
             UpdateProceduralLeaning(dt);
-            
+
             // Fallback: keep AnimationPlayer in sync when AnimationTree state machine is not providing transitions
-            if (_animPlayer != null)
+            if (_animPlayer != null && _animStateMachine != null)
             {
                 string animState = "Idle";
-                if (_isDead) animState = "Death";
-                else if (_isHit) animState = "Hit";
-                else if (_isDodging) animState = "Dodge";
-                else if (_isAttacking) animState = "Attack";
-                else if (isJumping) animState = "Jump";
-                else if (isSprinting) animState = "Sprint";
-                else if (isWalking) animState = "Walk";
+                switch (_animStateMachine.CurrentState)
+                {
+                    case AnimationStateMachine.StateType.Dead:
+                        animState = "Death";
+                        break;
+                    case AnimationStateMachine.StateType.Hit:
+                        animState = "Hit";
+                        break;
+                    case AnimationStateMachine.StateType.Dodging:
+                        animState = "Dodge";
+                        break;
+                    case AnimationStateMachine.StateType.Attacking:
+                        animState = "Attack";
+                        break;
+                    case AnimationStateMachine.StateType.Sprinting:
+                        animState = "Sprint";
+                        break;
+                    case AnimationStateMachine.StateType.Walking:
+                        animState = "Walk";
+                        break;
+                    case AnimationStateMachine.StateType.Idle:
+                    default:
+                        animState = "Idle";
+                        break;
+                }
+                
+                if (isJumping) animState = "Jump";
 
                 // Only switch if different or not playing
                 string current = _animPlayer.CurrentAnimation;
@@ -1030,7 +1044,15 @@ namespace DarkAges
         /// </summary>
         private void UpdateProceduralLeaning(float dt)
         {
-            if (_isDead || _isDodging || _isHit) return;  // No lean when incapacitated
+            // No lean when incapacitated
+            if (_animStateMachine != null)
+            {
+                var state = _animStateMachine.CurrentState;
+                if (state == AnimationStateMachine.StateType.Dead || 
+                    state == AnimationStateMachine.StateType.Dodging || 
+                    state == AnimationStateMachine.StateType.Hit)
+                    return;
+            }
             
             // Get horizontal velocity magnitude (XZ plane)
             float speed = new Vector3(Velocity.X, 0, Velocity.Z).Length();
