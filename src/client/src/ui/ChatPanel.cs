@@ -1,5 +1,6 @@
 using Godot;
 using System;
+using DarkAges.Networking;
 using System.Text;
 
 namespace DarkAges.Client.UI
@@ -47,7 +48,7 @@ namespace DarkAges.Client.UI
             if (Input.IsActionJustPressed("ui_cancel") && Visible)
             {
                 Visible = false;
-                GetTree().SetInputAsHandled();
+                GetViewport().SetInputAsHandled();
             }
         }
 

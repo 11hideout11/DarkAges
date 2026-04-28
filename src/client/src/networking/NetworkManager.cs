@@ -759,15 +759,24 @@ namespace DarkAges.Networking
             }
         }
 
-        private void ProcessPong
-        /// Process combat result from server.
-        /// Format: [type:1=11][result:1][damage:4][target_id:4][is_critical:1][timestamp:4]
-        /// Result codes: 0=hit, 1=miss, 2=blocked, 3=cooldown, 4=gcd_active
-        /// </summary>
         /// <summary>
-        /// Send a lock-on target request to the server.
-        /// Format: [type:1=5][target_entity:4][client_timestamp:4]
+        /// Process quest objective progress/complete update from server.
+        /// Format: [type:1=15][questId:4][objectiveIndex:1][current:4][required:4][status:1]
         /// </summary>
+        private void ProcessQuestUpdate(byte[] data)
+        {
+            if (data.Length < 15) return;
+
+            uint questId = BitConverter.ToUInt32(data, 1);
+            byte objectiveIndex = data[5];
+            uint current = BitConverter.ToUInt32(data, 6);
+            uint required = BitConverter.ToUInt32(data, 10);
+            byte status = data[14];
+
+            GD.Print($"[NetworkManager] Quest update: quest={questId} obj={objectiveIndex} cur={current}/{required} status={status}");
+            EmitSignal(SignalName.QuestUpdateReceived, questId, objectiveIndex, current, required, status);
+        }
+
         public void SendLockOnRequest(uint targetEntityId)
         {
             if (_udpClient == null || _serverEndPoint == null) return;

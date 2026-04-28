@@ -3,6 +3,7 @@
 [ext_resource type="Script" path="res://src/ui/ChatPanel.cs" id="1_chat"]
 
 [node name="ChatPanel" type="CanvasLayer"]
+script = ExtResource("1_chat")
 layer = 100
 visible = false
 

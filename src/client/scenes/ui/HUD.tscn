@@ -1,4 +1,4 @@
-[gd_scene load_steps=9 format=3 uid="uid://hudmain"]
+[gd_scene load_steps=11 format=3 uid="uid://hudmain"]
 
 [ext_resource type="Script" path="res://src/ui/HUDController.cs" id="1_hudctrl"]
 [ext_resource type="Script" path="res://src/ui/HealthBarSystem.cs" id="2_health"]
@@ -7,6 +7,8 @@
 [ext_resource type="Script" path="res://src/ui/CombatTextSystem.cs" id="5_combattext"]
 [ext_resource type="Script" path="res://src/ui/DeathRespawnUI.cs" id="6_deathui"]
 [ext_resource type="Script" path="res://src/ui/InventoryPanel.cs" id="7_inventory"]
+[ext_resource type="PackedScene" path="res://scenes/ui/ChatPanel.tscn" id="8_chatpanel"]
+[ext_resource type="PackedScene" path="res://scenes/ui/QuestTracker.tscn" id="9_questpanel"]
 
 [sub_resource type="GradientTexture2D" id="1_crosshair"]
 width = 32
@@ -200,3 +202,11 @@ offset_bottom = 150.0
 grow_horizontal = 2
 grow_vertical = 2
 script = ExtResource("7_inventory")
+
+[node name="ChatPanel" type="CanvasLayer" parent="." instance=ExtResource("8_chatpanel")]
+layer = 100
+visible = false
+
+[node name="QuestTracker" type="CanvasLayer" parent="." instance=ExtResource("9_questpanel")]
+layer = 101
+
