@@ -60,13 +60,24 @@ namespace DarkAges.Combat
             hitMarkerResetTimer.WaitTime = 0.1f;
             hitMarkerResetTimer.OneShot = false;
             hitMarkerResetTimer.Timeout += () => recentHits.Clear();
-            AddChild(hitMarkerResetTimer);
-            hitMarkerResetTimer.Start();
+            // Defer AddChild to avoid "busy setting up children" error during _Ready()
+            CallDeferred(MethodName.AddChild, hitMarkerResetTimer);
+            // Also defer Start() since timer needs to be in tree first
+            CallDeferred("StartHitMarkerTimer");
         }
 
         public override void _ExitTree()
         {
             NetworkManager.Instance.CombatEventReceived -= OnCombatEventReceived;
+        }
+
+        /// <summary>
+        /// Start the hit marker reset timer (deferred to ensure timer is in tree)
+        /// </summary>
+        private void StartHitMarkerTimer()
+        {
+            if (hitMarkerResetTimer != null)
+                hitMarkerResetTimer.Start();
         }
 
         /// <summary>

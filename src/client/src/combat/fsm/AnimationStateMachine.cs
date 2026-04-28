@@ -45,6 +45,9 @@ namespace DarkAges.Combat.FSM
         public bool IsBusy => _currentState == StateType.Attacking || 
                             _currentState == StateType.Dodging || 
                             _currentState == StateType.Hit;
+        
+        // Properties expected by PredictedPlayer.cs
+        public bool IsOnGlobalCooldown => _gcdTimer > 0;
 
         public override void _Ready()
         {
@@ -54,7 +57,7 @@ namespace DarkAges.Combat.FSM
             
             // Configure all state transitions in the AnimationNodeStateMachine resource
             // with 0.1s crossfade for smooth animation blending
-            var stateMachine = _animTree.GetRoot() as AnimationNodeStateMachine;
+            var stateMachine = _animTree.TreeRoot as AnimationNodeStateMachine;
             if (stateMachine != null)
             {
                 AddTransition(stateMachine, "Idle", "Walking");
@@ -95,7 +98,16 @@ namespace DarkAges.Combat.FSM
             }
         }
 
-        public override void _PhysicsProcess(double delta)
+        /// <summary>
+    /// Helper to add transition between two states in the AnimationNodeStateMachine
+    /// </summary>
+    private void AddTransition(AnimationNodeStateMachine stateMachine, string from, string to)
+    {
+        var transition = new AnimationNodeStateMachineTransition();
+        stateMachine.AddTransition(from, to, transition);
+    }
+
+    public override void _PhysicsProcess(double delta)
         {
             // Update timers
             if (_gcdTimer > 0)
@@ -192,6 +204,30 @@ namespace DarkAges.Combat.FSM
         public void TriggerRespawn()
         {
             TransitionTo(StateType.Idle);
+        }
+
+        /// <summary>
+        /// Trigger attack - wrapper for PredictedPlayer.cs compatibility
+        /// </summary>
+        public void TriggerAttack()
+        {
+            TryAttack();
+        }
+
+        /// <summary>
+        /// Start global cooldown - for PredictedPlayer.cs compatibility
+        /// </summary>
+        public void StartGlobalCooldown()
+        {
+            _gcdTimer = GLOBAL_COOLDOWN_DURATION;
+        }
+
+        /// <summary>
+        /// Trigger dodge - wrapper for PredictedPlayer.cs compatibility
+        /// </summary>
+        public void TriggerDodge()
+        {
+            TryDodge();
         }
 
         private void TransitionTo(StateType newState)
