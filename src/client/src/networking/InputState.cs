@@ -36,6 +36,9 @@ namespace DarkAges.Networking
         /// <summary>Block held this frame</summary>
         public bool Block;
         
+        /// <summary>Interact with NPC/object (E key)</summary>
+        public bool Interact;
+        
         /// <summary>Camera yaw (horizontal rotation)</summary>
         public float Yaw;
         
@@ -43,12 +46,13 @@ namespace DarkAges.Networking
         public float Pitch;
         
         /// <summary>
-        /// Pack input flags into a single byte for efficient transmission.
-        /// Bit layout: [Sprint][Block][Attack][Jump][Right][Left][Backward][Forward]
+        /// Pack input flags into a ushort for network transmission.
+        /// Bit layout: [Sprint][Block][Attack][Jump][Right][Left][Backward][Forward] in low byte,
+        /// interact flag at bit 8 (0x100) in high byte.
         /// </summary>
-        public byte PackFlags()
+        public ushort PackFlags()
         {
-            byte flags = 0;
+            ushort flags = 0;
             if (Forward) flags |= 0x01;
             if (Backward) flags |= 0x02;
             if (Left) flags |= 0x04;
@@ -57,13 +61,14 @@ namespace DarkAges.Networking
             if (Attack) flags |= 0x20;
             if (Block) flags |= 0x40;
             if (Sprint) flags |= 0x80;
+            if (Interact) flags |= 0x100;
             return flags;
         }
         
         /// <summary>
-        /// Unpack input flags from a byte.
+        /// Unpack input flags from a ushort.
         /// </summary>
-        public void UnpackFlags(byte flags)
+        public void UnpackFlags(ushort flags)
         {
             Forward = (flags & 0x01) != 0;
             Backward = (flags & 0x02) != 0;
@@ -73,6 +78,7 @@ namespace DarkAges.Networking
             Attack = (flags & 0x20) != 0;
             Block = (flags & 0x40) != 0;
             Sprint = (flags & 0x80) != 0;
+            Interact = (flags & 0x100) != 0;
         }
         
         public override string ToString()

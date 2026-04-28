@@ -244,6 +244,7 @@ namespace DarkAges.Networking
                 Sprint = Input.IsActionPressed("sprint"),
                 Attack = Input.IsActionPressed("attack"),
                 Block = Input.IsActionPressed("block"),
+                Interact = Input.IsActionJustPressed("interact"),
                 Yaw = yaw,
                 Pitch = pitch,
                 Sequence = 0,  // Will be set when queued
@@ -288,19 +289,19 @@ namespace DarkAges.Networking
         }
 
         /// <summary>
-        /// Serialize input to FlatBuffer format
+        /// Serialize input to raw binary format.
+        /// Format: [packet_type:1][sequence:4][timestamp:4][flags:2][yaw:2][pitch:2][target:4] = 19 bytes total
         /// </summary>
         private byte[] SerializeInput(InputState input)
         {
-            // FlatBuffer format: [packet_type:1][sequence:4][timestamp:4][input_flags:1][yaw:2][pitch:2][target:4]
-            var data = new byte[18];
-            
+            var data = new byte[19];
+
             data[0] = PACKET_CLIENT_INPUT;
             BitConverter.GetBytes(input.Sequence).CopyTo(data, 1);
             BitConverter.GetBytes(input.Timestamp).CopyTo(data, 5);
-            
-            // Bit-packed input flags
-            byte flags = 0;
+
+            // Bit-packed input flags (ushort, little-endian)
+            ushort flags = 0;
             if (input.Forward) flags |= 0x01;
             if (input.Backward) flags |= 0x02;
             if (input.Left) flags |= 0x04;
@@ -309,17 +310,19 @@ namespace DarkAges.Networking
             if (input.Attack) flags |= 0x20;
             if (input.Block) flags |= 0x40;
             if (input.Sprint) flags |= 0x80;
-            data[9] = flags;
-            
+            if (input.Interact) flags |= 0x100;
+            data[9] = (byte)(flags & 0xFF);
+            data[10] = (byte)((flags >> 8) & 0xFF);
+
             // Quantized rotation (yaw/pitch in radians * 10000)
             short yawQuantized = (short)(input.Yaw * 10000);
             short pitchQuantized = (short)(input.Pitch * 10000);
-            BitConverter.GetBytes(yawQuantized).CopyTo(data, 10);
-            BitConverter.GetBytes(pitchQuantized).CopyTo(data, 12);
-            
+            BitConverter.GetBytes(yawQuantized).CopyTo(data, 11);
+            BitConverter.GetBytes(pitchQuantized).CopyTo(data, 13);
+
             // Target entity (0 for now - no targeting)
-            BitConverter.GetBytes((uint)0).CopyTo(data, 14);
-            
+            BitConverter.GetBytes((uint)0).CopyTo(data, 15);
+
             return data;
         }
 

@@ -7,7 +7,7 @@ namespace DarkAges.Client.UI
 {
     /// <summary>
     /// [CLIENT_AGENT] WP-7-4 Main HUD controller that coordinates all combat UI elements.
-    /// Manages health bars, ability bar, target lock, combat text, and death UI.
+    /// Manages health bars, ability bar, target lock, combat text, death UI, and interaction prompt.
     /// </summary>
     public partial class HUDController : CanvasLayer
     {
@@ -28,6 +28,10 @@ namespace DarkAges.Client.UI
         // Party UI (simplified for now)
         private Panel _partyPanel;
         
+        // Interaction Prompt
+        private Label _interactionPrompt;
+        private const float INTERACT_RANGE = 3.5f; // World units
+
         // Configuration
         [Export] public bool ShowDebugInfo = false;
 
@@ -120,6 +124,17 @@ namespace DarkAges.Client.UI
                 AddChild(_questTracker);
             }
 
+            // Interaction Prompt (Phase 2.5)
+            _interactionPrompt = new Label();
+            _interactionPrompt.Text = "Press E to interact";
+            _interactionPrompt.HorizontalAlignment = HorizontalAlignment.Center;
+            _interactionPrompt.VerticalAlignment = VerticalAlignment.Bottom;
+            // Position near bottom center of screen, offset up by 80 pixels
+            var vpSize = GetViewport().GetVisibleRect().Size;
+            _interactionPrompt.Position = new Vector2(vpSize.X / 2 - 100, vpSize.Y - 80);
+            _interactionPrompt.Visible = false;
+            AddChild(_interactionPrompt);
+
             // Crosshair
             _crosshair = GetNode<TextureRect>("SafeArea/MainLayout/Center/Crosshair");
             
@@ -155,6 +170,9 @@ namespace DarkAges.Client.UI
             {
                 _questTracker.Visible = !_questTracker.Visible;
             }
+
+            // Update interaction prompt visibility (Phase 2.5)
+            UpdateInteractionPrompt();
         }
         
         private void UpdateTargetHealthBar()
@@ -189,6 +207,44 @@ namespace DarkAges.Client.UI
             
             // Hide hit marker if not recently hit
             // The HitMarker component handles its own visibility timing
+        }
+
+        private void UpdateInteractionPrompt()
+        {
+            if (_interactionPrompt == null) return;
+
+            var localId = GameState.Instance.LocalEntityId;
+            if (localId == 0)
+            {
+                _interactionPrompt.Visible = false;
+                return;
+            }
+
+            var playerEntity = GameState.Instance.GetEntity(localId);
+            if (playerEntity == null)
+            {
+                _interactionPrompt.Visible = false;
+                return;
+            }
+
+            Vector3 playerPos = playerEntity.Position;
+            bool nearInteractable = false;
+
+            foreach (var entity in GameState.Instance.Entities.Values)
+            {
+                // EntityType: 3 = NPC
+                if (entity.Type == 3)
+                {
+                    float dist = playerPos.DistanceTo(entity.Position);
+                    if (dist <= INTERACT_RANGE)
+                    {
+                        nearInteractable = true;
+                        break;
+                    }
+                }
+            }
+
+            _interactionPrompt.Visible = nearInteractable;
         }
 
         private void OnConnectionStateChanged(GameState.ConnectionState state)

@@ -44,10 +44,10 @@ namespace Protocol {
 
 std::vector<uint8_t> serializeInput(const InputState& input) {
     std::vector<uint8_t> data;
-    data.reserve(17);  // 1 byte flags + 2 floats + 2 uint32
-    
-    // Pack flags
-    uint8_t flags = 0;
+    data.reserve(18);  // 2 bytes flags + 2 floats + 2 uint32s
+
+    // Pack flags as ushort: low byte = movement/actions, high byte bit0 = interact
+    uint16_t flags = 0;
     flags |= (input.forward  & 0x1) << 0;
     flags |= (input.backward & 0x1) << 1;
     flags |= (input.left     & 0x1) << 2;
@@ -56,34 +56,37 @@ std::vector<uint8_t> serializeInput(const InputState& input) {
     flags |= (input.attack   & 0x1) << 5;
     flags |= (input.block    & 0x1) << 6;
     flags |= (input.sprint   & 0x1) << 7;
-    
-    data.push_back(flags);
-    
+    flags |= (input.interact & 0x1) << 8;
+
+    data.push_back(static_cast<uint8_t>(flags & 0xFF));
+    data.push_back(static_cast<uint8_t>((flags >> 8) & 0xFF));
+
     // Serialize floats and uint32s
     auto appendBytes = [&data](const void* ptr, size_t size) {
         const uint8_t* bytes = static_cast<const uint8_t*>(ptr);
         data.insert(data.end(), bytes, bytes + size);
     };
-    
+
     appendBytes(&input.yaw, sizeof(float));
     appendBytes(&input.pitch, sizeof(float));
     appendBytes(&input.sequence, sizeof(uint32_t));
     appendBytes(&input.timestamp_ms, sizeof(uint32_t));
-    
+
     return data;
 }
 
 bool deserializeInput(std::span<const uint8_t> data, InputState& outInput) {
-    constexpr size_t MIN_SIZE = 1 + sizeof(float) * 2 + sizeof(uint32_t) * 2;
-    
+    constexpr size_t MIN_SIZE = 2 + sizeof(float) * 2 + sizeof(uint32_t) * 2;
+
     if (data.size() < MIN_SIZE) {
         return false;
     }
-    
+
     size_t offset = 0;
-    
-    // Unpack flags
-    uint8_t flags = data[offset++];
+
+    // Unpack flags as ushort (little-endian)
+    uint16_t flags = static_cast<uint16_t>(data[offset]) | (static_cast<uint16_t>(data[offset + 1]) << 8);
+    offset += 2;
     outInput.forward  = (flags >> 0) & 0x1;
     outInput.backward = (flags >> 1) & 0x1;
     outInput.left     = (flags >> 2) & 0x1;
@@ -92,7 +95,8 @@ bool deserializeInput(std::span<const uint8_t> data, InputState& outInput) {
     outInput.attack   = (flags >> 5) & 0x1;
     outInput.block    = (flags >> 6) & 0x1;
     outInput.sprint   = (flags >> 7) & 0x1;
-    
+    outInput.interact = (flags >> 8) & 0x1;
+
     std::memcpy(&outInput.yaw, &data[offset], sizeof(float));
     offset += sizeof(float);
     std::memcpy(&outInput.pitch, &data[offset], sizeof(float));
@@ -100,7 +104,7 @@ bool deserializeInput(std::span<const uint8_t> data, InputState& outInput) {
     std::memcpy(&outInput.sequence, &data[offset], sizeof(uint32_t));
     offset += sizeof(uint32_t);
     std::memcpy(&outInput.timestamp_ms, &data[offset], sizeof(uint32_t));
-    
+
     return true;
 }
 

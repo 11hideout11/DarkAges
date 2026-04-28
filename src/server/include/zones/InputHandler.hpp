@@ -17,6 +17,7 @@ class ItemSystem;
 class ChatSystem;
 class CraftingSystem;
 class TradeSystem;
+class DialogueSystem;
 
 // Handles client input validation, anti-cheat enforcement, and attack processing.
 // Extracted from ZoneServer to reduce monolithic file size.
@@ -36,6 +37,7 @@ public:
     void setChatSystem(ChatSystem* cs) { chatSystem_ = cs; }
     void setCraftingSystem(CraftingSystem* cs) { craftingSystem_ = cs; }
     void setTradeSystem(TradeSystem* ts) { tradeSystem_ = ts; }
+    void setDialogueSystem(DialogueSystem* ds) { dialogueSystem_ = ds; }
 
     // Process incoming client input (routing entry point)
     void onClientInput(const ClientInputPacket& input);
@@ -76,6 +78,7 @@ private:
     ChatSystem* chatSystem_{nullptr};
     CraftingSystem* craftingSystem_{nullptr};
     TradeSystem* tradeSystem_{nullptr};
+    DialogueSystem* dialogueSystem_{nullptr};
 };
 
 } // namespace DarkAges

@@ -61,6 +61,7 @@ NetworkProto::ClientInput ProtobufProtocol::inputStateToProto(
     flags |= (state.attack ? 1 : 0) << 5;
     flags |= (state.block ? 1 : 0) << 6;
     flags |= (state.sprint ? 1 : 0) << 7;
+    flags |= (state.interact ? 1 : 0) << 8;
     
     input.set_input_flags(flags);
     input.set_yaw(state.yaw);
@@ -83,6 +84,7 @@ InputState ProtobufProtocol::protoToInputState(const NetworkProto::ClientInput& 
     state.attack = (flags >> 5) & 1;
     state.block = (flags >> 6) & 1;
     state.sprint = (flags >> 7) & 1;
+    state.interact = (flags >> 8) & 1;
     
     state.yaw = proto.yaw();
     state.pitch = proto.pitch();

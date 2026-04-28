@@ -323,6 +323,7 @@ bool ZoneServer::initialize(const ZoneConfig& config) {
     tradeSystem_.setItemSystem(&itemSystem_);
     tradeSystem_.setChatSystem(&chatSystem_);
     inputHandler_.setTradeSystem(&tradeSystem_);
+    inputHandler_.setDialogueSystem(&dialogueSystem_);
 
     // [GAMEPLAY_AGENT] Initialize zone event system
     zoneEventSystem_.setChatSystem(&chatSystem_);
@@ -337,6 +338,12 @@ bool ZoneServer::initialize(const ZoneConfig& config) {
     dialogueSystem_.setQuestSystem(&questSystem_);
     dialogueSystem_.setItemSystem(&itemSystem_);
     dialogueSystem_.setChatSystem(&chatSystem_);
+    
+    // Wire dialogue text delivery to chat system ( NPC dialogue appears in chat )
+    dialogueSystem_.setDialogueTextCallback([this](EntityID player, const char* npcName, const char* text, bool isEnd) {
+        std::string msg = std::string(npcName) + ": " + text;
+        chatSystem_.sendSystemMessage(registry_, player, msg.c_str(), getCurrentTimeMs());
+    });
 
     // [GAMEPLAY_AGENT] Wire level-up into quest tracking
     experienceSystem_.setLevelUpCallback([this](EntityID player, uint32_t newLevel) {
@@ -1512,6 +1519,12 @@ EntityID ZoneServer::spawnNPC(const Position& spawnPos, uint8_t level, uint16_t 
     stats.respawnTimeMs = respawnTimeMs;
     registry_.emplace<NPCStats>(entity, stats);
 
+    // Interaction component — enables player dialogue
+    auto& interact = registry_.emplace<Interactable>(entity);
+    if (interact.dialogueTreeId > 0) {
+        dialogueSystem_.setNPCTree(entity, interact.dialogueTreeId);
+    }
+
     return entity;
 }
 
@@ -1565,6 +1578,12 @@ EntityID ZoneServer::spawnFromGroup(const Position& spawnPos, uint8_t level,
     stats.xpReward = xpReward;
     stats.respawnTimeMs = respawnTimeMs;
     registry_.emplace<NPCStats>(entity, stats);
+
+    // Interaction component — enables player dialogue
+    auto& interact = registry_.emplace<Interactable>(entity);
+    if (interact.dialogueTreeId > 0) {
+        dialogueSystem_.setNPCTree(entity, interact.dialogueTreeId);
+    }
 
     // SpawnableComponent — marks this NPC as managed by SpawnSystem for respawn tracking
     SpawnableComponent spawnable;
