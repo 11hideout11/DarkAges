@@ -592,7 +592,7 @@ void CombatEventLogger::getKillFeed(CassSession* session, uint32_t zoneId,
     std::string dayBucket = getDayBucket(getCurrentTimestamp());
     cass_statement_bind_string(statement, 0, dayBucket.c_str());
     cass_statement_bind_int32(statement, 1, static_cast<cass_int32_t>(zoneId));
-    cass_statement_set_page_size(statement, limit);
+    cass_statement_set_paging_size(statement, limit);  // Fixed: API is _paging_size in driver 2.17+
 
     CassFuture* future = cass_session_execute(session, statement);
 
