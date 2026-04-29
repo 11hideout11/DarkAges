@@ -11,7 +11,7 @@ void RecoveryState::Enter(Registry& registry, EntityID entity) {
     // Recovery = global cooldown window minus (attack + active + cooldown)
     if (const CombatConfig* cfg = registry.try_get<CombatConfig>(entity)) {
         float totalGCD = cfg->globalCooldownMs / 1000.0f;
-        float attackTotal = (cfg->attackWindupMs + cfg->attackActiveMs) / 1000.0f;
+        float attackTotal = cfg->globalCooldownMs / 1000.0f;
         // active phase is single tick; use config.attackActiveMs if present
         attackTotal += 0.033f; // one-tick active window (~1 frame)
         float cooldown = cfg->attackCooldownMs / 1000.0f;

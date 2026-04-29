@@ -7,7 +7,7 @@
 
 namespace DarkAges {
 
-struct Registry;  // forward (EnTT registry defined elsewhere)
+
 
 enum class StateStatus {
     Continue,  // State remains active

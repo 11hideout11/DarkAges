@@ -14,9 +14,9 @@ public:
     State* GetNextState(CombatState* combat) const override;
 
 private:
-    void createHitbox(Registry& registry, uint32_t attacker);
-    void checkCollision(Registry& registry, uint32_t attacker);
-    void removeHitbox(Registry& registry, uint32_t attacker);
+    void createHitbox(Registry& registry, EntityID attacker);
+    void checkCollision(Registry& registry, EntityID attacker);
+    void removeHitbox(Registry& registry, EntityID attacker);
 
     enum class Phase { Windup, Active, Recover };
     float timer_ = 0.0f;
