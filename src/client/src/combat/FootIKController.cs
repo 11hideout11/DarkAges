@@ -1,5 +1,6 @@
 using Godot;
 using System;
+using DarkAges.Combat.FSM;
 
 namespace DarkAges.Combat
 {
@@ -143,7 +144,7 @@ namespace DarkAges.Combat
             
             bool grounded = result.Count > 0;
             
-            if (ground)
+            if (grounded)
             {
                 Vector3 hitPos = (Vector3)result["position"];
                 Vector3 hitNormal = (Vector3)result["normal"];

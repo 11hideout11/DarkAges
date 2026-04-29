@@ -11,7 +11,7 @@ cd build_validate && ctest --output-on-failure -j1
 - Phase 8: COMPLETE — all core gameplay systems
 - Phase 9: COMPLETE — performance budgets pass (400 ents <20ms, 800 <30ms)
 - Networking: STABLE — live validator passes (1-10 clients, snapshots OK)
-- Tests: 1285 cases / 96 files / 11 suites — ALL PASS (7212 assertions)
+- Tests: **1300 cases / 11 suites — ALL PASS (7243 assertions)** (as of 2026-04-29 build)
 - Server: ~32K LOC (C++20, EnTT ECS, 60Hz tick) | Client: ~9K LOC (C# Godot 4.2)
 - Harness: Two-layer evaluator architecture operational (objective + subjective)
 - **MVP Criteria Updated (2026-04-28)**: New criteria require full third-person combat multiplayer template with demo zones and gameplay. **Project is NOW FULLY DEMO READY under updated standards** — all critical systems + Foot IK + Controls docs complete.
@@ -73,4 +73,13 @@ cd build_validate && ctest --output-on-failure -j1
 10. docs: update AGENTS.md state date and refresh Recent Commits after docs merge
 ---
 
-Last updated: 2026-04-28
+
+## OpenHands Integration Updates (2026-04-29)
+
+- Added 4 new standalone skills: `test-flakiness.py`, `coverage-report.py`, `pr-create.py`, `pr-comment.py`, `code-format.py`
+- Fixed CMake JSON include bug — switched from direct `target_include_directories` to `target_link_libraries(nlohmann_json::nlohmann_json)` to resolve missing header error in `build_validate`
+- Skills installed to `~/.hermes/skills/scripts/` as symlinks to `openhands-adaptation/skills/`
+- Microagents present in `.openhands/microagents/` for Godot 4.2 pinning, server C++ conventions, networking, repo context
+- Documentation: `OPENHANDS_SKILLS_REFERENCE.md` — comprehensive skill reference
+
+Last updated: 2026-04-29

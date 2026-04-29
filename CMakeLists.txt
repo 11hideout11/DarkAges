@@ -701,9 +701,7 @@ if(CASSANDRA_FOUND)
 endif()
 
 # nlohmann/json is always included (header-only)
-target_include_directories(darkages_core PUBLIC 
-    ${json_SOURCE_DIR}/single_include
-)
+target_link_libraries(darkages_core PUBLIC nlohmann_json::nlohmann_json)
 target_compile_definitions(darkages_core PUBLIC ENABLE_NLOHMANN_JSON=1)
 
 # Protobuf includes and linking
