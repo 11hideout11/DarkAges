@@ -1,5 +1,6 @@
 #include "combat/CombatSystem.hpp"
 #include "combat/detail/CooldownState.hpp"
+#include "combat/detail/RecoveryState.hpp"
 
 namespace DarkAges::combat::detail {
 

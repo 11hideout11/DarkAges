@@ -1,5 +1,6 @@
 #include "combat/CombatSystem.hpp"
 #include "combat/detail/RecoveryState.hpp"
+#include "combat/detail/IdleState.hpp"
 
 namespace DarkAges::combat::detail {
 

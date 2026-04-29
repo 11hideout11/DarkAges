@@ -1,9 +1,24 @@
 #include "combat/CombatSystem.hpp"
 #include "combat/detail/AttackState.hpp"
+#include "combat/detail/CooldownState.hpp"
 
 namespace DarkAges::combat::detail {
 
-using namespace Constants;
+// Free function: simple damage application for AttackState hit resolution
+// This is a simplified version of CombatSystem::applyDamage to avoid system coupling.
+static bool applyDamage(Registry& registry, EntityID target, EntityID attacker, int16_t damage, uint32_t /*currentTimeMs*/) {
+    if (CombatState* combat = registry.try_get<CombatState>(target)) {
+        if (combat->isDead) return false;
+        combat->health -= damage;
+        if (combat->health < 0) combat->health = 0;
+        if (combat->health == 0) {
+            combat->isDead = true;
+            // Death callbacks would be invoked here in full system
+        }
+        return true;
+    }
+    return false;
+}
 
 AttackState::AttackState()
     : timer_(0.0f), windupDuration_(0.1f), activeDuration_(0.033f),
@@ -27,35 +42,23 @@ StateStatus AttackState::Update(Registry& registry, uint32_t entity, float dt) {
     if (phase_ == Phase::Windup) {
         if (timer_ >= windupDuration_) {
             phase_ = Phase::Active;
-            timer_ = 0.0f;
+            createHitbox(registry, entity);
         }
         return StateStatus::Continue;
     }
 
     if (phase_ == Phase::Active) {
-        if (!createdHitbox_) {
-            createHitbox(registry, entity);
-            createdHitbox_ = true;
-            checkCollision(registry, entity);
-        }
-        // One-tick active phase; then recover
-        if (timer_ >= activeDuration_) {
-            phase_ = Phase::Recover;
-            timer_ = 0.0f;
-        }
-        return StateStatus::Continue;
-    }
-
-    // Recover: wait until total attack duration passes
-    float totalDuration = windupDuration_ + activeDuration_ + 0.1f;  // minimal recover
-    if (timer_ >= totalDuration) {
+        // Active: one tick, check collision then advance
+        checkCollision(registry, entity);
         return StateStatus::Finish;
     }
-    return StateStatus::Continue;
+
+    // Should not reach here; safety fallback
+    return StateStatus::Finish;
 }
 
 void AttackState::Exit(Registry& registry, uint32_t entity) {
-    // Ensure any lingering hitbox is cleared
+    // Ensure hitbox is cleaned up if state exits prematurely
     removeHitbox(registry, entity);
 }
 
@@ -63,15 +66,13 @@ State* AttackState::GetNextState(CombatState* /*combat*/) const {
     return new CooldownState();
 }
 
-// Simple spherical hitbox centered in front of attacker
 void AttackState::createHitbox(Registry& registry, uint32_t attacker) {
     const Position* pos = registry.try_get<Position>(attacker);
     const Rotation* rot = registry.try_get<Rotation>(attacker);
     if (!pos || !rot) return;
 
     Hitbox hb;
-    hb.entity = attacker;
-    hb.radius = 2.0f * FIXED_TO_FLOAT;  // 2 world units
+    hb.radius = 1.5f; // melee range
     hb.origin = { pos->x * FIXED_TO_FLOAT, pos->y * FIXED_TO_FLOAT, pos->z * FIXED_TO_FLOAT };
 
     glm::vec3 forward = getForwardVector(rot->yaw);
@@ -86,7 +87,7 @@ void AttackState::checkCollision(Registry& registry, uint32_t attacker) {
     if (!hb) return;
 
     auto view = registry.view<Position, CombatState>();
-    view.each([&](uint32_t target, const Position& targetPos, CombatState& targetCombat) {
+    view.each([&](EntityID target, const Position& targetPos, CombatState& targetCombat) {
         if (target == attacker) return;
         if (targetCombat.isDead) return;
 
