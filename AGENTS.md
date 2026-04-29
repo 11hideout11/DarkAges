@@ -57,7 +57,9 @@ cd build_validate && ctest --output-on-failure -j1
 - **Sprint Decomposition**: `once` mode skips tasks >2h estimated; `deep` mode allows up to 1.5x budget
 - **Harness Audit**: components in `HARNESS_COMPONENTS` dict with expiration dates; review quarterly
 
-## Gaps (Updated 2026-04-29 post-PR #27 merge)
+## Gaps (Updated 2026-04-29)
+
+- **PvE Integration**: Full combat loop tested — NPC AI → combat → XP → loot → level up
 - **MVP CRITICAL**: Full third-person combat multiplayer template **COMPLETE** — FSM integrated with AnimationStateMachine
 - **MVP CRITICAL**: Demo zones — 3 zones created (tutorial.json, arena.json, boss.json) — COMPLETE
 - **MVP HIGH**: Foot IK — SkeletonIK3D nodes configured with terrain alignment — COMPLETE
