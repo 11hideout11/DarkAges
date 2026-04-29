@@ -61,16 +61,16 @@ cd build_validate && ctest --output-on-failure -j1
 
 ## Recent Commits (last 10 — updated)
 
-1. fix(client): resolve AnimationStateMachine namespace and typo in FootIKController
-2. feat(combat): implement Foot IK and controls documentation
-3. feat(combat): Combat FSM + Demo Zones + Hitbox Tests
-4. feat(dialogue): integrate client-server dialogue network protocol
-5. feat(npc): add E-key interaction system with extended input protocol
-6. fix(eval): ignore sizeof on fundamental types in heuristic reviewer
-7. feat(zones): create demo zone configurations (tutorial, arena, boss)
-8. fix(client): resolve C# compilation errors and scene tree issues
-9. Merge autonomous/20260427-npc-interaction: NPC interaction additions
-10. chore: add P2.5 demo visual polish tasks and update test metric baselines
+1. docs: update Recent Commits with FootIKController fix
+2. fix: resolve client build failures and refresh metrics
+3. feat(combat): implement Foot IK and complete playability validation
+4. docs: update test results with root cause analysis
+5. Merge pull request #26: fix cmake installer and test results
+6. fix: add cmake installer and document test results
+7. fix(client): correct Player scene
+8. fix(client): correct Player scene
+9. fix(server): correct CMakeLists.txt dependency handling
+10. fix(server): correct CMakeLists.txt dependency handling
 ---
 
 
