@@ -35,10 +35,10 @@ static EntityID createNPC(Registry& registry, float x, float z,
     registry.emplace<Rotation>(entity);
     registry.emplace<BoundingVolume>(entity);
 
-    CombatState combat;
+    registry.emplace<CombatState>(entity);
+    auto& combat = registry.get<CombatState>(entity);
     combat.health = 1000;
     combat.maxHealth = 1000;
-    registry.emplace<CombatState>(entity, combat);
 
     Mana mana;
     registry.emplace<Mana>(entity, mana);

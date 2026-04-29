@@ -6,21 +6,18 @@ namespace DarkAges::combat::detail {
 
 RecoveryState::RecoveryState() : timer_(0.0f), duration_(0.5f) {}
 
-void RecoveryState::Enter(Registry& registry, EntityID entity) {
+void RecoveryState::Enter(Registry& registry, EntityID entity, const CombatConfig& config) {
     timer_ = 0.0f;
-    // Recovery = global cooldown window minus (attack + active + cooldown)
-    if (const CombatConfig* cfg = registry.try_get<CombatConfig>(entity)) {
-        float totalGCD = cfg->globalCooldownMs / 1000.0f;
-        float attackTotal = cfg->globalCooldownMs / 1000.0f;
-        // active phase is single tick; use config.attackActiveMs if present
-        attackTotal += 0.033f; // one-tick active window (~1 frame)
-        float cooldown = cfg->attackCooldownMs / 1000.0f;
-        duration_ = totalGCD - attackTotal - cooldown;
-        if (duration_ < 0.05f) duration_ = 0.05f;  // clamp minimum
-    }
+    // RecoveryTime = GlobalCooldown - (AttackWindup + AttackActive + Cooldown)
+    constexpr float ACTIVE_DURATION = 0.033f; // one-tick active window (~1 frame)
+    float totalGCD = config.globalCooldownMs / 1000.0f;
+    float windup = config.attackWindupMs / 1000.0f;
+    float cooldown = config.attackCooldownMs / 1000.0f;
+    duration_ = totalGCD - windup - ACTIVE_DURATION - cooldown;
+    if (duration_ < 0.05f) duration_ = 0.05f;  // clamp minimum to avoid negative/zero
 }
 
-StateStatus RecoveryState::Update(Registry& registry, EntityID entity, float dt) {
+StateStatus RecoveryState::Update(Registry& registry, EntityID entity, float dt, uint32_t currentTimeMs) {
     timer_ += dt;
     if (timer_ >= duration_) {
         return StateStatus::Finish;
@@ -35,3 +32,4 @@ State* RecoveryState::GetNextState(CombatState* /*combat*/) const {
 }
 
 } // namespace DarkAges::combat::detail
+

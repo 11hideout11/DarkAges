@@ -24,7 +24,15 @@ TEST_CASE("EntitySnapshot serialization and deserialization", "[migration]") {
     original.position = Position{1000, 2000, 3000, 1000};
     original.velocity = Velocity{100, 200, 300};
     original.rotation = Rotation{1.57f, 0.5f};
-    original.combat = CombatState{8000, 10000, 1, 2, entt::null, 0, false};
+    CombatState combat27;
+    combat27.health = 8000;
+    combat27.maxHealth = 10000;
+    combat27.teamId = 1;
+    combat27.classType = 2;
+    combat27.lastAttacker = entt::null;
+    combat27.lastAttackTime = 0;
+    combat27.isDead = false;
+    original.combat = combat27;
     original.network = NetworkState{100, 1000, 50, 0.0f, 1};
     original.lastInput = InputState{};
     original.lastInput.forward = 1;
@@ -179,7 +187,15 @@ TEST_CASE("EntityMigrationManager state machine transitions", "[migration]") {
     registry.emplace<Position>(entity, Position{1000, 0, 1000, 0});
     registry.emplace<Velocity>(entity, Velocity{100, 0, 100});
     registry.emplace<Rotation>(entity, Rotation{3.14f, 0.0f});
-    registry.emplace<CombatState>(entity, CombatState{7500, 10000, 1, 1, entt::null, 0, false});
+    CombatState cs182;
+    cs182.health = 7500;
+    cs182.maxHealth = 10000;
+    cs182.teamId = 1;
+    cs182.classType = 1;
+    cs182.lastAttacker = entt::null;
+    cs182.lastAttackTime = 0;
+    cs182.isDead = false;
+    registry.emplace<CombatState>(entity, cs182);
     registry.emplace<NetworkState>(entity, NetworkState{50, 500, 25, 0.0f, 5});
     registry.emplace<InputState>(entity);
     registry.emplace<AntiCheatState>(entity);
@@ -294,15 +310,14 @@ TEST_CASE("EntitySnapshot preserves all component types", "[migration]") {
     snapshot.rotation = Rotation{1.5708f, 0.0f};  // 90 degrees yaw
     
     // Set combat state
-    snapshot.combat = CombatState{
-        5000,    // health
-        10000,   // maxHealth
-        2,       // teamId
-        3,       // classType
-        static_cast<entt::entity>(99),  // lastAttacker
-        500,     // lastAttackTime
-        false    // isDead
-    };
+    snapshot.combat = CombatState{};
+    snapshot.combat.health = 5000;
+    snapshot.combat.maxHealth = 10000;
+    snapshot.combat.teamId = 2;
+    snapshot.combat.classType = 3;
+    snapshot.combat.lastAttacker = static_cast<entt::entity>(99);
+    snapshot.combat.lastAttackTime = 500;
+    snapshot.combat.isDead = false;
     
     // Set network state
     snapshot.network = NetworkState{

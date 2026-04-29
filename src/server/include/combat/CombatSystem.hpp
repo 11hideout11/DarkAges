@@ -27,10 +27,11 @@ struct CombatConfig {
     int16_t criticalMultiplier = 150;    // 1.5x (150%)
     
     // Attack timing
-    uint32_t attackCooldownMs = 500;     // 0.5s between attacks
-    uint32_t globalCooldownMs = 1200;    // 1.2s global cooldown
-    float meleeRange = 2.5f;             // meters
-    float meleeAngle = 60.0f;            // degrees (cone in front)
+    uint32_t attackWindupMs = 100;      // 0.1s wind-up before hit
+    uint32_t attackCooldownMs = 500;    // 0.5s between attacks
+    uint32_t globalCooldownMs = 1200;   // 1.2s global cooldown
+    float meleeRange = 2.5f;            // meters
+    float meleeAngle = 60.0f;           // degrees (cone in front)
     
     // Team settings
     bool allowFriendlyFire = false;

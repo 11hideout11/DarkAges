@@ -192,10 +192,10 @@ EntityID SpawnSystem::createNPCFromTemplate(Registry& registry, uint32_t templat
     
     // Scale health with level
     uint32_t baseHealth = 100 + (level * 10);
-    CombatState combat;
+    registry.emplace<CombatState>(entity);
+    auto& combat = registry.get<CombatState>(entity);
     combat.health = baseHealth;
     combat.maxHealth = baseHealth;
-    registry.emplace<CombatState>(entity, combat);
     
     registry.emplace<Mana>(entity);
     registry.emplace<NPCTag>(entity);

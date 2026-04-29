@@ -920,6 +920,9 @@ void ZoneServer::updateGameLogic() {
     processPendingDialogueResponses();
     combatEventHandler_.processCombat();
 
+    // [COMBAT] Update FSM for all entities (batch)
+    combatSystem_.updateFSM(registry_, Constants::DT_SECONDS, getCurrentTimeMs());
+
     // Health regeneration
     healthRegenSystem_.update(registry_, getCurrentTimeMs());
 
@@ -1542,11 +1545,11 @@ EntityID ZoneServer::spawnNPC(const Position& spawnPos, uint8_t level, uint16_t 
     registry_.emplace<BoundingVolume>(entity);
 
     // Combat state — scaled by level
-    CombatState combat;
+    registry_.emplace<CombatState>(entity);
+    auto& combat = registry_.get<CombatState>(entity);
     combat.health = static_cast<int16_t>(1000 + (level - 1) * 200);
     combat.maxHealth = combat.health;
     combat.classType = 0;
-    registry_.emplace<CombatState>(entity, combat);
 
     // Mana (NPCs don't use mana but the component is expected by some systems)
     Mana mana;
@@ -1602,11 +1605,11 @@ EntityID ZoneServer::spawnFromGroup(const Position& spawnPos, uint8_t level,
     registry_.emplace<BoundingVolume>(entity);
 
     // Combat state — scaled by level
-    CombatState combat;
+    registry_.emplace<CombatState>(entity);
+    auto& combat = registry_.get<CombatState>(entity);
     combat.health = static_cast<int16_t>(1000 + (level - 1) * 200);
     combat.maxHealth = combat.health;
     combat.classType = 0;
-    registry_.emplace<CombatState>(entity, combat);
 
     // Mana
     Mana mana;

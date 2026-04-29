@@ -330,10 +330,10 @@ static EntityID createTestPlayer(Registry& registry, float x, float z) {
     auto entity = registry.create();
     registry.emplace<Position>(entity, Position::fromVec3(glm::vec3(x, 0, z)));
     registry.emplace<Velocity>(entity);
-    CombatState combat;
+    registry.emplace<CombatState>(entity);
+    auto& combat = registry.get<CombatState>(entity);
     combat.health = 1000;
     combat.maxHealth = 1000;
-    registry.emplace<CombatState>(entity, combat);
     registry.emplace<Mana>(entity);
     registry.emplace<PlayerTag>(entity);
     registry.emplace<PlayerProgression>(entity);
@@ -349,10 +349,10 @@ static EntityID createTestNPC(Registry& registry, float x, float z,
     registry.emplace<Rotation>(entity);
     registry.emplace<BoundingVolume>(entity);
 
-    CombatState combat;
+    registry.emplace<CombatState>(entity);
+    auto& combat = registry.get<CombatState>(entity);
     combat.health = 1000;
     combat.maxHealth = 1000;
-    registry.emplace<CombatState>(entity, combat);
 
     Mana mana;
     registry.emplace<Mana>(entity, mana);
