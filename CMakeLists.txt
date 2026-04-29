@@ -9,6 +9,7 @@ endif()
 set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>DLL")
 
 project(DarkAgesServer VERSION 0.7.0 LANGUAGES CXX)
+enable_language(C)  # Added to fix C compiler feature initialization
 
 # C++20 is required
 set(CMAKE_CXX_STANDARD 20)
