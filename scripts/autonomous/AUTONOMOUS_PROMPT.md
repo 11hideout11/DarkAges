@@ -8,16 +8,20 @@ Reusable prompt for iterating through feature implementations on the DarkAges MM
 □ Discover: What needs to be done?
   - AGENTS.md Gaps section
   - .demo_tasks.md REMAINING
-  - Run: grep -r "TODO\|FIXME" src/
+  - Find minimal tests: grep "TEST_CASE" src/server/tests/Test{XYZ}.cpp | wc -l
 
 □ Analyze: Current state
-  - Check existing tests
-  - Find integration points
-  - Identify smallest change
+  - Check existing tests: grep "^TEST_CASE" src/server/tests/Test{XYZ}.cpp
+  - Check API coverage: grep "virtual\|void\|bool" include/combat/XYZSystem.hpp
+  - Identify smallest gap with clear expansion path
 
 □ Implement: Make the change
-  - Write/modify code
-  - Write tests
+  - Use terminal <<EOF for tests (safer than insert):
+    cat >> src/server/tests/Test{XYZ}.cpp << 'EOF'
+    TEST_CASE("System new behavior", "[xyz]") {
+        // test code here
+    }
+    EOF
   - Follow: DarkAges:: namespace, registry.all_of<T>()
 
 □ Build & Test:
@@ -25,12 +29,22 @@ Reusable prompt for iterating through feature implementations on the DarkAges MM
   - cmake --build build_validate -j$(nproc)
   - ctest --output-on-failure -j1
 
-□ Verify: All 11 tests pass? No regression?
+□ Verify: All 11 tests pass? New tests explicitly tested?
+  - Run specific: ./darkages_tests "[achievements]"
 
 □ Commit: Push to branch autonomous/YYYYMMDD-{feature}
   
 □ Iterate: Repeat until done
 ```
+
+## Task Selection Criteria
+
+**Pick the smallest gap** with:
+1. Clear expansion path (API exists, just not tested)
+2. Can add 2-3 tests in single session
+3. Tests validate existing behavior, not new features
+
+**Example**: AchievementSystem has only 3 tests, has 8+ API methods → expand to 5 tests
 
 ## Build Commands
 
