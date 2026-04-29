@@ -503,7 +503,7 @@ void CombatSystem::onEntityDied(Registry& registry, EntityID victim, EntityID ki
     // This is called internally by killEntity before the callback
     // Additional death logic can be added here
 }
-void CombatSystem::updateFSM(Registry& registry, float deltaSec, uint32_t /*currentTimeMs*/) {
+void CombatSystem::updateFSM(Registry& registry, float deltaSec, uint32_t currentTimeMs) {
     auto view = registry.view<CombatState>();
     for (auto entity : view) {
         CombatState* combat = registry.try_get<CombatState>(entity);
@@ -512,18 +512,18 @@ void CombatSystem::updateFSM(Registry& registry, float deltaSec, uint32_t /*curr
         // Initialize state if absent
         if (!combat->currentState) {
             combat->currentState = std::make_unique<combat::detail::IdleState>();
-            combat->currentState->Enter(registry, entity);
+            combat->currentState->Enter(registry, entity, config_);
             continue;
         }
 
         // Tick current state
-        StateStatus status = combat->currentState->Update(registry, entity, deltaSec);
+        StateStatus status = combat->currentState->Update(registry, entity, deltaSec, currentTimeMs);
         if (status == StateStatus::Finish) {
             State* next = combat->currentState->GetNextState(combat);
             if (next) {
                 combat->currentState->Exit(registry, entity);
                 combat->currentState.reset(next);
-                next->Enter(registry, entity);
+                next->Enter(registry, entity, config_);
             }
         }
     }

@@ -1,18 +1,11 @@
-#include "combat/CombatSystem.hpp"
 #include "combat/detail/AttackState.hpp"
 #include "combat/detail/CooldownState.hpp"
+#include "combat/detail/Hitbox.hpp"
+#include "combat/CombatSystem.hpp"
 #include <chrono>
 #include <cmath>
 
 namespace DarkAges::combat::detail {
-
-// Local Hitbox component used only within this translation unit.
-// This is a transient collision shape created during the Active phase.
-struct Hitbox {
-    float radius;                       // Melee range in world units (meters)
-    glm::vec3 origin;                   // World-space center of the hitbox
-    std::chrono::steady_clock::time_point startTime;
-};
 
 // ---------------------------------------------------------------------------
 // Helper: apply damage to a target and flag death
@@ -27,6 +20,8 @@ static bool applyDamage(Registry& registry, EntityID target, EntityID attacker,
         if (combat->health == 0) {
             combat->isDead = true;
         }
+        // Record attacker for XP/loot/credit
+        combat->lastAttacker = attacker;
         return true;
     }
     return false;
@@ -39,20 +34,17 @@ static bool applyDamage(Registry& registry, EntityID target, EntityID attacker,
 
 AttackState::AttackState()
     : timer_(0.0f), windupDuration_(0.1f), activeDuration_(0.033f),
-      phase_(Phase::Windup), createdHitbox_(false) {}
+      phase_(Phase::Windup), createdHitbox_(false), config_(nullptr) {}
 
-void AttackState::Enter(Registry& registry, EntityID entity) {
+void AttackState::Enter(Registry& registry, EntityID entity, const CombatConfig& config) {
     timer_ = 0.0f;
     phase_ = Phase::Windup;
     createdHitbox_ = false;
-
-    // Allow per-entity windup override via CombatConfig
-    if (const CombatConfig* cfg = registry.try_get<CombatConfig>(entity)) {
-        windupDuration_ = cfg->attackWindupMs / 1000.0f;
-    }
+    config_ = &config;
+    windupDuration_ = config.attackWindupMs / 1000.0f;
 }
 
-StateStatus AttackState::Update(Registry& registry, EntityID entity, float dt) {
+StateStatus AttackState::Update(Registry& registry, EntityID entity, float dt, uint32_t currentTimeMs) {
     timer_ += dt;
 
     // Phase 1: Windup — animation prelude, no collision
@@ -66,7 +58,14 @@ StateStatus AttackState::Update(Registry& registry, EntityID entity, float dt) {
 
     // Phase 2: Active — single-tick collision check, then finish immediately
     if (phase_ == Phase::Active) {
-        checkCollision(registry, entity);
+        bool hitOccurred = checkCollision(registry, entity);
+        // On any hit, stamp attacker's cooldowns
+        if (hitOccurred) {
+            if (CombatState* combat = registry.try_get<CombatState>(entity)) {
+                combat->lastAttackTime = currentTimeMs;
+                combat->lastGlobalCooldownTime = currentTimeMs;
+            }
+        }
         return StateStatus::Finish;      // Transition to Cooldown immediately
     }
 
@@ -112,10 +111,12 @@ void AttackState::createHitbox(Registry& registry, EntityID attacker) {
     createdHitbox_ = true;
 }
 
-void AttackState::checkCollision(Registry& registry, EntityID attacker) {
+bool AttackState::checkCollision(Registry& registry, EntityID attacker) {
+    assert(config_ != nullptr && "AttackState::config_ must be set before Update");
     const Hitbox* hb = registry.try_get<Hitbox>(attacker);
-    if (!hb) return;
+    if (!hb) return false;
 
+    bool anyHit = false;
     // Scan all entities with Position+CombatState for melee collision
     auto view = registry.view<Position, CombatState>();
     view.each([&](EntityID target, const Position& targetPos, CombatState& targetCombat) {
@@ -129,9 +130,13 @@ void AttackState::checkCollision(Registry& registry, EntityID attacker) {
         float distSq = dx*dx + dy*dy + dz*dz;
 
         if (distSq <= hb->radius * hb->radius) {
-            applyDamage(registry, target, attacker, 25, 0);
+            int16_t damage = config_->baseMeleeDamage;
+            if (applyDamage(registry, target, attacker, damage, 0)) {
+                anyHit = true;
+            }
         }
     });
+    return anyHit;
 }
 
 void AttackState::removeHitbox(Registry& registry, EntityID attacker) {
@@ -139,3 +144,4 @@ void AttackState::removeHitbox(Registry& registry, EntityID attacker) {
 }
 
 } // namespace DarkAges::combat::detail
+
