@@ -14,13 +14,15 @@ cd build_validate && ctest --output-on-failure -j1
 ```
 
 ## State (2026-04-29)
-- Phase 8: COMPLETE — all core gameplay systems
-- Phase 9: COMPLETE — performance budgets pass (400 ents <20ms, 800 <30ms)
-- Networking: STABLE — live validator passes (1-10 clients, snapshots OK)
-- Tests: **1300 cases / 11 suites — ALL PASS (7243 assertions)** (as of 2026-04-29 build)
+- Phase 0: COMPLETE — documented in PHASE0_SUMMARY.md
+- Phase 1-5: **UNVERIFIED** — No documentation found for implementation
+- Phase 6: COMPLETE — build system hardening
+- Phase 7: PARTIAL — TEST_SUMMARY.md shows 77% pass rate
+- Phase 8: PARTIAL — multiple work packages complete, GNS blocked
+- Phase 9: COMPLETE — performance budgets validated
+- Tests: **INCONSISTENT** — Various counts (100-2097) with varying pass rates (77%-100%)
 - Server: ~32K LOC (C++20, EnTT ECS, 60Hz tick) | Client: ~9K LOC (C# Godot 4.2)
-- Harness: Two-layer evaluator architecture operational (objective + subjective)
-- **MVP Criteria Updated (2026-04-28)**: New criteria require full third-person combat multiplayer template with demo zones and gameplay. **Project is NOW FULLY DEMO READY under updated standards** — all critical systems + Foot IK + Controls docs complete.
+- **⚠️ IMPORTANT**: Project status is NOT CLEARLY DEMO READY. PROJECT_STATUS.md (dated 2026-04-28) explicitly states "NOT READY for Demo MVP" under updated criteria.
 
 ## Architecture
 - **ECS**: EnTT, `DarkAges::` namespace. Components in `ecs/`, systems in `combat/`, `physics/`, `zones/`
@@ -59,25 +61,76 @@ cd build_validate && ctest --output-on-failure -j1
 
 ## Gaps (Updated 2026-04-29)
 
-- **PvE Integration**: Full combat loop tested — NPC AI → combat → XP → loot → level up
-- **MVP CRITICAL**: Full third-person combat multiplayer template **COMPLETE** — FSM integrated with AnimationStateMachine
-- **MVP CRITICAL**: Demo zones — 3 zones created (tutorial.json, arena.json, boss.json) — COMPLETE
-- **MVP HIGH**: Foot IK — SkeletonIK3D nodes configured with terrain alignment — COMPLETE
-- **MVP HIGH**: Human playability — All controls validated and documented — COMPLETE
-- **MVP MEDIUM**: Blend spaces — Not yet implemented (can be added post-MVP)
-- **MVP MEDIUM**: Visual polish — SDFGI+SSAO+SSIL enabled in Main.tscn; extended demo deep validation passed (all artifacts non-fatal)
+### 🔴 CRITICAL GAPS - NOT PREVIOUSLY DOCUMENTED
+
+1. **Phase 1-5 Implementation Gap** — No documentation exists for Phases 1-5. Only Phase 0, 6, and 8 have summary docs. Major verification gap.
+
+2. **Conflicting Demo Readiness Claims** — PROJECT_STATUS.md (2026-04-28) states project is "NOT READY for Demo MVP" but AGENTS.md claims "NOW FULLY DEMO READY". **This contradiction MUST be resolved.**
+
+3. **GNS Integration Blocked** — WebRTC submodule access denied. WP-8-6 uses stub UDP instead of Steam's GameNetworkingSockets.
+
+4. **Database Stubs Active** — Redis/ScyllaDB are stubbed. No real persistence testing in CI.
+
+5. **Test Results Inconsistency** — TEST_SUMMARY.md shows 77% pass rate (23 failing tests). Current TEST_RESULTS.md shows 11/11 suites pass. Need reconciliation.
+
+6. **Server Startup Crash (Jan 30)** — PERFORMANCE_BENCHMARK_REPORT.md documents CRITICAL failure. Later docs say fixed but no detailed root cause analysis documented.
+
+7. **Memory Leaks Detected** — Test framework itself has memory leaks (4 blocks in test_scope, 4 bytes leaked in multiple test functions).
+
+8. **No Node-Based FSM** — Uses inline state flags per CRITICAL rules. AGENTS.md incorrectly states "FSM integrated with AnimationStateMachine".
+
+### 🟡 HIGH PRIORITY GAPS
+
+9. **Godot Client Headless Artifacts** — DEMO_CAPABILITIES_REPORT documents: add_child() failures, Transform access before node ready, Quaternion normalization issues.
+
+10. **Protocol.cpp Excluded** — Excluded when ENABLE_GNS=OFF. Protobuf protocol depends on GNS.
+
+11. **Documentation Drift** — Multiple markdown files reference pre-April state. Inconsistent across codebase.
+
+12. **Validator Connection Exhaustion** — live_client_validator.py creates aggressive UDP retries that can exhaust server connection slots.
+
+### 🟢 MEDIUM PRIORITY GAPS
+
+13. **Blend Spaces Not Implemented** — Marked MEDIUM in AGENTS.md. Animation blending incomplete.
+
+14. **Test Count Inconsistent** — Documentation shows 2097 tests, 1300 cases, 100 cases across multiple sources.
+
+### Historical Phases Completion Status
+
+| Phase | Status | Evidence | Notes |
+|-------|--------|----------|-------|
+| Phase 0 | ✅ COMPLETE | PHASE0_SUMMARY.md | Foundation architecture |
+| Phase 1 | ❓ UNVERIFIED | No documentation | Prediction & Reconciliation |
+| Phase 2 | ❓ UNVERIFIED | No documentation | Multi-Player Sync |
+| Phase 3 | ❓ UNVERIFIED | No documentation | Combat & Lag Compensation |
+| Phase 4 | ❓ UNVERIFIED | No documentation | Spatial Sharding |
+| Phase 5 | ❓ UNVERIFIED | No documentation | Optimization & Security |
+| Phase 6 | ✅ COMPLETE | PHASE_6_COMPLETION_SUMMARY.md | Build System Hardening |
+| Phase 7 | ⚠️ PARTIAL | TEST_SUMMARY.md (77% pass) | Unit Testing |
+| Phase 8 | ⚠️ PARTIAL | Multiple docs, some failures | Production Hardening |
+
+### Known Issues Requiring Resolution (NOT PREVIOUSLY TRACKED)
+
+1. **Demo Readiness Contradiction** — Must reconcile PROJECT_STATUS.md vs AGENTS.md claims
+2. **GNS Integration** — WebRTC access required or permanent stub documentation
+3. **Test Suite Discrepancy** — 77% vs 100% pass rate must be reconciled
+4. **Memory Leaks** — Test framework leaks must be fixed or documented as expected
+5. **Phase 1-5 Documentation** — Cannot verify implementation without docs
+
+---
 
 ## Recent Commits (last 10 — updated)
 
-1. docs: update Gaps section date to 2026-04-29
-2. Merge PR #27: fix MetricsExporter reinitialization
-3. docs: update Recent Commits with FootIKController fix
-4. fix: resolve client build failures and refresh metrics
-5. feat(combat): implement Foot IK and complete playability validation
-6. docs: update test results with root cause analysis
-7. Merge pull request #26: fix cmake installer and test results
-8. fix: add cmake installer and document test results
-9. fix(client): correct Player scene
+1. docs: comprehensive gap analysis - phase verification, test inconsistencies
+2. docs: update Gaps section date to 2026-04-29
+3. Merge PR #27: fix MetricsExporter reinitialization
+4. docs: update Recent Commits with FootIKController fix
+5. fix: resolve client build failures and refresh metrics
+6. feat(combat): implement Foot IK and complete playability validation
+7. docs: update test results with root cause analysis
+8. Merge pull request #26: fix cmake installer and test results
+9. fix: add cmake installer and document test results
+10. fix(client): correct Player scene
 ---
 
 
