@@ -90,6 +90,9 @@ set(SERVER_SOURCES
     src/combat/PositionHistory.cpp
     src/combat/CombatSystem.cpp
     src/combat/LagCompensatedCombat.cpp
+    src/combat/AttackState.cpp
+    src/combat/CooldownState.cpp
+    src/combat/RecoveryState.cpp
     src/profiling/PerfettoProfiler.cpp
     src/profiling/PerformanceMonitor.cpp
     src/memory/MemoryPool.cpp
@@ -199,6 +202,10 @@ set(SERVER_HEADERS
     include/combat/PositionHistory.hpp
     include/combat/CombatSystem.hpp
     include/combat/LagCompensatedCombat.hpp
+    include/combat/detail/State.hpp
+    include/combat/detail/AttackState.hpp
+    include/combat/detail/CooldownState.hpp
+    include/combat/detail/RecoveryState.hpp
     include/profiling/PerfettoProfiler.hpp
     include/profiling/PerformanceMonitor.hpp
     include/memory/MemoryPool.hpp
