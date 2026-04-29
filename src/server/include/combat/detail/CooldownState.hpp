@@ -7,9 +7,9 @@ namespace DarkAges::combat::detail {
 class CooldownState final : public State {
 public:
     CooldownState();
-    void Enter(Registry& registry, uint32_t entity) override;
-    StateStatus Update(Registry& registry, uint32_t entity, float deltaSec) override;
-    void Exit(Registry& registry, uint32_t entity) override;
+    void Enter(Registry& registry, EntityID entity) override;
+    StateStatus Update(Registry& registry, EntityID entity, float deltaSec) override;
+    void Exit(Registry& registry, EntityID entity) override;
     const char* Name() const override { return "Cooldown"; }
     State* GetNextState(CombatState* combat) const override;
 

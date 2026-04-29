@@ -6,7 +6,7 @@ namespace DarkAges::combat::detail {
 
 RecoveryState::RecoveryState() : timer_(0.0f), duration_(0.5f) {}
 
-void RecoveryState::Enter(Registry& registry, uint32_t entity) {
+void RecoveryState::Enter(Registry& registry, EntityID entity) {
     timer_ = 0.0f;
     // Recovery = global cooldown window minus (attack + active + cooldown)
     if (const CombatConfig* cfg = registry.try_get<CombatConfig>(entity)) {
@@ -20,7 +20,7 @@ void RecoveryState::Enter(Registry& registry, uint32_t entity) {
     }
 }
 
-StateStatus RecoveryState::Update(Registry& registry, uint32_t entity, float dt) {
+StateStatus RecoveryState::Update(Registry& registry, EntityID entity, float dt) {
     timer_ += dt;
     if (timer_ >= duration_) {
         return StateStatus::Finish;
@@ -28,7 +28,7 @@ StateStatus RecoveryState::Update(Registry& registry, uint32_t entity, float dt)
     return StateStatus::Continue;
 }
 
-void RecoveryState::Exit(Registry& registry, uint32_t entity) {}
+void RecoveryState::Exit(Registry& registry, EntityID entity) {}
 
 State* RecoveryState::GetNextState(CombatState* /*combat*/) const {
     return new IdleState();

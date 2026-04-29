@@ -24,7 +24,7 @@ AttackState::AttackState()
     : timer_(0.0f), windupDuration_(0.1f), activeDuration_(0.033f),
       phase_(Phase::Windup), createdHitbox_(false) {}
 
-void AttackState::Enter(Registry& registry, uint32_t entity) {
+void AttackState::Enter(Registry& registry, EntityID entity) {
     timer_ = 0.0f;
     phase_ = Phase::Windup;
     createdHitbox_ = false;
@@ -36,7 +36,7 @@ void AttackState::Enter(Registry& registry, uint32_t entity) {
     // TODO: Play windup animation on client via network
 }
 
-StateStatus AttackState::Update(Registry& registry, uint32_t entity, float dt) {
+StateStatus AttackState::Update(Registry& registry, EntityID entity, float dt) {
     timer_ += dt;
 
     if (phase_ == Phase::Windup) {
@@ -57,7 +57,7 @@ StateStatus AttackState::Update(Registry& registry, uint32_t entity, float dt) {
     return StateStatus::Finish;
 }
 
-void AttackState::Exit(Registry& registry, uint32_t entity) {
+void AttackState::Exit(Registry& registry, EntityID entity) {
     // Ensure hitbox is cleaned up if state exits prematurely
     removeHitbox(registry, entity);
 }
@@ -66,7 +66,7 @@ State* AttackState::GetNextState(CombatState* /*combat*/) const {
     return new CooldownState();
 }
 
-void AttackState::createHitbox(Registry& registry, uint32_t attacker) {
+void AttackState::createHitbox(Registry& registry, EntityID attacker) {
     const Position* pos = registry.try_get<Position>(attacker);
     const Rotation* rot = registry.try_get<Rotation>(attacker);
     if (!pos || !rot) return;
@@ -82,7 +82,7 @@ void AttackState::createHitbox(Registry& registry, uint32_t attacker) {
     registry.emplace_or_replace<Hitbox>(attacker, hb);
 }
 
-void AttackState::checkCollision(Registry& registry, uint32_t attacker) {
+void AttackState::checkCollision(Registry& registry, EntityID attacker) {
     const Hitbox* hb = registry.try_get<Hitbox>(attacker);
     if (!hb) return;
 
@@ -103,7 +103,7 @@ void AttackState::checkCollision(Registry& registry, uint32_t attacker) {
     });
 }
 
-void AttackState::removeHitbox(Registry& registry, uint32_t attacker) {
+void AttackState::removeHitbox(Registry& registry, EntityID attacker) {
     registry.remove<Hitbox>(attacker);
 }
 
