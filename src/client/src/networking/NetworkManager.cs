@@ -64,7 +64,6 @@ namespace DarkAges.Networking
     [Signal]
     public delegate void DialogueStartReceivedEventHandler(uint npcId, uint dialogueId, string npcName, string dialogueText, string[] options);
 
-
  // Socket
         private UdpClient? _udpClient;
         private IPEndPoint? _serverEndPoint;
@@ -873,6 +872,32 @@ namespace DarkAges.Networking
             }
         }
 
+        /// <summary>
+        /// Send a lock-on target request to the server.
+        /// Format: [type:1=5][target_entity:4][client_timestamp:4]
+        /// </summary>
+        public void SendLockOnRequest(uint targetEntityId)
+        {
+            if (_udpClient == null || _serverEndPoint == null) return;
+            if (GameState.Instance.CurrentConnectionState != GameState.ConnectionState.Connected) return;
+
+            byte[] data = new byte[9];
+            data[0] = PACKET_LOCK_ON_REQUEST;
+            BitConverter.GetBytes(targetEntityId).CopyTo(data, 1);
+            uint timestamp = (uint)Time.GetTicksMsec();
+            BitConverter.GetBytes(timestamp).CopyTo(data, 5);
+
+            try
+            {
+                _udpClient.Send(data, data.Length);
+                GD.Print($"[NetworkManager] Sent lock-on request target={targetEntityId} ts={timestamp}");
+            }
+            catch (Exception ex)
+            {
+                GD.PrintErr($"[NetworkManager] Lock-on request send failed: {ex.Message}");
+            }
+        }
+
         
         /// <summary>
         /// Process dialogue start packet from server.
@@ -902,6 +927,23 @@ namespace DarkAges.Networking
             
             GD.Print($"[NetworkManager] Dialogue start from {npcName}");
             EmitSignal(SignalName.DialogueStartReceived, npcId, dialogueId, npcName, dialogueText, options);
+=======
+            byte[] data = new byte[9];
+            data[0] = PACKET_LOCK_ON_REQUEST;
+            BitConverter.GetBytes(targetEntityId).CopyTo(data, 1);
+            uint timestamp = (uint)Time.GetTicksMsec();
+            BitConverter.GetBytes(timestamp).CopyTo(data, 5);
+
+            try
+            {
+                _udpClient.Send(data, data.Length);
+                GD.Print($"[NetworkManager] Sent lock-on request target={targetEntityId} ts={timestamp}");
+            }
+            catch (Exception ex)
+            {
+                GD.PrintErr($"[NetworkManager] Lock-on request send failed: {ex.Message}");
+            }
+>>>>>>> theirs
         }
 
         private void ProcessCombatResult(byte[] data)
