@@ -172,7 +172,7 @@ def heuristic_review(diff_text: str, agents_text: str) -> dict:
     current_file = None
 
     # Known violation patterns
-    forbidden_namespace = re.compile(r'\bnamespace\s+[dD]arkages\b', re.IGNORECASE)
+    forbidden_namespace = re.compile(r'\bnamespace\s+darkages\b')  # case-sensitive: DarkAges (correct)
     entitle_has = re.compile(r'registry\.has<')
     entitle_view_size = re.compile(r'\.view\.size\s*\(')
     forward_decl_sizeof = re.compile(r'sizeof\s*\(\s*\w+\s*\)')
