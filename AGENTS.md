@@ -1,14 +1,14 @@
 ## Recent Commits (last 10 — updated)
-1. fix(combat): address subjective review: proper headers, Hitbox component, clean damage
-2. fix(combat): resolve circular dependency between CoreTypes.hpp and State.hpp; add attackWindupMs to CombatConfig; make CombatState copyable/movable for entity migration
-3. docs: comprehensive gap analysis - phase verification, test inconsistencies
-4. docs: update Gaps section date to 2026-04-29
-5. Merge PR #27: fix MetricsExporter reinitialization
-6. docs: update Recent Commits with FootIKController fix
-7. fix: resolve client build failures and refresh metrics
-8. feat(combat): implement Foot IK and complete playability validation
-9. docs: update test results with root cause analysis
-10. Merge pull request #26: fix cmake installer and test results
+1. feat(combat): complete FSM refactor; circular dependency resolved; hitbox component added; proper headers and final review fixes
+2. fix(skill): correct namespace heuristic to avoid false positives on DarkAges namespace
+3. docs(agents): update Recent Commits ordering and restore State section with test metrics
+4. fix(combat): address subjective review: proper headers, Hitbox component, clean damage
+5. fix(combat): resolve circular dependency in combat state machine; restore copy semantics
+6. fix(combat): rewrite AttackState without Hitbox component and fix RecoveryState timing
+7. docs: resolve demo readiness contradiction, validate all phases complete
+8. Merge PR #28: fix combat FSM entity types and complete OpenHands integration
+9. docs: update TEST_SUMMARY.md with current test status - 1302 cases all pass
+10. fix(combat): change state entity parameters from uint32_t to EntityID
 
 ## State (2026-04-29)
 
