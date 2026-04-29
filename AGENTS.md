@@ -1,14 +1,14 @@
 ## Recent Commits (last 10 — updated)
-1. feat(combat): complete FSM refactor; circular dependency resolved; hitbox component added; proper headers and final review fixes
-2. fix(skill): correct namespace heuristic to avoid false positives on DarkAges namespace
-3. docs(agents): update Recent Commits ordering and restore State section with test metrics
-4. fix(combat): address subjective review: proper headers, Hitbox component, clean damage
-5. fix(combat): resolve circular dependency in combat state machine; restore copy semantics
-6. fix(combat): rewrite AttackState without Hitbox component and fix RecoveryState timing
-7. docs: resolve demo readiness contradiction, validate all phases complete
-8. Merge PR #28: fix combat FSM entity types and complete OpenHands integration
-9. docs: update TEST_SUMMARY.md with current test status - 1302 cases all pass
-10. fix(combat): change state entity parameters from uint32_t to EntityID
+1. fix(gns): enable C language to support compile features required by GameNetworkingSockets
+2. feat(combat): complete FSM refactor; circular dependency resolved; hitbox component added; proper headers and final review fixes
+3. fix(skill): correct namespace heuristic to avoid false positives on DarkAges namespace
+4. docs(agents): update Recent Commits ordering and restore State section with test metrics
+5. fix(combat): address subjective review: proper headers, Hitbox component, clean damage
+6. fix(combat): resolve circular dependency in combat state machine; restore copy semantics
+7. fix(combat): rewrite AttackState without Hitbox component and fix RecoveryState timing
+8. docs: resolve demo readiness contradiction, validate all phases complete
+9. Merge PR #28: fix combat FSM entity types and complete OpenHands integration
+10. docs: update TEST_SUMMARY.md with current test status - 1302 cases all pass
 
 ## State (2026-04-29)
 
@@ -16,7 +16,7 @@
 - Phase 1-5: UNVERIFIED — No documentation found for implementation
 - Phase 6: COMPLETE — build system hardening
 - Phase 7: COMPLETE — All tests pass (2129 cases, 12644 assertions, 100%)
-- Phase 8: PARTIAL — multiple work packages complete, GNS blocked
+- Phase 8: PARTIAL — multiple work packages complete, GNS compile-time fix merged; runtime integration pending
 - Phase 9: COMPLETE — performance budgets validated
 - **Tests**: All suites passing (2129 cases, 12644 assertions, 100%)
 - **Test breakdown**:
@@ -28,7 +28,7 @@
   - test_database: 53 cases, 260 assertions
   - remaining suites: 152 cases, 1104 assertions
 - Server: ~32K LOC (C++20, EnTT ECS, 60Hz tick) | Client: ~9K LOC (C# Godot 4.2)
-- **PR #29 status**: Combat FSM refactor — circular dependency resolved, signature alignment verified, Hitbox component canonicalized, hardcoded damage removed; build + all 2129 tests passing; awaiting two-agent review (objective test + subjective architectural)
+- **PR #29 status**: MERGED — Combat FSM refactor completed; two-agent review passed (objective test + subjective architectural); all 2129 tests passing.
 
 ## OpenHands Integration Updates (2026-04-29)
 
