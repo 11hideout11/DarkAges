@@ -61,16 +61,16 @@ cd build_validate && ctest --output-on-failure -j1
 
 ## Recent Commits (last 10 — updated)
 
-1. feat(combat): implement Foot IK and controls documentation
-2. feat(combat): Combat FSM + Demo Zones + Hitbox Tests
-3. feat(dialogue): integrate client-server dialogue network protocol
-4. feat(npc): add E-key interaction system with extended input protocol
-5. fix(eval): ignore sizeof on fundamental types in heuristic reviewer
-6. feat(zones): create demo zone configurations (tutorial, arena, boss)
-7. fix(client): resolve C# compilation errors and scene tree issues
-8. Merge autonomous/20260427-npc-interaction: NPC interaction additions
-9. chore: add P2.5 demo visual polish tasks and update test metric baselines
-10. docs: update AGENTS.md state date and refresh Recent Commits after docs merge
+1. fix(client): resolve AnimationStateMachine namespace and typo in FootIKController
+2. feat(combat): implement Foot IK and controls documentation
+3. feat(combat): Combat FSM + Demo Zones + Hitbox Tests
+4. feat(dialogue): integrate client-server dialogue network protocol
+5. feat(npc): add E-key interaction system with extended input protocol
+6. fix(eval): ignore sizeof on fundamental types in heuristic reviewer
+7. feat(zones): create demo zone configurations (tutorial, arena, boss)
+8. fix(client): resolve C# compilation errors and scene tree issues
+9. Merge autonomous/20260427-npc-interaction: NPC interaction additions
+10. chore: add P2.5 demo visual polish tasks and update test metric baselines
 ---
 
 
