@@ -67,17 +67,16 @@ cd build_validate && ctest --output-on-failure -j1
 
 ## Recent Commits (last 10 — updated)
 
-1. Merge PR #27: fix MetricsExporter reinitialization
-2. docs: update Recent Commits with FootIKController fix
-3. fix: resolve client build failures and refresh metrics
-4. feat(combat): implement Foot IK and complete playability validation
-5. docs: update test results with root cause analysis
-6. Merge pull request #26: fix cmake installer and test results
-7. fix: add cmake installer and document test results
-8. fix(client): correct Player scene
+1. docs: update Gaps section date to 2026-04-29
+2. Merge PR #27: fix MetricsExporter reinitialization
+3. docs: update Recent Commits with FootIKController fix
+4. fix: resolve client build failures and refresh metrics
+5. feat(combat): implement Foot IK and complete playability validation
+6. docs: update test results with root cause analysis
+7. Merge pull request #26: fix cmake installer and test results
+8. fix: add cmake installer and document test results
 9. fix(client): correct Player scene
-10. fix(server): correct CMakeLists.txt dependency handling
-11. fix(server): correct CMakeLists.txt dependency handling
+10. fix(client): correct Player scene
 ---
 
 
