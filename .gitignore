@@ -165,3 +165,10 @@ src/server/build/
 
 # Autonomous runtime state
 scripts/autonomous/.edit_history.json
+
+# Demo instrumentation artifacts (exclude large generated JSON)
+tools/analysis/reports/instrumented_run.json
+tools/analysis/reports/*.json
+
+# Hermes agent runtime files
+.hermes/

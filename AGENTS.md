@@ -76,7 +76,6 @@ cd build_validate && ctest --output-on-failure -j1
 7. Merge pull request #26: fix cmake installer and test results
 8. fix: add cmake installer and document test results
 9. fix(client): correct Player scene
-10. fix(client): correct Player scene
 ---
 
 
