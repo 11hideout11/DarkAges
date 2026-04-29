@@ -1,5 +1,11 @@
 # DarkAges MMO — Agent Map
 
+## LLM Cost Control (Updated 2026-04-28)
+- **Model Config**: `.hermes/config.json` enforces banned models (Kimi 2.6/2.5), auxiliary agent model tiers (forced to haiku), and token limits.
+- **Auxiliary Agents**: `writer`, `community-manager`, `prototyper`, `qa-tester`, `accessibility-specialist` forced to `haiku` (cheapest tier).
+- **Banned Models**: `moonshot/kimi-2.6`, `moonshot/kimi-2.5`, `kimi-2.6` — automatically replaced with `haiku` if requested.
+- **Token Optimization**: Context truncation (max 500 lines for aux), prompt minimization for non-critical agents, enforced token limits per tier.
+
 ## Build & Validate
 ```bash
 cmake -S . -B build_validate -DBUILD_TESTS=ON -DFETCH_DEPENDENCIES=ON -DENABLE_GNS=OFF -DENABLE_REDIS=OFF -DENABLE_SCYLLA=OFF
@@ -57,20 +63,21 @@ cd build_validate && ctest --output-on-failure -j1
 - **MVP HIGH**: Foot IK — SkeletonIK3D nodes configured with terrain alignment — COMPLETE
 - **MVP HIGH**: Human playability — All controls validated and documented — COMPLETE
 - **MVP MEDIUM**: Blend spaces — Not yet implemented (can be added post-MVP)
-- **MVP MEDIUM**: Visual polish (SDFGI, post-processing) configured but needs validation in demo context
+- **MVP MEDIUM**: Visual polish — SDFGI+SSAO+SSIL enabled in Main.tscn; extended demo deep validation passed (all artifacts non-fatal)
 
 ## Recent Commits (last 10 — updated)
 
-1. docs: update Recent Commits with FootIKController fix
-2. fix: resolve client build failures and refresh metrics
-3. feat(combat): implement Foot IK and complete playability validation
-4. docs: update test results with root cause analysis
-5. Merge pull request #26: fix cmake installer and test results
-6. fix: add cmake installer and document test results
-7. fix(client): correct Player scene
+1. Merge PR #27: fix MetricsExporter reinitialization
+2. docs: update Recent Commits with FootIKController fix
+3. fix: resolve client build failures and refresh metrics
+4. feat(combat): implement Foot IK and complete playability validation
+5. docs: update test results with root cause analysis
+6. Merge pull request #26: fix cmake installer and test results
+7. fix: add cmake installer and document test results
 8. fix(client): correct Player scene
-9. fix(server): correct CMakeLists.txt dependency handling
+9. fix(client): correct Player scene
 10. fix(server): correct CMakeLists.txt dependency handling
+11. fix(server): correct CMakeLists.txt dependency handling
 ---
 
 
