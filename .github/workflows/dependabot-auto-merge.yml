@@ -1,0 +1,49 @@
+name: Dependabot Auto-Merge
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+  pull_request_target:
+    types: [opened, synchronize, reopened]
+
+# Allow only one workflow run at a time
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test-and-merge:
+    if: ${{ github.actor == 'dependabot[bot]' }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Fetch repository
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.ref }}
+          repository: ${{ github.event.pull_request.head.repo.full_name }}
+          fetch-depth: 0
+      
+      - name: Setup CMake
+        uses: lukka/get-cmake@latest
+        with:
+          cmake_version: "3.28"
+      
+      - name: Configure build
+        run: |
+          cmake -S . -B build \
+            -DBUILD_TESTS=ON \
+            -DFETCH_DEPENDENCIES=ON \
+            -DENABLE_GNS=OFF \
+            -DENABLE_REDIS=OFF \
+            -DENABLE_SCYLLA=OFF
+      
+      - name: Build
+        run: cmake --build build -j$(nproc)
+      
+      - name: Run tests
+        run: cd build && ctest --output-on-failure -j1
+      
+      - name: Enable Dependabot auto-merge
+        run: gh pr merge --auto --squash "${{ github.event.pull_request.number }}"
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
