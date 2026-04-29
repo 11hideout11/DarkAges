@@ -248,10 +248,10 @@ TEST_CASE("ServerStateExporter computes healthPercent from CombatState", "[instr
     EntityID e = reg.create();
     reg.emplace<Position>(e, Position{});
     reg.emplace<Velocity>(e);
-    CombatState combat;
+    reg.emplace<CombatState>(e);
+    auto& combat = reg.get<CombatState>(e);
     combat.health = 7500;
     combat.maxHealth = 10000;
-    reg.emplace<CombatState>(e, combat);
 
     exporter.maybeExport(reg, 1, 0);
 
@@ -276,10 +276,10 @@ TEST_CASE("ServerStateExporter healthPercent defaults to 0 when maxHealth is 0",
     EntityID e = reg.create();
     reg.emplace<Position>(e, Position{});
     reg.emplace<Velocity>(e);
-    CombatState combat;
+    reg.emplace<CombatState>(e);
+    auto& combat = reg.get<CombatState>(e);
     combat.health = 100;
     combat.maxHealth = 0;
-    reg.emplace<CombatState>(e, combat);
 
     exporter.maybeExport(reg, 1, 0);
 

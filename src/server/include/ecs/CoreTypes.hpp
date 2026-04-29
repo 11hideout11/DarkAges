@@ -1,3 +1,4 @@
+
 #pragma once
 
 #include "Constants.hpp"
@@ -8,6 +9,8 @@
 
 // [PHYSICS_AGENT] Core ECS types and components
 // All components are POD (Plain Old Data) for cache efficiency
+
+#include "combat/detail/State.hpp"
 
 namespace DarkAges {
 
@@ -148,7 +151,6 @@ struct InputState {
 // COMBAT COMPONENTS
 // ============================================================================
 
-// [COMBAT_AGENT] Combat state
 struct CombatState {
     int16_t health{10000};      // 0-10000 (100.0 health)
     int16_t maxHealth{10000};
@@ -159,9 +161,41 @@ struct CombatState {
     uint32_t lastGlobalCooldownTime{0};  // Last time any ability/attack was used (for GCD)
     bool isDead{false};
 
-    // FSM state
-    uint8_t currentState{0};     // 0=Idle,1=AttackWindup,2=AttackActive,3=Cooldown,4=Stunned,5=Dead
-    float stateTimer{0.0f};      // Seconds elapsed in current state
+    // FSM: polymorphic state machine
+    std::unique_ptr<State> currentState{nullptr};
+
+    // Constructors / assignment
+    CombatState() = default;
+    ~CombatState();
+
+    // Copy constructor: for snapshot/migration; copies only data, resets FSM state.
+    CombatState(const CombatState& other)
+        : health(other.health), maxHealth(other.maxHealth), teamId(other.teamId),
+          classType(other.classType), lastAttacker(other.lastAttacker),
+          lastAttackTime(other.lastAttackTime), lastGlobalCooldownTime(other.lastGlobalCooldownTime),
+          isDead(other.isDead), currentState(nullptr) {}
+
+    // Copy assignment: similar semantics (reset FSM state)
+    CombatState& operator=(const CombatState& other) {
+        if (this != &other) {
+            health = other.health;
+            maxHealth = other.maxHealth;
+            teamId = other.teamId;
+            classType = other.classType;
+            lastAttacker = other.lastAttacker;
+            lastAttackTime = other.lastAttackTime;
+            lastGlobalCooldownTime = other.lastGlobalCooldownTime;
+            isDead = other.isDead;
+            currentState.reset();
+        }
+        return *this;
+    }
+
+    // Move operations: default (unique_ptr supports move)
+    CombatState(CombatState&&) = default;
+    CombatState& operator=(CombatState&&) = default;
+
+
 
     [[nodiscard]] float healthPercent() const {
         return static_cast<float>(health) / static_cast<float>(maxHealth) * 100.0f;

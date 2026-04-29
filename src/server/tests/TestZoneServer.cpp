@@ -565,10 +565,10 @@ TEST_CASE("ZoneServer registry supports entity creation", "[zones][zoneserver]")
 
     SECTION("create entity with combat state component") {
         auto entity = registry.create();
-        CombatState combat{};
+        registry.emplace<CombatState>(entity);
+        auto& combat = registry.get<CombatState>(entity);
         combat.health = 1000;
         combat.maxHealth = 1000;
-        registry.emplace<CombatState>(entity, combat);
 
         auto& c = registry.get<CombatState>(entity);
         REQUIRE(c.health == 1000);
@@ -1040,11 +1040,8 @@ TEST_CASE("ZoneServer metrics accumulate correctly across many ticks", "[zones][
     REQUIRE(metrics.tickCount == numTicks);
     REQUIRE(metrics.totalTickTimeUs > 0);
     REQUIRE(metrics.maxTickTimeUs > 0);
-    REQUIRE(metrics.overruns >= 0);
-    REQUIRE(metrics.networkTimeUs >= 0);
-    REQUIRE(metrics.physicsTimeUs >= 0);
-    REQUIRE(metrics.gameLogicTimeUs >= 0);
-    REQUIRE(metrics.replicationTimeUs >= 0);
+    // overruns, networkTimeUs are uint64_t; non-negative by definition
+    // physicsTimeUs, gameLogicTimeUs, replicationTimeUs are uint64_t; non-negative by definition
 }
 
 TEST_CASE("ZoneServer metrics reset zeroes all counters", "[zones][zoneserver][depth]") {

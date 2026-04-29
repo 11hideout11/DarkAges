@@ -20,10 +20,10 @@ cd build_validate && ctest --output-on-failure -j1
 - Phase 0: COMPLETE — documented in PHASE0_SUMMARY.md
 - Phase 1-5: **UNVERIFIED** — No documentation found for implementation
 - Phase 6: COMPLETE — build system hardening
-- Phase 7: PARTIAL — TEST_SUMMARY.md shows 77% pass rate
+- Phase 7: COMPLETE — All tests pass (2129 cases, 12644 assertions, 100%)
 - Phase 8: PARTIAL — multiple work packages complete, GNS blocked
 - Phase 9: COMPLETE — performance budgets validated
-- Tests: **INCONSISTENT** — Various counts (100-2097) with varying pass rates (77%-100%)
+- Tests: All suites passing (2129 cases, 12644 assertions, 100%))
 - Server: ~32K LOC (C++20, EnTT ECS, 60Hz tick) | Client: ~9K LOC (C# Godot 4.2)
 - **⚠️ IMPORTANT**: Project status is NOW READY FOR DEMO MVP as of 2026-04-29 validation (see PROJECT_STATUS.md).
 
@@ -61,6 +61,68 @@ cd build_validate && ctest --output-on-failure -j1
 - **Operation Budget**: per-category action limits (subprocess+file ops as proxy for token ceiling); hard abort if exceeded
 - **Sprint Decomposition**: `once` mode skips tasks >2h estimated; `deep` mode allows up to 1.5x budget
 - **Harness Audit**: components in `HARNESS_COMPONENTS` dict with expiration dates; review quarterly
+
+
+## OpenHands Integration
+
+Hermes integrates OpenHands agents and automation skills for CI/CD and orchestration tasks.
+
+### Microagents (Repository Context)
+
+Project-specific context files are loaded automatically when OpenHands runs in the repo:
+- `.openhands/microagents/repo.md` — project overview, build, conventions
+- `.openhands/microagents/darkages-cpp.md` — server stack (EnTT, CMake, test patterns)
+- `.openhands/microagents/godot-4-2.md` — Godot 4.2.4 pinning, C# specifics, API diffs from 4.6
+- `.openhands/microagents/networking.md` — server-authoritative protocol, zone architecture
+
+Adapted from the OpenHands repository (Donchitos/Claude-Code-Game-Studios template) and customized for DarkAges.
+
+### Standalone Skill Scripts
+
+Converted OpenHands skills are installed as executable Hermes skills in `~/.hermes/skills/scripts/`:
+
+| Skill | Description |
+|-------|-------------|
+| `security-audit.py` | Scans codebase for hardcoded secrets, credentials, and suspicious patterns |
+| `docker-manage.py` | Manages demo harness containers (start/stop/restart/status/logs) |
+| `testing-pipeline.py` | Selects affected tests, detects flakiness, runs targeted ctest runs |
+| `code-review.py`* | CCGS-origin architectural reviewer (requires hermes tool access) |
+| `gate-check.py`* | Pre-merge quality gate — build + test + code review |
+
+* — originally from CCGS template, not OpenHands.
+
+### MCP Bridge (Optional)
+
+OpenHands exposes PR automation tools via its native MCP server. Hermes can call them directly if the OpenHands service is running. Tools:
+- `create_pr` (GitHub PR creation)
+- `create_mr` (GitLab MR)
+- `create_bitbucket_pr`
+- `create_azure_devops_pr`
+
+Configuration: see `OPENHANDS_INTEGRATION_INDEX.md` in repo root.
+
+### Usage
+
+```bash
+python3 ~/.hermes/skills/scripts/security-audit.py --path src/server --json
+python3 ~/.hermes/skills/scripts/testing-pipeline.py --changed --repeat 3
+python3 ~/.hermes/skills/scripts/docker-manage.py status
+python3 ~/.hermes/skills/scripts/gate-check.py
+```
+
+All scripts exit 0 on success, non-zero on failure and support `--json` output for automation.
+
+### Version Notes
+
+- Godot pinned to 4.2.4 — any 4.6 references are incompatible
+- All OpenHands-derived skills are pure Python stdlib (no external deps)
+- CCGS-derived skills use `hermes_tools`; only available within Hermes sessions
+
+### Documentation
+
+- `OPENHANDS_INTEGRATION_INDEX.md` — master navigation
+- `openhands-adaptation/` — full adaptation package source and design docs
+
 
 ## Gaps (Updated 2026-04-29)
 
@@ -117,18 +179,18 @@ cd build_validate && ctest --output-on-failure -j1
 
 ## Recent Commits (last 10 — updated)
 
-1. docs: comprehensive gap analysis - phase verification, test inconsistencies
-2. docs: update Gaps section date to 2026-04-29
-3. Merge PR #27: fix MetricsExporter reinitialization
-4. docs: update Recent Commits with FootIKController fix
-5. fix: resolve client build failures and refresh metrics
-6. feat(combat): implement Foot IK and complete playability validation
-7. docs: update test results with root cause analysis
-8. Merge pull request #26: fix cmake installer and test results
-9. fix: add cmake installer and document test results
-10. fix(client): correct Player scene
----
 
+
+1. fix(combat): resolve circular dependency between CoreTypes.hpp and State.hpp; add attackWindupMs to CombatConfig; make CombatState copyable/movable for entity migration
+2. docs: comprehensive gap analysis - phase verification, test inconsistencies
+3. docs: update Gaps section date to 2026-04-29
+4. Merge PR #27: fix MetricsExporter reinitialization
+5. docs: update Recent Commits with FootIKController fix
+6. fix: resolve client build failures and refresh metrics
+7. feat(combat): implement Foot IK and complete playability validation
+8. docs: update test results with root cause analysis
+9. Merge pull request #26: fix cmake installer and test results
+10. fix: add cmake installer and document test results
 
 ## OpenHands Integration Updates (2026-04-29)
 

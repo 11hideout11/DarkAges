@@ -3,6 +3,9 @@
 
 #include "combat/CombatSystem.hpp"
 #include "Constants.hpp"
+#include <memory>
+#include "combat/detail/State.hpp"
+#include "combat/detail/IdleState.hpp"
 #include <cmath>
 #include <algorithm>
 #include <cstdlib>
@@ -11,6 +14,11 @@
 #include <glm/glm.hpp>
 #include <vector>
 
+
+// CombatState destructor (required for unique_ptr<State>)
+namespace DarkAges {
+    CombatState::~CombatState() = default;
+}
 namespace DarkAges {
 
 // ============================================================================
@@ -495,6 +503,32 @@ void CombatSystem::onEntityDied(Registry& registry, EntityID victim, EntityID ki
     // This is called internally by killEntity before the callback
     // Additional death logic can be added here
 }
+void CombatSystem::updateFSM(Registry& registry, float deltaSec, uint32_t /*currentTimeMs*/) {
+    auto view = registry.view<CombatState>();
+    for (auto entity : view) {
+        CombatState* combat = registry.try_get<CombatState>(entity);
+        if (!combat) continue;
+
+        // Initialize state if absent
+        if (!combat->currentState) {
+            combat->currentState = std::make_unique<combat::detail::IdleState>();
+            combat->currentState->Enter(registry, entity);
+            continue;
+        }
+
+        // Tick current state
+        StateStatus status = combat->currentState->Update(registry, entity, deltaSec);
+        if (status == StateStatus::Finish) {
+            State* next = combat->currentState->GetNextState(combat);
+            if (next) {
+                combat->currentState->Exit(registry, entity);
+                combat->currentState.reset(next);
+                next->Enter(registry, entity);
+            }
+        }
+    }
+}
+
 
 // ============================================================================
 // HealthRegenSystem Implementation

@@ -72,10 +72,10 @@ static EntityID createSpawnableNPC(Registry& registry, uint32_t groupId,
     stats.xpReward = 50;
     registry.emplace<NPCStats>(entity, stats);
     
-    CombatState combat;
+    registry.emplace<CombatState>(entity);
+    auto& combat = registry.get<CombatState>(entity);
     combat.health = 100;
     combat.maxHealth = 100;
-    registry.emplace<CombatState>(entity, combat);
     
     SpawnableComponent spawnable;
     spawnable.spawnGroupId = groupId;
