@@ -1,0 +1,44 @@
+{
+  "timestamp": "2026-04-28T21:16:32.105908",
+  "git_head": "7018858a38c3cdbc181f58f5322df3ea15a4a634",
+  "uncommitted": [
+    "M scripts/autonomous/.cron_state.json",
+    "?? .hermes/",
+    "?? .openhands/",
+    "?? ADAPTATION_INDEX.md",
+    "?? ADAPTATION_MANIFEST.md",
+    "?? AGENT_ROLE_MAPPING.md",
+    "?? CCGS_HERMES_ADAPTATION_REVIEW.md",
+    "?? HERMES_IMPLEMENTATION_PLAN.md",
+    "?? OPENHANDS_ADAPTATION_INDEX.md",
+    "?? OPENHANDS_INTEGRATION_INDEX.md",
+    "?? docs/engine-reference/",
+    "?? openhands-adaptation/",
+    "?? src/server/include/combat/detail/",
+    "?? src/server/src/combat/AttackState.cpp",
+    "?? src/server/src/combat/CooldownState.cpp",
+    "?? src/server/src/combat/RecoveryState.cpp",
+    "?? test_openhands.txt"
+  ],
+  "cmake_configure": {
+    "exit": 0,
+    "stdout": "-- The CXX compiler identification is GNU 13.3.0\n-- Detecting CXX compiler ABI info\n-- Detecting CXX compiler ABI info - done\n-- Check for working CXX compiler: /usr/bin/c++ - skipped\n-- Detecting CXX compile features\n-- Detecting CXX compile features - done\n-- Performing Test CMAKE_HAVE_LIBC_PTHREAD\n-- Performing Test CMAKE_HAVE_LIBC_PTHREAD - Success\n-- Found Threads: TRUE  \n-- EnTT found in deps/entt\n-- GLM found in deps/glm\n-- nlohmann/json found in deps/json\n-- Protobuf found in deps/protobuf\n-- The C compiler identification is GNU 13.3.0\n-- Detecting C compiler ABI info\n-- Detecting C compiler ABI info - done\n-- Check for working C compiler: /usr/bin/cc - skipped\n-- Detecting C compile features\n-- Detecting C compile features - done\n-- \n-- 3.21.12.0\n-- Performing Test protobuf_HAVE_LD_VERSION_SCRIPT\n-- Performing Test protobuf_HAVE_LD_VERSION_SCRIPT - Success\n-- Found ZLIB: /usr/lib/x86_64-linux-gnu/libz.so (found version \"1.3\")  \n-- Performing Test protobuf_HAVE_BUILTIN_ATOMICS\n-- Performing Test protobuf_HAVE_BUILTIN_ATOMICS - Success\n-- Proceeding with version: 24.3.25.0\n-- Looking for strtof_l\n-- Looking for strtof_l - found\n-- Looking for strtoull_l\n-- Looking for strtoull_l - found\n-- Looking for realpath\n-- Looking for realpath - found\n-- CMAKE_CXX_FLAGS: \n-- Performing Test HAVE_FLAG__ffile_prefix_map__root_projects_DarkAges_build_validate__deps_catch2_src__\n-- Performing Test HAVE_FLAG__ffile_prefix_map__root_projects_DarkAges_build_validate__deps_catch2_src__ - Success\n-- GameNetworkingSockets: Disabled (ENABLE_GNS=OFF)\n-- FlatBuffers: Target available\n-- nlohmann/json: Target available\n-- FlatBuffers code generation configured\n-- NetworkManager: Using real UDP implementation (no GNS)\n--   - NetworkManager_udp.cpp: BSD socket-based UDP server\n-- Protocol: Using stub implementation (GNS not available)\n-- Monitoring: Prometheus metrics enabled\n-- Skipping GNS integration tests (GNS not available)\n-- Skipping Redis integration tests (Redis not available",
+    "stderr": "CMake Warning at CMakeLists.txt:571 (message):\n  RedisManager: Using stub implementation\n\n\nCMake Warning at CMakeLists.txt:594 (message):\n  ScyllaManager: Using stub implementation\n\n\n\n========================================\nDarkAges Server Build Configuration\n========================================\nC++ Standard: 20\nBuild type: \nBuild tests: ON\nAddressSanitizer: OFF\n\nDependencies:\n  EnTT: TRUE - /root/projects/DarkAges/deps/entt/single_include\n  GLM: TRUE - /root/projects/DarkAges/deps/glm\n  FlatBuffers: TRUE\n  GameNetworkingSockets: FALSE\n  hiredis: FALSE\n  cassandra-cpp-driver: FALSE\n  nlohmann/json: TRUE\n========================================\n\n"
+  },
+  "build": {
+    "exit": 2,
+    "errors": [
+      "/root/projects/DarkAges/src/server/src/instrumentation/ServerStateExporter.hpp:9:10: fatal error: nlohmann/json.hpp: No such file or directory"
+    ],
+    "summary": "ic_string<char>::size_type\u2019 {aka \u2018long unsigned int\u2019} [-Wsign-compare]\n  158 |         for (int i = 0; i < default_str.length(); ++i) {\n      |                         ~~^~~~~~~~~~~~~~~~~~~~~~\n/root/projects/DarkAges/deps/protobuf/src/google/protobuf/compiler/ruby/ruby_generator.cc: In function \u2018std::string google::protobuf::compiler::ruby::PackageToModule(const std::string&)\u2019:\n/root/projects/DarkAges/deps/protobuf/src/google/protobuf/compiler/ruby/ruby_generator.cc:329:21: warning: comparison of integer expressions of different signedness: \u2018int\u2019 and \u2018std::__cxx11::basic_string<char>::size_type\u2019 {aka \u2018long unsigned int\u2019} [-Wsign-compare]\n  329 |   for (int i = 0; i < name.size(); i++) {\n      |                   ~~^~~~~~~~~~~~~\n/root/projects/DarkAges/deps/protobuf/src/google/protobuf/compiler/subprocess.cc: In member function \u2018bool google::protobuf::compiler::Subprocess::Communicate(const google::protobuf::Message&, google::protobuf::Message*, std::string*)\u2019:\n/root/projects/DarkAges/deps/protobuf/src/google/protobuf/compiler/subprocess.cc:432:21: warning: comparison of integer expressions of different signedness: \u2018int\u2019 and \u2018std::__cxx11::basic_string<char>::size_type\u2019 {aka \u2018long unsigned int\u2019} [-Wsign-compare]\n  432 |       if (input_pos == input_data.size()) {\n      |           ~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~\nIn file included from /root/projects/DarkAges/src/server/src/instrumentation/ServerStateExporter.cpp:1:\n/root/projects/DarkAges/src/server/src/instrumentation/ServerStateExporter.hpp:9:10: fatal error: nlohmann/json.hpp: No such file or directory\n    9 | #include <nlohmann/json.hpp>\n      |          ^~~~~~~~~~~~~~~~~~~\ncompilation terminated.\ngmake[2]: *** [CMakeFiles/darkages_core.dir/build.make:454: CMakeFiles/darkages_core.dir/src/server/src/instrumentation/ServerStateExporter.cpp.o] Error 1\ngmake[2]: *** Waiting for unfinished jobs....\ngmake[1]: *** [CMakeFiles/Makefile2:224: CMakeFiles/darkages_core.dir/all] Error 2\ngmake: *** [Makefile:146: all] Error 2\n"
+  },
+  "test": {
+    "exit": null,
+    "output": "",
+    "skipped": "build failed"
+  },
+  "issues": [
+    "Build failed \u2014 see errors above",
+    "Missing nlohmann/json include path (deps local vs fetched mismatch)"
+  ]
+}

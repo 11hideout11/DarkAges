@@ -496,6 +496,10 @@ set(SERVER_SOURCES
     src/server/src/combat/DialogueSystem.cpp
     src/server/src/combat/PositionHistory.cpp
     src/server/src/combat/LagCompensatedCombat.cpp
+    src/server/src/combat/AttackState.cpp
+    src/server/src/combat/CooldownState.cpp
+    src/server/src/combat/RecoveryState.cpp
+    src/server/src/combat/IdleState.cpp
     src/server/src/combat/AchievementSystem.cpp
     src/server/src/combat/LeaderboardSystem.cpp
     src/server/src/combat/TargetLockSystem.cpp

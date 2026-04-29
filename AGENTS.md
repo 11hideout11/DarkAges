@@ -1,10 +1,13 @@
 # DarkAges MMO — Agent Map
 
-## LLM Cost Control (Updated 2026-04-28)
-- **Model Config**: `.hermes/config.json` enforces banned models (Kimi 2.6/2.5), auxiliary agent model tiers (forced to haiku), and token limits.
-- **Auxiliary Agents**: `writer`, `community-manager`, `prototyper`, `qa-tester`, `accessibility-specialist` forced to `haiku` (cheapest tier).
-- **Banned Models**: `moonshot/kimi-2.6`, `moonshot/kimi-2.5`, `kimi-2.6` — automatically replaced with `haiku` if requested.
-- **Token Optimization**: Context truncation (max 500 lines for aux), prompt minimization for non-critical agents, enforced token limits per tier.
+## LLM Cost Control (Updated 2026-04-29)
+- **FREE Models Only**: All agents use Ollama local models (no API keys required):
+  - Critical agents (3 directors): `ollama/llama3.1:8b`
+  - Standard agents (leads): `ollama/llama3.2:3b`
+  - Auxiliary/specialists (all others): `ollama/llama3.2:1b` (smallest/fastest)
+- **Banned Models**: All paid APIs banned (Anthropic Claude, OpenAI GPT, Moonshot Kimi)
+- **Aggressive Cost Control**: ALL non-critical agents forced to cheapest model (`ollama/llama3.2:1b`)
+- **Token Optimization**: Context truncation (max 300 lines), prompt minimization, 512 token limit for auxiliary tasks.
 
 ## Build & Validate
 ```bash

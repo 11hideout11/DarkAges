@@ -1,0 +1,53 @@
+{
+  "timestamp": "2026-04-28T21:54:01.737236",
+  "git_head": "7018858a",
+  "build": {
+    "configured": true,
+    "build_ok": true,
+    "json_bug_fixed": true,
+    "cmake_patch": "target_link_libraries(darkages_core PUBLIC nlohmann_json::nlohmann_json)"
+  },
+  "skills": {
+    "total": 10,
+    "list": [
+      "code-format.py",
+      "code-review.py",
+      "coverage-report.py",
+      "docker-manage.py",
+      "gate-check.py",
+      "pr-comment.py",
+      "pr-create.py",
+      "security-audit.py",
+      "test-flakiness.py",
+      "testing-pipeline.py"
+    ],
+    "all_executable": true,
+    "newly_added": [
+      "pr-create.py",
+      "coverage-report.py",
+      "test-flakiness.py",
+      "pr-comment.py",
+      "code-format.py"
+    ]
+  },
+  "microagents": {
+    "location": ".openhands/microagents/",
+    "files": [
+      "darkages-cpp.md",
+      "godot-4-2.md",
+      "networking.md",
+      "repo.md"
+    ]
+  },
+  "docs": {
+    "index": "OPENHANDS_INTEGRATION_INDEX.md",
+    "reference": "OPENHANDS_SKILLS_REFERENCE.md",
+    "manifest": "ADAPTATION_MANIFEST.md",
+    "agents_updated": true
+  },
+  "notes": [
+    "CombatSystem signature mismatch stashed \u2014 not affecting build",
+    "Gate-check passes (build+test) when invoked; test suite runs ~80s",
+    "All new skills tested via --help and dry-run smoke"
+  ]
+}
