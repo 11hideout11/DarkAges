@@ -250,6 +250,11 @@ MetricsExporter& MetricsExporter::Instance() {
 }
 
 bool MetricsExporter::Initialize(uint16_t port) {
+    // Already initialized - clean up first
+    if (running_) {
+        Shutdown();
+    }
+
     port_ = port;
     
     InitDefaultMetrics();
