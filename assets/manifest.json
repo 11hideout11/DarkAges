@@ -1,0 +1,1166 @@
+{
+  "spec_version": "1.0",
+  "project": "DarkAges MMO",
+  "engine": "Godot 4.2.2",
+  "renderer": "Forward+",
+  "client_language": "C#",
+  "generated_date": "2026-04-29",
+  "description": "Master manifest of all required 3D assets, textures, shaders, and effects for DarkAges demo zones. This file drives asset generation, validation, and integration.",
+  "asset_categories": {
+    "characters": {
+      "directory": "assets/characters",
+      "required": true,
+      "assets": [
+        {
+          "id": "char_player_male",
+          "name": "Player Character (Male)",
+          "type": "character",
+          "description": "Base playable human male avatar",
+          "tier": 1,
+          "priority": "CRITICAL",
+          "status": "missing",
+          "format": "glb",
+          "tri_count_target": 15000,
+          "tri_count_max": 18000,
+          "bones_target": 32,
+          "bones_max": 64,
+          "skin_influences_max": 4,
+          "uv_layers": 1,
+          "vertex_colors": false,
+          "rig_type": "humanoid",
+          "required_animations": [
+            "idle", "walk", "run", "jump_start", "jump_loop",
+            "jump_land", "attack_1h_left", "attack_1h_right",
+            "block", "dodge", "parry", "hit_reaction",
+            "death_front", "death_back", "respawn"
+          ],
+          "animation_count": 15,
+          "textures": {
+            "albedo": {
+              "path": "assets/characters/player_male/textures/albedo.png",
+              "resolution": 1024,
+              "format": "PNG",
+              "colorspace": "sRGB",
+              "required": true
+            },
+            "normal": {
+              "path": "assets/characters/player_male/textures/normal.png",
+              "resolution": 1024,
+              "format": "PNG",
+              "colorspace": "Linear",
+              "required": true
+            },
+            "roughness": {
+              "path": "assets/characters/player_male/textures/roughness.png",
+              "resolution": 1024,
+              "format": "PNG",
+              "colorspace": "Linear",
+              "required": true
+            },
+            "metallic": {
+              "path": "assets/characters/player_male/textures/metallic.png",
+              "resolution": 1024,
+              "format": "PNG",
+              "colorspace": "Linear",
+              "required": true
+            },
+            "ao": {
+              "path": "assets/characters/player_male/textures/ao.png",
+              "resolution": 1024,
+              "format": "PNG",
+              "colorspace": "Linear",
+              "required": false
+            }
+          },
+          "material": {
+            "path": "assets/materials/character_player_male.tres",
+            "shader": "StandardMaterial3D",
+            "workflow": "PBR_Metallic_Roughness"
+          },
+          "export": {
+            "glb_path": "assets/characters/player_male/model.glb",
+            "blend_source": "assets/characters/player_male/source.blend",
+            "export_preset": "Godot_Mobile_GLB"
+          },
+          "godot_scene": {
+            "resource_path": "res://assets/characters/player_male/model.glb",
+            "import_flags": {
+              "generate_tangents": true,
+              "generate_lod": false,
+              "apply_modifiers": true,
+              "import_scale": 1.0
+            }
+          },
+          "integration": {
+            "player_scene": "res://scenes/Player.tscn",
+            "animation_tree": "res://scenes/PlayerAnimationTree.tres",
+            "animation_player": "AnimationPlayer",
+            "state_machine": "CombatStateMachine",
+            "script": "res://src/prediction/PredictedPlayer.cs"
+          },
+          "production": {
+            "estimated_hours": 40,
+            "dependencies": ["blender", "armorpaint"],
+            "assignee": null,
+            "start_date": null,
+            "completion_date": null
+          },
+          "notes": "Must support root motion for networked movement. Humanoid bone naming essential for retargeting to NPCs."
+        },
+        {
+          "id": "char_player_female",
+          "name": "Player Character (Female)",
+          "type": "character",
+          "description": "Female player variant - DEFERRED for MVP, male placeholder used",
+          "tier": 2,
+          "priority": "LOW",
+          "status": "deferred",
+          "format": "glb",
+          "tri_count_target": 15000,
+          "bones_target": 32,
+          "texture_count": 4,
+          "required_animations": 15,
+          "production": {
+            "estimated_hours": 35,
+            "notes": "Can share same rig/animations as male; only texture/mesh differ"
+          }
+        },
+        {
+          "id": "npc_guard",
+          "name": "NPC Guard",
+          "type": "character",
+          "description": "Hostile/friendly guard NPC - re-uses player rig/animations",
+          "tier": 2,
+          "priority": "HIGH",
+          "status": "missing",
+          "format": "glb",
+          "tri_count_target": 12000,
+          "tri_count_max": 15000,
+          "bones_target": 32,
+          "texture_count": 4,
+          "material_variants": ["guard_red", "guard_blue", "guard_gold"],
+          "required_animations": ["idle", "walk", "run", "attack_1h", "death", "patrol"],
+          "animation_count": 6,
+          "notes": "Reuse player animations to save work. Different texture atlas for uniform."
+        },
+        {
+          "id": "npc_villager_01",
+          "name": "Villager Type A",
+          "type": "character", 
+          "description": "Passive civilian NPC with idle wander behavior",
+          "tier": 3,
+          "priority": "MEDIUM",
+          "status": "missing",
+          "format": "glb",
+          "tri_count_target": 10000,
+          "bones_target": 32,
+          "animation_count": 4,
+          "required_animations": ["idle", "walk", "talk", "emote_wave"],
+          "notes": "Simple variant - can be reskinned villager"
+        },
+        {
+          "id": "boss_creature",
+          "name": "Boss Creature (Ogre/Dragon Hybrid)",
+          "type": "character",
+          "description": "Zone100 boss enemy, 2.2x player height, custom shader FX",
+          "tier": 1,
+          "priority": "HIGH",
+          "status": "missing",
+          "format": "glb",
+          "tri_count_target": 25000,
+          "tri_count_max": 30000,
+          "bones_target": 48,
+          "custom_rig": true,
+          "texture_count": 5,
+          "required_animations": [
+            "idle", "walk", "attack_lunge", "attack_aoe",
+            "attack_ranged", "enrage", "death_dramatic", "roar"
+          ],
+          "animation_count": 8,
+          "shader_overrides": ["glow_eyes", "fire_aura", "dissolve_death"],
+          "special_effects": ["ground_slam_shockwave", "breath_fire"],
+          "production": {
+            "estimated_hours": 60,
+            "notes": "Requires custom rig, unique VFX, bespoke animations"
+          }
+        }
+      ]
+    },
+
+    "weapons": {
+      "directory": "assets/weapons",
+      "required": true,
+      "assets": [
+        {
+          "id": "weapon_sword_1h",
+          "name": "One-Handed Sword",
+          "type": "weapon",
+          "description": "Basic steel longsword, player starting weapon",
+          "tier": 1,
+          "priority": "CRITICAL",
+          "status": "missing",
+          "format": "glb",
+          "tri_count_target": 1500,
+          "tri_count_max": 2000,
+          "materials": ["steel", "leather_grip", "wood_scabbard"],
+          "textures": {
+            "albedo": {"resolution": 512, "required": true},
+            "normal": {"resolution": 512, "required": true},
+            "roughness": {"resolution": 256, "required": true}
+          },
+          "hitbox": {
+            "shape": "capsule",
+            "extents": [0.05, 0.8, 0.05],
+            "attach_point": "hand_r_weapon"
+          },
+          "damage": {
+            "base": 25,
+            "crit_multiplier": 1.5
+          },
+          "animations": ["draw", "sheath", "drop"],
+          "sound_effects": ["swing_woosh", "hit_metal"],
+          "godot_scene": {
+            "path": "assets/weapons/sword_1h/Sword1H.tscn",
+            "scene_type": "MeshInstance3D + CollisionShape3D"
+          },
+          "production": {
+            "estimated_hours": 6
+          }
+        },
+        {
+          "id": "weapon_sword_2h",
+          "name": "Two-Handed Claymore",
+          "type": "weapon",
+          "description": "Large greatsword, slower but higher damage",
+          "tier": 2,
+          "priority": "HIGH",
+          "status": "missing",
+          "format": "glb",
+          "tri_count_target": 3000,
+          "tri_count_max": 4000,
+          "materials": ["steel"],
+          "hitbox": {
+            "shape": "capsule",
+            "extents": [0.08, 1.2, 0.08]
+          },
+          "damage": {
+            "base": 45,
+            "crit_multiplier": 1.3
+          },
+          "animations": ["draw_2h", "sheath_2h"],
+          "production": {
+            "estimated_hours": 8
+          }
+        },
+        {
+          "id": "weapon_axe_1h",
+          "name": "One-Handed Battle Axe",
+          "type": "weapon",
+          "description": "Medium-weight axe, cleave damage",
+          "tier": 2,
+          "priority": "MEDIUM",
+          "status": "missing",
+          "tri_count_target": 1800,
+          "hitbox": {
+            "shape": "box",
+            "extents": [0.15, 0.6, 0.15]
+          },
+          "damage": {
+            "base": 32,
+            "armor_penetration": 0.2,
+            "crit_multiplier": 1.4
+          },
+          "production": {
+            "estimated_hours": 7
+          }
+        },
+        {
+          "id": "weapon_spear",
+          "name": "Iron Spear",
+          "type": "weapon",
+          "description": "Long-range thrust weapon with reach advantage",
+          "tier": 2,
+          "priority": "MEDIUM",
+          "status": "missing",
+          "format": "glb",
+          "tri_count_target": 2200,
+          "materials": ["iron", "wood"],
+          "hitbox": {
+            "shape": "capsule",
+            "extents": [0.06, 1.5, 0.06]
+          },
+          "damage": {
+            "base": 28,
+            "range_bonus": 1.5
+          },
+          "production": {
+            "estimated_hours": 7
+          }
+        },
+        {
+          "id": "weapon_shield",
+          "name": "Kite Shield",
+          "type": "weapon",
+          "description": "Block-focused shield, raises defence stat",
+          "tier": 2,
+          "priority": "MEDIUM",
+          "status": "missing",
+          "tri_count_target": 1800,
+          "materials": ["wood", "iron_rim", "leather_strap"],
+          "block_rating": 35,
+          "parry_bonus": 15,
+          "attach_point": "hand_l_shield",
+          "production": {
+            "estimated_hours": 6
+          }
+        }
+      ]
+    },
+
+    "environment": {
+      "directory": "assets/environment",
+      "required": true,
+      "assets": [
+        {
+          "id": "env_training_floor",
+          "name": "Tutorial Arena Floor",
+          "type": "environment",
+          "description": "Flat training ground for Zone98",
+          "tier": 1,
+          "priority": "CRITICAL",
+          "status": "missing",
+          "format": "glb",
+          "tri_count_target": 400,
+          "mesh_type": "static",
+          "lod_count": 1,
+          "collision": "convex",
+          "textures": ["ground_dirt_1k_albedo", "ground_dirt_1k_normal"],
+          "zone_assignments": ["Zone98"],
+          "production": {
+            "estimated_hours": 2
+          }
+        },
+        {
+          "id": "env_wall_straight_4m",
+          "name": "Wall Segment - Straight 4m",
+          "type": "environment",
+          "description": "Modular ruined wall - straight piece",
+          "tier": 2,
+          "priority": "HIGH",
+          "status": "missing",
+          "format": "glb",
+          "tri_count_target": 1200,
+          "mesh_type": "static",
+          "lod_count": 2,
+          "pivot_point": "center",
+          "texture_atlas": "ruined_stone_atlas",
+          "variant_of": null,
+          "zone_assignments": ["Zone99", "Zone100"],
+          "production": {
+            "estimated_hours": 4
+          }
+        },
+        {
+          "id": "env_wall_corner_outer",
+          "name": "Wall Corner - Outer 90°",
+          "type": "environment", 
+          "description": "Ruined wall corner piece, exterior",
+          "tier": 2,
+          "priority": "HIGH",
+          "status": "missing",
+          "format": "glb",
+          "tri_count_target": 900,
+          "mesh_type": "static",
+          "zone_assignments": ["Zone99", "Zone100"]
+        },
+        {
+          "id": "env_wall_arch",
+          "name": "Wall with Archway",
+          "type": "environment",
+          "description": "Passageway arch in ruined wall",
+          "tier": 2,
+          "priority": "MEDIUM",
+          "status": "missing",
+          "format": "glb",
+          "tri_count_target": 1500,
+          "mesh_type": "static",
+          "portal": true
+        },
+        {
+          "id": "env_rock_large_01",
+          "name": "Large Rock Formation",
+          "type": "environment",
+          "description": "Environmental obstacle, blocking/sightline",
+          "tier": 2,
+          "priority": "MEDIUM",
+          "status": "missing",
+          "format": "glb",
+          "tri_count_target": 800,
+          "collision_simple": "convex_hull",
+          "instancing_possible": true,
+          "count_required": 5
+        },
+        {
+          "id": "env_tree_pine_01",
+          "name": "Pine Tree",
+          "type": "environment",
+          "description": "Coniferous tree, simple billboard LOD",
+          "tier": 2,
+          "priority": "MEDIUM",
+          "status": "missing",
+          "format": "glb",
+          "tri_count_target": 2000,
+          "lod_count": 3,
+          "lods": [
+            {"distance": 20, "tri_ratio": 1.0},
+            {"distance": 50, "tri_ratio": 0.5},
+            {"distance": 100, "tri_ratio": 0.1, "type": "billboard"}
+          ],
+          "instancing": true,
+          "count_required": 20
+        },
+        {
+          "id": "env_tree_deciduous_01",
+          "name": "Deciduous Tree",
+          "type": "environment",
+          "description": "Round-canopy tree for varied foliage",
+          "tier": 2,
+          "priority": "MEDIUM",
+          "status": "missing",
+          "format": "glb",
+          "tri_count_target": 2500,
+          "lod_count": 3,
+          "lods": [
+            {"distance": 20, "tri_ratio": 1.0},
+            {"distance": 50, "tri_ratio": 0.5},
+            {"distance": 100, "tri_ratio": 0.1, "type": "billboard"}
+          ],
+          "instancing": true,
+          "count_required": 15
+        },
+        {
+          "id": "env_grass_tuft",
+          "name": "Grass Tuft",
+          "type": "environment",
+          "description": "Ground cover - instanced foliage",
+          "tier": 3,
+          "priority": "LOW",
+          "status": "missing",
+          "format": "glb",
+          "tri_count_target": 50,
+          "instancing": true,
+          "multimesh_count": 5000,
+          "variants": 6
+        },
+        {
+          "id": "env_barrel_wooden",
+          "name": "Wooden Barrel",
+          "type": "environment",
+          "description": "Breakable container prop",
+          "tier": 3,
+          "priority": "LOW",
+          "status": "missing",
+          "format": "glb",
+          "tri_count_target": 200,
+          "destructible": true,
+          "physics": true
+        },
+        {
+          "id": "env_torch_wall",
+          "name": "Wall Torch",
+          "type": "environment",
+          "description": "Point light source + VFX attachment",
+          "tier": 3,
+          "priority": "LOW",
+          "status": "missing",
+          "format": "glb",
+          "tri_count_target": 50,
+          "has_light": true,
+          "light_color": [1.0, 0.8, 0.3],
+          "light_energy": 2.0,
+          "particle_effect": "fire_flicker"
+        },
+        {
+          "id": "env_fountain_basin",
+          "name": "Fountain Basin (Ruined)",
+          "type": "environment",
+          "description": "Central decorative feature, water surface",
+          "tier": 3,
+          "priority": "LOW",
+          "status": "missing",
+          "format": "glb",
+          "tri_count_target": 2000,
+          "has_water": true,
+          "water_plane": true
+        }
+      ]
+    },
+
+    "vfx": {
+      "directory": "assets/vfx",
+      "required": true,
+      "assets": [
+        {
+          "id": "vfx_damage_number",
+          "name": "Damage Number Shader",
+          "type": "shader",
+          "description": "Floating combat text with bobbing motion and fade",
+          "tier": 1,
+          "priority": "CRITICAL",
+          "status": "missing",
+          "format": "gdshader",
+          "path": "assets/shaders/damage_number.gdshader",
+          "target_node": "Label3D",
+          "parameters": {
+            "color": {"type": "color", "default": [1.0, 1.0, 1.0, 1.0]},
+            "size": {"type": "float", "default": 48.0},
+            "rise_speed": {"type": "float", "default": 1.5},
+            "fade_delay": {"type": "float", "default": 0.5},
+            "crit_flash": {"type": "bool", "default": false}
+          },
+          "uniforms": {},
+          "shader_type": "canvas_item",
+          "godot_version": "4.2",
+          "production": {
+            "estimated_hours": 4
+          }
+        },
+        {
+          "id": "vfx_hit_flash_screen",
+          "name": "Hit Flash Screen Shader",
+          "type": "shader",
+          "description": "Red flash overlay when player takes damage",
+          "tier": 1,
+          "priority": "CRITICAL",
+          "status": "missing",
+          "format": "gdshader",
+          "path": "assets/shaders/hit_flash_screen.gdshader",
+          "target_node": "ColorRect (fullscreen)",
+          "parameters": {
+            "flash_color": {"type": "color", "default": [1.0, 0.2, 0.2, 1.0]},
+            "flash_intensity": {"type": "float", "default": 0.6},
+            "flash_duration": {"type": "float", "default": 0.15}
+          },
+          "shader_type": "canvas_item"
+        },
+        {
+          "id": "vfx_hit_flash_weapon",
+          "name": "Weapon Hit Flash Shader",
+          "type": "shader",
+          "description": "Momentary white bloom on weapon blade during hit",
+          "tier": 2,
+          "priority": "HIGH",
+          "status": "missing",
+          "format": "gdshader",
+          "path": "assets/shaders/hit_flash_weapon.gdshader",
+          "material_override": "weapon_standard_material",
+          "parameters": {
+            "flash_power": {"type": "float", "default": 2.0},
+            "flash_duration": {"type": "float", "default": 0.1}
+          },
+          "shader_type": "spatial"
+        },
+        {
+          "id": "vfx_toon_outline",
+          "name": "Cel-Shade Outline Shader",
+          "type": "shader",
+          "description": "Backface extrusion outline for enemies/bosses",
+          "tier": 2,
+          "priority": "HIGH",
+          "status": "missing",
+          "format": "gdshader",
+          "path": "assets/shaders/toon_outline.gdshader",
+          "parameters": {
+            "outline_color": {"type": "color", "default": [0.1, 0.1, 0.1, 1.0]},
+            "outline_width": {"type": "float", "default": 0.03},
+            "cull_mode": {"type": "int", "default": 1}  // BACK
+          },
+          "shader_type": "spatial",
+          "render_mode": "unshaded, cull_back"
+        },
+        {
+          "id": "vfx_crit_explosion",
+          "name": "Critical Hit Particle System",
+          "type": "particle",
+          "description": "Gold/white burst on critical strike",
+          "tier": 2,
+          "priority": "HIGH",
+          "status": "missing",
+          "format": "tscn (GPUParticles3D)",
+          "path": "assets/vfx/crit_explosion/CritExplosion.tscn",
+          "texture_atlas": "vfx_atlas.png",
+          "sprite_frames": "sparkle_8frame",
+          "max_particles": 32,
+          "lifetime": 0.6,
+          "emission_shape": "point",
+          "one_shot": true,
+          "process_material": "CPUParticles",
+          "local_space": false
+        },
+        {
+          "id": "vfx_dissolve_death",
+          "name": "Dissolve Death Shader",
+          "type": "shader",
+          "description": "Pixel-shatter + smoke dissolve on boss death",
+          "tier": 2,
+          "priority": "HIGH",
+          "status": "missing",
+          "format": "gdshader",
+          "path": "assets/shaders/dissolve_death.gdshader",
+          "parameters": {
+            "dissolve_amount": {"type": "float", "default": 0.0, "min": 0.0, "max": 1.0},
+            "edge_width": {"type": "float", "default": 0.05},
+            "edge_color": {"type": "color", "default": [1.0, 0.5, 0.0, 1.0]},
+            "noise_scale": {"type": "float", "default": 10.0}
+          },
+          "shader_type": "spatial",
+          "render_mode": "cull_disabled, shadows_disabled"
+        }
+      ]
+    },
+
+    "textures": {
+      "directory": "assets/textures",
+      "required": true,
+      "assets": [
+        {
+          "id": "tex_ui_health_bar_fill",
+          "name": "Health Bar Fill Gradient",
+          "type": "texture",
+          "description": "Horizontal gradient green → red for health bar",
+          "tier": 1,
+          "priority": "CRITICAL",
+          "status": "missing",
+          "format": "png",
+          "path": "assets/textures/ui/health_fill.png",
+          "resolution": [256, 32],
+          "colorspace": "sRGB",
+          "purpose": "UI_TextureProgressBar",
+          "usage": "TextureProgressBar bar_fill",
+          "compression": "lossless"
+        },
+        {
+          "id": "tex_ui_hud_frame",
+          "name": "HUD Frame Texture",
+          "type": "texture",
+          "description": "Panel background, semi-transparent dark",
+          "tier": 1,
+          "priority": "HIGH",
+          "status": "missing",
+          "format": "png",
+          "resolution": [256, 256],
+          "alpha": true
+        },
+        {
+          "id": "tex_ground_dirt_1k",
+          "name": "Ground Dirt PBR Texture Set",
+          "type": "texture_set",
+          "description": "4 maps: albedo, normal, roughness, AO",
+          "tier": 1,
+          "priority": "CRITICAL",
+          "status": "missing",
+          "format": "png",
+          "resolution": 1024,
+          "maps": ["albedo", "normal", "roughness", "ao"],
+          "path_pattern": "assets/textures/environment/ground_dirt_1k_{map}.png",
+          "tileable": true
+        },
+        {
+          "id": "tex_stone_ruined_1k",
+          "name": "Ruined Stone PBR Texture Set",
+          "type": "texture_set",
+          "description": "Weathered stone masonry",
+          "tier": 2,
+          "priority": "HIGH",
+          "status": "missing",
+          "resolution": 1024,
+          "maps": ["albedo", "normal", "roughness", "ao", "height"],
+          "tileable": true,
+          "atlas_variants": 3
+        },
+        {
+          "id": "tex_metal_iron_1k",
+          "name": "Iron Metal PBR Texture Set",
+          "type": "texture_set",
+          "description": "Used for weapons, armor",
+          "tier": 1,
+          "priority": "CRITICAL",
+          "status": "missing",
+          "resolution": 1024,
+          "maps": ["albedo", "normal", "roughness", "metallic", "ao"]
+        },
+        {
+          "id": "tex_vfx_atlas",
+          "name": "VFX Sprite Atlas",
+          "type": "texture_atlas",
+          "description": "256×256 sheet containing spark, explosion, debris sprites",
+          "tier": 1,
+          "priority": "CRITICAL",
+          "status": "missing",
+          "format": "png",
+          "resolution": [1024, 1024],
+          "sprites": [
+            "spark_01", "spark_02", "spark_03",
+            "explosion_01", "explosion_02", "explosion_03",
+            "debris_01", "debris_02",
+            "dust_01", "dust_02"
+          ]
+        }
+      ]
+    },
+
+    "shaders": {
+      "directory": "assets/shaders",
+      "required": true,
+      "assets": [
+        {
+          "id": "shader_toon_cel",
+          "name": "Toon Cel Shader",
+          "type": "shader_file",
+          "description": "Cel-shaded material for stylized characters",
+          "tier": 2,
+          "priority": "MEDIUM",
+          "status": "missing",
+          "format": "gdshader",
+          "path": "assets/shaders/toon_cel.gdshader",
+          "shader_type": "spatial",
+          "render_modes": ["unshaded", "cull_disabled"],
+          "parameters": {
+            "base_color": {"type": "color", "default": [1.0, 1.0, 1.0, 1.0]},
+            "shadow_threshold": {"type": "float", "default": 0.25, "min": 0.0, "max": 1.0},
+            "shadow_softness": {"type": "float", "default": 0.05, "min": 0.0, "max": 0.5}
+          },
+          "code_template": "#define SHADER_TOON_CEL\nshader_type spatial;\nrender_mode unshaded;\n\nuniform vec4 base_color : source_color = vec4(1.0);\nuniform float shadow_threshold = 0.25;\nuniform float shadow_softness = 0.05;\n\nvoid fragment() {\n    float NdotL = dot(NORMAL, LIGHT);\n    float toon = smoothstep(shadow_threshold - shadow_softness, shadow_threshold + shadow_softness, NdotL);\n    ALBEDO = base_color.rgb * (0.7 + 0.3 * toon);\n}"
+        },
+        {
+          "id": "shader_outline",
+          "name": "Outline Backface Shader",
+          "type": "shader_file",
+          "description": "Cheap outline via scaled backfaces",
+          "tier": 2,
+          "priority": "HIGH",
+          "status": "missing",
+          "format": "gdshader",
+          "path": "assets/shaders/outline_backface.gdshader",
+          "shader_type": "spatial",
+          "render_modes": ["cull_front", "unshaded"],
+          "parameters": {
+            "outline_color": {"type": "color", "default": [0.0, 0.0, 0.0, 1.0]},
+            "outline_width": {"type": "float", "default": 0.02, "min": 0.001, "max": 0.2}
+          }
+        },
+        {
+          "id": "shader_health_bar_gradient",
+          "name": "Health Bar Gradient Material",
+          "type": "shader_file",
+          "description": "Horizontal color gradient for TextureProgressBar",
+          "tier": 1,
+          "priority": "CRITICAL",
+          "status": "missing",
+          "format": "gdshader",
+          "path": "assets/shaders/health_bar_gradient.gdshader",
+          "shader_type": "canvas_item",
+          "uniforms": {
+            "color_low": {"type": "color", "value": [0.8, 0.2, 0.2, 1.0]},
+            "color_mid": {"type": "color", "value": [1.0, 0.9, 0.2, 1.0]},
+            "color_high": {"type": "color", "value": [0.2, 0.8, 0.2, 1.0]}
+          }
+        },
+        {
+          "id": "shader_dissolve",
+          "name": "Dissolve Shader",
+          "type": "shader_file",
+          "description": "Noise-based dissolve for death/respawn effects",
+          "tier": 2,
+          "priority": "HIGH",
+          "status": "missing",
+          "format": "gdshader",
+          "path": "assets/shaders/dissolve.gdshader",
+          "shader_type": "spatial",
+          "parameters": {
+            "dissolve_amount": {"type": "float", "min": 0.0, "max": 1.0},
+            "edge_width": {"type": "float", "default": 0.02},
+            "edge_color": {"type": "color", "default": [1.0, 0.3, 0.0, 1.0]}
+          }
+        }
+      ]
+    },
+
+    "materials": {
+      "directory": "assets/materials",
+      "required": true,
+      "assets": [
+        {
+          "id": "mat_character_base",
+          "name": "Character Base Material",
+          "type": "material",
+          "description": "PBR StandardMaterial3D template for characters",
+          "tier": 1,
+          "priority": "CRITICAL",
+          "status": "missing",
+          "format": "tres",
+          "path": "assets/materials/character_base.tres",
+          "shader": "StandardMaterial3D",
+          "albedo_texture": "character_albedo_atlas.png",
+          "normal_texture": "character_normal_atlas.png",
+          "roughness_texture": "character_roughness_atlas.png",
+          "metallic_texture": "character_metallic_atlas.png",
+          "metallic": 0.0,
+          "roughness": 0.8,
+          "uv1_scale": [1.0, 1.0],
+          "uv1_offset": [0.0, 0.0]
+        },
+        {
+          "id": "mat_weapon_metal",
+          "name": "Weapon Metal Material",
+          "type": "material",
+          "description": "Metallic PBR material for blades/armor",
+          "tier": 1,
+          "priority": "CRITICAL",
+          "status": "missing",
+          "format": "tres",
+          "metallic": 1.0,
+          "roughness": 0.3,
+          "albedo_color": [0.8, 0.8, 0.85, 1.0]
+        },
+        {
+          "id": "mat_ground_stone",
+          "name": "Stone Ground Material",
+          "type": "material",
+          "description": "Terrain paving material",
+          "tier": 1,
+          "priority": "CRITICAL",
+          "status": "missing",
+          "format": "tres",
+          "metallic": 0.0,
+          "roughness": 0.9,
+          "texture_albedo": "tex_ground_dirt_1k_albedo"
+        }
+      ]
+    },
+
+    "particles": {
+      "directory": "assets/vfx",
+      "required": true,
+      "assets": [
+        {
+          "id": "particle_spark_burst",
+          "name": "Spark Burst Particle System",
+          "type": "particle_scene",
+          "description": "Small metallic sparks for hit impact",
+          "tier": 2,
+          "priority": "HIGH",
+          "status": "missing",
+          "format": "tscn",
+          "path": "assets/vfx/spark_burst/SparkBurst.tscn",
+          "node_type": "GPUParticles3D",
+          "max_particles": 50,
+          "lifetime": 0.4,
+          "one_shot": true,
+          "emission_shape": "sphere",
+          "process_material": {
+            "type": "ParticleProcessMaterial",
+            "gravity": Vector3(0, -9.8, 0),
+            "initial_velocity": 5.0,
+            "angular_velocity": [1.0, 1.0],
+            "scale_min": 0.05,
+            "scale_max": 0.1
+          },
+          "draw_pass": {
+            "mesh": "sphere_1seg",
+            "material": "ParticleMaterialWhite"
+          }
+        },
+        {
+          "id": "particle_explosion_small",
+          "name": "Small Explosion",
+          "type": "particle_scene",
+          "description": "Crit explosion burst",
+          "tier": 2,
+          "priority": "HIGH",
+          "status": "missing",
+          "format": "tscn",
+          "max_particles": 100,
+          "lifetime": 0.6,
+          "one_shot": true,
+          "texture": "vfx_atlas.png",
+          "anim_frames": "explosion_01,explosion_02,explosion_03"
+        }
+      ]
+    },
+
+    "ui": {
+      "directory": "assets/ui",
+      "required": true,
+      "assets": [
+        {
+          "id": "ui_icon_attack_ability",
+          "name": "Attack Ability Icon",
+          "type": "ui_texture",
+          "description": "32×32 sword icon for ability bar",
+          "tier": 1,
+          "priority": "CRITICAL",
+          "status": "missing",
+          "format": "png",
+          "resolution": [64, 64],
+          "path": "assets/ui/icons/attack_ability.png",
+          "atlas": "ui_icons_atlas",
+          "sprite_offset": [0, 0]
+        },
+        {
+          "id": "ui_icon_block_ability",
+          "name": "Block Ability Icon",
+          "type": "ui_texture",
+          "status": "missing",
+          "resolution": [64, 64]
+        },
+        {
+          "id": "ui_icon_target_lock",
+          "name": "Target Lock Indicator",
+          "type": "ui_texture",
+          "description": "Reticle displayed over locked target",
+          "tier": 1,
+          "priority": "HIGH",
+          "status": "missing",
+          "format": "png",
+          "resolution": [64, 64],
+          "animated": false
+        },
+        {
+          "id": "ui_icon_buff_defensive",
+          "name": "Defensive Buff Icon",
+          "type": "ui_texture",
+          "description": "Shield icon for buff bar",
+          "tier": 2,
+          "priority": "MEDIUM",
+          "status": "missing"
+        },
+        {
+          "id": "ui_font_main",
+          "name": "Main UI Font",
+          "type": "font",
+          "description": "Proportional font for UI text",
+          "tier": 2,
+          "priority": "HIGH",
+          "status": "missing",
+          "format": "ttf or otf",
+          "sizes": {
+            "small": 12,
+            "normal": 16,
+            "large": 24,
+            "huge": 48
+          },
+          "fallback": "Noto Sans"
+        }
+      ]
+    },
+
+    "audio": {
+      "directory": "assets/audio",
+      "required": false,
+      "deferred": true,
+      "assets": [
+        {
+          "id": "sfx_swing_sword",
+          "name": "Sword Swing SFX",
+          "type": "sfx",
+          "format": "ogg",
+          "status": "missing",
+          "volume": 0.6,
+          "deferred": true
+        },
+        {
+          "id": "sfx_hit_flesh",
+          "name": "Flesh Hit SFX",
+          "type": "sfx",
+          "format": "ogg",
+          "status": "missing",
+          "deferred": true
+        }
+      ]
+    }
+  },
+
+  "zones": {
+    "directory": "src/client/scenes/zones",
+    "required": true,
+    "scenes": [
+      {
+        "id": "zone_98_tutorial",
+        "name": "Zone 98 - Tutorial Arena",
+        "scene_path": "src/client/scenes/zones/Zone98Tutorial.tscn",
+        "description": "Combat tutorial zone with training dummies",
+        "tier": 1,
+        "priority": "CRITICAL",
+        "status": "scene_exists",
+        "imported_assets": [],
+        "required_assets": [
+          "env_training_floor", "env_crate_01", "env_barrel_01",
+          "npc_guard", "weapon_sword_1h"
+        ],
+        "navmesh": true,
+        "ambient_light": {"color": [0.5, 0.6, 0.8], "energy": 0.3},
+        "directional_light": {"color": [1.0, 0.95, 0.9], "energy": 1.0}
+      },
+      {
+        "id": "zone_99_combat",
+        "name": "Zone 99 - Combat Arena",
+        "scene_path": "src/client/scenes/zones/Zone99Combat.tscn",
+        "description": "Free-for-all combat platform with obstacles",
+        "tier": 1,
+        "priority": "HIGH",
+        "status": "scene_placeholder",
+        "imported_assets": [],
+        "required_assets": [
+          "env_wall_straight_4m", "env_wall_corner_outer", "env_rock_large_01",
+          "npc_guard", "weapon_sword_1h", "weapon_axe_1h"
+        ],
+        "player_capacity": 8,
+        "ai_count": 5
+      },
+      {
+        "id": "zone_100_boss",
+        "name": "Zone 100 - Boss Arena",
+        "scene_path": "src/client/scenes/zones/Zone100Boss.tscn",
+        "description": "Circular pit arena with hazard mechanics",
+        "tier": 1,
+        "priority": "HIGH",
+        "status": "scene_placeholder",
+        "required_assets": [
+          "env_training_floor (scaled)", "env_fountain_basin",
+          "boss_creature", "weapon_sword_1h"
+        ],
+        "hazards": ["lava_pit", "collapsing_floor"],
+        "boss_spawn_point": {"position": [0, 0, 0]},
+        "player_spawn_points": [
+          {"position": [-10, 0, 10]},
+          {"position": [10, 0, 10]},
+          {"position": [0, 0, -10]}
+        ],
+        "atmosphere": "fog_dense_black"
+      }
+    ]
+  },
+
+  "materials": {
+    "sets": [
+      {
+        "name": "character_base",
+        "shader": "StandardMaterial3D",
+        "pbr_workflow": "metallic_roughness",
+        "texture_slots": ["albedo", "normal", "roughness", "metallic", "ao"],
+        "shared": true
+      },
+      {
+        "name": "weapon_metal",
+        "shader": "StandardMaterial3D",
+        "metallic": 1.0,
+        "roughness": 0.3
+      },
+      {
+        "name": "environment_stone",
+        "shader": "StandardMaterial3D",
+        "metallic": 0.0,
+        "roughness": 0.85,
+        "normal_scale": 1.5
+      }
+    ]
+  },
+
+  "atlas": {
+    "ui_icons": {
+      "texture": "assets/textures/ui/icons_atlas.png",
+      "size": [1024, 1024],
+      "icons_per_row": 16,
+      "sprites": [
+        "attack", "block", "dodge", "parry", "target_lock",
+        "health", "mana", "stamina"
+      ]
+    },
+    "weapon_textures": {
+      "texture": "assets/textures/weapons_shared/weapons_atlas.png",
+      "size": [1024, 1024],
+      "slice_vertical": 4
+    }
+  },
+
+  "validation": {
+    "tri_budgets": {
+      "player_character": {"min": 12000, "max": 18000, "target": 15000},
+      "npc_standard": {"min": 10000, "max": 15000, "target": 12000},
+      "weapon_1h": {"min": 1000, "max": 3000, "target": 1500},
+      "weapon_2h": {"min": 2000, "max": 5000, "target": 3000},
+      "env_prop": {"min": 200, "max": 5000, "target": 1500},
+      "boss": {"min": 20000, "max": 35000, "target": 25000}
+    },
+    "texture_limits": {
+      "max_texture_size": 2048,
+      "character_albedo": 1024,
+      "ui_icon": 128,
+      "environment_tile": 1024,
+      "atlas_max": 4096
+    },
+    "bone_limits": {
+      "max_per_armature": 64,
+      "recommended_character": 32
+    },
+    "vertex_influences": {
+      "max": 4,
+      "warn_if_above": 3
+    }
+  },
+
+  "production": {
+    "estimated_total_asset_hours": 250,
+    "critical_path": [
+      "char_player_male",
+      "weapon_sword_1h",
+      "animations_locomotion",
+      "env_training_floor",
+      "vfx_damage_number",
+      "vfx_hit_flash_screen"
+    ],
+    "parallel_tracks": [
+      {
+        "track": "character",
+        "assets": ["char_player_male", "animations_locomotion", "animations_combat", "npc_guard"]
+      },
+      {
+        "track": "weapons", 
+        "assets": ["weapon_sword_1h", "weapon_sword_2h", "weapon_axe_1h"]
+      },
+      {
+        "track": "environment",
+        "assets": ["env_training_floor", "env_wall_straight_4m", "env_rock_large_01"]
+      },
+      {
+        "track": "vfx",
+        "assets": ["vfx_damage_number", "vfx_hit_flash_screen", "vfx_toon_outline"]
+      }
+    ]
+  },
+
+  "integrity": {
+    "required_checks": [
+      "tri_count_within_budget",
+      "uv_padding_sufficient",
+      "texture_resolution_correct",
+      "material_assigned",
+      "no_missing_textures",
+      "godot_import_clean",
+      "animation_loops_correct",
+      "bone_naming_convention"
+    ]
+  },
+
+  "godot_resource_references": {
+    "player_scene": "res://scenes/Player.tscn",
+    "remote_player_scene": "res://scenes/RemotePlayer.tscn",
+    "animation_tree": "res://scenes/PlayerAnimationTree.tres",
+    "animations_tres": "res://scenes/PlayerAnimations.tres",
+    "main_scene": "res://scenes/Main.tscn",
+    "zone_98": "res://scenes/zones/Zone98Tutorial.tscn",
+    "zone_99": "res://scenes/zones/Zone99Combat.tscn",
+    "zone_100": "res://scenes/zones/Zone100Boss.tscn"
+  }
+}
