@@ -1,7 +1,7 @@
 # PRD-009: Demo Zones System
 
 **Version:** 1.0
-**Status:** Not Started
+**Status:** 🟡 Planned
 **Owner:** SERVER_AGENT
 **Priority:** CRITICAL
 **Dependencies:** PRD-004 (Sharding), PRD-005 (Client)
