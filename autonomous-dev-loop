@@ -318,7 +318,6 @@ open_pull_request() {
 - Tests: Run via workflow verify
 
 Co-authored-by: openhands <openhands@all-hands.dev>" \
-            --repo "$(git remote get-url origin | sed 's|.*/||' | sed 's|\.git||')" \
             2>&1 || log_warn "PR creation may have failed"
     else
         log_warn "GitHub CLI not available - skipping PR"
