@@ -325,15 +325,47 @@ def generate_test_file(task):
     # If given a .cpp file, try to find the corresponding .hpp header
     header_for_content = source_file
     if source_file.endswith(".cpp"):
-        # Try: src/server/src/netcode/Foo.cpp -> src/server/include/netcode/Foo.hpp
-        rel = source_file.replace("src/server/src/", "")
-        candidate = str(REPO / "src" / "server" / "include" / rel.replace(".cpp", ".hpp"))
-        if Path(candidate).exists():
-            header_for_content = str(Path(candidate).relative_to(REPO))
-            try:
-                content = budgeted_read_text(Path(candidate), limit=8000)
-            except Exception:
-                pass
+        # Strategy 1: Check #include directives in the .cpp file
+        # This is the most reliable way to know which header to use
+        try:
+            cpp_content = budgeted_read_text(source_path, limit=2000)
+            include_matches = re.findall(r'#include\s+["<]([^">]+)[">]', cpp_content)
+            # Prioritize headers that match the source file's basename
+            source_basename = Path(source_file).stem.lower()
+            matched_header = None
+            for inc in include_matches:
+                if inc.endswith('.hpp'):
+                    if inc.startswith('src/server/include/'):
+                        candidate = REPO / inc
+                    else:
+                        # Assume it's relative to include root
+                        candidate = REPO / "src" / "server" / "include" / inc
+                    if candidate.exists():
+                        header_for_content = str(candidate.relative_to(REPO))
+                        matched_header = candidate
+                        try:
+                            content = budgeted_read_text(candidate, limit=8000)
+                        except Exception:
+                            pass
+                        # Prefer the header that matches the source file's basename
+                        if candidate.stem.lower() == source_basename:
+                            break
+        except Exception:
+            pass
+        
+        # Strategy 2: If no header found via includes, search recursively under include/
+        if header_for_content == source_file:
+            basename = Path(source_file).stem
+            # Search for any .hpp file with matching basename under include/
+            include_root = REPO / "src" / "server" / "include"
+            matches = list(include_root.rglob(f"{basename}.hpp"))
+            if matches:
+                candidate = matches[0]
+                header_for_content = str(candidate.relative_to(REPO))
+                try:
+                    content = budgeted_read_text(candidate, limit=8000)
+                except Exception:
+                    pass
     
     test_name = f"Test{basename}.cpp"
     test_path = REPO / "src" / "server" / "tests" / test_name

@@ -534,6 +534,139 @@ def find_doc_drift() -> List[Task]:
     return tasks
 
 
+
+
+def find_prd_tasks() -> List[Task]:
+    """Parse PRD documents and convert incomplete requirements into tasks."""
+    tasks = []
+    prd_dir = PROJECT_ROOT / "docs" / "plans" / "PRD"
+    
+    if not prd_dir.exists():
+        return tasks
+    
+    COMPLETE_MARKERS = {"✅", "✓", "Done", "COMPLETE", "DONE"}
+    
+    for prd_file in prd_dir.glob("*.md"):
+        try:
+            content = prd_file.read_text()
+        except (UnicodeDecodeError, PermissionError):
+            continue
+        
+        # Skip if PRD marked complete
+        status_match = re.search(r'\*\*Status:\*\*\s*(.+)', content)
+        if status_match and any(m in status_match.group(1).upper() for m in ["✅ COMPLETE", "COMPLETE", "DONE"]):
+            continue
+        
+        prd_priority = "P2"
+        title_match = re.search(r'Priority.*?\b(P[0-4])\b', content)
+        if title_match:
+            prd_priority = title_match.group(1).upper()
+        
+        lines = content.split('\n')
+        in_table = False
+        table_header = None
+        
+        for line in lines:
+            stripped = line.strip()
+            
+            # Detect table header containing ID and Requirement columns
+            if '| ID |' in stripped and 'Requirement' in stripped and 'Priority' in stripped:
+                in_table = True
+                table_header = [c.strip().lower() for c in stripped.split('|') if c.strip()]
+                continue
+            
+            # Table separator line (|----|)
+            if in_table and stripped.startswith('|') and all(c in '-| ' for c in stripped):
+                continue
+            
+            # Table data row
+            if in_table and stripped.startswith('|') and stripped.endswith('|'):
+                cells = [c.strip() for c in stripped.split('|')]
+                # Remove empty leading/trailing cells from split
+                if cells and cells[0] == '':
+                    cells = cells[1:]
+                if cells and cells[-1] == '':
+                    cells = cells[:-1]
+                
+                if len(cells) >= 4:
+                    req_id, req_text, req_prio, req_status = cells[0], cells[1], cells[2], cells[3] if len(cells) > 3 else ""
+                    
+                    # Skip complete requirements
+                    if any(m in req_status for m in COMPLETE_MARKERS):
+                        continue
+                    
+                    priority = req_prio if req_prio in ("P0", "P1", "P2", "P3", "P4") else prd_priority
+                    files = extract_file_references(req_text)
+                    
+                    tasks.append(Task(
+                        priority=priority,
+                        category="feature" if priority in ("P0", "P1") else "fix",
+                        title=req_text[:80],
+                        description=f"From {prd_file.name}: {req_text}",
+                        files=files,
+                        estimated_hours=estimate_hours_from_priority(priority)
+                    ))
+                continue
+            
+            # End of table
+            if in_table and stripped == '':
+                in_table = False
+                continue
+        
+        # Checklist items
+        for m in re.finditer(r'^- \[[ ~]?\]\s*(.+)', content, re.MULTILINE):
+            item_text = m.group(1).strip()
+            if len(item_text) >= 5:
+                tasks.append(Task(
+                    priority=prd_priority,
+                    category="feature",
+                    title=item_text[:80],
+                    description=f"Checklist item from {prd_file.name}",
+                    files=[],
+                    estimated_hours=1.0
+                ))
+        
+        # Deliverables: look for sections that list file paths
+        # Pattern: "Deliverables" or "Files to update" section with backticked paths
+        for section_match in re.finditer(r'(Deliverables|Files to update|## 6\.)', content):
+            section_start = section_match.end()
+            # Grab next 3000 chars or until next ## heading
+            section_end = content.find('\n##', section_start)
+            if section_end == -1:
+                section_end = section_start + 3000
+            else:
+                section_end = min(section_start + 3000, section_end)
+            section_text = content[section_start:section_end]
+            # Find all backticked file paths with common source extensions
+            for pm in re.finditer(r'`([^`]+\.(?:cpp|hpp|py|gd|tscn|cs|md|json|yaml|yml))`', section_text):
+                file_path = pm.group(1).strip()
+                if file_path and file_path not in [t.files for t in tasks if t.files]:
+                    tasks.append(Task(
+                        priority=prd_priority,
+                        category="feature",
+                        title=f"Deliver: {Path(file_path).name}",
+                        description=f"Required by {prd_file.name}",
+                        files=[file_path],
+                        estimated_hours=3.0
+                    ))
+    
+    return tasks
+
+def extract_file_references(text: str) -> List[str]:
+    """Extract file paths from a requirement description."""
+    files = []
+    for m in re.finditer(r'`([^`]+\.(?:cpp|hpp|py|gd|tscn|cs|md|json|yaml|yml))`', text):
+        files.append(m.group(1))
+    for m in re.finditer(r'(?<!`)\b(src|tools|tests?|docs?)/[\w./_-]+\.(?:cpp|hpp|py|gd|tscn|cs|md|json|yaml|yml)', text):
+        files.append(m.group(0))
+    return files[:5]
+
+
+def estimate_hours_from_priority(priority: str) -> float:
+    """Estimate completion time based on priority."""
+    return {"P0": 4.0, "P1": 2.0, "P2": 1.0, "P3": 0.5}.get(priority, 1.0)
+
+
 def find_include_deps() -> List[Task]:
     """Find headers with excessive includes that could be forward-declared."""
     tasks = []
@@ -724,6 +857,7 @@ def main():
 
     # Discover tasks
     all_tasks = []
+    all_tasks.extend(find_prd_tasks())
     all_tasks.extend(find_missing_tests())
     # all_tasks.extend(find_missing_header_tests())  # DISABLED: redundant with find_missing_tests
     all_tasks.extend(find_shallow_tests())
