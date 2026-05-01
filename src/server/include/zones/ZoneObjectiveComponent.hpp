@@ -35,9 +35,9 @@ namespace DarkAges
   };
   
   /**
-   * ObjectiveProgress - Tracks progress on a single objective
+   * ZoneObjectiveProgress - Tracks progress on a single zone objective
    */
-  struct ObjectiveProgress
+  struct ZoneObjectiveProgress
   {
     /// Objective ID from zone config
     std::string ObjectiveId;

@@ -1,4 +1,4 @@
-[gd_scene load_steps=8 format=3 uid="uid://combat_state_machine"]
+[gd_scene load_steps=15 format=3 uid="uid://combat_state_machine"]
 
 [ext_resource type="Script" path="res://src/combat/fsm/CombatStateMachineController.cs" id="1_controller"]
 [ext_resource type="AnimationLibrary" path="res://scenes/PlayerAnimations.tres" id="2_animlib"]
@@ -104,21 +104,6 @@ SubResource("Transition_Idle_Death"),
 
 [sub_resource type="AnimationNodeStateMachineTransition" id="Transition_Idle_Death"]
 
-[sub_resource type="AnimationTree" id="AnimationTree_Root"]
-tree_root = SubResource("StateMachine")
-root_transition_request = ""
-sync_playback = false
-states/Playback/position = Vector2(0, 0)
-states/StateMachine/position = Vector2(0, 0)
-parameters/conditions/idle = false
-parameters/conditions/walking = false
-parameters/conditions/sprinting = false
-parameters/conditions/attacking = false
-parameters/conditions/dodging = false
-parameters/conditions/hit = false
-parameters/conditions/dead = false
-parameters/state/current = 0
-
 [node name="CombatStateMachine" type="Node3D"]
 script = ExtResource("1_controller")
 
@@ -127,8 +112,7 @@ root_node = NodePath("..")
 anim_library = ExtResource("2_animlib")
 
 [node name="AnimationTree" type="AnimationTree" parent="."]
-tree_root = SubResource("AnimationTree_Root")
-resource = SubResource("AnimationTree_Root")
+tree_root = SubResource("StateMachine")
 parameters/conditions/idle = false
 parameters/conditions/walking = false
 parameters/conditions/sprinting = false

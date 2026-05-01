@@ -4,7 +4,8 @@
 #include "zones/ZoneObjectiveComponent.hpp"
 
 #include <entt/entity/fwd.hpp>
-#include <entt/core/signal.hpp>
+#include <entt/entity/registry.hpp>
+#include <entt/signal/sigh.hpp>
 
 #include <vector>
 #include <unordered_map>
@@ -21,26 +22,12 @@ namespace DarkAges
    * Usage:
    *   ZoneObjectiveSystem system;
    *   system.Initialize(registry);
-   *   system.OnPlayerEnterZone(entity, zoneId);
-   *   system.OnObjectiveProgress(entity, "kill_5_dummies", 1);
+   *   system.OnPlayerEnterZone(entity, zoneId, zoneDef);
+   *   system.OnObjectiveProgress(entity, "kill_5_dummies", 3);
    */
   class ZoneObjectiveSystem
   {
   public:
-    using EventEmitter = entt::emitter<ZoneObjectiveSystem>;
-    
-    /// Signal emitted when objective progress changes
-    using ObjectiveProgressSignal = entt::delegate<void(entt::entity, const std::string&, uint16_t, uint16_t)>;
-    
-    /// Signal emitted when objective completes
-    using ObjectiveCompleteSignal = entt::delegate<void(entt::entity, const std::string&)>;
-    
-    /// Signal emitted when wave starts/completes
-    using WaveSignal = entt::delegate<void(entt::entity, uint8_t, bool)>;
-    
-    /// Signal emitted when zone completes
-    using ZoneCompleteSignal = entt::delegate<void(entt::entity, uint16_t)>;
-    
     ZoneObjectiveSystem() = default;
     ~ZoneObjectiveSystem() = default;
     
@@ -64,12 +51,12 @@ namespace DarkAges
     void OnPlayerLeaveZone(entt::entity player);
     
     /**
-     * Report objective progress
+     * Report objective progress (absolute count, not a delta)
      * @param player Player entity
      * @param objectiveId Objective ID from config
-     * @param progress Current progress count (+1 for kills, etc.)
+     * @param count Absolute current count (e.g. 3 for "3 kills so far")
      */
-    void OnObjectiveProgress(entt::entity player, const std::string& objectiveId, uint16_t progress);
+    void OnObjectiveProgress(entt::entity player, const std::string& objectiveId, uint16_t count);
     
     /**
      * Handle wave start in wave-defense zones
@@ -104,7 +91,7 @@ namespace DarkAges
      * @param player Player entity
      * @return Map of objective ID to progress
      */
-    const std::unordered_map<std::string, ObjectiveProgress>& GetObjectives(entt::entity player) const;
+    const std::unordered_map<std::string, ZoneObjectiveProgress>& GetObjectives(entt::entity player) const;
     
     /**
      * Tick objective timers (called each server tick)
@@ -113,35 +100,40 @@ namespace DarkAges
     void Tick(float deltaTime);
     
     /**
-     * Get signal for objective progress events
+     * Get sink for objective progress events.
+     * Signal signature: void(entt::entity player, const std::string& objectiveId,
+     *                        uint16_t currentCount, uint16_t requiredCount)
      */
-    entt::Sink<ObjectiveProgressSignal> OnObjectiveProgressed()
+    auto OnObjectiveProgressed()
     {
-      return _objectiveProgressSink;
+      return entt::sink{_objectiveProgressSignal};
     }
     
     /**
-     * Get signal for objective complete events
+     * Get sink for objective complete events.
+     * Signal signature: void(entt::entity player, const std::string& objectiveId)
      */
-    entt::Sink<ObjectiveCompleteSignal> OnObjectiveCompleted()
+    auto OnObjectiveCompleted()
     {
-      return _objectiveCompleteSink;
+      return entt::sink{_objectiveCompleteSignal};
     }
     
     /**
-     * Get signal for wave events
+     * Get sink for wave events.
+     * Signal signature: void(entt::entity player, uint8_t waveNumber, bool starting)
      */
-    entt::Sink<WaveSignal> OnWaveChanged()
+    auto OnWaveChanged()
     {
-      return _waveSink;
+      return entt::sink{_waveSignal};
     }
     
     /**
-     * Get signal for zone complete events
+     * Get sink for zone complete events.
+     * Signal signature: void(entt::entity player, uint16_t zoneId)
      */
-    entt::Sink<ZoneCompleteSignal> OnZoneCompleted()
+    auto OnZoneCompleted()
     {
-      return _zoneCompleteSink;
+      return entt::sink{_zoneCompleteSignal};
     }
     
   private:
@@ -151,24 +143,18 @@ namespace DarkAges
     std::unordered_map<entt::entity, ZoneDefinition> _playerZoneDefs;
     
     /// Player entity -> objective progress map
-    std::unordered_map<entt::entity, std::unordered_map<std::string, ObjectiveProgress>> _playerObjectives;
+    std::unordered_map<entt::entity, std::unordered_map<std::string, ZoneObjectiveProgress>> _playerObjectives;
     
-    /// Signals
-    entt::sigh_forward<ObjectiveProgressSignal> _objectiveProgressSignal;
-    entt::sigh_forward<ObjectiveCompleteSignal> _objectiveCompleteSignal;
-    entt::sigh_forward<WaveSignal> _waveSignal;
-    entt::sigh_forward<ZoneCompleteSignal> _zoneCompleteSignal;
-    
-    /// Sinks (connected to handlers)
-    ObjectiveProgressSignal _objectiveProgressSink{_objectiveProgressSignal};
-    ObjectiveCompleteSignal _objectiveCompleteSink{_objectiveCompleteSignal};
-    WaveSignal _waveSink{_waveSignal};
-    ZoneCompleteSignal _zoneCompleteSink{_zoneCompleteSignal};
+    /// Signals (publish via these; expose sinks via On*() accessors)
+    entt::sigh<void(entt::entity, const std::string&, uint16_t, uint16_t)> _objectiveProgressSignal;
+    entt::sigh<void(entt::entity, const std::string&)>                     _objectiveCompleteSignal;
+    entt::sigh<void(entt::entity, uint8_t, bool)>                          _waveSignal;
+    entt::sigh<void(entt::entity, uint16_t)>                               _zoneCompleteSignal;
     
     /**
      * Helper: Check if all required objectives complete
      */
-    bool CheckObjectivesComplete(entt::entity player, const ZoneDefinition& zoneDef);
+    bool CheckObjectivesComplete(entt::entity player, const ZoneDefinition& zoneDef) const;
     
     /**
      * Helper: Emit events to player

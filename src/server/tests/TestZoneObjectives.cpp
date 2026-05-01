@@ -1,10 +1,12 @@
-#include <catch2/catch2.hpp>
+#include <catch2/catch_test_macros.hpp>
+#include <catch2/catch_approx.hpp>
 #include <entt/entity/registry.hpp>
 
 #include "zones/ZoneObjectiveSystem.hpp"
 #include "zones/ZoneDefinition.hpp"
 
 using namespace DarkAges;
+using Catch::Approx;
 
 TEST_CASE("ZoneObjectiveSystem", "[zones]")
 {

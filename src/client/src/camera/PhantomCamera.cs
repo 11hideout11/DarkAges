@@ -304,8 +304,7 @@ namespace DarkAges.Camera
                 
                 // Check angle from camera forward
                 Vector3 toEnemy = (enemy.GlobalPosition - player.GlobalPosition).Normalized();
-                Vector3 camForward = player.GlobalPosition - GlobalPosition;
-                camForward = camForward.Normalized();
+                Vector3 camForward = (-GlobalTransform.Basis.Z).Normalized();
                 
                 float angle = toEnemy.AngleTo(camForward);
                 float angleDeg = Mathf.RadToDeg(angle);
@@ -352,14 +351,14 @@ namespace DarkAges.Camera
         {
             if (_lockedTarget == null) return;
             
-            // Get all enemies and sort by distance
+            // Get all enemies (including the current one) and sort by distance
             var player = GetParent().GetParent();
             var nearby = GetTree().GetNodesInGroup("enemies");
             
             var targets = new Godot.Collections.Array<Node3D>();
             foreach (var node in nearby)
             {
-                if (node is Node3D enemy && node != _lockedTarget)
+                if (node is Node3D enemy)
                 {
                     float dist = player.GlobalPosition.DistanceTo(enemy.GlobalPosition);
                     if (dist < 20.0f)
@@ -379,7 +378,7 @@ namespace DarkAges.Camera
                 return distA.CompareTo(distB);
             });
             
-            // Find current index and switch
+            // Find current target's index, then advance by direction
             int currentIdx = -1;
             for (int i = 0; i < targets.Count; i++)
             {
@@ -390,7 +389,11 @@ namespace DarkAges.Camera
                 }
             }
             
-            int newIdx = (currentIdx + direction + targets.Count) % targets.Count;
+            // If current target not found, start from 0; otherwise step by direction
+            int newIdx = currentIdx == -1
+                ? 0
+                : (currentIdx + direction + targets.Count) % targets.Count;
+            
             SetLockedTarget(targets[newIdx]);
         }
         
@@ -433,13 +436,7 @@ namespace DarkAges.Camera
         
         private void UpdateDesiredDistance()
         {
-            float desired = _maxDistance;
-            
-            // When locked on, use shorter distance
-            if (IsLockedOn)
-            {
-                desired = _lockOnDistance;
-            }
+            float desired = IsLockedOn ? _lockOnDistance : _maxDistance;
             
             // Check collision
             _raycast.TargetPosition = new Vector3(0, 0, -_maxDistance);
@@ -449,7 +446,9 @@ namespace DarkAges.Camera
             {
                 Vector3 collisionPoint = _raycast.GetCollisionPoint();
                 float dist = GlobalPosition.DistanceTo(collisionPoint);
-                desired = Mathf.Max(_minDistance, dist - _collisionMargin);
+                // Only push camera *in*, never extend beyond the mode's desired distance
+                float collisionAdjusted = Mathf.Max(_minDistance, dist - _collisionMargin);
+                desired = Mathf.Min(desired, collisionAdjusted);
             }
             
             _targetDistance = desired;

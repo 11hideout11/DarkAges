@@ -217,6 +217,9 @@ namespace DarkAges.Combat.FSM
                 // Exit current state
                 ExitState(_currentState);
                 
+                // Emit exit signal before state changes
+                EmitSignal(SignalName.StateExited, _currentState.ToString());
+                
                 // Update state
                 _currentState = newState;
                 
@@ -247,8 +250,8 @@ namespace DarkAges.Combat.FSM
                 return false;
             }
             
-            // Block transitions while on cooldown
-            if (_cooldownTimer > 0 && toState == "Attack")
+            // Block transitions while on cooldown for gated actions
+            if (_cooldownTimer > 0 && (toState == "Attack" || toState == "Dodge"))
             {
                 return false;
             }
@@ -436,6 +439,10 @@ namespace DarkAges.Combat.FSM
             }
         }
         
+        // Reference-counted hit stop state (handles overlapping hit stops safely)
+        private static int _activeHitStopCount;
+        private static float _hitStopRestoreTimeScale = 1.0f;
+        
         /// <summary>
         /// Hit stop effect - brief time freeze
         /// </summary>
@@ -443,9 +450,32 @@ namespace DarkAges.Combat.FSM
         {
             if (_animPlayer == null) return;
             
+            // Track overlapping hit stops; only save the prior timescale on the first one
+            if (_activeHitStopCount == 0)
+            {
+                _hitStopRestoreTimeScale = Engine.TimeScale;
+            }
+            _activeHitStopCount++;
             Engine.TimeScale = 0.1f;
-            await ToSignal(GetTree().CreateTimer(0.05f, true), "timeout");
-            Engine.TimeScale = 1.0f;
+            
+            try
+            {
+                var tree = GetTree();
+                if (tree == null) return;
+                // processAlways=true so the timer is not slowed by TimeScale
+                await ToSignal(tree.CreateTimer(0.05f, true, false, true), "timeout");
+            }
+            finally
+            {
+                if (_activeHitStopCount > 0)
+                {
+                    _activeHitStopCount--;
+                    if (_activeHitStopCount == 0)
+                    {
+                        Engine.TimeScale = _hitStopRestoreTimeScale;
+                    }
+                }
+            }
         }
         
         // ============================================

@@ -1,9 +1,8 @@
 #include "zones/ZoneObjectiveSystem.hpp"
-#include "components/PlayerComponent.hpp"
 
 #include <entt/entity/registry.hpp>
 
-#include <cstring>
+#include <ctime>
 
 namespace DarkAges
 {
@@ -34,7 +33,7 @@ namespace DarkAges
     
     for (const auto& obj : zoneDef.objectives)
     {
-      ObjectiveProgress progress;
+      ZoneObjectiveProgress progress;
       progress.ObjectiveId = obj.id;
       progress.CurrentCount = 0;
       progress.RequiredCount = obj.requiredCount;
@@ -55,7 +54,7 @@ namespace DarkAges
     if (!_registry) return;
     
     // Remove component
-    if (_registry->has<ZoneObjectiveComponent>(player))
+    if (_registry->all_of<ZoneObjectiveComponent>(player))
     {
       _registry->remove<ZoneObjectiveComponent>(player);
     }
@@ -86,7 +85,7 @@ namespace DarkAges
       objProgress.CompletedAt = static_cast<uint32_t>(time(nullptr));
       
       // Emit complete event
-      _objectiveCompleteSink.publish(player, objectiveId);
+      _objectiveCompleteSignal.publish(player, objectiveId);
       
       // Notify client
       ZoneObjectiveEvent event;
@@ -97,7 +96,7 @@ namespace DarkAges
     else
     {
       // Emit progress event
-      _objectiveProgressSink.publish(player, objectiveId, progress, objProgress.RequiredCount);
+      _objectiveProgressSignal.publish(player, objectiveId, progress, objProgress.RequiredCount);
       
       // Notify client
       ZoneObjectiveEvent event;
@@ -111,14 +110,16 @@ namespace DarkAges
   
   void ZoneObjectiveSystem::OnWaveStart(entt::entity player, uint8_t waveNumber)
   {
+    if (!_registry) return;
     auto it = _playerZoneDefs.find(player);
     if (it == _playerZoneDefs.end()) return;
     
+    if (!_registry->all_of<ZoneObjectiveComponent>(player)) return;
     auto& component = _registry->get<ZoneObjectiveComponent>(player);
     component.CurrentWave = waveNumber;
     
     // Emit wave start
-    _waveSink.publish(player, waveNumber, true);
+    _waveSignal.publish(player, waveNumber, true);
     
     // Notify client
     ZoneObjectiveEvent event;
@@ -130,10 +131,12 @@ namespace DarkAges
   
   void ZoneObjectiveSystem::OnWaveComplete(entt::entity player, uint8_t waveNumber)
   {
+    if (!_registry) return;
     auto it = _playerZoneDefs.find(player);
     if (it == _playerZoneDefs.end()) return;
     
     auto& zoneDef = it->second;
+    if (!_registry->all_of<ZoneObjectiveComponent>(player)) return;
     auto& component = _registry->get<ZoneObjectiveComponent>(player);
     
     // Check if all waves complete
@@ -142,7 +145,7 @@ namespace DarkAges
       component.ZoneComplete = true;
       
       // Emit zone complete
-      _zoneCompleteSink.publish(player, component.ZoneId);
+      _zoneCompleteSignal.publish(player, component.ZoneId);
       
       // Notify client
       ZoneObjectiveEvent event;
@@ -159,7 +162,7 @@ namespace DarkAges
     else
     {
       // Emit wave complete
-      _waveSink.publish(player, waveNumber, false);
+      _waveSignal.publish(player, waveNumber, false);
       
       // Notify client
       ZoneObjectiveEvent event;
@@ -184,9 +187,9 @@ namespace DarkAges
     return _registry->get<ZoneObjectiveComponent>(player);
   }
   
-  const std::unordered_map<std::string, ObjectiveProgress>& ZoneObjectiveSystem::GetObjectives(entt::entity player) const
+  const std::unordered_map<std::string, ZoneObjectiveProgress>& ZoneObjectiveSystem::GetObjectives(entt::entity player) const
   {
-    static std::unordered_map<std::string, ObjectiveProgress> empty;
+    static std::unordered_map<std::string, ZoneObjectiveProgress> empty;
     auto it = _playerObjectives.find(player);
     return (it != _playerObjectives.end()) ? it->second : empty;
   }
@@ -198,7 +201,7 @@ namespace DarkAges
     // Update time remaining for timed zones
     for (auto& [entity, zoneDef] : _playerZoneDefs)
     {
-      if (_registry->has<ZoneObjectiveComponent>(entity))
+      if (_registry->all_of<ZoneObjectiveComponent>(entity))
       {
         auto& component = _registry->get<ZoneObjectiveComponent>(entity);
         if (component.TimeRemaining > 0)
@@ -211,7 +214,7 @@ namespace DarkAges
     }
   }
   
-  bool ZoneObjectiveSystem::CheckObjectivesComplete(entt::entity player, const ZoneDefinition& zoneDef)
+  bool ZoneObjectiveSystem::CheckObjectivesComplete(entt::entity player, const ZoneDefinition& zoneDef) const
   {
     auto it = _playerObjectives.find(player);
     if (it == _playerObjectives.end()) return false;
