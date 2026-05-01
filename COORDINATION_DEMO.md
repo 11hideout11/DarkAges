@@ -21,3 +21,9 @@
 - Conflict handling: if divergent, `git pull --rebase` required
 
 **This file will be deleted at end of demo.**
+## Post-Conflict Resolution Update
+
+**Hermes Agent** has now integrated Agent B's changes and verified
+remote sync. The coordination workflow is complete.
+
+*Verified at: 2026-05-01 14:18:02*
