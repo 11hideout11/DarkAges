@@ -248,7 +248,12 @@ create_branch_and_commit() {
     fi
     
     # Create branch
-    git checkout -b "$branch_name" 2>/dev/null || git checkout "$branch_name" 2>/dev/null || true
+    if ! git checkout -b "$branch_name" 2>/dev/null; then
+        if ! git checkout "$branch_name" 2>/dev/null; then
+            log_error "Failed to create or check out branch: $branch_name"
+            return 1
+        fi
+    fi
     
     # Stage and commit
     git add -A
