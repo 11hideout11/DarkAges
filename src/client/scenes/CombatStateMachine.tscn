@@ -1,0 +1,139 @@
+[gd_scene load_steps=8 format=3 uid="uid://combat_state_machine"]
+
+[ext_resource type="Script" path="res://src/combat/fsm/CombatStateMachineController.cs" id="1_controller"]
+[ext_resource type="AnimationLibrary" path="res://scenes/PlayerAnimations.tres" id="2_animlib"]
+
+[sub_resource type="AnimationNodeStateMachine" id="StateMachine"]
+node_path_parent = ".."
+States/Idle/wrap_mode = 1
+States/Idle/time_wrap_mode = 0
+States/Idle/position = Vector2(384, 144)
+States/Idle/scale = Vector2(1, 1)
+States/Idle/autoplay = ""
+States/Idle/finish_notify = false
+States/Idle/next_mode = 0
+States/Idle/next_name = ""
+States/Idle/next_blend_time_pos = Vector2(0, 0)
+States/Walk/wrap_mode = 1
+States/Walk/time_wrap_mode = 0
+States/Walk/position = Vector2(256, 256)
+States/Walk/scale = Vector2(1, 1)
+States/Walk/autoplay = ""
+States/Walk/finish_notify = false
+States/Walk/next_mode = 0
+States/Walk/next_name = ""
+States/Walk/next_blend_time_pos = Vector2(0, 0)
+States/Run/wrap_mode = 1
+States/Run/time_wrap_mode = 0
+States/Run/position = Vector2(512, 256)
+States/Run/scale = Vector2(1, 1)
+States/Run/autoplay = ""
+States/Run/finish_notify = false
+States/Run/next_mode = 0
+States/Run/next_name = ""
+States/Run/next_blend_time_pos = Vector2(0, 0)
+States/Attack/wrap_mode = 1
+States/Attack/time_wrap_mode = 0
+States/Attack/position = Vector2(384, 400)
+States/Attack/scale = Vector2(1, 1)
+States/Attack/autoplay = ""
+States/Attack/finish_notify = false
+States/Attack/next_mode = 0
+States/Attack/next_name = ""
+States/Attack/next_blend_time_pos = Vector2(0, 0)
+States/Dodge/wrap_mode = 1
+States/Dodge/time_wrap_mode = 0
+States/Dodge/position = Vector2(640, 400)
+States/Dodge/scale = Vector2(1, 1)
+States/Dodge/autoplay = ""
+States/Dodge/finish_notify = false
+States/Dodge/next_mode = 0
+States/Dodge/next_name = ""
+States/Dodge/next_blend_time_pos = Vector2(0, 0)
+States/Hit/wrap_mode = 1
+States/Hit/time_wrap_mode = 0
+States/Hit/position = Vector2(128, 400)
+States/Hit/scale = Vector2(1, 1)
+States/Hit/autoplay = ""
+States/Hit/finish_notify = false
+States/Hit/next_mode = 0
+States/Hit/next_name = ""
+States/Hit/next_blend_time_pos = Vector2(0, 0)
+States/Death/wrap_mode = 1
+States/Death/time_wrap_mode = 0
+States/Death/position = Vector2(384, 512)
+States/Death/scale = Vector2(1, 1)
+States/Death/autoplay = ""
+States/Death/finish_notify = false
+States/Death/next_mode = 0
+States/Death/next_name = ""
+States/Death/next_blend_time_pos = Vector2(0, 0)
+Transitions = [
+SubResource("Transition_Idle_Walk"),
+SubResource("Transition_Walk_Idle"),
+SubResource("Transition_Idle_Run"),
+SubResource("Transition_Run_Idle"),
+SubResource("Transition_Idle_Attack"),
+SubResource("Transition_Attack_Idle"),
+SubResource("Transition_Idle_Dodge"),
+SubResource("Transition_Dodge_Idle"),
+SubResource("Transition_Idle_Hit"),
+SubResource("Transition_Hit_Idle"),
+SubResource("Transition_Idle_Death"),
+]
+
+[sub_resource type="AnimationNodeStateMachineTransition" id="Transition_Idle_Walk"]
+
+[sub_resource type="AnimationNodeStateMachineTransition" id="Transition_Walk_Idle"]
+
+[sub_resource type="AnimationNodeStateMachineTransition" id="Transition_Idle_Run"]
+
+[sub_resource type="AnimationNodeStateMachineTransition" id="Transition_Run_Idle"]
+
+[sub_resource type="AnimationNodeStateMachineTransition" id="Transition_Idle_Attack"]
+
+[sub_resource type="AnimationNodeStateMachineTransition" id="Transition_Attack_Idle"]
+
+[sub_resource type="AnimationNodeStateMachineTransition" id="Transition_Idle_Dodge"]
+
+[sub_resource type="AnimationNodeStateMachineTransition" id="Transition_Dodge_Idle"]
+
+[sub_resource type="AnimationNodeStateMachineTransition" id="Transition_Idle_Hit"]
+
+[sub_resource type="AnimationNodeStateMachineTransition" id="Transition_Hit_Idle"]
+
+[sub_resource type="AnimationNodeStateMachineTransition" id="Transition_Idle_Death"]
+
+[sub_resource type="AnimationTree" id="AnimationTree_Root"]
+tree_root = SubResource("StateMachine")
+root_transition_request = ""
+sync_playback = false
+states/Playback/position = Vector2(0, 0)
+states/StateMachine/position = Vector2(0, 0)
+parameters/conditions/idle = false
+parameters/conditions/walking = false
+parameters/conditions/sprinting = false
+parameters/conditions/attacking = false
+parameters/conditions/dodging = false
+parameters/conditions/hit = false
+parameters/conditions/dead = false
+parameters/state/current = 0
+
+[node name="CombatStateMachine" type="Node3D"]
+script = ExtResource("1_controller")
+
+[node name="AnimationPlayer" type="AnimationPlayer" parent="."]
+root_node = NodePath("..")
+anim_library = ExtResource("2_animlib")
+
+[node name="AnimationTree" type="AnimationTree" parent="."]
+tree_root = SubResource("AnimationTree_Root")
+resource = SubResource("AnimationTree_Root")
+parameters/conditions/idle = false
+parameters/conditions/walking = false
+parameters/conditions/sprinting = false
+parameters/conditions/attacking = false
+parameters/conditions/dodging = false
+parameters/conditions/hit = false
+parameters/conditions/dead = false
+parameters/state/current = 0

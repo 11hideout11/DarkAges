@@ -1,10 +1,25 @@
 # PRD-010: Server-Authoritative Hitbox/Hurtbox Validation System
 
 **Version:** 1.0
-**Status:** 🔄 In Progress — Components & tests exist, need full validation docs
+**Status:** 🔄 In Progress — Collision matrix documented, tests expanding
 **Owner:** PHYSICS_AGENT
 **Priority:** CRITICAL (P0 — MVP Blocking)
 **Dependencies:** PRD-003 (Combat System), PRD-008 (FSM)
+
+---
+
+## Implementation Status (2026-05-01)
+
+### ✅ Completed
+- [x] Collision matrix documented at `docs/collision-matrix.md`
+- [x] Hitbox.hpp implementation (`src/server/include/combat/detail/Hitbox.hpp`)
+- [x] Test file: `TestHitboxHurtbox.cpp`
+- [x] Test file: `TestHitboxCollision.cpp`
+
+### 📋 Pending
+- [ ] Edge-case test expansion (multihit, iframes, boundary)
+- [ ] Anti-cheat validation (speed hack detection)
+- [ ] Performance benchmark (1000 entities)
 
 ---
 

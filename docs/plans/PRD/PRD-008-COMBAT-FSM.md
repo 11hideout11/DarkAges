@@ -1,10 +1,32 @@
 # PRD-008: CombatStateMachine Node-Based FSM Template
 
 **Version:** 1.0
-**Status:** 🔄 In Progress — Implementation needed
+**Status:** 🔄 In Progress — Scene + Controller created, integration pending
 **Owner:** COMBAT_AGENT
 **Priority:** CRITICAL (P0 — MVP Blocking)
 **Dependencies:** PRD-003 (Combat System), PRD-005 (Client)
+
+---
+
+## Implementation Status (2026-05-01)
+
+### ✅ Completed
+- [x] Created: `src/client/scenes/CombatStateMachine.tscn` - Visual FSM scene with AnimationTree
+- [x] Created: `src/client/src/combat/fsm/CombatStateMachineController.cs` - Controller script
+- [x] AnimationNodeStateMachine with 7 states (Idle, Walk, Run, Attack, Dodge, Hit, Death)
+- [x] Global cooldown support (1.2s default)
+- [x] Hit stop effect integration
+- [x] Signal-based callbacks (StateEntered, StateExited, TransitionRequested, CooldownStarted)
+
+### 📋 Pending Integration
+- [ ] Connect CombatStateMachine.tscn to Player.tscn
+- [ ] Connect CombatStateMachine.tscn to RemotePlayer.tscn
+- [ ] Wire signals between AnimationStateMachine and CombatStateMachineController
+- [ ] Test in Godot editor
+- [ ] Run demo validation
+
+### 📋 Deliverables Remaining
+- Documentation: `docs/state-machine-usage.md`
 
 ---
 
