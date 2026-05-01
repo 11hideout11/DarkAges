@@ -120,9 +120,13 @@ do_test() {
     cd "$BUILD_DIR"
     
     # Run all tests with CTest
-    ctest --output-on-failure -j1
+    local result
+    if ctest --output-on-failure -j1; then
+        result=0
+    else
+        result=$?
+    fi
     
-    local result=$?
     cd "$PROJECT_ROOT"
     
     if [[ $result -eq 0 ]]; then
