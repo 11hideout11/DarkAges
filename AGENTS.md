@@ -13,7 +13,7 @@
 ## State (2026-05-01)
 
 - Phase 0: COMPLETE — documented in PHASE0_SUMMARY.md
-- Phase 1-5: UNVERIFIED — No documentation found for implementation
+- Phase 1-5: ✅ VERIFIED — Summary docs created (PHASE1-5_SUMMARY.md)
 - Phase 6: COMPLETE — build system hardening
 - Phase 7: COMPLETE — All tests pass (2129 cases, 12644 assertions, 100%)
 - Phase 8: PARTIAL — multiple work packages complete, GNS compile-time fix merged; runtime integration pending
