@@ -1,0 +1,224 @@
+{
+  "terrain": [
+    {
+      "name": "Liemaeu/GDNative-linux-HeightMap",
+      "stars": 1,
+      "desc": "This script compiles the GDNative library on GNU/Linux for the HeightMap terrain plugin by Zylann https://github.com/Zylann/godot_heightmap_plugin",
+      "url": "https://github.com/Liemaeu/GDNative-linux-HeightMap",
+      "language": "Shell",
+      "license": "GPL-2.0",
+      "topics": [
+        "game-development",
+        "gaming",
+        "godot",
+        "linux"
+      ]
+    },
+    {
+      "name": "AsPJT/DungeonTemplateLibrary",
+      "stars": 1428,
+      "desc": "\ud83c\udf0f: Dungeon free resources (terrain & roguelike generation)",
+      "url": "https://github.com/AsPJT/DungeonTemplateLibrary",
+      "language": "C++",
+      "license": "BSL-1.0",
+      "topics": [
+        "3d-graphics",
+        "creative-coding",
+        "fractal",
+        "generative-art",
+        "godot"
+      ]
+    },
+    {
+      "name": "SirNeirda/godot_procedural_infinite_world",
+      "stars": 55,
+      "desc": "Full Godot C# example project for procedural infinite terrain generation, with randomized objects spread throughout the map, physics and day/night cycle. ",
+      "url": "https://github.com/SirNeirda/godot_procedural_infinite_world",
+      "language": "C#",
+      "license": "NOASSERTION",
+      "topics": [
+        "godot",
+        "procedural",
+        "project",
+        "terrain"
+      ]
+    },
+    {
+      "name": "immaculate-lift-studio/TerrainCrafter",
+      "stars": 32,
+      "desc": "Procedural Terrain Generation for Godot 4",
+      "url": "https://github.com/immaculate-lift-studio/TerrainCrafter",
+      "language": "GDScript",
+      "license": "MIT",
+      "topics": []
+    },
+    {
+      "name": "ape1121/Godot4-3D-Smooth-Destructible-Terrain",
+      "stars": 28,
+      "desc": "A basic demonstration of procedural smooth terrain generation in Godot 4 in 100 lines.",
+      "url": "https://github.com/ape1121/Godot4-3D-Smooth-Destructible-Terrain",
+      "language": "GDScript",
+      "license": "MIT",
+      "topics": []
+    }
+  ],
+  "foliage": [
+    {
+      "name": "marcosbitetti/grass_plugin_4_godot",
+      "stars": 74,
+      "desc": "A plugin to handle huge amount of grass, foliages and other vegetations for Godot Game Engine",
+      "url": "https://github.com/marcosbitetti/grass_plugin_4_godot",
+      "language": "GDScript",
+      "license": "none",
+      "topics": []
+    }
+  ],
+  "asset_management": [],
+  "level_tools": [
+    {
+      "name": "PhoenixIllusion/mesh-library-builder",
+      "stars": 0,
+      "desc": "This is a tool for Godot to create collision-enabled MeshLibraries for use in GridMaps using folders or zips of GLTF models.",
+      "url": "https://github.com/PhoenixIllusion/mesh-library-builder",
+      "language": "TypeScript",
+      "license": "MIT",
+      "topics": []
+    }
+  ],
+  "procedural": [
+    {
+      "name": "sventomasek/Godot-TileMap-Procedural-Generation",
+      "stars": 3,
+      "desc": "C# Procedural Generation with Ore, Structure, Node and Border generation. Uses randomly generated Noise textures to generate the terrain.",
+      "url": "https://github.com/sventomasek/Godot-TileMap-Procedural-Generation",
+      "language": "C#",
+      "license": "MIT",
+      "topics": []
+    },
+    {
+      "name": "Zylann/godot_voxel",
+      "stars": 3619,
+      "desc": "Voxel module for Godot Engine",
+      "url": "https://github.com/Zylann/godot_voxel",
+      "language": "C++",
+      "license": "MIT",
+      "topics": []
+    },
+    {
+      "name": "Zylann/voxelgame",
+      "stars": 727,
+      "desc": "Voxel world prototype made with Godot Engine",
+      "url": "https://github.com/Zylann/voxelgame",
+      "language": "GDScript",
+      "license": "NOASSERTION",
+      "topics": []
+    },
+    {
+      "name": "ClarkThyLord/Voxel-Core",
+      "stars": 486,
+      "desc": "Voxel plugin for the Godot game engine!",
+      "url": "https://github.com/ClarkThyLord/Voxel-Core",
+      "language": "GDScript",
+      "license": "MIT",
+      "topics": [
+        "3d",
+        "godot",
+        "godot-addon",
+        "godot-engine",
+        "godot-plugin"
+      ]
+    },
+    {
+      "name": "Relintai/voxelman",
+      "stars": 110,
+      "desc": "A voxel engine for godot. I'ts a c++ engine module.",
+      "url": "https://github.com/Relintai/voxelman",
+      "language": "C++",
+      "license": "MIT",
+      "topics": [
+        "engine-module",
+        "game",
+        "godot",
+        "lights",
+        "meshes"
+      ]
+    }
+  ],
+  "shaders": [
+    {
+      "name": "haowg/GODOT-VFX-LIBRARY",
+      "stars": 235,
+      "desc": "A comprehensive collection of particle effects and shaders for Godot 4, designed specifically for action games",
+      "url": "https://github.com/haowg/GODOT-VFX-LIBRARY",
+      "language": "GDScript",
+      "license": "MIT",
+      "topics": []
+    },
+    {
+      "name": "Bejmach/GodotShaderEffectLibrary",
+      "stars": 0,
+      "desc": "Library with grapgic effects for godot",
+      "url": "https://github.com/Bejmach/GodotShaderEffectLibrary",
+      "language": null,
+      "license": "none",
+      "topics": []
+    },
+    {
+      "name": "davezant/Godot-Shader-Vault",
+      "stars": 0,
+      "desc": "A free open-source library of optimized shaders for Godot. Designed for artists and developers who want professional visual effects without complexity.",
+      "url": "https://github.com/davezant/Godot-Shader-Vault",
+      "language": "GDShader",
+      "license": "Unlicense",
+      "topics": []
+    },
+    {
+      "name": "Lehu7682/GODOT-VFX-LIBRARY",
+      "stars": 0,
+      "desc": "\u2728 Create stunning visuals with 35+ particle effects and 17+ shaders for Godot 4, perfect for action games like Metroidvania and platformers.",
+      "url": "https://github.com/Lehu7682/GODOT-VFX-LIBRARY",
+      "language": null,
+      "license": "none",
+      "topics": [
+        "2d-games",
+        "3d-games",
+        "animation",
+        "game-development",
+        "game-engine"
+      ]
+    },
+    {
+      "name": "RPicster/Godot-particle-and-vfx-textures",
+      "stars": 352,
+      "desc": "A collection of textures I created to be used for lensflares, lights, particles and visual effects.",
+      "url": "https://github.com/RPicster/Godot-particle-and-vfx-textures",
+      "language": "GDScript",
+      "license": "CC0-1.0",
+      "topics": []
+    },
+    {
+      "name": "marinho/godot-visual-effects",
+      "stars": 72,
+      "desc": "Repository with various shaders, particles and camera effects",
+      "url": "https://github.com/marinho/godot-visual-effects",
+      "language": "GDScript",
+      "license": "none",
+      "topics": []
+    },
+    {
+      "name": "Lehu7682/GODOT-VFX-LIBRARY",
+      "stars": 0,
+      "desc": "\u2728 Create stunning visuals with 35+ particle effects and 17+ shaders for Godot 4, perfect for action games like Metroidvania and platformers.",
+      "url": "https://github.com/Lehu7682/GODOT-VFX-LIBRARY",
+      "language": null,
+      "license": "none",
+      "topics": [
+        "2d-games",
+        "3d-games",
+        "animation",
+        "game-development",
+        "game-engine"
+      ]
+    }
+  ]
+}
