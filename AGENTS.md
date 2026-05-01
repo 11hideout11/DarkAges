@@ -1,16 +1,16 @@
 ## Recent Commits (last 10 — updated)
-1. fix(gns): enable C language to support compile features required by GameNetworkingSockets
-2. feat(combat): complete FSM refactor; circular dependency resolved; hitbox component added; proper headers and final review fixes
-3. fix(skill): correct namespace heuristic to avoid false positives on DarkAges namespace
-4. docs(agents): update Recent Commits ordering and restore State section with test metrics
-5. fix(combat): address subjective review: proper headers, Hitbox component, clean damage
-6. fix(combat): resolve circular dependency in combat state machine; restore copy semantics
-7. fix(combat): rewrite AttackState without Hitbox component and fix RecoveryState timing
-8. docs: resolve demo readiness contradiction, validate all phases complete
-9. Merge PR #28: fix combat FSM entity types and complete OpenHands integration
-10. docs: update TEST_SUMMARY.md with current test status - 1302 cases all pass
+1. docs(research): add comprehensive world-building capabilities research and asset pipeline
+2. fix(gns): enable C language to support compile features required by GameNetworkingSockets
+3. feat(combat): complete FSM refactor; circular dependency resolved; hitbox component added; proper headers and final review fixes
+4. fix(skill): correct namespace heuristic to avoid false positives on DarkAges namespace
+5. docs(agents): update Recent Commits ordering and restore State section with test metrics
+6. fix(combat): address subjective review: proper headers, Hitbox component, clean damage
+7. fix(combat): resolve circular dependency in combat state machine; restore copy semantics
+8. fix(combat): rewrite AttackState without Hitbox component and fix RecoveryState timing
+9. docs: resolve demo readiness contradiction, validate all phases complete
+10. Merge PR #28: fix combat FSM entity types and complete OpenHands integration
 
-## State (2026-04-29)
+## State (2026-05-01)
 
 - Phase 0: COMPLETE — documented in PHASE0_SUMMARY.md
 - Phase 1-5: UNVERIFIED — No documentation found for implementation
@@ -18,6 +18,7 @@
 - Phase 7: COMPLETE — All tests pass (2129 cases, 12644 assertions, 100%)
 - Phase 8: PARTIAL — multiple work packages complete, GNS compile-time fix merged; runtime integration pending
 - Phase 9: COMPLETE — performance budgets validated
+- **Art Pipeline**: RESEARCH PHASE COMPLETE — world-building capabilities documented; asset pipeline spec exists (43 assets); CC0 sourcing strategies cataloged; Godot 4.2 PBR workflow defined; manifest.json created at assets/manifest.json
 - **Tests**: All suites passing (2129 cases, 12644 assertions, 100%)
 - **Test breakdown**:
   - unit_tests: 1302 cases, 7244 assertions
