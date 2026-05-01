@@ -1,9 +1,9 @@
 # PRD-008: Combat State Machine (FSM)
 
 **Version:** 1.0  
-**Status:** 🔴 Not Started  
+**Status:** 🔴 Not Started (Planned)  
 **Owner:** CLIENT_AGENT  
-**Priority:** CRITICAL  
+**Priority:** HIGH  
 **Dependencies:** PRD-003 (Combat System)
 
 ---
