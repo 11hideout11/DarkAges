@@ -40,6 +40,35 @@ struct ZoneDefinition {
     // Network config
     std::string host;
     uint16_t port;
+
+    // -------------------------------------------------------
+    // Objective / wave / time-limit data (optional per zone)
+    // -------------------------------------------------------
+
+    /// A single objective that players must (or may) complete in this zone.
+    struct Objective {
+        std::string id;
+
+        enum class Type : uint8_t {
+            Kill     = 0,
+            Interact = 1,
+            Damage   = 2,
+            Custom   = 3
+        };
+
+        Type     type          = Type::Custom;
+        bool     required      = true;
+        uint16_t requiredCount = 1;
+    };
+
+    /// Objectives active in this zone (empty = no objective tracking).
+    std::vector<Objective> objectives;
+
+    /// Number of waves for wave-defense zones (0 = no waves).
+    uint8_t waveCount = 0;
+
+    /// Time limit in seconds (0 = no time limit).
+    float timeLimit = 0.0f;
     
     // Check if position is within this zone (excluding buffer)
     bool containsPosition(float x, float z) const;

@@ -1,10 +1,26 @@
 # PRD-014: Phantom Camera 3rd-Person Follow & Lock-On System
 
 **Version:** 1.0
-**Status:** 🔄 Not Started — Currently using basic SpringArm3D
+**Status:** 🔄 In Progress — Implementation created
 **Owner:** CAMERA_AGENT
 **Priority:** HIGH (P1 — Visual Coherence Requirement)
 **Dependencies:** PRD-008 (CombatStateMachine FSM — for lock-on state integration)
+
+---
+
+## Implementation Status (2026-05-01)
+
+### ✅ Completed
+- [x] Created: `PhantomCamera.cs` - Lock-on targeting camera
+- [x] Smooth third-person follow (inherits from existing CameraController)
+- [x] Lock-on targeting with automatic focus
+- [x] Target switching (next/prev)
+- [x] Smooth transitions between free-look and lock-on modes
+
+### 📋 Pending Integration
+- [ ] Replace CameraController script in Player.tscn with PhantomCamera
+- [ ] Configure input map actions (lock_on, lock_on_next, lock_on_prev)
+- [ ] Add enemies to "enemies" group for detection
 
 ---
 

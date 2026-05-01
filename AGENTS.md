@@ -32,6 +32,37 @@
 - Server: ~32K LOC (C++20, EnTT ECS, 60Hz tick) | Client: ~9K LOC (C# Godot 4.2)
 - **PR #29 status**: MERGED — Combat FSM refactor completed; two-agent review passed (objective test + subjective architectural); all 2129 tests passing.
 
+## PLAN.md Execution Updates (2026-05-01)
+
+### PRD-008: Node-Based Combat FSM Template
+- ✅ Created: `CombatStateMachine.tscn` scene with AnimationTree structure
+- ✅ Created: `CombatStateMachineController.cs` (C# controller script)
+- 📋 Integration pending: Connect to Player.tscn/RemotePlayer.tscn
+
+### PRD-009: Demo Zones with Objectives
+- ✅ Zone configs enriched with objectives, events, wave configuration
+- ✅ Created: `ZoneObjectiveComponent.hpp` - Server tracking component
+- ✅ Created: `ZoneObjectiveSystem.hpp/.cpp` - Objective tracking logic
+- ✅ Created: `TestZoneObjectives.cpp` - Unit tests
+- 📋 Server integration pending (tick loop, snapshots)
+
+### PRD-010: Hitbox/Hurtbox Validation
+- ✅ Collision matrix documented at `docs/collision-matrix.md`
+- ✅ Hitbox.hpp implementation exists
+- ✅ Test files: TestHitboxHurtbox.cpp, TestHitboxCollision.cpp
+- 📋 Edge-case test expansion pending
+
+### PRD-012: GNS Runtime Integration
+- ⚠️ Compile-time fixed (Phase 8), runtime pending
+- 📋 Network stack port from custom UDP to GNS pending
+
+### PRD-013: Phase 1-5 Verification
+- ✅ RESOLVED - PHASE1_SUMMARY.md through PHASE5_SUMMARY.md exist
+
+### PRD-014: Phantom Camera
+- ✅ Created: `PhantomCamera.cs` - Lock-on targeting system
+- 📋 Integration pending (replace CameraController in Player.tscn)
+
 ## OpenHands Integration Updates (2026-04-29)
 
 - Added 4 new standalone skills: `test-flakiness.py`, `coverage-report.py`, `pr-create.py`, `pr-comment.py`, `code-format.py`
