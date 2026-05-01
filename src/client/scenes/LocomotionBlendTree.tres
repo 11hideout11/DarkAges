@@ -1,0 +1,38 @@
+[gd_resource type="AnimationTree" format=3 uid="uid://locomotion_blend_space"]
+
+[sub_resource type="AnimationNodeStateMachine" id="LocomotionSM"]
+node_path_parent = ".."
+States/Idle/position = Vector2(300, 150)
+States/Walk/position = Vector2(450, 250)
+States/Run/position = Vector2(600, 150)
+States/Airborne/position = Vector2(450, 50)
+Transitions = []
+
+[sub_resource type="AnimationNodeBlendSpace2D" id="WalkBlendSpace"]
+blend_position = Vector2(0, 0)
+minimum = Vector2(-1, 0)
+maximum = Vector2(1, 1)
+sync = false
+stack_algorithm = 0
+
+[sub_resource type="AnimationNodeBlendSpace2D" id="RunBlendSpace"]
+blend_position = Vector2(0, 0)
+minimum = Vector2(1, 0)
+maximum = Vector2(2, 1)
+sync = false
+stack_algorithm = 0
+
+[sub_resource type="AnimationTree" id="LocomotionTree"]
+tree_root = SubResource("LocomotionSM")
+root_transition_request = ""
+sync_playback = false
+parameters/StateMachine/active = true
+parameters/WalkBlendSpace/blend_position = Vector2(0, 0)
+parameters/RunBlendSpace/blend_position = Vector2(0, 0)
+
+[node name="LocomotionBlendTree" type="AnimationTree"]
+tree_root = SubResource("LocomotionTree")
+resource = SubResource("LocomotionTree")
+parameters/StateMachine/active = true
+parameters/WalkBlendSpace/blend_position = Vector2(0, 0)
+parameters/RunBlendSpace/blend_position = Vector2(0, 0)

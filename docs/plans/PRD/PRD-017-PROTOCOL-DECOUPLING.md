@@ -1,11 +1,24 @@
 # PRD-017: Protocol Layer Decoupling from GNS
 
 **Version:** 1.0
-**Status:** 🔄 Not Started — Protocol.cpp excluded when ENABLE_GNS=OFF
+**Status:** 🔄 In Progress — Stub implementation exists
 **Owner:** NETWORKING_AGENT
 **Priority:** HIGH (P2 — Build Flexibility)
 **Dependencies:** PRD-012 (GNS Runtime Integration — must coordinate)
 **Issue:** #4 from PROJECT_ISSUES_TRACKER.md
+
+---
+
+## Implementation Status (2026-05-01)
+
+### ✅ Completed - Stub Exists
+- [x] Protocol_stub.cpp exists - works when ENABLE_GNS=OFF
+- [x] NetworkManager_stub.cpp exists - alternative when GNS disabled
+- [x] Conditional compilation for ENABLE_GNS
+
+### 📋 Pending - Verification
+- [ ] Test builds with ENABLE_GNS=OFF
+- [ ] Verify protocol tests run in isolation
 
 ---
 
