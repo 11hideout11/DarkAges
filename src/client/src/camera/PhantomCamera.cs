@@ -358,12 +358,12 @@ namespace DarkAges.Camera
             var targets = new Godot.Collections.Array<Node3D>();
             foreach (var node in nearby)
             {
-                if (node is Node3D enemy)
+                if (node is Node3D target)
                 {
-                    float dist = player.GlobalPosition.DistanceTo(enemy.GlobalPosition);
+                    float dist = player.GlobalPosition.DistanceTo(target.GlobalPosition);
                     if (dist < 20.0f)
                     {
-                        targets.Add(enemy);
+                        targets.Add(target);
                     }
                 }
             }

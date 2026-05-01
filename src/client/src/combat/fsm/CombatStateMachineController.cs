@@ -440,8 +440,8 @@ namespace DarkAges.Combat.FSM
         }
         
         // Reference-counted hit stop state (handles overlapping hit stops safely)
-        private static int _activeHitStopCount;
-        private static float _hitStopRestoreTimeScale = 1.0f;
+        private int _activeHitStopCount;
+        private float _hitStopRestoreTimeScale = 1.0f;
         
         /// <summary>
         /// Hit stop effect - brief time freeze
