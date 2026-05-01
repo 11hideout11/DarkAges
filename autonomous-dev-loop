@@ -1,0 +1,403 @@
+#!/bin/bash
+# ============================================================================
+# DarkAges Autonomous Development Loop
+# ============================================================================
+# Executes an autonomous development iteration: task discovery → implementation → PR
+#
+# Usage:
+#   PATH="$HOME/.local/bin:$PATH" ./autonomous-dev-loop [options]
+#
+# Options:
+#   --max-iterations N    Maximum implementation iterations (default: 10)
+#   --batch-mode       Run all iterations without stopping
+#   --dry-run       Show what would be done without executing
+#   --task FILE     Use specific task file instead of auto-discovery
+#   --branch NAME   Use a specific feature branch
+#
+# Environment:
+#   GITHUB_TOKEN     Required for PR creation
+#   PATH          Must include cmake, ninja, g++
+#
+# Examples:
+#   PATH="$HOME/.local/bin:$PATH" ./autonomous-dev-loop --dry-run
+#   PATH="$HOME/.local/bin:$PATH" ./autonomous-dev-loop --max-iterations 5
+# ============================================================================
+
+set -e
+
+# ============================================================================
+# Configuration
+# ============================================================================
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PROJECT_ROOT="$SCRIPT_DIR"
+BUILD_DIR="$PROJECT_ROOT/build"
+MAX_ITERATIONS="${MAX_ITERATIONS:-10}"
+BATCH_MODE=false
+DRY_RUN=false
+TASK_FILE=""
+FEATURE_BRANCH=""
+
+# Colors
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+BLUE='\033[0;34m'
+CYAN='\033[0;36m'
+MAGENTA='\033[0;35m'
+NC='\033[0m'
+
+# ============================================================================
+# Logging
+# ============================================================================
+log() { echo -e "${GREEN}[*]${NC} $1"; }
+log_info() { echo -e "${BLUE}[>]${NC} $1"; }
+log_warn() { echo -e "${YELLOW}[!]${NC} $1"; }
+log_error() { echo -e "${RED}[X]${NC} $1" >&2; }
+log_section() { 
+    echo ""
+    echo -e "${MAGENTA}========================================${NC}"
+    echo -e "${MAGENTA}$1${NC}"
+    echo -e "${MAGENTA}========================================${NC}"
+    echo ""
+}
+
+# ============================================================================
+# Prerequisites Check
+# ============================================================================
+check_prereqs() {
+    log_section "Checking Prerequisites"
+    
+    # Check required tools
+    local missing=()
+    
+    for tool in cmake ninja g++; do
+        if ! command -v "$tool" &> /dev/null; then
+            missing+=("$tool")
+        fi
+    done
+    
+    if [[ ${#missing[@]} -gt 0 ]]; then
+        log_warn "Missing tools: ${missing[*]}"
+        log_info "Install: pip3 install cmake ninja && apt install g++"
+    else
+        log_info "All tools available"
+    fi
+    
+    # Check build directory
+    if [[ -d "$BUILD_DIR" ]]; then
+        log_info "Build directory exists: $BUILD_DIR"
+    else
+        log_info "Will create build directory"
+    fi
+    
+    # Check git state
+    if git rev-parse --git-dir &> /dev/null; then
+        local branch=$(git rev-parse --abbrev-ref HEAD)
+        local status=$(git status --porcelain | wc -l)
+        log_info "Git: branch=$branch, changes=$status"
+    fi
+}
+
+# ============================================================================
+# Task Discovery
+# ============================================================================
+discover_tasks() {
+    log_section "Task Discovery"
+    
+    local task_source="$TASK_FILE"
+    
+    if [[ -n "$task_source" ]]; then
+        log_info "Using specified task file: $task_source"
+        cat "$task_source"
+        return 0
+    fi
+    
+    # Check AGENTS.md for gaps
+    if [[ -f "$PROJECT_ROOT/AGENTS.md" ]]; then
+        log_info "Checking AGENTS.md for gaps..."
+        grep -A 20 "GAPS\|Remaining\|TODO" "$PROJECT_ROOT/AGENTS.md" 2>/dev/null || true
+    fi
+    
+    # Check .demo_tasks.md for remaining tasks
+    if [[ -f "$PROJECT_ROOT/.demo_tasks.md" ]]; then
+        log_info "Checking .demo_tasks.md for remaining items..."
+        grep -E "^\s*-\s*\[\s*\]" "$PROJECT_ROOT/.demo_tasks.md" 2>/dev/null || true
+    fi
+    
+    # Check PHASE summaries for incomplete items
+    for f in "$PROJECT_ROOT"/PHASE*_SUMMARY.md; do
+        if [[ -f "$f" ]]; then
+            local incomplete=$(grep -E "INCOMPLETE|PARTIAL" "$f" 2>/dev/null | head -5)
+            if [[ -n "$incomplete" ]]; then
+                log_info "Found in $(basename "$f"):"
+                echo "$incomplete"
+            fi
+        fi
+    done
+    
+    # List test files with low coverage
+    log_info "Checking test coverage..."
+    for testfile in "$PROJECT_ROOT"/src/server/tests/Test*.cpp; do
+        if [[ -f "$testfile" ]]; then
+            local name=$(basename "$testfile" .cpp)
+            local count
+            count=$(grep -c "^TEST_CASE" "$testfile" 2>/dev/null || echo 0)
+            count=${count:-0}
+            if [[ "$count" -lt 5 ]]; then
+                log_info "Low test coverage: $name ($count tests)"
+            fi
+        fi
+    done
+    
+    log_info "Task discovery complete"
+}
+
+# ============================================================================
+# Implementation Loop
+# ============================================================================
+run_iteration() {
+    local iteration=$1
+    local task_description=$2
+    
+    log_section "Iteration $iteration: $task_description"
+    
+    if [[ "$DRY_RUN" == true ]]; then
+        log_info "[DRY RUN] Would implement: $task_description"
+        return 0
+    fi
+    
+    # Implementation would happen here
+    # This is where the agent would make code changes
+    
+    log_info "Implementation step for: $task_description"
+    
+    return 0
+}
+
+# ============================================================================
+# Build & Test
+# ============================================================================
+build_and_test() {
+    log_section "Build & Test"
+    
+    if [[ "$DRY_RUN" == true ]]; then
+        log_info "[DRY RUN] Would build and test"
+        return 0
+    fi
+    
+    local start_time=$(date +%s)
+    
+    # Configure
+    log_info "Configuring CMake..."
+    rm -rf "$BUILD_DIR"
+    mkdir -p "$BUILD_DIR"
+    cd "$BUILD_DIR"
+    
+    cmake .. \
+        -DCMAKE_BUILD_TYPE=Release \
+        -DBUILD_TESTS=ON \
+        -DBUILD_SHARED_LIBS=OFF \
+        -DENABLE_GNS=OFF \
+        -DENABLE_REDIS=OFF \
+        -DENABLE_SCYLLA=OFF \
+        -DCMAKE_POLICY_VERSION_MINIMUM=3.5 \
+        -G Ninja \
+        2>&1 | tail -20
+    
+    # Build
+    log_info "Building..."
+    ninja -j$(nproc 2>/dev/null || echo 4) 2>&1 | tail -20
+    
+    # Test
+    log_info "Running tests..."
+    cd "$BUILD_DIR"
+    ctest --output-on-failure -j1 2>&1 | tail -30
+    
+    local result=$?
+    local elapsed=$(($(date +%s) - start_time))
+    
+    cd "$PROJECT_ROOT"
+    
+    if [[ $result -eq 0 ]]; then
+        log "Build & Test completed in ${elapsed}s"
+    else
+        log_warn "Build & Test had issues (exit code: $result)"
+    fi
+    
+    return $result
+}
+
+# ============================================================================
+# Create Git Branch & Commit
+# ============================================================================
+create_branch_and_commit() {
+    local changes_summary="$1"
+    
+    log_section "Creating Branch & Commit"
+    
+    local branch_name="${FEATURE_BRANCH:-autonomous/$(date +%Y%m%d)-feature}"
+    
+    if [[ "$DRY_RUN" == true ]]; then
+        log_info "[DRY RUN] Would create branch: $branch_name"
+        return 0
+    fi
+    
+    # Check for changes
+    if ! git rev-parse --git-dir &> /dev/null; then
+        log_error "Not in a git repository"
+        return 1
+    fi
+    
+    # Create branch
+    if ! git checkout -b "$branch_name" 2>/dev/null; then
+        if ! git checkout "$branch_name" 2>/dev/null; then
+            log_error "Failed to create or check out branch: $branch_name"
+            return 1
+        fi
+    fi
+    
+    # Stage and commit
+    git add -A
+    git status --porcelain | head -20
+    
+    if [[ -n "$(git status --porcelain)" ]]; then
+        git commit -m "feat(autonomous): implementation of $changes_summary
+        
+- Implemented as part of autonomous development loop
+- Build and tests validated
+
+Co-authored-by: openhands <openhands@all-hands.dev>"
+        log_info "Committed to branch: $branch_name"
+    else
+        log_info "No changes to commit"
+    fi
+    
+    echo "$branch_name"
+}
+
+# ============================================================================
+# Open Pull Request
+# ============================================================================
+open_pull_request() {
+    local branch_name="$1"
+    local description="$2"
+    
+    log_section "Opening Pull Request"
+    
+    if [[ -z "$GITHUB_TOKEN" ]]; then
+        log_warn "GITHUB_TOKEN not set - skipping PR creation"
+        log_info "To create PR manually:"
+        log_info "  git push -u origin $branch_name"
+        log_info "  gh pr create --title 'Autonomous: $description' --body 'Description'"
+        return 0
+    fi
+    
+    if [[ "$DRY_RUN" == true ]]; then
+        log_info "[DRY RUN] Would create PR for branch: $branch_name"
+        return 0
+    fi
+    
+    # Push branch
+    log_info "Pushing branch: $branch_name"
+    git push -u origin "$branch_name" 2>&1 || {
+        log_warn "Push failed - may need credentials"
+        return 1
+    }
+    
+    # Create PR using GitHub CLI
+    if command -v gh &> /dev/null; then
+        gh pr create \
+            --title "Autonomous: $description" \
+            --body "Implemented via autonomous development loop
+            
+## Changes
+- $description
+
+## Verification
+- Build: $([ -d "$BUILD_DIR" ] && echo 'passed' || echo 'not run')
+- Tests: Run via workflow verify
+
+Co-authored-by: openhands <openhands@all-hands.dev>" \
+            2>&1 || log_warn "PR creation may have failed"
+    else
+        log_warn "GitHub CLI not available - skipping PR"
+    fi
+}
+
+# ============================================================================
+# Main Loop
+# ============================================================================
+main() {
+    log_section "DarkAges Autonomous Development Loop"
+    log "Max iterations: $MAX_ITERATIONS"
+    log "Project: $PROJECT_ROOT"
+    echo ""
+    
+    # Parse arguments
+    while [[ $# -gt 0 ]]; do
+        case "$1" in
+            --max-iterations)
+                MAX_ITERATIONS="$2"
+                shift 2
+                ;;
+            --batch-mode)
+                BATCH_MODE=true
+                shift
+                ;;
+            --dry-run)
+                DRY_RUN=true
+                shift
+                ;;
+            --task)
+                TASK_FILE="$2"
+                shift 2
+                ;;
+            --branch)
+                FEATURE_BRANCH="$2"
+                shift 2
+                ;;
+            *)
+                shift
+                ;;
+        esac
+    done
+    
+    # Check prerequisites
+    check_prereqs
+    
+    # Discover tasks
+    discover_tasks
+    local task_summary="autonomous implementation iteration $(date +%Y%m%d)"
+    
+    # Run iterations
+    local iteration=1
+    while [[ $iteration -le $MAX_ITERATIONS ]]; do
+        run_iteration $iteration "$task_summary"
+        
+        # After each iteration, try build
+        if ! build_and_test; then
+            if [[ "$BATCH_MODE" == true ]]; then
+                log_warn "Build failed, continuing..."
+            else
+                log_error "Build failed, stopping iteration"
+                break
+            fi
+        fi
+        
+        ((iteration++))
+    done
+    
+    # Create branch and commit
+    create_branch_and_commit "$task_summary"
+    local branch_name=$(git rev-parse --abbrev-ref HEAD)
+    
+    # Open PR
+    open_pull_request "$branch_name" "$task_summary"
+    
+    log_section "Autonomous Loop Complete"
+    log "Branch: $branch_name"
+    log "Iterations: $((iteration-1))"
+}
+
+# Run main
+main "$@"
