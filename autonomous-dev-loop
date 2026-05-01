@@ -264,7 +264,8 @@ create_branch_and_commit() {
         
 - Implemented as part of autonomous development loop
 - Build and tests validated
-- Co-authored-by: openhands <openhands@all-hands.dev>"
+
+Co-authored-by: openhands <openhands@all-hands.dev>"
         log_info "Committed to branch: $branch_name"
     else
         log_info "No changes to commit"
