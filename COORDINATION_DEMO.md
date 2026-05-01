@@ -1,4 +1,6 @@
-# Multi-Agent Coordination Demo
+# Multi-Agent Coordination Demo (UPDATED BY AGENT B)
+
+**AGENT B NOTE:** This file was modified by a cloud OpenHands agent simulating concurrent work.
 
 **Created:** 2026-05-01  
 **Purpose:** Demonstrate synchronization workflow between local Hermes Agent and cloud OpenHands agents.
