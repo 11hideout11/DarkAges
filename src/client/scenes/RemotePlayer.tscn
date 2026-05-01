@@ -1,7 +1,8 @@
-[gd_scene load_steps=6 format=3 uid="uid://remoteplayer"]
+[gd_scene load_steps=7 format=3 uid="uid://remoteplayer"]
 
 [ext_resource type="Script" path="res://src/entities/RemotePlayer.cs" id="1_remoteplayer"]
 [ext_resource type="AnimationLibrary" path="res://scenes/PlayerAnimations.tres" id="2_animlib"]
+[ext_resource type="AnimationTree" path="res://scenes/PlayerAnimationTree.tres" id="3_animationtree"]
 
 [sub_resource type="CapsuleShape3D" id="CapsuleShape3D_remote"]
 radius = 0.3
@@ -29,33 +30,10 @@ albedo_color = Color(0.2, 0.9, 0.2, 1)
 emission = Color(0.3, 1.0, 0.3, 1)
 emission_energy_multiplier = 1.0
 
-[sub_resource type="Animation" id="Animation_default"]
-resource_name = "Idle"
-length = 0.001
-tracks/0/type = "value"
-tracks/0/imported = false
-tracks/0/enabled = true
-tracks/0/path = NodePath("Model:position")
-tracks/0/interp = 1
-tracks/0/loop_wrap = true
-tracks/0/keys = {
-"times": PackedFloat32Array(0),
-"transitions": PackedFloat32Array(1),
-"update": 0,
-"values": [Vector3(0, 0, 0)]
-}
-[sub_resource type="AnimationNodeStateMachine" id="AnimationTree_state_machine"]
-resource_name = "StateMachine"
-
-
 [node name="RemotePlayer" type="CharacterBody3D"]
 collision_layer = 4
 collision_mask = 3
 script = ExtResource("1_remoteplayer")
-InterpolationDelay = 0.1
-ExtrapolationLimit = 0.5
-PositionSmoothing = 15.0
-RotationSmoothing = 10.0
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.9, 0)
@@ -70,13 +48,9 @@ surface_material_override/0 = SubResource("StandardMaterial3D_remote")
 
 [node name="AnimationPlayer" type="AnimationPlayer" parent="Model"]
 root_node = NodePath("../..")
-anims/Idle = SubResource("Animation_default")
-[node name="AnimationTree" type="AnimationTree" parent="Model"]
-root_node = NodePath("../..")
-tree_root = SubResource("AnimationTree_state_machine")
-anim_player = NodePath("../AnimationPlayer")
-library = ExtResource("2_animlib")
 
+[node name="AnimationTree" type="AnimationTree" parent="Model"]
+resource = ExtResource("3_animationtree")
 
 [node name="NameLabel" type="Label3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.1, 0)
