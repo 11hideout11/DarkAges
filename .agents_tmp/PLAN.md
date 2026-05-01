@@ -957,3 +957,110 @@ This analysis identified **26 total gaps** across all categories:
 
 **Plan Status:** ✅ COMPLETE - Ready for agent implementation  
 **Generated:** 2026-05-01
+
+---
+
+# Appendix: Autonomous Automation Workflow
+
+## Automation Definition: DarkAges Gap Analysis Agent
+
+**Purpose:** Automatically identify gaps and create PRDs weekly
+
+### Trigger
+- **Type:** Cron
+- **Schedule:** `0 2 * * 0` (Sunday at 2 AM UTC)
+- **Alternative:** `0 9 * * 1` (Monday 9 AM for new week planning)
+
+### Prompt for Automation
+
+```
+You are a Planning Agent for the DarkAges MMO project. Your task is to:
+
+1. ANALYZE CURRENT PROJECT STATE:
+   - Read AGENTS.md and CURRENT_STATUS.md from the repository
+   - Check existing PRDs in docs/plans/PRD/ directory  
+   - Review phase completion status from README.md
+
+2. IDENTIFY GAPS:
+   - Compare project goals (README "Project Goals") vs. current implementation
+   - Look for implicit gaps: "TODO", "not implemented", "partial", "skip"
+   - Check CURRENT_STATUS.md "Next Steps" section
+   - Read existing PRD-008 through PRD-024 status
+
+3. CREATE SPEC-DRIVEN PRDs:
+   For each new gap, create PRD with:
+   - Problem Statement (what's missing)
+   - User Stories with acceptance criteria  
+   - Functional Requirements (numbered FR-XXX)
+   - Non-Goals (scope boundaries)
+   - Implementation Approach
+   - Deliverables and time estimate
+
+4. UPDATE PLAN.md:
+   - Add new gaps to summary table
+   - Mark PRDs with NEW status
+   - Include implementation order recommendations
+
+AREAS TO ANALYZE:
+1. MVP-Blocking: Combat FSM, Demo Zones, Hitbox Validation
+2. Gameplay: Cooldown, Spawning, Quest, Loot, Behavior Trees  
+3. Infrastructure: Accounts, Restart, Multi-zone
+4. Client/UI: Settings, Audio, Tutorial, Achievements
+5. Polish: Foot IK, Procedural Leaning, SDFGI, Blend Spaces
+
+Focus on gaps NOT in existing PRD-001 through PRD-024.
+Save new PRDs to docs/plans/PRD/PRD-XXX-[name].md format.
+```
+
+### Repo Configuration
+- **Repository:** DarkAges (workspace)
+- **Path:** /workspace/project/DarkAges
+
+### Expected Runtime
+- **Timeout:** 600 seconds (10 minutes)
+- **Frequency:** Weekly
+
+---
+
+## Creating the Automation
+
+To create this automation in OpenHands Cloud, run:
+
+```bash
+curl -X POST "${OPENHANDS_HOST}/api/automation/v1/preset/prompt" \
+  -H "Authorization: Bearer ${OPENHANDS_API_KEY}" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "DarkAges Weekly Gap Analysis",
+    "prompt": "You are a Planning Agent for the DarkAges MMO project. Your task is to:\n\n1. ANALYZE CURRENT PROJECT STATE:\n   - Read AGENTS.md and CURRENT_STATUS.md from the repository\n   - Check existing PRDs in docs/plans/PRD/ directory  \n   - Review phase completion status\n\n2. IDENTIFY GAPS:\n   - Compare project goals vs. current implementation\n   - Look for implicit gaps: missing features, partial implementations\n   - Check CURRENT_STATUS.md Next Steps section\n\n3. CREATE SPEC-DRIVEN PRDs:\n   For new gaps create PRD with:\n   - Problem Statement\n   - User Stories with acceptance criteria  \n   - Functional Requirements (numbered)\n   - Non-Goals\n   - Implementation Approach\n   - Deliverables\n\n4. UPDATE PLAN.md:\n   - Add new gaps to summary\n   - Recommend implementation order\n\nFocus on gaps NOT covered by existing PRD-001 through PRD-024.",
+    "trigger": {
+      "type": "cron",
+      "schedule": "0 2 * * 0",
+      "timezone": "UTC"
+    },
+    "timeout": 600,
+    "repos": [
+      {"url": "DarkAges", "provider": "github"}
+    ]
+  }'
+```
+
+### Alternative: Event-Triggered
+
+Run on every push to main branch:
+
+```bash
+curl -X POST "${OPENHANDS_HOST}/api/automation/v1/preset/prompt" \
+  -H "Authorization: Bearer ${OPENHANDS_API_KEY}" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "DarkAges Gap Analysis on Push",
+    "prompt": "Run the gap analysis workflow. Check for new gaps since last analysis.",
+    "trigger": {
+      "type": "event",
+      "source": "github",
+      "on": "push",
+      "filter": "ref == '\''refs/heads/main'\''"
+    }
+  }'
+```

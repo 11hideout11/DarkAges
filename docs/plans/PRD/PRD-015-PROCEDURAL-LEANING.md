@@ -1,11 +1,26 @@
 # PRD-015: Procedural Leaning System — Velocity-Based Character Tilt
 
 **Version:** 1.0
-**Status:** 🔄 Not Started — No implementation exists (COMPATIBILITY_ANALYSIS: "None")
+**Status:** 🔄 In Progress — Implementation created
 **Owner:** ANIMATION_AGENT
 **Priority:** HIGH (P1 — Visual Coherence Requirement per COMPATIBILITY_ANALYSIS.md)
 **Dependencies:** PRD-008 (CombatStateMachine FSM — for movement state integration)
 **Also referenced in:** PROJECT_STATUS.md "Visual Polish" section (2026-04-25+26 mentions "procedural leaning")
+
+---
+
+## Implementation Status (2026-05-01)
+
+### ✅ Completed
+- [x] Created: `ProceduralLeaning.cs` - Velocity-based character tilt
+- [x] Velocity-based lean angle (forward/backward)
+- [x] Turn banking (lateral acceleration)
+- [x] Smooth interpolation
+- [x] State-aware (disabled during combat states)
+
+### 📋 Pending Integration
+- [ ] Add to Player.tscn as child node
+- [ ] Configure export properties
 
 ---
 

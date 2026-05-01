@@ -1,10 +1,23 @@
 # PRD-022: Combat State Machine Node-Based Template Visual Polish & Finalization
 
 **Version:** 1.0
-**Status:** 🟡 Not Started — Needed for issue #6 closure
+**Status:** 🔄 In Progress — Created usage guide, PRD in progress
 **Owner:** COMBAT_AGENT
 **Priority:** MEDIUM (P3 — shareability / polish)
 **Dependencies:** PRD-008 (CombatStateMachine FSM)
+
+---
+
+## Implementation Status (2026-05-01)
+
+### ✅ Completed
+- [x] Created: `docs/state-machine-usage.md` - Usage guide
+- [x] Created: CombatStateMachine.tscn - Visual FSM template
+- [x] Created: CombatStateMachineController.cs - Controller
+
+### 📋 Pending
+- [ ] Icon resource assignment
+- [ ] Debug overlay hints
 
 ---
 

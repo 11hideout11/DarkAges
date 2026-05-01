@@ -1,11 +1,25 @@
 # PRD-023: Combat Floating Text Integration — Damage Numbers & Healing Indicators
 
 **Version:** 1.0
-**Status:** 🔄 Not Started — DamageNumber.cs & CombatTextSystem.cs exist but NOT integrated
+**Status:** 🔄 In Progress — Components exist, integration needed
 **Owner:** UI_AGENT
 **Priority:** MEDIUM (P3 — Player Feedback Quality)
 **Dependencies:** PRD-008 (CombatStateMachine FSM), PRD-010 (Hitbox validation)
 **Gap Source:** COMPATIBILITY_ANALYSIS.md — "Floating Combat Text: DamageNumber.cs exists but not integrated"
+
+---
+
+## Implementation Status (2026-05-01)
+
+### ✅ Completed - Components Exist
+- [x] CombatTextSystem.cs exists (UI system with pooling)
+- [x] DamageNumber.cs exists
+
+### 📋 Pending - Integration
+- [ ] Connect to AttackFeedbackSystem or CombatSystem
+- [ ] Trigger damage display on hit registration
+- [ ] Display heal numbers on healing
+- [ ] Critical hit styling
 
 ---
 
