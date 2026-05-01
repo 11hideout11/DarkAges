@@ -12,6 +12,7 @@
 #   --batch-mode       Run all iterations without stopping
 #   --dry-run       Show what would be done without executing
 #   --task FILE     Use specific task file instead of auto-discovery
+#   --branch NAME   Use a specific feature branch
 #
 # Environment:
 #   GITHUB_TOKEN     Required for PR creation
