@@ -259,7 +259,6 @@ namespace DarkAges
             _interactionPanel.OffsetBottom = -60;
             _interactionPanel.Visible = false;
             // Theme styling
-            _interactionPanel.Modulate = ThemePanelBg;
             _interactionPanel.AddThemeStyleBoxOverride("panel", CreateThemedPanelStyle());
             AddChild(_interactionPanel);
             
