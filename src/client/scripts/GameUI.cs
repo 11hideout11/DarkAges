@@ -368,7 +368,6 @@ namespace DarkAges
             _dialoguePanel.SetSize(new Vector2(400, 300));
             _dialoguePanel.Visible = false;
             // Theme styling
-            _dialoguePanel.Modulate = ThemePanelBg;
             _dialoguePanel.AddThemeStyleBoxOverride("panel", CreateThemedPanelStyle());
             AddChild(_dialoguePanel);
             
