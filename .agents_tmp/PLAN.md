@@ -1,164 +1,207 @@
-# 1. OBJECTIVE
+# PLAN.md - External Systems Integration for DarkAges MMO
 
-Advance the DarkAges MMO project toward MVP (Minimum Viable Product) by completing server-side and parallel implementation tasks that don't conflict with the Hermes agent's PRD-008 work (CombatStateMachine integration to Player.tscn/RemotePlayer.tscn).
+## 1. OBJECTIVE
 
-Target areas:
-- PRD-010: Hitbox/Hurtbox edge-case test expansion
-- PRD-009: Server-side ZoneObjectiveSystem integration (tick loop + snapshot)
-- PRD-012: GNS runtime abstraction layer (interface + stub)
+Complete the remaining visual and audiovisual tasks for the DarkAges MMO demo:
 
-These tasks are prioritized because:
-1. They don't conflict with PRD-008 client integration work
-2. They directly support the MVP criteria (combat validation, zone objectives, production networking)
-3. They can be tested independently with existing test infrastructure
+1. **Sound Effects Integration** - Add audio system code + acquire CC0 combat SFX
+2. **Particle Effects** - Create GPUParticles3D combat hit effect system  
+3. **Proper 3D Models** - Replace capsule placeholders with CC0 rigged character models
+4. **Lighting Upgrades (SDFGI/SSAO)** - Verify and tune existing environment config
+
+These are the final visual/audio polish items needed before MVP.
 
 # 2. CONTEXT SUMMARY
 
-## Hermes Agent Work (Non-Conflict Verification)
+## Current State
 
-The Hermes agent explicitly stated they are working on:
-- **PRD-008 integration**: Connect CombatStateMachine.tscn to Player.tscn and RemotePlayer.tscn
-- Wire signal callbacks between AnimationStateMachine and CombatStateMachineController
-- Integration testing in Godot editor
+| Task | Current Status | Required Action |
+|------|-----------------|-----------------|
+| Lighting (SDFGI/SSAO) | ✅ Configured in Main.tscn (lines 38-40) | Verify + tune parameters |
+| 3D Models | ❌ CapsuleMesh placeholders only | Import CC0 .glb characters |
+| Sound Effects | ❌ No audio system, no files | Create system + acquire SFX |
+| Particle Effects | ❌ No particle code exists | Create GPUParticles3D system |
 
-**What I must NOT do** (conflicts):
-- ❌ Modify Player.tscn scene structure
-- ❌ Modify RemotePlayer.tscn scene structure  
-- ❌ Wire signals in player scripts
-- ❌ Create Godot integration tests
+## External Resources Identified (CC0)
 
-## What I CAN Do (Parallel/Independent Work)
+- **3D Characters**: Quaternius Universal Base Characters (~13k tris, rigged)
+- **Sound Effects**: OpenGameArt CC0 combat sounds (sword swing, hit)
+- **Particle Textures**: Kenney Particle Pack (CC0 sprite sheet)
+- All sources confirmed CC0/public domain - no licensing concerns
 
-| PRD | Task | Conflict Risk | Dependencies |
-|-----|------|------------|-------------|
-| PRD-010 | Edge-case hitbox tests | LOW - pure C++ unit tests | PRD-010 core exists |
-| PRD-009 | Server tick loop integration | LOW - ZoneObjectiveSystem different path | PRD-009 system exists |
-| PRD-012 | GNS interface abstraction | LOW - networking layer, no player code | Compile-time fixed |
+## Dependencies
 
-## Current Test Baseline (Verified)
-- 2129 test cases, 12644 assertions, 100% passing
-- unit_tests: 1302 cases
-- test_combat: 140 cases
-- test_zones: 198 cases |
+- Godot 4.2.4 (Pinned) - uses Vulkan rendering
+- Main.tscn already configured with Environment resource
+- Player.tscn/Projectile.cs exist for effect attachment points
 
 # 3. APPROACH OVERVIEW
 
-Three parallel work packages that can advance MVP without conflict:
+## Chosen Approach
 
-### Approach A: PRD-010 Edge-Case Tests (Pure Server C++)
-- Create edge-case test file: `TestHitboxEdgeCases.cpp`
-- Test multi-hit simultaneous, iframes, boundary conditions
-- No scene modifications, no Godot code
-- Runs in existing test infrastructure
+**Parallel execution with asset acquisition:**
 
-### Approach B: PRD-009 Server-Side Integration
-- Connect `ZoneObjectiveComponent` to ZoneServer tick loop
-- Add to snapshot serialization
-- Server-only changes in C++
+1. **Lighting** - Verify SDFGI/SSAO settings, tune for performance/quality balance
+2. **Audio** - Create AudioManager system + download CC0 SFX files + integrate
+3. **Particles** - Create GPUParticles3D hit effect prefab + integrate with attack system
+4. **Models** - Download CC0 character packs, re-export as .glb, replace placeholders
 
-### Approach C: PRD-012 Network Socket Interface
-- Create `INetworkSocket.hpp` interface
-- Preserve existing `StubSocket` (current UDP code)
-- Factory pattern for ENABLE_GNS=ON/OFF
-- No player/scene modifications
-| PRD-013 | Phase 1-5 Implementation Verification | 🟡 In Progress | P0 |
-| PRD-014 | Phantom Camera 3rd-Person | 🟡 In Progress | P1 |
-| PRD-015 | Procedural Leaning System | 🟡 In Progress | P1 |
-| PRD-016 | SDFGI/SSAO/SSIL Post-Processing | 🟡 In Progress | P2 |
-| PRD-017 | Protocol Layer Decoupling | 🟡 In Progress | P2 |
-| PRD-018 | Production Database Integration | 🟡 In Progress | P2 |
-| PRD-019 | AnimationTree Blend Spaces | 🟡 In Progress | P2 |
-| PRD-020 | Godot Client Headless Fixes | 🟡 In Progress | P3 |
-| PRD-021 | Demo Validator Connection Pooling | 🟡 In Progress | P3 |
-| PRD-022 | Combat FSM Visual Polish | 🟡 In Progress | P2 |
-| PRD-023 | Combat Floating Text Integration | 🟡 In Progress | P2 |
-| PRD-024 | Documentation Audit | ✅ Complete | - |
+**Rationale:**
+- All tasks are independent - can run in parallel
+- CC0 assets are free - no budget constraints
+- No external API or service dependencies
+- Visual coherence requires all four working together
+
+## Alternatives Considered
+
+- **Models**: Procedural generation (too expensive, wrong look)
+- **Audio**: Text-to-speech (inappropriate for medieval)
+- **Particles**: CPUParticles (GPUParticles3D has better performance)
 
 # 4. IMPLEMENTATION STEPS
 
-## Step 4.1: PRD-010 Edge-Case Hitbox Tests
-**Goal:** Expand test coverage with edge cases not currently covered
-**Method:** Create `TestHitboxEdgeCases.cpp` with multi-hit, iframes, rewind boundary tests
+## Step 4.1: Lighting Verification and Tuning
+**Goal:** Confirm SDFGI/SSAO active, tune for demo performance
+**Method:** 
+1. Review Main.tscn Environment settings (already present)
+2. Document config in `docs/lighting-setup.md`
+3. Add performance fallback tiers for low-end GPU
 
-Reference: `src/server/tests/TestHitboxHurtbox.cpp` (existing pattern)
+Reference: Main.tscn lines 33-40 (Environment resource)
 
-Test cases to add:
-- Two hitboxes overlapping same hurtbox → only first registers
-- Hitbox deactivation during active attack
-- Hurtbox invulnerability frames (iframes)
-- Rewind to exactly 2.000s boundary
-- Hitbox offset + rotation edge cases
-- Multiple hurtboxes on same entity
+**Deliverables:**
+- `docs/lighting-setup.md` (NEW or UPDATE)
+- Lighting tier settings in Main.tscn Environment resource
 
-**Estimated:** 4 hours
-**Risk:** LOW - isolated to test code
+**Estimated:** 2 hours
+**Risk:** LOW - settings already present
 
-## Step 4.2: PRD-009 Server Tick Loop Integration
-**Goal:** Connect ZoneObjectiveSystem to ZoneServer tick loop
-**Method:** Add objective update call in main tick function
+## Step 4.2: Sound Effects Integration
+**Goal:** Add combat audio feedback system
+**Method:**
+1. Create `AudioManager.cs` for audio resource management
+2. Create `CombatAudioSystem.cs` for combat sound triggers  
+3. Download CC0 SFX from OpenGameArt/Kenney (sword swing, hit impact)
+4. Wire to AttackFeedbackSystem or CombatEventSystem
 
-Reference: `src/server/src/zones/ZoneServer.cpp` (existing tick loop)
+Reference: `src/client/src/combat/AttackFeedbackSystem.cs` (existing)
 
-Tasks:
-1. Add `#include "zones/ZoneObjectiveSystem.hpp"`
-2. Add `ZoneObjectiveSystem::process(objects_, dt)` in tick loop
-3. Add objective data to snapshot serialization
-4. Verify builds and existing tests pass
+**Assets to acquire:**
+- sfx_sword_swing.ogg 
+- sfx_hit_flesh.ogg
+- sfx_block.ogg (optional)
+- sfx_death.ogg (optional)
 
-**Estimated:** 4 hours
-**Risk:** LOW - server-only changes
-
-## Step 4.3: PRD-012 Network Socket Interface
-**Goal:** Create abstraction layer for GNS/stub switching
-**Method:** Define INetworkSocket interface, implement factory
-
-Reference: `src/server/src/networking/NetworkSocket.cpp` (current implementation)
-
-Tasks:
-1. Create `src/server/include/networking/INetworkSocket.hpp`
-2. Implement `GNSSocket.cpp` (GNS-backed)
-3. Implement `StubSocket.cpp` (current UDP, extracted)
-4. Create `NetworkSocketFactory.cpp`
-5. Add ENABLE_GNS conditional in ZoneServer
+**Deliverables:**
+- `AudioManager.cs` (NEW)
+- `CombatAudioSystem.cs` (NEW)
+- `assets/audio/*.ogg` (DOWNLOAD)
+- Main.tscn integration (attach AudioManager)
 
 **Estimated:** 6 hours
-**Risk:** MEDIUM - requires careful interface design
+**Risk:** LOW - standalone script, no server changes
+
+## Step 4.3: Particle Effects System
+**Goal:** Visual hit feedback (sparks, blood, impact bursts)
+**Method:**
+1. Create `HitEffect.tscn` with GPUParticles3D node
+2. Configure ParticleProcessMaterial for burst effect
+3. Create `CombatParticleSystem.cs` to manage effect spawning
+4. Integrate with AttackFeedbackSystem/CombatEventSystem
+
+Reference: Player.tscn AttackFeedback child node (existing)
+
+**Particle types to create:**
+- Hit sparks (metal on metal)
+- Blood splatter (flesh hit)
+- Impact dust (miss/block)
+
+**Deliverables:**
+- `HitEffect.tscn` (NEW - GPUParticles3D scene)
+- `CombatParticleSystem.cs` (NEW)
+- Integrate with Main.tscn
+
+**Estimated:** 6 hours  
+**Risk:** LOW - visual only
+
+## Step 4.4: Proper 3D Character Models
+**Goal:** Replace capsule placeholders with proper humanoid models
+**Method:**
+1. Download Quaternius Universal Base Characters (CC0)
+2. Import .glb into Godot project
+3. Re-export with proper settings (rig, animations)
+4. Replace CapsuleMesh in Player.tscn with imported model
+5. Configure AnimationTree bindings
+
+Reference: Player.tscn lines 30-32 (current CapsuleMesh), manifest.json lines 14-108 (asset spec)
+
+**Deliverables:**
+- `assets/characters/player_male/model.glb` (IMPORT)
+- Player.tscn (MODIFY - replace mesh)
+- Animation retargeting config
+
+**Estimated:** 8 hours
+**Risk:** MEDIUM - requires animation retuning
+
+## Step 4.5: Integration Testing
+**Goal:** Verify all visual/audio systems work together
+**Method:**
+1. Run demo client in editor
+2. Verify lighting renders correctly
+3. Play attack animation, verify sound + particles fire
+4. Verify character model animation plays correctly
+5. Performance check (maintain 60fps)
+
+**Deliverables:**
+- All systems operational in Main.tscn
+
+**Estimated:** 4 hours
+**Risk:** MEDIUM - integration dependent
 
 # 5. TESTING AND VALIDATION
 
 ## Validation Criteria
 
-### PRD-010 Tests
-- [ ] New test file compiles
-- [ ] All edge-case tests pass
-- [ ] No test regressions (baseline 2129 cases maintained)
-- [ ] Build: `cmake --build build -j$(nproc)` passes
+### Lighting
+- [ ] SDFGI enabled (quality >= 1) - verify in WorldEnvironment
+- [ ] SSAO visible - check corner darkening
+- [ ] SSAO/SSIL settings documented
+- [ ] No render warnings in Godot console
 
-### PRD-009 Integration
-- [ ] Server starts with zone objectives
-- [ ] Objectives tick in ZoneServer
-- [ ] Snapshot includes objective data
-- [ ] Existing zone tests pass
+### Audio  
+- [ ] Attack triggers sword swing sound
+- [ ] Hit triggers impact sound
+- [ ] No audio crackling or latency
+- [ ] Sounds are mono/mixed correctly for 3D
 
-### PRD-012 Interface
-- [ ] Interface compiles
-- [ ] Stub mode (ENABLE_GNS=OFF) passes existing tests
-- [ ] Factory correctly instantiates stub
-- [ ] No protocol changes (wire format unchanged)
+### Particles
+- [ ] Hit effect spawns at collision point
+- [ ] Particles fade within 0.5s
+- [ ] No particle pooling issues
+- [ ] GPUParticles3D (not CPU)
 
-## Acceptance Criteria Summary
-- No test regressions (2129 cases, 12644 assertions)
-- All PRDs move from "pending" to "in progress" or "complete"
-- Build validates without errors
-- Demo pipeline operational (existing stub path)
+### Models
+- [ ] Character renders with proper mesh
+- [ ] Idle animation plays
+- [ ] Walk/Run animation plays  
+- [ ] Attack animation plays
+- [ ] No visual artifacts or z-fighting
 
----
+### Performance
+- [ ] Maintains 60fps with all effects active
+- [ ] No memory leaks in effects system
+- [ ] Particles properly clean up on entity destroy
 
-## Acceptance Criteria Summary
-- No test regressions (2129 cases, 12644 assertions)
-- All PRDs move from "pending" to "in progress" or "complete"
-- Build validates without errors
-- Demo pipeline operational (existing stub path)
+## Acceptance Summary
+
+All four remaining external system requirements addressed:
+- Lighting verified
+- Audio system created + CC0 assets acquired
+- Particle effects created
+- 3D character models imported
+
+Build continues to pass (no server changes)
+Demo runs in Godot editor with visual polish complete
 
 **Plan Status:** Ready for implementation  
-**Focus:** Server-side and parallel tasks that don't conflict with Hermes agent PRD-008 work
+**Focus:** Visual and audiovisual polish for MVP completion

@@ -9,6 +9,9 @@
 [ext_resource type="Script" path="res://src/utils/DemoAutoCombat.cs" id="7_autocombat"]
 [ext_resource type="Script" path="res://src/combat/CombatEventSystem.cs" id="8_combatevent"]
 [ext_resource type="Script" path="res://src/ui/CombatTextSystem.cs" id="9_combattext"]
+[ext_resource type="Script" path="res://src/audio/AudioManager.cs" id="10_audomanager"]
+[ext_resource type="Script" path="res://src/audio/CombatAudioSystem.cs" id="11_combataudio"]
+[ext_resource type="Script" path="res://src/particles/CombatParticleSystem.cs" id="12_particles"]
 
 [sub_resource type="PlaneMesh" id="PlaneMesh_ground"]
 size = Vector2(200, 200)
@@ -164,3 +167,12 @@ script = ExtResource("8_combatevent")
 
 [node name="CombatTextSystem" type="Node" parent="."]
 script = ExtResource("9_combattext")
+
+[node name="AudioManager" type="Node" parent="."]
+script = ExtResource("10_audomanager")
+
+[node name="CombatAudioSystem" type="Node" parent="."]
+script = ExtResource("11_combataudio")
+
+[node name="CombatParticleSystem" type="Node" parent="."]
+script = ExtResource("12_particles")
