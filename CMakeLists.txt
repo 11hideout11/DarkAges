@@ -153,7 +153,7 @@ if(ENABLE_GNS AND NOT WIN32)
         GIT_REPOSITORY https://github.com/ValveSoftware/GameNetworkingSockets.git
         GIT_TAG v1.4.1
         GIT_SHALLOW TRUE
-        PATCH_COMMAND ${CMAKE_COMMAND} -E env patch -p1 -d "<SOURCE_DIR>" -b --suffix=.bak < "${CMAKE_SOURCE_DIR}/patches/game-networking-sockets/0001-fix-compile-features.patch"
+        PATCH_COMMAND ${CMAKE_COMMAND} -E env patch -p1 -N -d "<SOURCE_DIR>" < "${CMAKE_SOURCE_DIR}/patches/game-networking-sockets/0001-fix-compile-features.patch" || true
     )
 endif()
 
@@ -548,6 +548,7 @@ if(GNS_FOUND)
     list(APPEND SERVER_SOURCES 
         src/server/src/netcode/NetworkManager.cpp
         src/server/src/netcode/GNSNetworkManager.cpp
+        src/server/src/netcode/ProtobufProtocol.cpp
     )
     message(STATUS "NetworkManager: Using GameNetworkingSockets implementation")
     message(STATUS "  - GNSNetworkManager: Full-featured implementation")

@@ -34,6 +34,7 @@ struct ConnectionState {
     uint32_t packetsSent{0};
     uint32_t packetsReceived{0};
     bool isActive{false};
+    EntityID entityId{entt::null};
 };
 
 // Move-only callable wrapper (needed because std::function requires copyability,
@@ -780,6 +781,114 @@ bool NetworkManager::processPacket(ConnectionID connectionId,
                                    uint32_t packetSize,
                                    uint32_t currentTimeMs) {
     return ddosProtection_.processPacket(connectionId, ipAddress, packetSize, currentTimeMs);
+}
+
+// ============================================================================
+// Combat / Lock-On / Chat / Quest / Dialogue Send Functions
+// ============================================================================
+
+void NetworkManager::sendCombatResult(ConnectionID connectionId, uint8_t resultCode, int32_t damage, 
+                                       uint32_t targetId, bool isCritical, uint32_t timestamp) {
+    uint8_t buffer[15];
+    buffer[0] = 11;  // PACKET_COMBAT_RESULT
+    buffer[1] = resultCode;
+    std::memcpy(buffer + 2, &damage, sizeof(int32_t));
+    std::memcpy(buffer + 6, &targetId, sizeof(uint32_t));
+    buffer[10] = isCritical ? 1 : 0;
+    std::memcpy(buffer + 11, &timestamp, sizeof(uint32_t));
+
+    sendEvent(connectionId, std::span<const uint8_t>(buffer, sizeof(buffer)));
+}
+
+void NetworkManager::sendLockOnConfirmed(ConnectionID connectionId, EntityID targetEntity) {
+    uint8_t buffer[5];
+    buffer[0] = 12;  // PACKET_LOCK_ON_CONFIRMED
+    uint32_t target = static_cast<uint32_t>(targetEntity);
+    std::memcpy(buffer + 1, &target, sizeof(uint32_t));
+
+    sendEvent(connectionId, std::span<const uint8_t>(buffer, sizeof(buffer)));
+}
+
+void NetworkManager::sendLockOnFailed(ConnectionID connectionId, EntityID targetEntity, uint8_t reason) {
+    uint8_t buffer[6];
+    buffer[0] = 13;  // PACKET_LOCK_ON_FAILED
+    uint32_t target = static_cast<uint32_t>(targetEntity);
+    std::memcpy(buffer + 1, &target, sizeof(uint32_t));
+    buffer[5] = reason;
+
+    sendEvent(connectionId, std::span<const uint8_t>(buffer, sizeof(buffer)));
+}
+
+void NetworkManager::sendChatMessage(ConnectionID connectionId, const ChatMessage& msg) {
+    // Serialize chat payload
+    auto payload = Protocol::serializeChatMessage(msg);
+    if (payload.empty()) return;
+
+    // Build packet: [type:1][payload:N]
+    std::vector<uint8_t> packet;
+    packet.reserve(1 + payload.size());
+    packet.push_back(static_cast<uint8_t>(Protocol::PacketType::PACKET_CHAT));
+    packet.insert(packet.end(), payload.begin(), payload.end());
+
+    sendEvent(connectionId, packet);
+}
+
+void NetworkManager::sendQuestUpdate(ConnectionID connectionId, const QuestUpdatePacket& update) {
+    // Serialize quest update payload
+    auto payload = Protocol::serializeQuestUpdate(update);
+    if (payload.empty()) return;
+
+    // Build packet: [type:1][payload:N]
+    std::vector<uint8_t> packet;
+    packet.reserve(1 + payload.size());
+    packet.push_back(static_cast<uint8_t>(Protocol::PacketType::PACKET_QUEST_UPDATE));
+    packet.insert(packet.end(), payload.begin(), payload.end());
+
+    sendEvent(connectionId, packet);
+}
+
+void NetworkManager::sendDialogueStart(ConnectionID connectionId, const Protocol::DialogueStartPacket& pkt) {
+    // Serialize payload
+    auto payload = Protocol::serializeDialogueStart(pkt);
+    if (payload.empty()) return;
+
+    // Build packet: [type:1][payload:N]
+    std::vector<uint8_t> packet;
+    packet.reserve(1 + payload.size());
+    packet.push_back(static_cast<uint8_t>(Protocol::PacketType::DialogueStart));
+    packet.insert(packet.end(), payload.begin(), payload.end());
+
+    sendEvent(connectionId, packet);
+}
+
+void NetworkManager::sendDialogueResponse(ConnectionID connectionId, const Protocol::DialogueResponsePacket& pkt) {
+    // Serialize payload
+    auto payload = Protocol::serializeDialogueResponse(pkt);
+    if (payload.empty()) return;
+
+    // Build packet: [type:1][payload:N]
+    std::vector<uint8_t> packet;
+    packet.reserve(1 + payload.size());
+    packet.push_back(static_cast<uint8_t>(Protocol::PacketType::DialogueResponse));
+    packet.insert(packet.end(), payload.begin(), payload.end());
+
+    sendEvent(connectionId, packet);
+}
+
+// ============================================================================
+// Respawn / Entity ID Management
+// ============================================================================
+
+std::vector<EntityID> NetworkManager::getPendingRespawnRequests() {
+    return {};
+}
+
+void NetworkManager::setConnectionEntityId(ConnectionID connectionId, EntityID entityId) {
+    std::lock_guard<std::mutex> lock(internal_->connectionsMutex);
+    auto it = internal_->connections.find(connectionId);
+    if (it != internal_->connections.end()) {
+        it->second.entityId = entityId;
+    }
 }
 
 } // namespace DarkAges
