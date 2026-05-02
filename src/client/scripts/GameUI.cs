@@ -36,6 +36,12 @@ namespace DarkAges
         private Label? _goldLabel;
         
         private Main? _main;
+        
+        // DarkAges theme colors (consistent across all UI)
+        private static readonly Color ThemePanelBg = new Color(0.12f, 0.12f, 0.18f, 0.95f);
+        private static readonly Color ThemeAccent = new Color(0.9f, 0.6f, 0.2f, 1.0f);  // Gold accent
+        private static readonly Color ThemeText = new Color(0.9f, 0.9f, 0.85f, 1.0f);    // Off-white text
+        private static readonly Color ThemeQuestComplete = new Color(0.2f, 0.8f, 0.3f, 1.0f); // Green for completion
 
         public override void _Ready()
         {
@@ -242,6 +248,8 @@ namespace DarkAges
             _interactionPanel.OffsetRight = -10;
             _interactionPanel.OffsetBottom = -60;
             _interactionPanel.Visible = false;
+            // Theme styling
+            _interactionPanel.AddThemeStyleBoxOverride("panel", CreateThemedPanelStyle());
             AddChild(_interactionPanel);
             
             var container = new HBoxContainer();
@@ -250,9 +258,23 @@ namespace DarkAges
             _interactionPanel.AddChild(container);
             
             _interactionPrompt = new Label();
-            _interactionPrompt.Text = "[E] Interact";
+            _interactionPrompt.Text = "[E] Talk";
             _interactionPrompt.HorizontalAlignment = HorizontalAlignment.Center;
+            _interactionPrompt.Modulate = ThemeAccent;
+            _interactionPrompt.AddThemeFontSizeOverride("font_size", 18);
             container.AddChild(_interactionPrompt);
+        }
+        
+        private StyleBoxFlat CreateThemedPanelStyle()
+        {
+            var style = new StyleBoxFlat();
+            style.BgColor = ThemePanelBg;
+            style.CornerRadiusTopLeft = 8;
+            style.CornerRadiusTopRight = 8;
+            style.CornerRadiusBottomLeft = 8;
+            style.CornerRadiusBottomRight = 8;
+            style.SetContentMargins(10, 10, 10, 10);
+            return style;
         }
         
         private void OnEntityInteractionRange(EntityData data)
@@ -337,6 +359,8 @@ namespace DarkAges
             _dialoguePanel.SizeFlagsVertical = Control.SizeFlags.ShrinkCenter;
             _dialoguePanel.SetSize(new Vector2(400, 300));
             _dialoguePanel.Visible = false;
+            // Theme styling
+            _dialoguePanel.AddThemeStyleBoxOverride("panel", CreateThemedPanelStyle());
             AddChild(_dialoguePanel);
             
             var vbox = new VBoxContainer();
@@ -346,11 +370,13 @@ namespace DarkAges
             
             _dialogueNpcName = new Label();
             _dialogueNpcName.Text = "NPC Name";
+            _dialogueNpcName.Modulate = ThemeAccent;
             _dialogueNpcName.AddThemeFontSizeOverride("font_size", 18);
             vbox.AddChild(_dialogueNpcName);
             
             _dialogueText = new Label();
             _dialogueText.Text = "Dialogue text...";
+            _dialogueText.Modulate = ThemeText;
             _dialogueText.AutowrapMode = TextServer.AutowrapMode.Word;
             vbox.AddChild(_dialogueText);
             
@@ -413,6 +439,8 @@ namespace DarkAges
             _questPanel.OffsetRight = -10;
             _questPanel.OffsetBottom = 130;
             _questPanel.Visible = false;
+            // Theme styling
+            _questPanel.AddThemeStyleBoxOverride("panel", CreateThemedPanelStyle());
             AddChild(_questPanel);
             
             var vbox = new VBoxContainer();
@@ -422,17 +450,20 @@ namespace DarkAges
             
             var title = new Label();
             title.Text = "Quests";
+            title.Modulate = ThemeAccent;
             title.AddThemeFontSizeOverride("font_size", 14);
             title.HorizontalAlignment = HorizontalAlignment.Center;
             vbox.AddChild(title);
             
             _questTitle = new Label();
             _questTitle.Text = "No active quests";
+            _questTitle.Modulate = ThemeText;
             _questTitle.AddThemeFontSizeOverride("font_size", 12);
             vbox.AddChild(_questTitle);
             
             _questProgress = new Label();
             _questProgress.Text = "";
+            _questProgress.Modulate = ThemeText;
             _questProgress.AddThemeFontSizeOverride("font_size", 11);
             vbox.AddChild(_questProgress);
         }
@@ -451,10 +482,12 @@ namespace DarkAges
             {
                 if (completed)
                 {
+                    _questProgress.Modulate = ThemeQuestComplete;
                     _questProgress.Text = "COMPLETED!";
                 }
                 else
                 {
+                    _questProgress.Modulate = ThemeText;
                     _questProgress.Text = $"{current} / {required}";
                 }
             }
@@ -466,8 +499,38 @@ namespace DarkAges
         
         private void SetupInventoryUI()
         {
-            // Inventory UI disabled until a real inventory/gold update event is
-            // available and this panel can be wired to it.
+            _inventoryPanel = new Panel();
+            _inventoryPanel.Name = "InventoryPanel";
+            _inventoryPanel.SetAnchorsPreset(Control.LayoutPreset.BottomLeft);
+            _inventoryPanel.OffsetLeft = 10;
+            _inventoryPanel.OffsetTop = -90;
+            _inventoryPanel.OffsetRight = 200;
+            _inventoryPanel.OffsetBottom = -10;
+            _inventoryPanel.Visible = false;
+            // Theme styling
+            _inventoryPanel.AddThemeStyleBoxOverride("panel", CreateThemedPanelStyle());
+            AddChild(_inventoryPanel);
+            
+            var hbox = new HBoxContainer();
+            hbox.SetAnchorsPreset(Control.LayoutPreset.FullRect);
+            hbox.AddThemeConstantOverride("separation", 10);
+            _inventoryPanel.AddChild(hbox);
+            
+            var goldIcon = new Label();
+            goldIcon.Text = "Gold: ";
+            goldIcon.Modulate = ThemeAccent;
+            hbox.AddChild(goldIcon);
+            
+            _goldLabel = new Label();
+            _goldLabel.Text = "0";
+            _goldLabel.Modulate = ThemeAccent;
+            hbox.AddChild(_goldLabel);
+        }
+        
+        private void OnInventoryUpdate(uint gold, uint[] items, uint[] quantities)
+        {
+            if (_inventoryPanel != null) _inventoryPanel.Visible = true;
+            if (_goldLabel != null) _goldLabel.Text = gold.ToString();
         }
     }
 }
