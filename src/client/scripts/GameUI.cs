@@ -457,7 +457,6 @@ namespace DarkAges
             _questPanel.OffsetBottom = 130;
             _questPanel.Visible = false;
             // Theme styling
-            _questPanel.Modulate = ThemePanelBg;
             _questPanel.AddThemeStyleBoxOverride("panel", CreateThemedPanelStyle());
             AddChild(_questPanel);
             
