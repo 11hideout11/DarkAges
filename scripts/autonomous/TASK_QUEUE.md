@@ -31,8 +31,8 @@ Prioritized list of autonomous improvements for DarkAges.
 ## P3 — Phase 10: Security Testing
 - [x] Anti-cheat validation (speed hack, teleport, fly hack) ✅ 2026-04-19
 - [x] DDoS protection simulation ✅ 2026-04-19
-- [ ] Fuzz testing (protocol fuzzing with AFL++)
-- [ ] Penetration testing (packet manipulation, replay attacks)
+- [x] Fuzz testing (protocol fuzzing with Catch2-based tests) ✅ 2026-05-02
+- [x] Penetration testing (packet manipulation, replay attacks) ✅ 2026-05-02
 
 ## P3 — Phase 11: Chaos Testing
 - [ ] Zone failure simulation
