@@ -131,10 +131,10 @@
       "prerequisiteQuestId": 10001,
       "objectives": [
         {
-          "type": "ExploreZone",
-          "targetId": 10,
+          "type": "TalkToNPC",
+          "targetId": 5001,
           "requiredCount": 1,
-          "description": "Visit the Ancient Ruins"
+          "description": "Report back to Village Elder Marcus about the Ancient Ruins"
         }
       ],
       "reward": {
