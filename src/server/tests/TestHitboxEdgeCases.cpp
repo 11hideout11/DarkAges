@@ -62,8 +62,8 @@ inline bool IntersectsCylinderSphere(const Hitbox& hb, const Hurtbox& hb2, float
 // overlap the same hurtbox simultaneously, only the first one in processing
 // order registers damage.
 inline int FirstHitWins(const std::vector<bool>& hitResults) {
-    for (int i = 0; i < static_cast<int>(hitResults.size()); ++i) {
-        if (hitResults[i]) return i;
+    for (size_t i = 0; i < hitResults.size(); ++i) {
+        if (hitResults[i]) return static_cast<int>(i);
     }
     return -1;
 }
@@ -97,8 +97,7 @@ TEST_CASE("Edge-case: Two hitboxes overlapping same hurtbox - only first registe
     // Apply first-hit-wins rule: only the first attacker in processing order
     // receives credit; the second is blocked because the target was already hit.
     int winner = FirstHitWins({hit1, hit2});
-    CHECK(winner == 0);  // First attacker (index 0) gets credit
-    CHECK(winner != 1);  // Second attacker does NOT get credit
+    REQUIRE(winner == 0);  // First attacker (index 0) gets credit; implicitly rules out index 1
 }
 
 // Test: Hitbox deactivation during active attack

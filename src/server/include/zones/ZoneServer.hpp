@@ -444,6 +444,9 @@ public:
     ZoneDefinition* lookupZone(uint32_t zoneId);
     uint32_t findZoneByPosition(float x, float z);
 
+    // Build a ZoneDefinition from the current server config (avoids repetitive field copying)
+    ZoneDefinition buildCurrentZoneDef() const;
+
     void processRespawns();
 };
 
