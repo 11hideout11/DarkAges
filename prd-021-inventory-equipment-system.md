@@ -1,4 +1,4 @@
-# PRD-021: Inventory Equipment System
+# PRD-022: Inventory Equipment System
 
 **Version:** 1.0  
 **Date:** 2026-05-02  
