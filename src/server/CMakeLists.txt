@@ -121,6 +121,7 @@ set(SERVER_SOURCES
     src/combat/PartySystem.cpp
     src/combat/GuildSystem.cpp
     src/monitoring/MetricsExporter.cpp
+    src/netcode/INetworkSocket.cpp
 )
 
 # Network manager: use stub if GNS not available
@@ -247,6 +248,7 @@ add_executable(darkages-server ${SERVER_SOURCES} ${SERVER_HEADERS})
 
 target_include_directories(darkages-server PRIVATE
     ${CMAKE_SOURCE_DIR}/include
+    ${CMAKE_SOURCE_DIR}/src
     ${CMAKE_SOURCE_DIR}/../shared
 )
 

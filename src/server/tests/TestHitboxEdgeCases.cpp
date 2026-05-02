@@ -11,6 +11,7 @@
 #include <catch2/catch_test_macros.hpp>
 #include <cmath>
 #include <functional>
+#include <vector>
 
 // Forward declarations - match what server uses
 namespace DarkAges {
@@ -56,6 +57,17 @@ inline bool IntersectsCylinderSphere(const Hitbox& hb, const Hurtbox& hb2, float
     return (dx*dx + dz*dz) <= (rSum * rSum);
 }
 
+// Returns index of the first attacker in the list that scored a hit; -1 if none.
+// Models the "first hit wins" deduplication rule: when multiple hitboxes
+// overlap the same hurtbox simultaneously, only the first one in processing
+// order registers damage.
+inline int FirstHitWins(const std::vector<bool>& hitResults) {
+    for (int i = 0; i < static_cast<int>(hitResults.size()); ++i) {
+        if (hitResults[i]) return i;
+    }
+    return -1;
+}
+
 // Check if target is in melee cone
 inline bool InMeleeCone(const float attackerYaw, const float targetAngle, const float coneDegrees) {
     float halfCone = coneDegrees * 0.5f * (M_PI / 180.0f);
@@ -82,12 +94,11 @@ TEST_CASE("Edge-case: Two hitboxes overlapping same hurtbox - only first registe
     REQUIRE(hit1 == true);
     REQUIRE(hit2 == true);
     
-    // In game logic, only first attacker should get credit (simulated)
-    bool firstAttackerGetsHit = true;
-    bool secondAttackerGetsHit = false;  // already hit by first
-    
-    CHECK(firstAttackerGetsHit == true);
-    CHECK(secondAttackerGetsHit == false);
+    // Apply first-hit-wins rule: only the first attacker in processing order
+    // receives credit; the second is blocked because the target was already hit.
+    int winner = FirstHitWins({hit1, hit2});
+    CHECK(winner == 0);  // First attacker (index 0) gets credit
+    CHECK(winner != 1);  // Second attacker does NOT get credit
 }
 
 // Test: Hitbox deactivation during active attack
@@ -174,10 +185,12 @@ TEST_CASE("Edge-case: Hitbox offset at various positions", "[combat][hitbox][edg
     };
     
     for (const auto& off : offsets) {
+        Hurtbox offsetTarget{ .layer = CollisionLayer{1u << 4}, .radius = hitbox.radius };
         // Verify intersection calculation works
-        bool hit = IntersectsCylinderSphere(hitbox, hitbox, off.dx, off.dz);
-        // At 0.5 radius, offsets <= 0.5 should be hits
-        if (off.dx*off.dx + off.dz*off.dz <= 0.25f) {
+        bool hit = IntersectsCylinderSphere(hitbox, offsetTarget, off.dx, off.dz);
+        // At 0.5 radius each, combined radius = 1.0; offsets <= 1.0 should be hits
+        if (off.dx*off.dx + off.dz*off.dz <= (hitbox.radius + offsetTarget.radius) *
+                                               (hitbox.radius + offsetTarget.radius)) {
             CHECK(hit == true);
         }
     }
@@ -199,7 +212,7 @@ TEST_CASE("Edge-case: Entity with multiple hitbox regions", "[combat][hitbox][ed
     // Shield at 0.2 away: 0.5 + 0.3 = 0.8 would hit
     bool shieldHit = IntersectsCylinderSphere(attacker, shieldHurtbox, 0.2f, 0.0f);
     
-    CHECK(bodyHit == true || shieldHit == true);
+    CHECK((bodyHit || shieldHit));
 }
 
 // Test: Max world boundary - no overflow

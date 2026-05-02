@@ -1183,6 +1183,20 @@ void ZoneServer::onClientConnected(ConnectionID connectionId) {
     // so the connection response contains the correct entity mapping
     network_->setConnectionEntityId(connectionId, entity);
 
+    // [PRD-009] Notify zone objective system that the player has entered this zone
+    {
+        ZoneDefinition zoneDef;
+        zoneDef.zoneId  = config_.zoneId;
+        zoneDef.minX    = config_.minX;
+        zoneDef.maxX    = config_.maxX;
+        zoneDef.minZ    = config_.minZ;
+        zoneDef.maxZ    = config_.maxZ;
+        zoneDef.centerX = (config_.minX + config_.maxX) * 0.5f;
+        zoneDef.centerZ = (config_.minZ + config_.maxZ) * 0.5f;
+        zoneObjectiveSystem_.OnPlayerEnterZone(
+            entity, static_cast<uint16_t>(config_.zoneId), zoneDef);
+    }
+
     std::cout << "[ZONE " << config_.zoneId << "] Spawned entity " << static_cast<uint32_t>(entity)
               << " for connection " << connectionId << std::endl;
 }
@@ -1194,6 +1208,9 @@ void ZoneServer::onClientDisconnected(ConnectionID connectionId) {
     EntityID entity = playerManager_.getEntityByConnection(connectionId);
 
     if (entity != entt::null) {
+        // [PRD-009] Remove player from zone objective tracking before cleanup
+        zoneObjectiveSystem_.OnPlayerLeaveZone(entity);
+
         // [GAMEPLAY_AGENT] Cancel any active trade on disconnect
         if (tradeSystem_.isTrading(registry_, entity)) {
             tradeSystem_.cancelTrade(registry_, entity);

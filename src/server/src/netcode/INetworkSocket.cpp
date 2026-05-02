@@ -1,14 +1,15 @@
 // [NETWORK_AGENT] Stub Socket Implementation
-// Basic UDP sockets for local development and testing
+// IMPORTANT: StubSocket is a purely in-memory stub for unit testing and
+// local development.  It does NOT open any OS sockets, does NOT send any
+// bytes over the network, and does NOT poll for incoming data.
+//
+// How to receive messages in tests:
+//   Call pushMessage(type, connectionId, data) to enqueue a packet that will
+//   be returned by the next receive() / peek() call.
+//
+// For real UDP networking use GNSSocket (or a future production UDP impl).
 
 #include "netcode/INetworkSocket.hpp"
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <arpa/inet.h>
-#include <unistd.h>
-#include <fcntl.h>
-#include <errno.h>
-#include <cstring>
 #include <algorithm>
 #include <queue>
 
@@ -20,14 +21,12 @@ namespace Netcode {
 // ============================================================================
 
 struct StubSocket::Impl {
-    int socketFd{-1};
-    uint16_t port{0};
     bool initialized{false};
     
     std::vector<ConnectionID> connections;
     ConnectionID nextConnectionId{1};
     
-    // Pending messages queue
+    // Pending messages queue (populated via pushMessage for tests)
     struct PendingMessage {
         PacketType type;
         ConnectionID connectionId;
@@ -45,11 +44,7 @@ struct StubSocket::Impl {
     MessageCallback onMessage;
     
     Impl() = default;
-    ~Impl() {
-        if (socketFd >= 0) {
-            close(socketFd);
-        }
-    }
+    ~Impl() = default;
 };
 
 StubSocket::StubSocket() : impl_(std::make_unique<Impl>()) {}
@@ -58,38 +53,10 @@ StubSocket::~StubSocket() {
     shutdown();
 }
 
-bool StubSocket::initialize(uint16_t port) {
+bool StubSocket::initialize(uint16_t /*port*/) {
     if (impl_->initialized) {
         return true;
     }
-    
-    impl_->socketFd = socket(AF_INET, SOCK_DGRAM, 0);
-    if (impl_->socketFd < 0) {
-        return false;
-    }
-    
-    // Set non-blocking
-    int flags = fcntl(impl_->socketFd, F_GETFL, 0);
-    fcntl(impl_->socketFd, F_SETFL, flags | O_NONBLOCK);
-    
-    // Allow broadcast
-    int broadcast = 1;
-    setsockopt(impl_->socketFd, SOL_SOCKET, SO_BROADCAST, &broadcast, sizeof(broadcast));
-    
-    // Bind to port
-    struct sockaddr_in addr;
-    memset(&addr, 0, sizeof(addr));
-    addr.sin_family = AF_INET;
-    addr.sin_port = htons(port);
-    addr.sin_addr.s_addr = INADDR_ANY;
-    
-    if (bind(impl_->socketFd, (struct sockaddr*)&addr, sizeof(addr)) < 0) {
-        close(impl_->socketFd);
-        impl_->socketFd = -1;
-        return false;
-    }
-    
-    impl_->port = port;
     impl_->initialized = true;
     return true;
 }
@@ -98,23 +65,12 @@ void StubSocket::shutdown() {
     if (!impl_->initialized) {
         return;
     }
-    
-    if (impl_->socketFd >= 0) {
-        close(impl_->socketFd);
-        impl_->socketFd = -1;
-    }
-    
     impl_->connections.clear();
     impl_->initialized = false;
 }
 
 void StubSocket::update(uint32_t) {
-    if (!impl_->initialized) {
-        return;
-    }
-    
-    // In stub mode, we don't have real incoming connections
-    // This would need platform-specific poll() in production
+    // In-memory stub: no I/O polling needed.
 }
 
 std::vector<ConnectionID> StubSocket::getConnections() {

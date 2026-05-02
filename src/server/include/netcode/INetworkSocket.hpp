@@ -6,6 +6,7 @@
 #pragma once
 
 #include "ecs/CoreTypes.hpp"
+#include "netcode/Protocol.hpp"
 #include <vector>
 #include <functional>
 #include <cstdint>
@@ -41,16 +42,10 @@ struct ConnectionQuality {
 // Packet Types
 // ============================================================================
 
-enum class PacketType : uint8_t {
-    ClientInput = 1,
-    ServerSnapshot = 2,
-    ReliableEvent = 3,
-    Ping = 4,
-    Handshake = 5,
-    Disconnect = 6,
-    DialogueStart = 7,
-    DialogueResponse = 8
-};
+// Alias to the canonical Protocol::PacketType to avoid a third parallel enum.
+// Use DarkAges::Protocol::PacketType throughout the codebase; this alias
+// exists purely so existing Netcode code compiles without full qualification.
+using PacketType = ::DarkAges::Protocol::PacketType;
 
 // ============================================================================
 // INetworkSocket Interface
