@@ -126,10 +126,10 @@ set(SERVER_SOURCES
 )
 
 # Network manager: use stub if GNS not available
+# Note: Protocol.cpp/Protocol_stub.cpp handled by root CMakeLists.txt
 if(GNS_AVAILABLE)
     list(APPEND SERVER_SOURCES
         src/netcode/NetworkManager.cpp
-        src/netcode/Protocol.cpp
     )
 else()
     list(APPEND SERVER_SOURCES

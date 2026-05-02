@@ -4,6 +4,7 @@
 
 #include <ctime>
 #include <cstring>
+#include <iostream>
 
 namespace DarkAges
 {
@@ -197,20 +198,33 @@ namespace DarkAges
   
   void ZoneObjectiveSystem::Tick(float deltaTime)
   {
-    if (!_registry) return;
+    // Guard: null registry is fatal error - log and return
+    if (!_registry) {
+      std::cerr << "[ZoneObjectiveSystem] FATAL: Tick called with null registry!" << std::endl;
+      return;
+    }
+    
+    // Guard: invalid deltaTime (negative or NaN) can corrupt state
+    if (deltaTime < 0.0f || deltaTime > 10.0f) {
+      std::cerr << "[ZoneObjectiveSystem] WARNING: Invalid deltaTime=" << deltaTime << ", clamping to 0.033s (30fps)" << std::endl;
+      deltaTime = 0.033f;  // 30fps max to prevent corruption
+    }
     
     // Update time remaining for timed zones
     for (auto& [entity, zoneDef] : _playerZoneDefs)
     {
-      if (_registry->all_of<ZoneObjectiveComponent>(entity))
+      // Skip invalid entities
+      if (entity == entt::null) continue;
+      
+      // Entity may have been destroyed
+      if (!_registry->all_of<ZoneObjectiveComponent>(entity)) continue;
+      
+      auto& component = _registry->get<ZoneObjectiveComponent>(entity);
+      if (component.TimeRemaining > 0)
       {
-        auto& component = _registry->get<ZoneObjectiveComponent>(entity);
-        if (component.TimeRemaining > 0)
-        {
-          component.TimeRemaining -= deltaTime;
-          if (component.TimeRemaining < 0)
-            component.TimeRemaining = 0;
-        }
+        component.TimeRemaining -= deltaTime;
+        if (component.TimeRemaining < 0)
+          component.TimeRemaining = 0;
       }
     }
   }
