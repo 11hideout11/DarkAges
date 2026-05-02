@@ -222,6 +222,7 @@ public:
     [[nodiscard]] ZoneEventSystem& getZoneEventSystem() { return zoneEventSystem_; }
     [[nodiscard]] DialogueSystem& getDialogueSystem() { return dialogueSystem_; }
     [[nodiscard]] SpawnSystem& getSpawnSystem() { return spawnSystem_; }
+    [[nodiscard]] ZoneObjectiveSystem& getZoneObjectiveSystem() { return zoneObjectiveSystem_; }
     [[nodiscard]] LagCompensator* getLagCompensatorPtr() { return &lagCompensator_; }
     [[nodiscard]] MovementSystem& getMovementSystemRef() { return movementSystem_; }
     [[nodiscard]] Security::AntiCheatSystem& getAntiCheatRef() { return antiCheat_; }
@@ -445,7 +446,7 @@ public:
     uint32_t findZoneByPosition(float x, float z);
 
     // Build a ZoneDefinition from the current server config (avoids repetitive field copying)
-    ZoneDefinition buildCurrentZoneDef() const;
+    ZoneDefinition buildZoneDefinition() const;
 
     void processRespawns();
 };

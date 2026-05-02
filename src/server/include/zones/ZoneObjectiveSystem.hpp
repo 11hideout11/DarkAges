@@ -3,9 +3,7 @@
 #include "zones/ZoneDefinition.hpp"
 #include "zones/ZoneObjectiveComponent.hpp"
 
-#include <entt/entity/fwd.hpp>
-#include <entt/entity/registry.hpp>
-#include <entt/signal/sigh.hpp>
+#include <entt/entt.hpp>
 
 #include <vector>
 #include <unordered_map>

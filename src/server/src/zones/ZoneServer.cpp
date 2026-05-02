@@ -178,6 +178,16 @@ bool ZoneServer::initialize(const ZoneConfig& config) {
             zoneEventSystem_.onNPCKilled(registry_, killer, victim,
                                          static_cast<uint32_t>(stats->archetype),
                                          getCurrentTimeMs());
+            // [ZONES_AGENT] Track kill for zone objective progress
+            if (registry_.all_of<ZoneObjectiveComponent>(killer)) {
+                const auto& objectives = zoneObjectiveSystem_.GetObjectives(killer);
+                for (const auto& [objId, progress] : objectives) {
+                    if (!progress.Complete) {
+                        uint16_t newCount = progress.CurrentCount + 1;
+                        zoneObjectiveSystem_.OnObjectiveProgress(killer, objId, newCount);
+                    }
+                }
+            }
         }
     });
 
@@ -1185,7 +1195,7 @@ void ZoneServer::onClientConnected(ConnectionID connectionId) {
 
     // [PRD-009] Notify zone objective system that the player has entered this zone
     zoneObjectiveSystem_.OnPlayerEnterZone(
-        entity, static_cast<uint16_t>(config_.zoneId), buildCurrentZoneDef());
+        entity, static_cast<uint16_t>(config_.zoneId), buildZoneDefinition());
 
     std::cout << "[ZONE " << config_.zoneId << "] Spawned entity " << static_cast<uint32_t>(entity)
               << " for connection " << connectionId << std::endl;
@@ -1888,7 +1898,7 @@ void ZoneServer::initializeHandoffController() {
     );
 
     // Set up zone definition for distance calculations
-    handoffController_->setMyZoneDefinition(buildCurrentZoneDef());
+    handoffController_->setMyZoneDefinition(buildZoneDefinition());
 
     // Set up zone lookup callbacks
     handoffController_->setZoneLookupCallbacks(
@@ -1962,16 +1972,69 @@ void ZoneServer::onHandoffCompleted(uint64_t playerId, uint32_t sourceZone,
     // Update metrics, logging, etc.
 }
 
-// Build a ZoneDefinition from this server's current config (avoids repetitive field copying).
-ZoneDefinition ZoneServer::buildCurrentZoneDef() const {
+// [ZONES_AGENT] Build ZoneDefinition from zone config and loaded demo JSON.
+// Enhanced: parses objectives, wave count, and time limits from demo config JSON.
+ZoneDefinition ZoneServer::buildZoneDefinition() const {
     ZoneDefinition def;
     def.zoneId  = config_.zoneId;
+    def.zoneName = "Zone " + std::to_string(config_.zoneId);
+    def.shape   = ZoneShape::RECTANGLE;
     def.minX    = config_.minX;
     def.maxX    = config_.maxX;
+    def.minY    = 0.0f;
+    def.maxY    = 100.0f;
     def.minZ    = config_.minZ;
     def.maxZ    = config_.maxZ;
     def.centerX = (config_.minX + config_.maxX) * 0.5f;
     def.centerZ = (config_.minZ + config_.maxZ) * 0.5f;
+    def.host    = "";
+    def.port    = config_.port;
+
+    // Parse zone objectives from demo config JSON if available
+    if (!demoConfigJson_.empty()) {
+        try {
+            nlohmann::json j = nlohmann::json::parse(demoConfigJson_);
+
+            if (j.contains("objectives") && j["objectives"].is_array()) {
+                for (const auto& obj : j["objectives"]) {
+                    ZoneDefinition::Objective zoneObj;
+                    zoneObj.id = obj.value("id", "");
+                    zoneObj.required = obj.value("required", true);
+                    zoneObj.requiredCount = obj.value("count", 1);
+
+                    std::string typeStr = obj.value("type", "custom");
+                    if (typeStr == "kill" || typeStr == "eliminate") {
+                        zoneObj.type = ZoneDefinition::Objective::Type::Kill;
+                    } else if (typeStr == "interact") {
+                        zoneObj.type = ZoneDefinition::Objective::Type::Interact;
+                    } else if (typeStr == "damage") {
+                        zoneObj.type = ZoneDefinition::Objective::Type::Damage;
+                    } else {
+                        zoneObj.type = ZoneDefinition::Objective::Type::Custom;
+                    }
+
+                    if (!zoneObj.id.empty()) {
+                        def.objectives.push_back(zoneObj);
+                    }
+                }
+            }
+
+            if (j.contains("wave_defense") && j["wave_defense"].contains("waves")) {
+                def.waveCount = static_cast<uint8_t>(j["wave_defense"]["waves"].size());
+            } else if (j.contains("wave_count")) {
+                def.waveCount = j["wave_count"].get<uint8_t>();
+            }
+
+            if (j.contains("time_limit")) {
+                def.timeLimit = j["time_limit"].get<float>();
+            } else if (j.contains("timeLimit")) {
+                def.timeLimit = j["timeLimit"].get<float>();
+            }
+        } catch (const std::exception& e) {
+            std::cerr << "[ZONE " << config_.zoneId << "] Failed to parse zone definition from demo config: " << e.what() << std::endl;
+        }
+    }
+
     return def;
 }
 

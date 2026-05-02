@@ -43,7 +43,11 @@
 - ✅ Created: `ZoneObjectiveComponent.hpp` - Server tracking component
 - ✅ Created: `ZoneObjectiveSystem.hpp/.cpp` - Objective tracking logic
 - ✅ Created: `TestZoneObjectives.cpp` - Unit tests
-- 📋 Server integration pending (tick loop, snapshots)
+- ✅ ZoneObjectiveSystem wired into ZoneServer lifecycle (init, tick, enter/leave, kill progress)
+- ✅ buildZoneDefinition() enhanced with JSON parsing (objectives, wave count, time limits)
+- ✅ Include paths fixed (consolidated to entt/entt.hpp)
+- ✅ getZoneObjectiveSystem() accessor added to ZoneServer
+- 📋 Snapshot replication for zone objectives pending (EmitEvent TODO)
 
 ### PRD-010: Hitbox/Hurtbox Validation
 - ✅ Collision matrix documented at `docs/collision-matrix.md`

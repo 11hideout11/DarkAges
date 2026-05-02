@@ -1,6 +1,6 @@
 #include "zones/ZoneObjectiveSystem.hpp"
 
-#include <entt/entity/registry.hpp>
+#include <entt/entt.hpp>
 
 #include <ctime>
 
