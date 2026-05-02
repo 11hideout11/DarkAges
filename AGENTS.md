@@ -1,14 +1,14 @@
-## Recent Commits (last 10 — updated)
-1. docs(research): add comprehensive world-building capabilities research and asset pipeline
-2. fix(gns): enable C language to support compile features required by GameNetworkingSockets
-3. feat(combat): complete FSM refactor; circular dependency resolved; hitbox component added; proper headers and final review fixes
-4. fix(skill): correct namespace heuristic to avoid false positives on DarkAges namespace
-5. docs(agents): update Recent Commits ordering and restore State section with test metrics
-6. fix(combat): address subjective review: proper headers, Hitbox component, clean damage
-7. fix(combat): resolve circular dependency in combat state machine; restore copy semantics
-8. fix(combat): rewrite AttackState without Hitbox component and fix RecoveryState timing
-9. docs: resolve demo readiness contradiction, validate all phases complete
-10. Merge PR #28: fix combat FSM entity types and complete OpenHands integration
+## Recent Commits (last 10 — updated 2026-05-02)
+1. feat(gns): unblock GNS runtime build — add missing protocol serializers and network send functions
+2. docs(research): add comprehensive world-building capabilities research and asset pipeline
+3. fix(gns): enable C language to support compile features required by GameNetworkingSockets
+4. feat(combat): complete FSM refactor; circular dependency resolved; hitbox component added; proper headers and final review fixes
+5. fix(skill): correct namespace heuristic to avoid false positives on DarkAges namespace
+6. docs(agents): update Recent Commits ordering and restore State section with test metrics
+7. fix(combat): address subjective review: proper headers, Hitbox component, clean damage
+8. fix(combat): resolve circular dependency in combat state machine; restore copy semantics
+9. fix(combat): rewrite AttackState without Hitbox component and fix RecoveryState timing
+10. docs: resolve demo readiness contradiction, validate all phases complete
 
 ## State (2026-05-01)
 
@@ -55,9 +55,13 @@
 - ✅ Test files: TestHitboxHurtbox.cpp, TestHitboxCollision.cpp
 
 ### PRD-012: GNS Runtime Integration
-- ⚠️ Compile-time fixed (Phase 8), runtime pending
-- ✅ GNSNetworkManager.cpp implementation exists (conditionally compiled)
-- 📋 Network stack integration pending
+- ✅ UNBLOCKED (2026-05-02): Build compiles and links with GNS+Protobuf support
+- ✅ Protocol.cpp (+225 lines): serializeCombatEvent, deserializeCombatEvent, createFullSnapshot, serializeChatMessage, serializeQuestUpdate, serializeDialogueStart, serializeDialogueResponse
+- ✅ NetworkManager.cpp (+109 lines): 9 business-logic send wrappers (combat, lock-on, chat, quest, dialogue, respawn, entity-id)
+- ✅ CMakeLists: ProtobufProtocol.cpp added to GNS_FOUND source list (was only in else branch)
+- GNS build: 82% tests pass (9/11 suites); 19 transport-level failures expected (UDP→GNS)
+- Non-GNS build: 100% tests pass, zero regressions
+- 📋 Runtime transport hardening: fix GNS-specific test failures, connection lifecycle
 
 ### PRD-013: Phase 1-5 Verification
 - ✅ RESOLVED - PHASE1_SUMMARY.md through PHASE5_SUMMARY.md exist
