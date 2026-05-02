@@ -61,17 +61,9 @@ namespace DarkAges
             // Find main scene
             _main = GetTree().CurrentScene as Main;
             
-            // Setup additional UI panels (interaction, dialogue, quest, inventory)
-            SetupInteractionUI();
-            SetupDialogueUI();
-            SetupQuestUI();
-            SetupInventoryUI();
-            
-            // Connect network events for interaction/dialogue
-            NetworkManager.Instance.DialogueStartReceived += OnDialogueStart;
-            NetworkManager.Instance.QuestUpdateReceived += OnQuestUpdateReceived;
-            // Entity interaction is detected via GameState entities in _Process
-            GameState.Instance.EntitySpawned += OnEntitySpawned;
+            // Interaction/dialogue/quest/inventory UI is owned by HUDController in Main.tscn.
+            // Do not initialize or subscribe here as well, otherwise both UI layers will
+            // respond to the same gameplay/network signals and show duplicate UI.
             
             // Show connection panel initially
             UpdateUIState(GameState.ConnectionState.Disconnected);
