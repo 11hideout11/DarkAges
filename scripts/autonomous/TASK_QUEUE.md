@@ -18,7 +18,7 @@ Prioritized list of autonomous improvements for DarkAges.
 
 ## P2 — Documentation
 - [x] Update stale documentation files (4 files reference old state) ✅ 2026-05-02
-- [ ] Add inline documentation to key ECS components
+- [x] Add inline documentation to key ECS components
 - [x] Document network protocol message format ✅ 2026-04-26 (docs/NETWORK_PROTOCOL.md)
 
 ## P2 — Phase 9 Completion
