@@ -34,7 +34,7 @@ GNS (GameNetworkingSockets) compile-time issues were resolved in Phase 8, but th
 4. Enable server-authoritative networking
 
 ### Success Criteria
-- [ ] Server starts with GNS enabled (`ENABLE_GNS=ON`)
+- [ ] Server starts with GNS when built in a configuration where `GNS_AVAILABLE` is enabled
 - [ ] Client connections accepted via GNS
 - [ ] Packet routing through GNSConnectionManager
 - [ ] Connection state tracked per client
