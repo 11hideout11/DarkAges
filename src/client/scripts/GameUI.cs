@@ -526,7 +526,6 @@ namespace DarkAges
             _inventoryPanel.OffsetBottom = -10;
             _inventoryPanel.Visible = false;
             // Theme styling
-            _inventoryPanel.Modulate = ThemePanelBg;
             _inventoryPanel.AddThemeStyleBoxOverride("panel", CreateThemedPanelStyle());
             AddChild(_inventoryPanel);
             
