@@ -6,7 +6,7 @@
 ## Current Status
 
 **MVP Criteria:** NOT READY — requires third-person combat template, demo zones, gameplay loop
-**Baseline:** 2097 tests / 12586 assertions — ALL PASS
+**Baseline:** 2129 tests / 12644 assertions — ALL PASS
 **Test Metrics:** 94 files / 11 suites
 
 ---
