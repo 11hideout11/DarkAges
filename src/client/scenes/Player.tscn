@@ -1,4 +1,4 @@
-[gd_scene load_steps=7 format=3 uid="uid://player"]
+[gd_scene load_steps=10 format=3 uid="uid://player"]
 
 [ext_resource type="Script" path="res://src/prediction/PredictedPlayer.cs" id="1_player"]
 [ext_resource type="Script" path="res://src/combat/AttackFeedbackSystem.cs" id="2_attack"]
@@ -8,6 +8,7 @@
 [ext_resource type="PackedScene" path="res://scenes/CombatStateMachine.tscn" id="6_combatfsm"]
 [ext_resource type="Script" path="res://src/combat/FootIKController.cs" id="7_footik"]
 
+[ext_resource type="AnimationNodeStateMachine" path="res://scenes/PlayerAnimationTree.tres" id="4_animationtree"]
 [sub_resource type="CapsuleShape3D" id="CapsuleShape3D_1"]
 radius = 0.3
 height = 1.8
@@ -16,7 +17,6 @@ height = 1.8
 radius = 0.3
 height = 1.8
 
-[ext_resource type="AnimationNodeStateMachine" path="res://scenes/PlayerAnimationTree.tres" id="4_animationtree"]
 
 [node name="Player" type="CharacterBody3D"]
 collision_layer = 2
