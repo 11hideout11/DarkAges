@@ -62,7 +62,7 @@ public:
     explicit PlayerManager(ZoneServer* zoneServer);
 
     /**
-     * @brief Destructor - ensures all player states are saved
+     * @brief Destructor
      */
     ~PlayerManager();
 
