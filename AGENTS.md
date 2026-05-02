@@ -61,7 +61,17 @@
 - ✅ CMakeLists: ProtobufProtocol.cpp added to GNS_FOUND source list (was only in else branch)
 - GNS build: 82% tests pass (9/11 suites); 19 transport-level failures expected (UDP→GNS)
 - Non-GNS build: 100% tests pass, zero regressions
-- 📋 Runtime transport hardening: fix GNS-specific test failures, connection lifecycle
+- ✅ PRD-017: Protocol decoupling complete (Protocol.cpp now requires FlatBuffers only, not GNS)
+
+### PRD-018: Production Database
+- ✅ docker-compose.dev.yml exists with Redis 7 + Scylla 5.4
+- ⚠️ Requires Docker daemon (not available in current environment)
+- Ready for local testing when Docker is available
+
+### PRD-023: Combat Text Integration (NEW)
+- ✅ CombatEventSystem added to Main.tscn
+- ✅ CombatTextSystem added to Main.tscn
+- ✅ PRD-023 complete (2026-05-02)
 
 ### PRD-013: Phase 1-5 Verification
 - ✅ RESOLVED - PHASE1_SUMMARY.md through PHASE5_SUMMARY.md exist
@@ -80,12 +90,12 @@
 
 ---
 
-## Execution Summary (2026-05-01)
+## Execution Summary (2026-05-02)
 
 ### PRDs Addressed
-- **11 total PRDs completed** during execution
-- **3 PRDs pending** (requires specialized agents)
-- **Test baseline**: 2129 tests, 12644 assertions, 100% passing
+- **12 total PRDs completed** during execution (ADDED PRD-023)
+- **3 PRDs pending** (requires specialized agents or Docker)
+- **Test baseline**: 1305 cases, 7252 assertions, 100% passing
 
 ### Files Created (11 files)
 1. `CombatStateMachine.tscn` - Node-based FSM template
@@ -100,7 +110,12 @@
 10. `state-machine-usage.md` - Usage guide
 11. `PLAN_EXECUTION_SUMMARY.md` - Tracking document
 
-## OpenHands Integration Updates (2026-04-29)
+### This Session's Commits
+- `f893419`: docs - AGENTS.md accuracy (PRD-008 integrated, PRD-016 implemented)
+- `c7cc8be`: feat(client) - Combat text integration into Main.tscn
+- `13b11d7`: fix(build) - Protocol decoupling from GNS flag
+
+## OpenHands Integration Updates (2026-05-02)
 
 - Added 4 new standalone skills: `test-flakiness.py`, `coverage-report.py`, `pr-create.py`, `pr-comment.py`, `code-format.py`
 - Fixed CMake JSON include bug — switched from direct `target_include_directories` to `target_link_libraries(nlohmann_json::nlohmann_json)` to resolve missing header error in `build_validate`
