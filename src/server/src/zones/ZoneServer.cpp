@@ -735,7 +735,7 @@ void ZoneServer::savePlayerState(EntityID entity) {
 }
 
 bool ZoneServer::tick() {
-    // If zone is not running, gracefully do nothing (used in uninitialized/tests)
+    // If zone is neither initialized nor running, gracefully do nothing (used in uninitialized/tests)
     if (!initialized_ && !running_) {
         return false;
     }
