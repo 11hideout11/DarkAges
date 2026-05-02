@@ -5,7 +5,7 @@
 [ext_resource type="Script" path="res://src/utils/MovementTrailSystem.cs" id="3_trail"]
 [ext_resource type="AnimationLibrary" path="res://scenes/PlayerAnimations.tres" id="4_animlib"]
 [ext_resource type="Script" path="res://src/camera/CameraController.cs" id="5_cameracontroller"]
-[ext_resource type="Script" path="res://src/combat/fsm/AnimationStateMachine.cs" id="6_fsm"]
+[ext_resource type="PackedScene" path="res://scenes/CombatStateMachine.tscn" id="6_combatfsm"]
 [ext_resource type="Script" path="res://src/combat/FootIKController.cs" id="7_footik"]
 
 [sub_resource type="CapsuleShape3D" id="CapsuleShape3D_1"]
@@ -50,9 +50,6 @@ anim_library = ExtResource("4_animlib")
 [node name="AnimationTree" type="AnimationTree" parent="."]
 resource = ExtResource("4_animationtree")
 
-[node name="AnimationStateMachine" type="Node" parent="."]
-script = ExtResource("6_fsm")
-
 [node name="LeftFootIK" type="SkeletonIK3D" parent="."]
 root_bone = &"Root"
 tip_bone = &"LeftFoot"
@@ -79,3 +76,6 @@ script = ExtResource("2_attack")
 [node name="MovementTrail" type="Node3D" parent="."]
 script = ExtResource("3_trail")
 Enabled = true
+
+[node name="CombatStateMachine" type="Node3D" parent="."]
+script = ExtResource("6_combatfsm")
