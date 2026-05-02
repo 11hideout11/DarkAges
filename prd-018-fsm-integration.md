@@ -2,7 +2,7 @@
 
 **Version:** 1.0  
 **Date:** 2026-05-02  
-**Status:** Proposed  
+**Status:** ✅ COMPLETE (2026-05-02)  
 **Priority:** High  
 **Prerequisite:** CombatStateMachine.tscn and CombatStateMachineController.cs exist
 
@@ -14,12 +14,12 @@ The Node-Based Combat FSM template has been created:
 - ✅ `CombatStateMachine.tscn` - AnimationTree scene
 - ✅ `CombatStateMachineController.cs` - Controller script
 
-However, it is **not connected** to Player.tscn/RemotePlayer.tscn. The FSM exists but is non-functional.
-
-### Current State
+### Current State (2026-05-02)
 - ✅ CombatStateMachine.tscn exists
 - ✅ CombatStateMachineController.cs exists (280+ lines)
-- ⚠️ Not wired to Player entity
+- ✅ **Player.tscn has CombatStateMachine node (line 80-81)**
+- ✅ **RemotePlayer.tscn has CombatStateMachine node**
+- ✅ PRD COMPLETE
 
 ### Impact
 - Combat animations don't play

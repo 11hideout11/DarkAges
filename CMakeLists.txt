@@ -562,13 +562,14 @@ else()
     message(STATUS "  - NetworkManager_udp.cpp: BSD socket-based UDP server")
 endif()
 
-# Protocol layer - conditional on FlatBuffers AND real NetworkManager
-# (Protocol.cpp uses GNS types, so it must be skipped if using stub)
-if(FLATBUFFERS_FOUND AND GNS_FOUND)
+# Protocol layer - requires FlatBuffers for serialization
+# Protocol.cpp provides full binary serialization (doesn't strictly require GNS)
+if(FLATBUFFERS_FOUND)
     list(APPEND SERVER_SOURCES src/server/src/netcode/Protocol.cpp)
     message(STATUS "Protocol: Using FlatBuffers implementation")
 else()
-    message(STATUS "Protocol: Using stub implementation (GNS not available)")
+    list(APPEND SERVER_SOURCES src/server/src/netcode/Protocol_stub.cpp)
+    message(STATUS "Protocol: Using stub implementation (FlatBuffers not available)")
 endif()
 
 # Database layer - ZoneMessage always compiled (no Redis dependency)

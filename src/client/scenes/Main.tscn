@@ -7,6 +7,8 @@
 [ext_resource type="Script" path="res://src/utils/DemoInstrumentation.cs" id="5_instrumentation"]
 [ext_resource type="PackedScene" uid="uid://hudmain" path="res://scenes/ui/HUD.tscn" id="6_hud"]
 [ext_resource type="Script" path="res://src/utils/DemoAutoCombat.cs" id="7_autocombat"]
+[ext_resource type="Script" path="res://src/combat/CombatEventSystem.cs" id="8_combatevent"]
+[ext_resource type="Script" path="res://src/ui/CombatTextSystem.cs" id="9_combattext"]
 
 [sub_resource type="PlaneMesh" id="PlaneMesh_ground"]
 size = Vector2(200, 200)
@@ -156,3 +158,9 @@ Enabled = true
 AttackRange = 8.0
 AttackInterval = 0.8
 AutoMoveToTarget = true
+
+[node name="CombatEventSystem" type="Node" parent="."]
+script = ExtResource("8_combatevent")
+
+[node name="CombatTextSystem" type="Node" parent="."]
+script = ExtResource("9_combattext")
