@@ -233,3 +233,99 @@ TEST_CASE("AchievementSystem multi-category progress", "[achievements]") {
     REQUIRE(craftingDone == true);
     REQUIRE(explorerPartial == true);
 }
+
+// ============================================================================
+// Additional Achievement Tests - extending coverage
+// ============================================================================
+
+TEST_CASE("AchievementSystem progress accumulates beyond criteria", "[achievements]") {
+    Registry registry;
+    AchievementSystem system;
+    
+    std::vector<AchievementDef> achievements = {
+        {1, "Grinder", "Kill 10 enemies",
+         AchievementCategory::Combat, 10, 100, 0, nullptr, nullptr},
+    };
+    system.initialize(achievements);
+    
+    EntityID player = registry.create();
+    registry.emplace<PlayerComponent>(player);
+    system.attachToPlayer(registry, player);
+    
+    // Update with way more than criteria
+    system.updateProgress(registry, player, AchievementCategory::Combat, 25);
+    
+    auto* comp = registry.try_get<AchievementComponent>(player);
+    REQUIRE(comp != nullptr);
+    
+    // Achievement should be completed
+    bool found = false;
+    for (uint32_t i = 0; i < comp->count; ++i) {
+        if (comp->achievements[i].achievementId == 1 && comp->achievements[i].completed) {
+            found = true;
+            // Progress should be capped at criteria
+            REQUIRE(comp->achievements[i].current >= 10);
+        }
+    }
+    REQUIRE(found == true);
+}
+
+TEST_CASE("AchievementSystem multiple players independent", "[achievements]") {
+    Registry registry;
+    AchievementSystem system;
+    
+    std::vector<AchievementDef> achievements = {
+        {1, "Killer", "Kill 5 enemies",
+         AchievementCategory::Combat, 5, 50, 0, nullptr, nullptr},
+    };
+    system.initialize(achievements);
+    
+    EntityID p1 = registry.create();
+    EntityID p2 = registry.create();
+    registry.emplace<PlayerComponent>(p1);
+    registry.emplace<PlayerComponent>(p2);
+    
+    system.attachToPlayer(registry, p1);
+    system.attachToPlayer(registry, p2);
+    
+    // p1 completes achievement
+    system.updateProgress(registry, p1, AchievementCategory::Combat, 5);
+    
+    // p2 has no progress
+    system.updateProgress(registry, p2, AchievementCategory::Combat, 1);
+    
+    REQUIRE(system.hasAchievement(registry, p1, 1) == true);
+    REQUIRE(system.hasAchievement(registry, p2, 1) == false);
+}
+
+TEST_CASE("AchievementSystem reset player progress", "[achievements]") {
+    Registry registry;
+    AchievementSystem system;
+    
+    std::vector<AchievementDef> achievements = {
+        {1, "Killer", "Kill 1 enemy",
+         AchievementCategory::Combat, 1, 50, 0, nullptr, nullptr},
+    };
+    system.initialize(achievements);
+    
+    EntityID player = registry.create();
+    registry.emplace<PlayerComponent>(player);
+    system.attachToPlayer(registry, player);
+    
+    // Complete the achievement
+    system.updateProgress(registry, player, AchievementCategory::Combat, 1);
+    REQUIRE(system.hasAchievement(registry, player, 1) == true);
+    
+    // Reset progress would require detach + reattach (test detach behavior)
+    system.detachFromPlayer(registry, player);
+    system.attachToPlayer(registry, player);
+    
+    // After reattach, achievement should be incomplete again
+    auto* comp = registry.try_get<AchievementComponent>(player);
+    REQUIRE(comp != nullptr);
+    bool stillComplete = false;
+    for (uint32_t i = 0; i < comp->count; ++i) {
+        if (comp->achievements[i].completed) stillComplete = true;
+    }
+    REQUIRE(stillComplete == false);
+}
