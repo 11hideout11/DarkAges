@@ -266,7 +266,7 @@ namespace DarkAges
             _interactionPanel.AddChild(container);
             
             _interactionPrompt = new Label();
-            _interactionPrompt.Text = "[E] Interact";
+            _interactionPrompt.Text = "[E] Talk";
             _interactionPrompt.HorizontalAlignment = HorizontalAlignment.Center;
             _interactionPrompt.Modulate = ThemeAccent;
             _interactionPrompt.AddThemeFontSizeOverride("font_size", 18);
@@ -536,7 +536,7 @@ namespace DarkAges
             
             _goldLabel = new Label();
             _goldLabel.Text = "0";
-            _goldLabel.Modulate = ThemeQuestComplete;
+            _goldLabel.Modulate = ThemeAccent;
             hbox.AddChild(_goldLabel);
         }
         
