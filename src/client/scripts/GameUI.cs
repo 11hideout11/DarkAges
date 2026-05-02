@@ -479,34 +479,8 @@ namespace DarkAges
         
         private void SetupInventoryUI()
         {
-            _inventoryPanel = new Panel();
-            _inventoryPanel.Name = "InventoryPanel";
-            _inventoryPanel.SetAnchorsPreset(Control.LayoutPreset.BottomLeft);
-            _inventoryPanel.OffsetLeft = 10;
-            _inventoryPanel.OffsetTop = -90;
-            _inventoryPanel.OffsetRight = 200;
-            _inventoryPanel.OffsetBottom = -10;
-            _inventoryPanel.Visible = false;
-            AddChild(_inventoryPanel);
-            
-            var hbox = new HBoxContainer();
-            hbox.SetAnchorsPreset(Control.LayoutPreset.FullRect);
-            hbox.AddThemeConstantOverride("separation", 10);
-            _inventoryPanel.AddChild(hbox);
-            
-            var goldIcon = new Label();
-            goldIcon.Text = "Gold: ";
-            hbox.AddChild(goldIcon);
-            
-            _goldLabel = new Label();
-            _goldLabel.Text = "0";
-            hbox.AddChild(_goldLabel);
-        }
-        
-        private void OnInventoryUpdate(uint gold, uint[] items, uint[] quantities)
-        {
-            if (_inventoryPanel != null) _inventoryPanel.Visible = true;
-            if (_goldLabel != null) _goldLabel.Text = gold.ToString();
+            // Inventory UI disabled until a real inventory/gold update event is
+            // available and this panel can be wired to it.
         }
     }
 }
