@@ -43,6 +43,10 @@ set(TEST_SOURCES
     BenchmarkRedis.cpp
     TestPositionHistory.cpp
     TestCircuitBreaker.cpp
+    TestChaosZones.cpp
+    TestChaosNetwork.cpp
+    TestChaosDatabase.cpp
+    TestChaosCrash.cpp
     TestViolationTracker.cpp
     TestInputValidator.cpp
     TestRateLimiter.cpp
