@@ -291,7 +291,7 @@ TEST_CASE("AchievementSystem multiple players independent", "[achievements]") {
     // p1 completes achievement
     system.updateProgress(registry, p1, AchievementCategory::Combat, 5);
     
-    // p2 has no progress
+    // p2 has partial progress
     system.updateProgress(registry, p2, AchievementCategory::Combat, 1);
     
     REQUIRE(system.hasAchievement(registry, p1, 1) == true);
