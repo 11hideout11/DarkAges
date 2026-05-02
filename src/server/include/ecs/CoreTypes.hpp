@@ -68,7 +68,7 @@ using ConnectionID = uint32_t;  // Network connection handle
  *
  * ## Fixed-Point Representation
  * - Units: 1.0f world unit = 1000 fixed-point units
- * - Range: ±2,147,483,647 units (~±2,147m or ~2km world space)
+ * - Range: ±2,147,483,647 fixed-point units (~±2,147,483 world units or ~±2,147 km world space)
  * - Precision: 0.001f world units (1mm)
  *
  * ## Usage
