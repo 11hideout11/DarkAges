@@ -35,10 +35,10 @@ Prioritized list of autonomous improvements for DarkAges.
 - [x] Penetration testing (packet manipulation, replay attacks) ✅ 2026-05-02
 
 ## P3 — Phase 11: Chaos Testing
-- [ ] Zone failure simulation
-- [ ] Network partition handling
-- [ ] Database failure recovery
-- [ ] Process crash resilience
+- [x] Zone failure simulation ✅ 2026-05-02 (TestChaosZones.cpp - 30 test cases)
+- [x] Network partition handling ✅ 2026-05-02 (TestChaosNetwork.cpp - 25+ test cases)
+- [x] Database failure recovery ✅ 2026-05-02 (TestChaosDatabase.cpp - 25+ test cases)
+- [x] Process crash resilience ✅ 2026-05-02 (TestChaosCrash.cpp - 25+ test cases)
 
 ## P2.5 — Demo Visual Polish & Missing Interactions
 - [ ] NPC interaction system (E key to interact, interaction prompt UI, dialogue trigger)
