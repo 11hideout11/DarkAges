@@ -19,6 +19,8 @@
 #include <fcntl.h>
 #include <cstring>
 #include <errno.h>
+#include <cstdlib>
+#include <iostream>
 
 namespace DarkAges {
 namespace Netcode {
@@ -659,28 +661,50 @@ void GNSSocket::setOnMessage(MessageCallback) {}
 #include <dlfcn.h>
 
 std::unique_ptr<INetworkSocket> NetworkSocketFactory::create(SocketType type) {
+    // Guard: invalid type defaults to stub
+    if (type != SocketType::Auto && type != SocketType::Stub && type != SocketType::GNS) {
+        std::cerr << "[NetworkSocketFactory] WARNING: Invalid socket type, using Stub" << std::endl;
+        type = SocketType::Stub;
+    }
+    
     if (type == SocketType::Auto) {
         type = isGNSAvailable() ? SocketType::GNS : SocketType::UDP;
     }
     
     switch (type) {
         case SocketType::GNS:
-            return std::make_unique<GNSSocket>();
+            // Verify GNS is actually available before use
+            if (isGNSAvailable()) {
+                std::cout << "[NetworkSocketFactory] Creating GNSSocket (production)" << std::endl;
+                return std::make_unique<GNSSocket>();
+            }
+            // Fall through to stub if GNS check failed
+            std::cout << "[NetworkSocketFactory] GNS unavailable, falling back to StubSocket" << std::endl;
+            [[fallthrough]];
         case SocketType::UDP:
             return std::make_unique<UDPSocket>();
         case SocketType::Stub:
         default:
+            std::cout << "[NetworkSocketFactory] Creating StubSocket (development)" << std::endl;
             return std::make_unique<StubSocket>();
     }
 }
 
 bool NetworkSocketFactory::isGNSAvailable() {
-    // Try to load GNS library
+    // Try to load GNS library via dlopen
     static void* gnsLib = nullptr;
     if (!gnsLib) {
         gnsLib = dlopen("libgameNetworkingSockets.so", RTLD_NOW);
     }
-    return gnsLib != nullptr;
+    if (gnsLib) return true;
+    
+    // Fallback: check environment variable override
+    const char* env = std::getenv("DARKAGES_FORCE_GNS");
+    if (env && std::strcmp(env, "1") == 0) {
+        std::cout << "[NetworkSocketFactory] GNS forced via DARKAGES_FORCE_GNS=1" << std::endl;
+        return true;
+    }
+    return false;
 }
 
 NetworkSocketFactory::SocketType NetworkSocketFactory::getCurrentType() {
