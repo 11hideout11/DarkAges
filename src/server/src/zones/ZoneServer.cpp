@@ -509,6 +509,7 @@ bool ZoneServer::initialize(const ZoneConfig& config) {
         }
     }
 
+    initialized_ = true;
     return true;
 }
 
@@ -636,6 +637,7 @@ void ZoneServer::requestShutdown() {
     if (!shutdownRequested_) {
         shutdownRequested_ = true;
         running_ = false;
+        initialized_ = false;
         std::cout << "[ZONE " << config_.zoneId << "] Shutdown requested" << std::endl;
     }
 }
@@ -733,6 +735,11 @@ void ZoneServer::savePlayerState(EntityID entity) {
 }
 
 bool ZoneServer::tick() {
+    // If zone is not running, gracefully do nothing (used in uninitialized/tests)
+    if (!initialized_ && !running_) {
+        return false;
+    }
+
     ZONE_TRACE_EVENT("ZoneServer::tick", Profiling::TraceCategory::TOTAL);
 
     // [PERFORMANCE_AGENT] Reset temporary allocator at start of tick
