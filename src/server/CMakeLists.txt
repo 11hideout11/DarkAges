@@ -74,6 +74,7 @@ set(SERVER_SOURCES
     src/physics/MovementSystem.cpp
     src/physics/NavigationGrid.cpp
     src/zones/ZoneServer.cpp
+    src/zones/ZoneObjectiveSystem.cpp
     src/zones/CombatEventHandler.cpp
     src/zones/AuraZoneHandler.cpp
     src/zones/ZoneOrchestrator.cpp

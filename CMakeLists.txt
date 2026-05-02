@@ -65,14 +65,15 @@ else()
         FetchContent_Declare(
             EnTT
             GIT_REPOSITORY https://github.com/skypjack/entt.git
-            GIT_TAG v3.13.0
+            GIT_TAG v3.16.0
             GIT_SHALLOW TRUE
         )
         FetchContent_MakeAvailable(EnTT)
-        set(ENTT_INCLUDE_DIR "${entt_SOURCE_DIR}/single_include")
+        # EnTT v3.16.0 single_include structure differs - use src for proper headers
+        set(ENTT_INCLUDE_DIR "${entt_SOURCE_DIR}/src")
         set(ENTT_FOUND TRUE)
     else()
-        message(FATAL_ERROR "EnTT not found. Run: git clone --branch v3.13.0 https://github.com/skypjack/entt.git deps/entt")
+        message(FATAL_ERROR "EnTT not found. Run: git clone --branch v3.16.0 https://github.com/skypjack/entt.git deps/entt")
     endif()
 endif()
 
@@ -88,14 +89,14 @@ else()
         FetchContent_Declare(
             glm
             GIT_REPOSITORY https://github.com/g-truc/glm.git
-            GIT_TAG 0.9.9.8
+            GIT_TAG 1.0.3
             GIT_SHALLOW TRUE
         )
         FetchContent_MakeAvailable(glm)
         set(GLM_INCLUDE_DIR "${glm_SOURCE_DIR}")
         set(GLM_FOUND TRUE)
     else()
-        message(FATAL_ERROR "GLM not found. Run: git clone --branch 0.9.9.8 https://github.com/g-truc/glm.git deps/glm")
+        message(FATAL_ERROR "GLM not found. Run: git clone --branch 1.0.3 https://github.com/g-truc/glm.git deps/glm")
     endif()
 endif()
 
@@ -110,7 +111,7 @@ set(FETCHCONTENT_QUIET ON)
 # Declare ALL external dependencies BEFORE any MakeAvailable
 # ---------------------------------------------------------------------------
 
-# nlohmann/json (v3.11.3) - JSON serialization
+# nlohmann/json (v3.12.0) - JSON serialization
 if(EXISTS "${CMAKE_SOURCE_DIR}/deps/json/include/nlohmann/json.hpp")
     message(STATUS "nlohmann/json found in deps/json")
     set(JSON_INCLUDE_DIR "${CMAKE_SOURCE_DIR}/deps/json/include")
@@ -121,17 +122,17 @@ else()
     FetchContent_Declare(
         json
         GIT_REPOSITORY https://github.com/nlohmann/json.git
-        GIT_TAG v3.11.3
+        GIT_TAG v3.12.0
         GIT_SHALLOW TRUE
     )
 endif()
 
-# FlatBuffers (v24.3.25) - Protocol serialization
+# FlatBuffers (v25.12.19) - Protocol serialization
 if(ENABLE_FLATBUFFERS)
     FetchContent_Declare(
         flatbuffers
         GIT_REPOSITORY https://github.com/google/flatbuffers.git
-        GIT_TAG v24.3.25
+        GIT_TAG v25.12.19
         GIT_SHALLOW TRUE
     )
 endif()
@@ -193,7 +194,7 @@ else()
     FetchContent_Declare(
         protobuf
         GIT_REPOSITORY https://github.com/protocolbuffers/protobuf.git
-        GIT_TAG v3.21.12
+        GIT_TAG v34.1
         GIT_SHALLOW TRUE
         GIT_SUBMODULES ""
     )
@@ -217,7 +218,7 @@ if(BUILD_TESTS)
         FetchContent_Declare(
             Catch2
             GIT_REPOSITORY https://github.com/catchorg/Catch2.git
-            GIT_TAG v3.5.0
+            GIT_TAG v3.14.0
             GIT_SHALLOW TRUE
         )
     endif()
@@ -513,6 +514,7 @@ set(SERVER_SOURCES
     src/server/src/zones/ZoneOrchestrator.cpp
     src/server/src/zones/PlayerManager.cpp
     src/server/src/zones/ZoneServer.cpp
+    src/server/src/zones/ZoneObjectiveSystem.cpp
     src/server/src/zones/CrossZoneMessenger.cpp
     src/server/src/zones/CombatEventHandler.cpp
     src/server/src/zones/AuraZoneHandler.cpp
