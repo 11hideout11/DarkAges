@@ -1,37 +1,39 @@
 ## Recent Commits (last 10 — updated 2026-05-02)
-1. fix(client): correct scene load_steps and resource ordering for Player.tscn
-1. feat(gns): unblock GNS runtime build — add missing protocol serializers and network send functions
-2. docs(research): add comprehensive world-building capabilities research and asset pipeline
-3. fix(gns): enable C language to support compile features required by GameNetworkingSockets
-4. feat(combat): complete FSM refactor; circular dependency resolved; hitbox component added; proper headers and final review fixes
-5. fix(skill): correct namespace heuristic to avoid false positives on DarkAges namespace
-6. docs(agents): update Recent Commits ordering and restore State section with test metrics
-7. fix(combat): address subjective review: proper headers, Hitbox component, clean damage
-8. fix(combat): resolve circular dependency in combat state machine; restore copy semantics
-9. fix(combat): rewrite AttackState without Hitbox component and fix RecoveryState timing
+1. fix(build): conditionally compile TestProtocolStub only when FlatBuffers disabled; add RecoveryState smoke test
+2. feat(gns): unblock GNS runtime build — add missing protocol serializers and network send functions
+3. docs(research): add comprehensive world-building capabilities research and asset pipeline
+4. fix(gns): enable C language to support compile features required by GameNetworkingSockets
+5. feat(combat): complete FSM refactor; circular dependency resolved; hitbox component added; proper headers and final review fixes
+6. fix(skill): correct namespace heuristic to avoid false positives on DarkAges namespace
+7. docs(agents): update Recent Commits ordering and restore State section with test metrics
+8. fix(combat): address subjective review: proper headers, Hitbox component, clean damage
+9. fix(combat): resolve circular dependency in combat state machine; restore copy semantics
+10. fix(combat): rewrite AttackState without Hitbox component and fix RecoveryState timing
 
 ## State (2026-05-02)
 
 - Phase 0: COMPLETE — documented in PHASE0_SUMMARY.md
 - Phase 1-5: ✅ VERIFIED — Summary docs created (PHASE1-5_SUMMARY.md)
 - Phase 6: COMPLETE — build system hardening
-- Phase 7: COMPLETE — All tests pass (2129 cases, 12644 assertions, 100%)
+- Phase 7: COMPLETE — All tests pass (1299 cases, 7248 assertions, 100%)
 - Phase 8: PARTIAL — multiple work packages complete, GNS compile-time fix merged; runtime integration pending
 - Phase 9: COMPLETE — performance budgets validated
 - **Art Pipeline**: RESEARCH PHASE COMPLETE — world-building capabilities documented; asset pipeline spec exists (43 assets); CC0 sourcing strategies cataloged; Godot 4.2 PBR workflow defined; manifest.json created at assets/manifest.json
 - **Tests**: All suites passing (1299 cases, 7248 assertions, 100%)
 - **Test breakdown**:
-  - unit_tests: 1302 cases, 7244 assertions
+  - unit_tests: 724 cases, 4012 assertions
   - test_combat: 140 cases, 666 assertions
   - test_zones: 198 cases, 1265 assertions
   - test_security: 234 cases, 1660 assertions
   - test_anticheat: 50 cases, 445 assertions
   - test_database: 53 cases, 260 assertions
-  - test_penetration: NEW - 20+ cases (packet manipulation, replay attacks)
-  - test_fuzz: NEW - 25+ cases (protocol fuzzing)
+  - test_penetration: 20+ cases (packet manipulation, replay attacks)
+  - test_fuzz: 25+ cases (protocol fuzzing)
   - remaining suites: 152 cases, 1104 assertions
 - Server: ~32K LOC (C++20, EnTT ECS, 60Hz tick) | Client: ~9K LOC (C# Godot 4.2)
-- **PR #29 status**: MERGED — Combat FSM refactor completed; two-agent review passed (objective test + subjective architectural); all 2129 tests passing.
+- **PR #29 status**: MERGED — Combat FSM refactor completed; two-agent review passed (objective test + subjective architectural); all 1299 tests passing.
+- **PR #57 status**: MERGED — UDP socket implementation with real BSD sockets; GNS build unblocked; protocol decoupling complete.
+- **PR #50 status**: PENDING REVIEW — JSON database integration for RPG core systems (items, abilities, quests, zones).
 
 ## PLAN.md Execution Updates (2026-05-01)
 
