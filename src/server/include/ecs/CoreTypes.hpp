@@ -430,8 +430,9 @@ struct TargetLock {
  * their XZ position.
  *
  * ## Grid Size
- * Cell size is typically 16m × 16m, providing O(1) lookup
- * for nearby entity queries.
+ * Cell size is 10m × 10m, matching
+ * Constants::SPATIAL_HASH_CELL_SIZE and providing O(1)
+ * lookup for nearby entity queries.
  *
  * @see ReplicationOptimizer
  * @see AreaOfInterest
