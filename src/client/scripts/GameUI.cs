@@ -38,11 +38,9 @@ namespace DarkAges
         private Main? _main;
         
         // DarkAges theme colors (consistent across all UI)
-        private static readonly Color ThemeDarkBg = new Color(0.08f, 0.08f, 0.12f, 0.9f);
         private static readonly Color ThemePanelBg = new Color(0.12f, 0.12f, 0.18f, 0.95f);
         private static readonly Color ThemeAccent = new Color(0.9f, 0.6f, 0.2f, 1.0f);  // Gold accent
         private static readonly Color ThemeText = new Color(0.9f, 0.9f, 0.85f, 1.0f);    // Off-white text
-        private static readonly Color ThemeHighlight = new Color(0.2f, 0.6f, 0.9f, 1.0f);  // Blue highlight
         private static readonly Color ThemeQuestComplete = new Color(0.2f, 0.8f, 0.3f, 1.0f); // Green for completion
 
         public override void _Ready()
