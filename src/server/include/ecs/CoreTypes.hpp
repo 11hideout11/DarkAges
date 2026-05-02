@@ -493,14 +493,17 @@ struct BoundingVolume {
 // ============================================================================
 
 /**
- * @brief Player identification and account data
+ * @brief Player identification and session attachment data
  *
- * Persistent player data loaded from database at login.
- * Contains the permanent player ID, connection handle,
- * and session metadata.
+ * Combines persistent player identity data with runtime metadata
+ * populated for the current authenticated session.
+ * Contains the permanent player ID, player display name,
+ * active connection handle, and session start timestamp.
  *
- * @note This component is loaded from database and attached
- * when a player authenticates. It persists across sessions.
+ * @note The persistent identity fields (for example `playerId`)
+ * are loaded from storage at login, while `connectionId` and
+ * `sessionStart` describe only the current live session and
+ * should not be assumed to persist across reconnects.
  *
  * @see ScyllaManager for database loading
  */
