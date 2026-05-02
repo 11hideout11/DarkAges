@@ -14,7 +14,7 @@
     12|## Latest Validation Results
     13|
     14|### Server Tests (C++)
-    15|- **11/11 test suites PASS** (2129 tests, 12644 assertions)
+    15|- **11/11 test suites PASS**
     16|- Build: cmake Release, 0 errors
     17|
     18|### Godot Client (C#)
