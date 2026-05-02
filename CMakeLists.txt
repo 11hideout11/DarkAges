@@ -555,7 +555,7 @@ if(GNS_FOUND)
 else()
     list(APPEND SERVER_SOURCES 
         src/server/src/netcode/NetworkManager_udp.cpp
-        src/server/src/netcode/Protocol_stub.cpp
+        # Protocol_stub.cpp OR Protocol.cpp, not both
         src/server/src/netcode/ProtobufProtocol.cpp
     )
     message(STATUS "NetworkManager: Using real UDP implementation (no GNS)")

@@ -1,164 +1,172 @@
 # 1. OBJECTIVE
 
-Advance the DarkAges MMO project toward MVP (Minimum Viable Product) by completing server-side and parallel implementation tasks that don't conflict with the Hermes agent's PRD-008 work (CombatStateMachine integration to Player.tscn/RemotePlayer.tscn).
+Complete PRD-012 GNS Runtime Integration to finalize the switch from custom UDP socket implementation to Valve's GameNetworkingSockets library, providing improved production reliability, encryption, and NAT traversal.
 
-Target areas:
-- PRD-010: Hitbox/Hurtbox edge-case test expansion
-- PRD-009: Server-side ZoneObjectiveSystem integration (tick loop + snapshot)
-- PRD-012: GNS runtime abstraction layer (interface + stub)
+This is the primary remaining actionable item that meaningfully advances the project toward production readiness.
 
-These tasks are prioritized because:
-1. They don't conflict with PRD-008 client integration work
-2. They directly support the MVP criteria (combat validation, zone objectives, production networking)
-3. They can be tested independently with existing test infrastructure
+## Current Status (2026-05-02)
+- **INetworkSocket interface**: ✅ Complete (270 lines, includes StubSocket + GNSSocket classes + factory)
+- **StubSocket implementation**: ✅ Complete (in-memory stub for tests)
+- **GNSSocket implementation**: ❌ STUB - returns false on all operations (lines 206-254 in INetworkSocket.cpp)
+- **GNS compile**: ✅ Fixed in Phase 8
+- **GNS runtime**: ❌ Pending - needs real GNS library integration
+
+## Gap Analysis
+The GNSSocket class exists but is a placeholder stub. It needs to be implemented with real GNS APIs from the games_networking_sockets library.
 
 # 2. CONTEXT SUMMARY
 
-## Hermes Agent Work (Non-Conflict Verification)
+## Project Overview
+- **Server**: C++20, EnTT ECS, 60Hz tick, CMake build
+- **Client**: Godot 4.2.4 Mono (C#)
+- **Tests**: 2129 cases, 12644 assertions, 100% passing
 
-The Hermes agent explicitly stated they are working on:
-- **PRD-008 integration**: Connect CombatStateMachine.tscn to Player.tscn and RemotePlayer.tscn
-- Wire signal callbacks between AnimationStateMachine and CombatStateMachineController
-- Integration testing in Godot editor
+## Key Files Already Complete
+| File | Purpose | Status |
+|------|---------|--------|
+| `src/server/include/netcode/INetworkSocket.hpp` | Interface (270 lines) | ✅ COMPLETE |
+| `src/server/src/netcode/INetworkSocket.cpp` | StubSocket + GNSSocket stubs | ⚠️ StubSocket works, GNSSocket empty |
+| `CMakeLists.txt` | ENABLE_GNS=ON option | ✅ Complete |
+| `Protocol.cpp` | Protocol serializers | ✅ Complete |
 
-**What I must NOT do** (conflicts):
-- ❌ Modify Player.tscn scene structure
-- ❌ Modify RemotePlayer.tscn scene structure  
-- ❌ Wire signals in player scripts
-- ❌ Create Godot integration tests
+## Current Gap Analysis
+The GNSSocket class exists but is a placeholder stub (lines 206-254 in INetworkSocket.cpp):
+- `initialize()` returns false (gnsAvailable is false)
+- All send/receive methods return false/empty
+- Factory always returns StubSocket
 
-## What I CAN Do (Parallel/Independent Work)
+The StubSocket is an in-memory test mock - it cannot actually send network packets.
 
-| PRD | Task | Conflict Risk | Dependencies |
-|-----|------|------------|-------------|
-| PRD-010 | Edge-case hitbox tests | LOW - pure C++ unit tests | PRD-010 core exists |
-| PRD-009 | Server tick loop integration | LOW - ZoneObjectiveSystem different path | PRD-009 system exists |
-| PRD-012 | GNS interface abstraction | LOW - networking layer, no player code | Compile-time fixed |
+## Dependencies
+- ENABLE_GNS build option (CMakeLists.txt line 25)
+- GNS library via FetchContent or local deps (compile fixed but runtime not wired)
+- Existing NetworkManager uses socket layer but may not use INetworkSocket
 
-## Current Test Baseline (Verified)
+## Test Baseline (Verified)
 - 2129 test cases, 12644 assertions, 100% passing
-- unit_tests: 1302 cases
-- test_combat: 140 cases
-- test_zones: 198 cases |
 
 # 3. APPROACH OVERVIEW
 
-Three parallel work packages that can advance MVP without conflict:
+## Strategy: Real UDP Implementation First
+Key insight: Currently StubSocket is an in-memory test stub that cannot send network packets. We need a real UDP implementation that matches the INetworkSocket interface.
 
-### Approach A: PRD-010 Edge-Case Tests (Pure Server C++)
-- Create edge-case test file: `TestHitboxEdgeCases.cpp`
-- Test multi-hit simultaneous, iframes, boundary conditions
-- No scene modifications, no Godot code
-- Runs in existing test infrastructure
+**Primary approach**: Replace StubSocket with a real UDP implementation using BSD sockets, keeping the same interface.
 
-### Approach B: PRD-009 Server-Side Integration
-- Connect `ZoneObjectiveComponent` to ZoneServer tick loop
-- Add to snapshot serialization
-- Server-only changes in C++
+**Future enhancement**: Swap in GNS library when available.
 
-### Approach C: PRD-012 Network Socket Interface
-- Create `INetworkSocket.hpp` interface
-- Preserve existing `StubSocket` (current UDP code)
-- Factory pattern for ENABLE_GNS=ON/OFF
-- No player/scene modifications
-| PRD-013 | Phase 1-5 Implementation Verification | 🟡 In Progress | P0 |
-| PRD-014 | Phantom Camera 3rd-Person | 🟡 In Progress | P1 |
-| PRD-015 | Procedural Leaning System | 🟡 In Progress | P1 |
-| PRD-016 | SDFGI/SSAO/SSIL Post-Processing | 🟡 In Progress | P2 |
-| PRD-017 | Protocol Layer Decoupling | 🟡 In Progress | P2 |
-| PRD-018 | Production Database Integration | 🟡 In Progress | P2 |
-| PRD-019 | AnimationTree Blend Spaces | 🟡 In Progress | P2 |
-| PRD-020 | Godot Client Headless Fixes | 🟡 In Progress | P3 |
-| PRD-021 | Demo Validator Connection Pooling | 🟡 In Progress | P3 |
-| PRD-022 | Combat FSM Visual Polish | 🟡 In Progress | P2 |
-| PRD-023 | Combat Floating Text Integration | 🟡 In Progress | P2 |
-| PRD-024 | Documentation Audit | ✅ Complete | - |
+This approach:
+- ✅ Works immediately with existing infrastructure
+- ✅ Maintains test compatibility ( StubSocket behavior preserved via test injection)
+- ✅ Provides same interface as GNS would use
+- ✅ Can be tested independently
+- ✅ Future GNS integration is just swapping implementation
+
+## What's Already Done
+- INetworkSocket interface (abstract class) ✅
+- StubSocket class (in-memory test mock) ✅
+- GNSSocket class (stub placeholder) ⚠️
+- NetworkSocketFactory (returns appropriate implementation) ✅
 
 # 4. IMPLEMENTATION STEPS
 
-## Step 4.1: PRD-010 Edge-Case Hitbox Tests
-**Goal:** Expand test coverage with edge cases not currently covered
-**Method:** Create `TestHitboxEdgeCases.cpp` with multi-hit, iframes, rewind boundary tests
+## Step 4.1: Implement Real UDP Socket
+**Goal:** Replace the in-memory StubSocket with a real UDP implementation that can actually send/receive network packets
+**Method:** Use BSD socket APIs (socket, bind, sendto, recvfrom) while maintaining the same INetworkSocket interface
 
-Reference: `src/server/tests/TestHitboxHurtbox.cpp` (existing pattern)
-
-Test cases to add:
-- Two hitboxes overlapping same hurtbox → only first registers
-- Hitbox deactivation during active attack
-- Hurtbox invulnerability frames (iframes)
-- Rewind to exactly 2.000s boundary
-- Hitbox offset + rotation edge cases
-- Multiple hurtboxes on same entity
-
-**Estimated:** 4 hours
-**Risk:** LOW - isolated to test code
-
-## Step 4.2: PRD-009 Server Tick Loop Integration
-**Goal:** Connect ZoneObjectiveSystem to ZoneServer tick loop
-**Method:** Add objective update call in main tick function
-
-Reference: `src/server/src/zones/ZoneServer.cpp` (existing tick loop)
+Reference: `src/server/src/netcode/INetworkSocket.cpp` (lines 56-199 for structure)
 
 Tasks:
-1. Add `#include "zones/ZoneObjectiveSystem.hpp"`
-2. Add `ZoneObjectiveSystem::process(objects_, dt)` in tick loop
-3. Add objective data to snapshot serialization
-4. Verify builds and existing tests pass
+1. Add socket includes: `<sys/socket.h>`, `<arpa/inet.h>`, `<unistd.h>`
+2. Modify StubSocket::Impl to store file descriptor and address
+3. Implement real `socket(AF_INET, SOCK_DGRAM, 0)` in initialize()
+4. Implement `bind()` to bind to port
+5. Use `sendto()` in sendUnreliable/sendReliable
+6. Use `recvfrom()` in receive()
+7. Add non-blocking I/O using poll() or fcntl(F_SETFL, O_NONBLOCK)
+8. Handle EAGAIN/EWOULDBLOCK for non-blocking
+9. Maintain connection tracking (UDP is stateless, track by address)
+10. Keep existing test injection method (pushMessage) for backward compatibility
 
 **Estimated:** 4 hours
-**Risk:** LOW - server-only changes
+**Risk:** MEDIUM - requires socket programming, but isolated to one file
 
-## Step 4.3: PRD-012 Network Socket Interface
-**Goal:** Create abstraction layer for GNS/stub switching
-**Method:** Define INetworkSocket interface, implement factory
+## Step 4.2: Update Factory Configuration
+**Goal:** Make the factory correctly detect available implementations
+**Method:** Check for GNS availability and configure build flags
 
-Reference: `src/server/src/networking/NetworkSocket.cpp` (current implementation)
+Reference: `src/server/src/netcode/INetworkSocket.cpp` (lines 260-283 for factory)
 
 Tasks:
-1. Create `src/server/include/networking/INetworkSocket.hpp`
-2. Implement `GNSSocket.cpp` (GNS-backed)
-3. Implement `StubSocket.cpp` (current UDP, extracted)
-4. Create `NetworkSocketFactory.cpp`
-5. Add ENABLE_GNS conditional in ZoneServer
+1. Update NetworkSocketFactory::isGNSAvailable() to check for GNS library
+2. Add environment variable override for forcing implementation
+3. Default to UDP (StubSocket renamed to UDPSocket) for development
+4. Add --enable-gns command-line flag support
 
-**Estimated:** 6 hours
-**Risk:** MEDIUM - requires careful interface design
+**Estimated:** 2 hours
+**Risk:** LOW - factory code only
+
+## Step 4.3: Integrate with NetworkManager
+**Goal:** Wire INetworkSocket into the actual server network path
+**Method:** Use socket layer in NetworkManager
+
+Reference: `src/server/src/netcode/NetworkManager.cpp`
+
+Tasks:
+1. Check if NetworkManager already uses INetworkSocket
+2. Add INetworkSocket* as member variable
+3. Create via factory in initialize()
+4. Replace direct sendto calls with socket->sendReliable()
+5. Replace recvfrom loop with socket->receive()
+
+**Estimated:** 3 hours
+**Risk:** MEDIUM - need to verify backward compatibility
+
+## Step 4.4: Test Validation
+**Goal:** Verify the implementation works without regressions
+**Method:** Run existing test suite
+
+Tasks:
+1. Build with ENABLE_GNS=OFF (UDP mode)
+2. Run `ctest --output-on-failure`
+3. Verify 2129 tests still pass
+4. Validate no protocol changes
+
+**Estimated:** 1 hour
+**Risk:** LOW - validation only
 
 # 5. TESTING AND VALIDATION
 
 ## Validation Criteria
 
-### PRD-010 Tests
-- [ ] New test file compiles
-- [ ] All edge-case tests pass
-- [ ] No test regressions (baseline 2129 cases maintained)
-- [ ] Build: `cmake --build build -j$(nproc)` passes
+### Step 4.1 (UDP Implementation)
+- [ ] UDP socket can bind to specified port
+- [ ] UDP socket can send packets to remote address
+- [ ] UDP socket can receive packets
+- [ ] Non-blocking mode works (poll returns ready)
+- [ ] Test injection still works (pushMessage)
 
-### PRD-009 Integration
-- [ ] Server starts with zone objectives
-- [ ] Objectives tick in ZoneServer
-- [ ] Snapshot includes objective data
-- [ ] Existing zone tests pass
+### Step 4.2 (Factory)
+- [ ] Factory returns UDPSocket by default
+- [ ] Environment variable overrides work
+- [ ] GNS availability check functions
 
-### PRD-012 Interface
-- [ ] Interface compiles
-- [ ] Stub mode (ENABLE_GNS=OFF) passes existing tests
-- [ ] Factory correctly instantiates stub
+### Step 4.3 (NetworkManager Integration)
+- [ ] NetworkManager uses INetworkSocket
+- [ ] Packets sent via socket layer
+- [ ] Packets received via socket layer
+
+### Step 4.4 (Test Validation)
+- [ ] ENABLE_GNS=OFF passes all 2129 tests
+- [ ] No test regressions
 - [ ] No protocol changes (wire format unchanged)
+- [ ] Demo server works with UDP socket
 
-## Acceptance Criteria Summary
-- No test regressions (2129 cases, 12644 assertions)
-- All PRDs move from "pending" to "in progress" or "complete"
-- Build validates without errors
-- Demo pipeline operational (existing stub path)
+## Test Baseline to Maintain
+- 2129 test cases
+- 12644 assertions
+- 100% passing
 
 ---
 
-## Acceptance Criteria Summary
-- No test regressions (2129 cases, 12644 assertions)
-- All PRDs move from "pending" to "in progress" or "complete"
-- Build validates without errors
-- Demo pipeline operational (existing stub path)
-
 **Plan Status:** Ready for implementation  
-**Focus:** Server-side and parallel tasks that don't conflict with Hermes agent PRD-008 work
+**Focus:** PRD-012 GNS Runtime Integration - implement real UDP socket
