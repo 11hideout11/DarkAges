@@ -3,6 +3,7 @@
 [ext_resource type="Script" path="res://src/entities/RemotePlayer.cs" id="1_remoteplayer"]
 [ext_resource type="AnimationLibrary" path="res://scenes/PlayerAnimations.tres" id="2_animlib"]
 [ext_resource type="AnimationTree" path="res://scenes/PlayerAnimationTree.tres" id="3_animationtree"]
+[ext_resource type="PackedScene" path="res://scenes/CombatStateMachine.tscn" id="X_combatfsm_remote"]
 
 [sub_resource type="CapsuleShape3D" id="CapsuleShape3D_remote"]
 radius = 0.3
@@ -72,3 +73,6 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.25, 0)
 billboard = 1
 mesh = SubResource("BoxMesh_health_fill")
 surface_material_override/0 = SubResource("StandardMaterial3D_health_fill")
+
+[node name="CombatStateMachine" type="Node3D" parent="."]
+script = ExtResource("X_combatfsm_remote")
