@@ -4,24 +4,24 @@
 **Date:** 2026-05-02  
 **Status:** Proposed  
 **Priority:** High  
-**Prerequisite:** None - minimal placeholder exists
+**Prerequisite:** Existing inventory/equipment foundation is present and requires expansion/completion
 
 ---
 
 ## 1. Problem Statement
 
-The inventory and equipment system has only minimal placeholder implementation:
-- ⚠️ No inventory UI
-- ⚠️ No equipment slots fully wired
-- ⚠️ No item database
-- ⚠️ No loot system
-- ⚠️ No drag-and-drop
+The inventory and equipment system already has a substantial foundation, but it is not yet complete enough to support the full gameplay loop:
+- ⚠️ Existing inventory UI/equipment functionality needs completion and polish
+- ⚠️ Equipment slot wiring and gameplay integration are incomplete
+- ⚠️ Item data/content coverage needs expansion
+- ⚠️ Loot acquisition and reward flows are not fully implemented
+- ⚠️ Drag-and-drop and related UX interactions still need implementation/refinement
 
 This is critical for gameplay progression and player engagement.
 
 ### Current State
-- ⚠️ Minimal placeholder only
-- ⏸️ Needs full implementation
+- ✅ Substantial inventory/equipment baseline already exists
+- ⏸️ Needs expansion, integration, and completion
 
 ### Impact
 - Players cannot equip items
