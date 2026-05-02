@@ -14,6 +14,9 @@ struct ChatMessage;
 // Forward declaration for quest update packet
 struct QuestUpdatePacket;
 
+// Forward declaration for zone objective update packet
+struct ZoneObjectiveUpdatePacket;
+
 namespace Protocol {
 
 enum class MessageType : uint8_t {
@@ -36,8 +39,12 @@ enum class PacketType : uint8_t {
     DialogueResponse = 8, // Client -> Server: Player selected dialogue option
     PACKET_CHAT = 14,
     PACKET_QUEST_UPDATE = 15,
-    PACKET_QUEST_ACTION = 16
+    PACKET_QUEST_ACTION = 16,
+    PACKET_ZONE_OBJECTIVE_UPDATE = 18
 };
+
+// Serialize ZoneObjectiveUpdatePacket for UDP delivery
+std::vector<uint8_t> serializeZoneObjectiveUpdate(const ZoneObjectiveUpdatePacket& msg);
 
 // Serialize ChatMessage for UDP delivery
 std::vector<uint8_t> serializeChatMessage(const ChatMessage& msg);

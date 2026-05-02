@@ -847,6 +847,18 @@ void NetworkManager::sendQuestUpdate(ConnectionID connectionId, const QuestUpdat
     sendEvent(connectionId, packet);
 }
 
+void NetworkManager::sendZoneObjectiveUpdate(ConnectionID connectionId, const ZoneObjectiveUpdatePacket& msg) {
+    auto payload = Protocol::serializeZoneObjectiveUpdate(msg);
+    if (payload.empty()) return;
+
+    std::vector<uint8_t> packet;
+    packet.reserve(1 + payload.size());
+    packet.push_back(static_cast<uint8_t>(Protocol::PacketType::PACKET_ZONE_OBJECTIVE_UPDATE));
+    packet.insert(packet.end(), payload.begin(), payload.end());
+
+    sendEvent(connectionId, packet);
+}
+
 void NetworkManager::sendDialogueStart(ConnectionID connectionId, const Protocol::DialogueStartPacket& pkt) {
     // Serialize payload
     auto payload = Protocol::serializeDialogueStart(pkt);

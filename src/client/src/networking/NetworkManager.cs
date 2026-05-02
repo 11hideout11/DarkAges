@@ -62,6 +62,8 @@ namespace DarkAges.Networking
     [Signal]
     public delegate void QuestUpdateReceivedEventHandler(uint questId, uint objectiveIndex, uint current, uint required, byte status);
     [Signal]
+    public delegate void ZoneObjectiveUpdateReceivedEventHandler(byte eventType, string objectiveId, ushort currentProgress, ushort requiredProgress, byte waveNumber, string message);
+    [Signal]
     public delegate void DialogueStartReceivedEventHandler(uint npcId, uint dialogueId, string npcName, string dialogueText, string[] options);
 
  // Socket
@@ -102,6 +104,7 @@ namespace DarkAges.Networking
         private const byte PACKET_QUEST_UPDATE = 15;        // Server -> Client: quest objective progress/complete
         private const byte PACKET_QUEST_ACTION = 16;        // Client -> Server: accept/complete quest
         private const byte PACKET_DIALOGUE_START = 17;      // Server -> Client: begin NPC dialogue
+        private const byte PACKET_ZONE_OBJECTIVE_UPDATE = 18; // Server -> Client: zone objective progress/events
         private const byte PACKET_DIALOGUE_RESPONSE = 8;  // Client -> Server: dialogue option selected
 
         public override void _EnterTree()
@@ -447,6 +450,9 @@ namespace DarkAges.Networking
 
                     break;
 
+                case PACKET_ZONE_OBJECTIVE_UPDATE:
+                    ProcessZoneObjectiveUpdate(data);
+                    break;
                 default:
                     GD.Print($"[NetworkManager] Unknown packet type: {packetType}");
                     break;
@@ -825,6 +831,33 @@ namespace DarkAges.Networking
             GD.Print($"[NetworkManager] Quest update: quest={questId} obj={objectiveIndex} cur={current}/{required} status={status}");
             EmitSignal(SignalName.QuestUpdateReceived, questId, objectiveIndex, current, required, status);
         }
+
+        private void ProcessZoneObjectiveUpdate(byte[] data)
+        {
+            if (data.Length < 8) return; // Minimum: type(1) + objLen(1) + cur(2) + req(2) + wave(1) + msgLen(1) = 8 (without strings)
+
+            int idx = 1; // skip packet type byte
+            byte eventType = data[idx++];
+            byte objLen = data[idx++];
+            if (idx + objLen > data.Length) return;
+            string objectiveId = Encoding.UTF8.GetString(data, idx, objLen);
+            idx += objLen;
+            if (idx + 2 > data.Length) return;
+            ushort currentProgress = BitConverter.ToUInt16(data, idx);
+            idx += 2;
+            if (idx + 2 > data.Length) return;
+            ushort requiredProgress = BitConverter.ToUInt16(data, idx);
+            idx += 2;
+            byte waveNumber = data[idx++];
+            byte msgLen = data[idx++];
+            if (idx + msgLen > data.Length) return;
+            string message = msgLen > 0 ? Encoding.UTF8.GetString(data, idx, msgLen) : string.Empty;
+
+            GD.Print($"[NetworkManager] Zone objective update: event={eventType} obj={objectiveId} progress={currentProgress}/{requiredProgress} wave={waveNumber} msg=\"{message}\"");
+            EmitSignal(SignalName.ZoneObjectiveUpdateReceived, eventType, objectiveId, currentProgress, requiredProgress, waveNumber, message);
+        }
+
+
 
         public void SendLockOnRequest(uint targetEntityId)
         {

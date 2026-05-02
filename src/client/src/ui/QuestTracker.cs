@@ -25,7 +25,8 @@ namespace DarkAges.Client.UI
             if (NetworkManager.Instance != null)
             {
                 NetworkManager.Instance.QuestUpdateReceived += OnQuestUpdateReceived;
-                GD.Print("[QuestTracker] Subscribed to quest updates");
+                NetworkManager.Instance.ZoneObjectiveUpdateReceived += OnZoneObjectiveUpdateReceived;
+                GD.Print("[QuestTracker] Subscribed to quest and zone objective updates");
             }
         }
 
@@ -34,6 +35,7 @@ namespace DarkAges.Client.UI
             if (NetworkManager.Instance != null)
             {
                 NetworkManager.Instance.QuestUpdateReceived -= OnQuestUpdateReceived;
+                NetworkManager.Instance.ZoneObjectiveUpdateReceived -= OnZoneObjectiveUpdateReceived;
             }
         }
 
@@ -48,7 +50,7 @@ namespace DarkAges.Client.UI
 
         private void OnQuestUpdateReceived(uint questId, uint objectiveIndex, uint current, uint required, byte status)
         {
-            GD.Print($"[QuestTracker] Update: quest={questId} obj={objectiveIndex} cur={current} req={required} status={status}");
+            GD.Print($"[QuestTracker] Update: quest={questId} obj={objectiveIndex} cur={current}/{required} status={status}");
 
             if (!_quests.ContainsKey(questId))
             {
@@ -58,6 +60,13 @@ namespace DarkAges.Client.UI
             objDict[objectiveIndex] = (current, required, status);
 
             RefreshDisplay();
+        }
+
+        private void OnZoneObjectiveUpdateReceived(byte eventType, string objectiveId, ushort currentProgress, ushort requiredProgress, byte waveNumber, string message)
+        {
+            // For now, log zone objective events.
+            // TODO: display in dedicated zone objective UI panel
+            GD.Print($"[QuestTracker] Zone objective event: type={eventType} id={objectiveId} progress={currentProgress}/{requiredProgress} wave={waveNumber} msg=\"{message}\"");
         }
 
         private void RefreshDisplay()
