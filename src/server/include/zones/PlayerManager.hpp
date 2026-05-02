@@ -40,7 +40,7 @@ class ZoneServer;
  * playerMgr.setZoneId(1);
  *
  * // Player connects
- * EntityID player = playerMgr.registerPlayer(connectionId, playerId, " username", spawnPos);
+ * EntityID player = playerMgr.registerPlayer(connectionId, playerId, "username", spawnPos);
  *
  * // Query player
  * if (playerMgr.isPlayerConnected(playerId)) {
