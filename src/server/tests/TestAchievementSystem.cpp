@@ -264,7 +264,7 @@ TEST_CASE("AchievementSystem progress accumulates beyond criteria", "[achievemen
         if (comp->achievements[i].achievementId == 1 && comp->achievements[i].completed) {
             found = true;
             // Progress should be capped at criteria
-            REQUIRE(comp->achievements[i].current >= 10);
+            REQUIRE(comp->achievements[i].current == 10);
         }
     }
     REQUIRE(found == true);
