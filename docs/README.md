@@ -25,7 +25,7 @@ This index organizes all project documentation by domain. Use this as your entry
 | Document | Purpose | Last Updated |
 |----------|---------|--------------|
 | `IMPLEMENTATION_SUMMARY.md` | High-level system architecture, tech stack, core systems | Phase 0↑ |
-| `NETWORK_PROTOCOL.md` | UDP packet format, RPC handshake, snapshot compression | Phase 6↑ |
+| `NETWORK_PROTOCOL.md` | UDP packet format, RPC handshake, snapshot compression | Phase 9↑ |
 | `DATABASE_SCHEMA.md` | Redis schema, state persistence, session management | Phase 6↑ |
 | `API_CONTRACTS.md` | Server-client REST/WebSocket endpoints | Phase 6↑ |
 
@@ -259,8 +259,8 @@ Total:      43  distinct assets (Tier 1-4 combined)
 
 ---
 
-**Last updated:** 2026-04-29  
-**Status:** Phase 1 Art Pipeline Ready (tools + spec) → implementation phase starting  
+**Last updated:** 2026-05-02  
+**Status:** Phase 7-9 Complete (build, tests, performance) | Phase 10-11 Security & Chaos Testing In Progress  
 **Maintainer:** Hermes Agent (autonomous) + Iam (review)
 
 **Ready to begin art production.** Start with `docs/ART_PIPELINE_TOOLING.md` Installation section.

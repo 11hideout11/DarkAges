@@ -1,6 +1,6 @@
 # DarkAges - Document Index
 
-**Updated:** 2026-04-26
+**Updated:** 2026-05-02
 
 ## Canonical Documents (Single Source of Truth)
 

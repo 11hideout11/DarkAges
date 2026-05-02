@@ -1,8 +1,8 @@
 # DarkAges Research Corpus Index
 
-**Compiled:** 2026-04-29  
+**Compiled:** 2026-05-02  
 **Project:** DarkAges MMO (Godot 4.2.2, C# Client, C++ Server)  
-**Phase:** Post-Combat-FSM (PR #28) → Art Pipeline Specification Phase
+**Phase:** Post-Combat-FSM (PR #29) → Art Pipeline + Security/Chaos Testing
 
 ---
 
