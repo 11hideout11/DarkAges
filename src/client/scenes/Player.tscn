@@ -31,6 +31,14 @@ shape = SubResource("CapsuleShape3D_1")
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.9, 0)
 mesh = SubResource("CapsuleMesh_1")
 
+[node name="CharacterSkeleton" type="Skeleton3D" parent="."]
+# TODO: Import CC0 character model as child MeshInstance3D
+# See docs/character-import.md for import instructions
+# After import, hide CapsuleMesh above and show character model
+
+[node name="ModelSetupHelper" type="Node" parent="."]
+# Placeholder - delete after model import
+
 [node name="CameraRig" type="Node3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.6, 0)
 script = ExtResource("5_cameracontroller")
