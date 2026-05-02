@@ -212,14 +212,24 @@ TEST_CASE("Edge-case: Hitbox at maximum world boundary", "[combat][hitbox][bound
     Hitbox hitbox{ .layer = CollisionLayer{1u << 3}, .radius = 0.5f };
     Hurtbox hurtbox{ .layer = CollisionLayer{1u << 4}, .radius = 0.3f };
     
-    // At max boundary - should not overflow
-    bool atMaxHit = IntersectsCylinderSphere(hitbox, hurtbox, WORLD_MAX - 0.1f, 0.0f);
-    // At min boundary - should not underflow  
-    bool atMinHit = IntersectsCylinderSphere(hitbox, hurtbox, WORLD_MIN + 0.1f, 0.0f);
+    const float maxDx = WORLD_MAX - 0.1f;
+    const float minDx = WORLD_MIN + 0.1f;
+    const float dz = 0.0f;
+    const float maxDistanceSq = maxDx * maxDx + dz * dz;
+    const float minDistanceSq = minDx * minDx + dz * dz;
     
-    // Neither should produce NaN or inf
-    CHECK(std::isfinite(atMaxHit));
-    CHECK(std::isfinite(atMinHit));
+    // At max boundary - should not overflow
+    bool atMaxHit = IntersectsCylinderSphere(hitbox, hurtbox, maxDx, dz);
+    // At min boundary - should not underflow
+    bool atMinHit = IntersectsCylinderSphere(hitbox, hurtbox, minDx, dz);
+    
+    // The distance math used for these boundary inputs should remain finite.
+    CHECK(std::isfinite(maxDistanceSq));
+    CHECK(std::isfinite(minDistanceSq));
+
+    // These positions are far outside the combined radii and should not register as hits.
+    CHECK(atMaxHit == false);
+    CHECK(atMinHit == false);
 }
 
 // Test: Melee cone boundary at exact edge
