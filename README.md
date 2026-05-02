@@ -266,7 +266,7 @@ using Fixed = int32_t;  // 1000 units = 1.0f
 - Circuit breakers: External service failures don't crash server
 
 ### Commit Messages
-```bash
+```
 [AGENT] Brief description - Performance impact
 
 Examples:
