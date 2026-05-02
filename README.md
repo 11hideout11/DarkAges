@@ -73,7 +73,7 @@ See [CURRENT_STATUS.md](CURRENT_STATUS.md) for daily updates • [PROJECT_STATUS
 The fastest way to see DarkAges in action:
 
 ```bash
-cd /root/projects/DarkAges
+cd DarkAges
 
 # Quick demo (~45s): server + Godot client + validation + screenshots + video
 ./tools/demo/demo --quick --no-build
@@ -85,7 +85,7 @@ cd /root/projects/DarkAges
 ./tools/demo/demo --extended --no-build
 ```
 
-This autonomously: validates dependencies, starts the server, launches the Godot client (headless via xvfb-run), validates network/physics/combat, captures screenshots and MP4 video, and generates a report.
+This command automatically: validates dependencies, starts the server, launches the Godot client (headless via xvfb-run), validates network/physics/combat, captures screenshots and MP4 video, and generates a report.
 
 ### Prerequisites
 

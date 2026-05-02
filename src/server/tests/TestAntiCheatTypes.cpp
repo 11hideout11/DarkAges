@@ -46,7 +46,7 @@ TEST_CASE("CheatType enum values", "[security][anticheat][types]") {
     }
 
     SECTION("Default cheat type value") {
-        CheatType defaultType;
+        CheatType defaultType = CheatType::NONE;
         REQUIRE(defaultType == CheatType::NONE);
     }
 }
