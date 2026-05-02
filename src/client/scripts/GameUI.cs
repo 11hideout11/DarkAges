@@ -367,11 +367,6 @@ namespace DarkAges
             vbox.AddChild(_dialogueOptions);
         }
         
-        private void OnDialogueStartReceived(uint npcId, uint dialogueId, string npcName, string dialogueText, string[] options)
-        {
-            ShowDialogue(npcName, dialogueText, options);
-        }
-        
         private void ShowDialogue(string npcName, string text, string[] options)
         {
             if (_dialogueNpcName != null) _dialogueNpcName.Text = npcName;
