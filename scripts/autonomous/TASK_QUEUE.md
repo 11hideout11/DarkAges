@@ -41,7 +41,7 @@ Prioritized list of autonomous improvements for DarkAges.
 - [x] Process crash resilience ✅ 2026-05-02 (TestChaosCrash.cpp - 25+ test cases)
 
 ## P2.5 — Demo Visual Polish & Missing Interactions
-- [ ] NPC interaction system (E key to interact, interaction prompt UI, dialogue trigger)
+- [x] NPC interaction system (E key to interact, interaction prompt UI, dialogue trigger)
 - [ ] Sound effects integration (footsteps, weapon attacks, ambient, UI sounds)
 - [ ] Particle effects for combat/hits/spells/deaths
 - [ ] Replace capsule placeholder models with proper 3D character/monster models

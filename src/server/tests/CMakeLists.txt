@@ -49,6 +49,7 @@ set(TEST_SOURCES
     TestChaosCrash.cpp
     TestViolationTracker.cpp
     TestInputValidator.cpp
+    TestInteractionSystem.cpp
     TestRateLimiter.cpp
     TestConnectionThrottler.cpp
     TestCoreTypes.cpp
