@@ -12,7 +12,7 @@ Start date: 2026-04-28 (or later)
   * #21: combat(P2) — hit stop, procedural leaning, animation blend polish
   * #22: docs+test(depth) — PROJECT/ComprehensiveReview sync; ZoneServer depth tests (6 new)
   * #23: feat(npc) — E-key interaction system
-- Test status: 2097 cases / 12586 assertions — ALL PASS
+- Test status: 2129 cases / 12644 assertions — ALL PASS
 - Build: `cmake -S . -B build_validate -DBUILD_TESTS=ON -DFETCH_DEPENDENCIES=ON -DENABLE_GNS=OFF -DENABLE_REDIS=OFF -DENABLE_SCYLLA=OFF && cmake --build build_validate -j$(nproc)` — passes
 
 **Read these files first:**
@@ -114,7 +114,7 @@ Action: Add SkeletonIK3D node, configure terrain alignment
 3. After each logical change:
    - Build: `cmake --build build_validate -j$(nproc)`
    - Test: `ctest --output-on-failure -j1`
-   - Verify zero regressions (compare test count/assert count to baseline 2097/12586)
+   - Verify zero regressions (compare test count/assert count to baseline 2129/12644)
 4. When complete:
    - Run objective evaluator: `python3 scripts/autonomous/evaluate_change.py autonomous/YYYYMMDD-{slug} --base main`
    - Address any FAIL before proceeding
@@ -154,8 +154,8 @@ Load these skills before starting:
 
 Your PR must satisfy:
 1. Build compiles cleanly (zero errors; warnings OK but not ideal)
-2. All tests pass (no regressions; baseline 2097 cases, 12586 assertions)
-3. No test count decrease from baseline 2097/12586
+2. All tests pass (no regressions; baseline 2129 cases, 12644 assertions)
+3. No test count decrease from baseline 2129/12644
 4. No assertion count decrease
 5. Test summary explicitly listed in evaluator output
 6. Baseline metrics readable (build_validate test log)
