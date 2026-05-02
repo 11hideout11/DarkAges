@@ -135,6 +135,13 @@ bool ZoneServer::initialize(const ZoneConfig& config) {
             pendingDialogueResponses_.push_back(response);
         });
 
+    // [PRD-009] Zone objective system network integration
+    zoneObjectiveSystem_.SetNetwork(network_.get());
+    zoneObjectiveSystem_.SetConnectionResolver([this](entt::entity e) -> ConnectionID {
+        auto it = entityToConnection_.find(e);
+        return (it != entityToConnection_.end()) ? it->second : INVALID_CONNECTION;
+    });
+
     // Initialize Redis
     redis_ = std::make_unique<RedisManager>();
     if (!redis_->initialize(config_.redisHost, config_.redisPort)) {

@@ -510,6 +510,31 @@ std::vector<uint8_t> serializeQuestUpdate(const QuestUpdatePacket& pkt) {
     return data;
 }
 
+// Zone objective update packet serialization (server -> client)
+std::vector<uint8_t> serializeZoneObjectiveUpdate(const ZoneObjectiveUpdatePacket& pkt) {
+    std::vector<uint8_t> data;
+    size_t objLen = strnlen(pkt.objectiveId, 63);
+    size_t msgLen = strnlen(pkt.message, 127);
+    data.reserve(1 + 1 + objLen + 2 + 2 + 1 + 1 + msgLen);
+
+    data.push_back(static_cast<uint8_t>(pkt.eventType));
+    data.push_back(static_cast<uint8_t>(objLen));
+    data.insert(data.end(), pkt.objectiveId, pkt.objectiveId + objLen);
+    // currentProgress (little-endian)
+    data.push_back(static_cast<uint8_t>(pkt.currentProgress & 0xFF));
+    data.push_back(static_cast<uint8_t>((pkt.currentProgress >> 8) & 0xFF));
+    // requiredProgress (little-endian)
+    data.push_back(static_cast<uint8_t>(pkt.requiredProgress & 0xFF));
+    data.push_back(static_cast<uint8_t>((pkt.requiredProgress >> 8) & 0xFF));
+    // waveNumber
+    data.push_back(pkt.waveNumber);
+    // message
+    data.push_back(static_cast<uint8_t>(msgLen));
+    data.insert(data.end(), pkt.message, pkt.message + msgLen);
+
+    return data;
+}
+
 // ============================================================================
 // Dialogue Packet Serialization (stub implementation)
 // ============================================================================
