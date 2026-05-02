@@ -17,7 +17,7 @@ Prioritized list of autonomous improvements for DarkAges.
 - [x] FixedVector: 11 tests ✅ 2026-04-18
 
 ## P2 — Documentation
-- [ ] Update stale documentation files (4 files reference old state)
+- [x] Update stale documentation files (4 files reference old state) ✅ 2026-05-02
 - [ ] Add inline documentation to key ECS components
 - [x] Document network protocol message format ✅ 2026-04-26 (docs/NETWORK_PROTOCOL.md)
 
