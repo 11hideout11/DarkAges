@@ -150,6 +150,59 @@ public:
 };
 
 // ============================================================================
+// UDPSocket - Real UDP implementation using BSD sockets
+// ============================================================================
+
+// Production-ready UDP implementation using BSD socket APIs
+// Uses socket(), bind(), sendto(), recvfrom(), poll() for non-blocking I/O
+// Backward compatible with test message injection via pushMessage
+class UDPSocket : public INetworkSocket {
+public:
+    UDPSocket();
+    ~UDPSocket() override;
+
+    bool initialize(uint16_t port) override;
+    void shutdown() override;
+    void update(uint32_t currentTimeMs) override;
+
+    std::vector<ConnectionID> getConnections() override;
+    void disconnect(ConnectionID connectionId, const char* reason = nullptr) override;
+    bool isConnected(ConnectionID connectionId) const override;
+    uint32_t getMaxConnections() const override;
+    uint32_t getConnectionCount() const override;
+
+    bool sendUnreliable(ConnectionID connectionId, std::span<const uint8_t> data) override;
+    bool sendReliable(ConnectionID connectionId, std::span<const uint8_t> data) override;
+    void broadcastUnreliable(std::span<const uint8_t> data) override;
+    void broadcastReliable(std::span<const uint8_t> data) override;
+    void sendToMultiple(const std::vector<ConnectionID>& connections, 
+                    std::span<const uint8_t> data) override;
+
+    bool receive(PacketType& type, ConnectionID& connectionId, 
+               std::vector<uint8_t>& buffer) override;
+    bool peek(PacketType& type, ConnectionID& connectionId) const override;
+    void consume() override;
+
+    ConnectionQuality getConnectionQuality(ConnectionID connectionId) const override;
+    uint64_t getTotalBytesSent() const override;
+    uint64_t getTotalBytesReceived() const override;
+
+    void setOnConnected(ConnectionCallback callback) override;
+    void setOnDisconnected(DisconnectCallback callback) override;
+    void setOnMessage(MessageCallback callback) override;
+
+    // Test injection method
+    void pushMessage(PacketType type, ConnectionID connectionId, std::span<const uint8_t> data);
+
+private:
+    struct Impl;
+    std::unique_ptr<Impl> impl_;
+    
+    ConnectionID findOrCreateConnection(struct sockaddr_in& sender, uint32_t currentTimeMs);
+    const Impl::Connection* findConnection(ConnectionID connectionId) const;
+};
+
+// ============================================================================
 // StubSocket - Development-friendly UDP implementation
 // ============================================================================
 
@@ -250,8 +303,9 @@ private:
 class NetworkSocketFactory {
 public:
     enum class SocketType {
-        Auto,    // Auto-detect (GNS if available, stub otherwise)
-        Stub,    // Force stub implementation
+        Auto,    // Auto-detect (GNS if available, UDP otherwise)
+        UDP,     // Real UDP using BSD sockets
+        Stub,    // In-memory stub for tests
         GNS      // Force GNS implementation
     };
 
