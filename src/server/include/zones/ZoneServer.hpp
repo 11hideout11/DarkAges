@@ -18,6 +18,7 @@
 #include "zones/InputHandler.hpp"
 #include "zones/PerformanceHandler.hpp"
 #include "zones/AntiCheatHandler.hpp"
+#include "zones/ZoneObjectiveSystem.hpp"
 #include "combat/PositionHistory.hpp"
 #include "combat/LagCompensatedCombat.hpp"
 #include "combat/CombatSystem.hpp"
@@ -420,6 +421,9 @@ public:
 
     // [PHASE 4E] Zone handoff controller for seamless transitions
     std::unique_ptr<ZoneHandoffController> handoffController_;
+
+    // [PRD-009] Zone objective system for tracking player objectives
+    ZoneObjectiveSystem zoneObjectiveSystem_;
 
     // Handoff integration methods
     void initializeHandoffController();

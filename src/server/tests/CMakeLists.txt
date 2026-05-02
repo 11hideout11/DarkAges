@@ -76,6 +76,7 @@ set(TEST_SOURCES
     TestZoneServer.cpp
     TestProtocolStub.cpp
     TestHitboxCollision.cpp
+    TestHitboxEdgeCases.cpp
 )
 
 # Conditional test sources based on dependencies

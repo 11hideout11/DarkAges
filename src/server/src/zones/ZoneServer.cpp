@@ -93,6 +93,10 @@ bool ZoneServer::initialize(const ZoneConfig& config) {
     playerManager_.setZoneId(config_.zoneId);
     std::cout << "[ZONE " << config_.zoneId << "] Player manager initialized" << std::endl;
 
+    // [PRD-009] Initialize zone objective system
+    zoneObjectiveSystem_.Initialize(registry_);
+    std::cout << "[ZONE " << config_.zoneId << "] Zone objective system initialized" << std::endl;
+
     // Initialize network
     network_ = std::make_unique<NetworkManager>();
     if (!network_->initialize(config_.port)) {
@@ -957,6 +961,9 @@ void ZoneServer::updateGameLogic() {
 
     // [PHASE 4E] Update zone handoffs
     auraZoneHandler_.updateZoneHandoffs();
+
+    // [PRD-009] Update zone objective system
+    zoneObjectiveSystem_.Tick(Constants::DT_SECONDS);
 
     auto elapsed = std::chrono::steady_clock::now() - start;
     metrics_.gameLogicTimeUs += std::chrono::duration_cast<std::chrono::microseconds>(elapsed).count();
