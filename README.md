@@ -73,7 +73,7 @@ See [CURRENT_STATUS.md](CURRENT_STATUS.md) for daily updates • [PROJECT_STATUS
 The fastest way to see DarkAges in action:
 
 ```bash
-cd /workspace/project/DarkAges
+cd DarkAges
 
 # Quick demo (~45s): server + Godot client + validation + screenshots + video
 ./tools/demo/demo --quick --no-build
