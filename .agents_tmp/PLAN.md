@@ -1,68 +1,82 @@
 # 1. OBJECTIVE
 
-Advance the DarkAges MMO project toward MVP completion by focusing on: (1) completing remaining infrastructure PRDs, (2) implementing core gameplay systems (inventory/equipment), and (3) advancing the GNS runtime integration.
+Advance the DarkAges MMO project toward demo-ready MVP by: (1) completing GNS runtime integration to tick loop, (2) verifying RPG system wiring to main server loop, and (3) ensuring all systems initialize correctly.
 
-Target PRDs: PRD-012 (GNS Runtime Completion), PRD-021 (Inventory/Equipment), and completing any remaining gap items from prior sessions.
+✅ **VERIFIED 2026-05-02:**
+- All RPG systems properly initialized in ZoneServer
+- Systems have cross-references for rewards/trading
+- 105 test files covering all systems
+- Test baseline: 2129+ test cases (100% passing)
 
 # 2. CONTEXT SUMMARY
 
-## PRD Completion Status Summary (as of 2026-05-02)
+## Current System Implementations (Verified In Codebase)
 
-### ✅ COMPLETE (Previously Implemented)
-- PRD-008: Node-Based Combat FSM (CombatStateMachine.tscn + Controller integrated)
-- PRD-009: Demo Zones with Objectives (ZoneObjectiveSystem + Component + Tests)
-- PRD-010: Hitbox Validation (Collision matrix, edge case tests)
-- PRD-011: Foot IK (FootIKController.cs verified)
-- PRD-013: Phase 1-5 Verification (All summary docs exist)
-- PRD-014: Phantom Camera (Created, exists)
-- PRD-015: Procedural Leaning (Created, exists)
-- PRD-016: SDFGI/SSAO (Verified in Main.tscn lines 38-40: ssao=true, ssil=true, sdfgi=true)
-- PRD-017: Protocol Decoupling (Protocol.cpp stub exists)
-- PRD-019: Blend Spaces (LocomotionBlendTree.tres exists)
-- PRD-022: Combat FSM Polish (Usage guide created)
-- PRD-023: Combat Text (CombatTextIntegration.cs exists)
+### ✅ RPG SYSTEMS ALREADY IMPLEMENTED (Full C++ Source)
+| System | Location | Status |
+|--------|---------|--------|
+| ItemSystem | `src/server/include/combat/ItemSystem.hpp` + `.cpp` | ✅ Implemented |
+| QuestSystem | `src/server/include/combat/QuestSystem.hpp` + `.cpp` | ✅ Implemented |
+| PartySystem | `src/server/include/combat/PartySystem.hpp` | ✅ Implemented |
+| GuildSystem | `src/server/include/combat/GuildSystem.hpp` | ✅ Implemented |
+| CombatSystem | `src/server/src/combat/CombatSystem.cpp` | ✅ Implemented |
+| ZoneObjectiveSystem | `src/server/src/zones/ZoneObjectiveSystem.cpp` | ✅ Implemented |
 
-### 🔄 PARTIALLY COMPLETE
-- PRD-012: GNS Runtime - Compile-time fix merged, runtime NOT wired to tick loop
-- PRD-018: Production Database - docker-compose exists, needs Docker daemon
+### ✅ CLIENT-SIDE PRDs (Previously Completed)
+- PRD-008: Node-Based FSM (CombatStateMachine.tscn + Controller)
+- PRD-009: Demo Zones (ZoneObjectiveSystem + Component + Tests)
+- PRD-010: Hitbox Validation (Collision matrix)
+- PRD-011: Foot IK (FootIKController.cs)
+- PRD-014: Phantom Camera
+- PRD-015: Procedural Leaning
+- PRD-016: SDFGI/SSAO (Main.tscn lines 38-40 enabled)
+- PRD-019: Blend Spaces (LocomotionBlendTree.tres)
+- PRD-022: FSM Polish (Usage guide)
+- PRD-023: Combat Text
 
-### 📋 NOT YET IMPLEMENTED
-- PRD-021: Inventory/Equipment System ✅ COMPLETE 2026-05-02
-- PRD-022: Abilities/Talents System ✅ COMPLETE 2026-05-02
-- PRD-023: Combat Text ✅ COMPLETE
-- PRD-024: Party System ✅ COMPLETE 2026-05-02
-- PRD-025: Quest System ✅ COMPLETE 2026-05-02
-- PRD-026: Guild/Trade System ✅ COMPLETE 2026-05-02
+### 🔄 REQUIRES INTEGRATION
+- PRD-012: GNS Runtime - Compile fix merged, runtime needs tick loop wiring
 
-All RPG Core Systems Complete!
+### ✅ SYSTEMS VERIFIED (2026-05-02)
+- ItemSystem initialized on server startup (ZoneServer.cpp:289)
+- QuestSystem initialized on startup (ZoneServer.cpp:292)
+- QuestSystem has ItemSystem reference for rewards (ZoneServer.cpp:293)
+- CraftingSystem initialized with ItemSystem (ZoneServer.cpp:335-336)
+- TradeSystem has ItemSystem (ZoneServer.cpp:340)
+- ZoneEventSystem has ItemSystem (ZoneServer.cpp:348)
+- DialogueSystem has Quest + Item systems (ZoneServer.cpp:355-356)
+- 105 test files, 2129+ test cases
 
-## Test Baseline (Verified)
+## Test Baseline
 - 2129 test cases, 12644 assertions, 100% passing
-- Additional: +25 TestInventory +25 TestQuest +40 TestPartyGuildTrade = 2219+ total
-- All RPG systems tested and ready for integration
-- No regressions from any prior session
+- All systems have unit tests
+- No regressions from prior sessions
+
+## Session Progress (2026-05-02)
+- ✅ Verified ItemSystem/QuestSystem initialization (ZoneServer.cpp lines 285-356)
+- ✅ Verified all systems wired with cross-references
+- ✅ Verified 105 test files exist
+- ✅ Client UI extended with interaction/dialogue/quest panels (PR #52)
+- ✅ RPG data files and test files created (PR #50)
+- ⚠️ GNS Runtime: compile fix exists, runtime wiring requires external build
 
 # 3. APPROACH OVERVIEW
 
-Focus on the highest-impact achievable work:
+Focus on completing the remaining integration work:
 
-1. **PRD-012 GNS Runtime Integration** - Complete the network stack wiring
-   - Wire GNSConnectionManager to server tick loop
-   - Enable actual network traffic routing
-   - Critical for production deployment
+1. **PRD-012 GNS Runtime Integration** - Complete network stack wiring
+   - Wire GNSConnectionManager::Process() to ZoneServer::tick()
+   - Route UDP packets through GNS layer
+   - Enable production network traffic flow
 
-2. **PRD-021 Inventory/Equipment Foundation** - Core RPG loop
-   - Create ItemDatabase schema and JSON structure
-   - Implement player inventory component
-   - Equipment slots and equip/unequip logic
-   - Foundation for loot drops, quests, trading
+2. **System Initialization** - Wire RPG systems to server startup
+   - Ensure ItemSystem initializes with defaults
+   - Ensure QuestSystem initializes with defaults  
+   - Both call `initializeDefaults()` on startup
 
-3. **Quest System Foundation** (if time allows)
-   - Quest definition schema
-   - Quest tracking component
-   - Integration with existing systems
+3. **Integration Testing** - Verify all systems work together
 
-All work is achievable in current environment without external dependencies.
+All work is achievable in current environment without dependencies.
 
 # 4. IMPLEMENTATION STEPS
 
@@ -73,70 +87,70 @@ All work is achievable in current environment without external dependencies.
 Reference: `src/server/src/netcode/GNSNetworkManager.cpp`, `src/server/src/zones/ZoneServer.cpp`
 
 Tasks:
-1. Add GNSConnectionManager to ZoneServer initialization
+1. Add GNSConnectionManager member to ZoneServer
 2. Add `gns_connection_manager_.Process(delta_time)` in main tick loop
 3. Wire packet routing: receive packets via GNSConnectionManager
 4. Implement connection state tracking per client
-5. Verify with ENABLE_GNS build flag
+5. Build and verify with ENABLE_GNS=ON
 
 **Estimated:** 8 hours
 **Risk:** MEDIUM - networking integration requires careful interface design
 
-## Step 4.2: Implement PRD-021 Inventory/Equipment Foundation
-**Goal:** Create core RPG inventory system - prerequisite for gameplay progression
-**Method:** Create item database schema, inventory component, equipment slots
+## Step 4.2: Verify System Initialization Wiring
+**Goal:** Ensure RPG systems initialize on server startup
+**Method:** Verify ItemSystem/QuestSystem initializeDefaults() called
 
-Reference: `prd-021-inventory-equipment-system.md` (PRD spec)
-
-Tasks:
-1. Create item database schema (JSON) with 50+ items
-2. Implement `InventoryComponent` (server-side tracking)
-3. Implement equipment slots (8 slots: head, chest, legs, feet, main_hand, off_hand, 2 accessories)
-4. Implement equip/unequip logic with validation
-5. Create unit tests for inventory operations
-
-**Estimated:** 12 hours
-**Risk:** LOW - data-driven implementation with existing patterns
-
-## Step 4.3: Quest System Foundation (Optional Extension)
-**Goal:** Create quest tracking foundation for gameplay progression
-**Method:** Define quest schema and tracking component
-
-Reference: `prd-025-quest-system.md` (PRD spec)
+Reference: `src/server/src/combat/ItemSystem.cpp`, QuestSystem.cpp
 
 Tasks:
-1. Create quest definition schema (JSON)
-2. Implement `QuestComponent` for player tracking
-3. Implement quest objective types (kill, collect, location)
-4. Integration hooks for combat/loot systems
+1. Find where ZoneServer constructs game systems
+2. Verify ItemSystem::initializeDefaults() is called on startup
+3. Verify QuestSystem::initializeDefaults() is called on startup  
+4. Verify both systems are accessible to other systems (Quest needs ItemSystem)
+5. Add unit tests if not already present
 
-**Estimated:** 8 hours (if Step 4.2 completes early)
-**Risk:** LOW - follows existing component patterns
+**Estimated:** 4 hours
+**Risk:** LOW - likely already wired, verification only
+
+## Step 4.3: Integration & Testing
+**Goal:** Verify all systems work together in build
+**Method:** Run full test suite and verify build
+
+Reference: Test infrastructure (`src/server/tests/`)
+
+Tasks:
+1. Build with ENABLE_GNS=OFF (current stable config)
+2. Run full test suite - verify 2129+ tests pass
+3. Check unit test coverage for RPG systems
+4. Address any missing initialization or wiring
+
+**Estimated:** 4 hours
+**Risk:** LOW - verify existing work
 
 # 5. TESTING AND VALIDATION
 
 ## Validation Criteria
 
 ### PRD-012 GNS Runtime
-- [ ] Server starts with GNS (ENABLE_GNS=ON)
+- [ ] Server starts with ENABLE_GNS=ON
 - [ ] Client connections accepted via GNS
-- [ ] Packet routing through GNSConnectionManager
+- [ ] Packet routing through GNSConnectionManager::Process()
+- [ ] Connection state tracked per client
 - [ ] Existing tests pass (no regressions)
 
-### PRD-021 Inventory/Equipment
-- [ ] Item database loads 50+ items
-- [ ] Add/remove items works
-- [ ] Equipment slots function correctly
-- [ ] Equip/unequip with stat bonuses
-- [ ] Unit tests pass
+### System Initialization
+- [ ] ItemSystem initialized on server startup
+- [ ] QuestSystem initialized on server startup
+- [ ] ItemSystem accessible to QuestSystem (rewards)
+- [ ] Test coverage for initialization
 
-### Quest System (if implemented)
-- [ ] Quest definitions load
-- [ ] Quest tracking updates
-- [ ] Quest completion triggers rewards
+### Integration Tests
+- [ ] Build succeeds (cmake + compile)
+- [ ] All 2129+ tests pass
+- [ ] No assertion failures in test suite
 
 ## Acceptance Criteria Summary
-- No test regressions (2129+ cases maintained)
+- No test regressions (maintain 2129+)
 - Build validates without errors
 - PRD-012: GNS runtime completes
-- PRD-021: Inventory system foundations in place
+- All RPG systems verified initialized on startup
