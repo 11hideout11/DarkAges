@@ -868,7 +868,6 @@ if(BUILD_TESTS AND TARGET Catch2::Catch2WithMain)
         src/server/tests/TestPartyGuildSystem.cpp
         src/server/tests/TestAchievementSystem.cpp
         src/server/tests/TestLeaderboardSystem.cpp
-        src/server/tests/TestProtocolStub.cpp
         src/server/tests/TestNetworkIntegration.cpp
         # New comprehensive unit tests — expanded from stubs
         src/server/tests/TestPartySystem.cpp
@@ -876,6 +875,7 @@ if(BUILD_TESTS AND TARGET Catch2::Catch2WithMain)
         # New integration test for full gameplay loop
         src/server/tests/TestIntegration.cpp
         src/server/tests/TestServerStateExporter.cpp
+        src/server/tests/TestRecoveryState.cpp
     )
 
     # Conditionally include tests for optional features
@@ -892,6 +892,13 @@ if(BUILD_TESTS AND TARGET Catch2::Catch2WithMain)
         message(STATUS "Including Redis integration tests")
     else()
         message(STATUS "Skipping Redis integration tests (Redis not available)")
+    endif()
+
+    if(NOT FLATBUFFERS_FOUND)
+        list(APPEND TEST_SOURCES src/server/tests/TestProtocolStub.cpp)
+        message(STATUS "Including ProtocolStub tests (FlatBuffers not available)")
+    else()
+        message(STATUS "Skipping ProtocolStub tests (FlatBuffers available)")
     endif()
 
     # src/server/tests/TestScyllaManager.cpp  # Temporarily disabled - ScyllaDB stub
