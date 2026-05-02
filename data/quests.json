@@ -157,7 +157,7 @@
         {
           "type": "ReachLevel",
           "targetId": 5,
-          "requiredCount": 1,
+          "requiredCount": 5,
           "description": "Reach level 5"
         }
       ],
