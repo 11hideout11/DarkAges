@@ -258,7 +258,7 @@ namespace DarkAges
         private void OnEntityInteractionRange(EntityData data)
         {
             // Show interaction prompt when in range of interactive NPC
-            if (data.InteractionRange > 0 && data.NpcId > 0)
+            if (data.InteractionRange > 0 && data.DialogueTreeId > 0)
             {
                 ShowInteractionPrompt($"[E] Talk to {data.Name}");
             }
