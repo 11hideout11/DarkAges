@@ -90,12 +90,14 @@ public:
      *
      * Creates an ECS entity for the player and establishes connection mappings.
      * The player entity is initialized with default components from PlayerInfo.
+     * Requires a valid zone server to have been provided via the constructor or
+     * setZoneServer() before calling this method.
      *
      * @param connectionId Network connection handle
      * @param playerId Persistent player ID from authentication
      * @param username Player's display name
      * @param spawnPos Initial spawn position
-     * @return Newly created entity ID, or entt::null on failure
+     * @return Newly created entity ID
      */
     EntityID registerPlayer(ConnectionID connectionId, uint64_t playerId,
                          const std::string& username, const Position& spawnPos);
