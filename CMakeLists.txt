@@ -53,9 +53,13 @@ find_package(Threads REQUIRED)
 # Local Dependencies (EnTT, GLM)
 # ============================================================================
 
-# Check for EnTT
-if(EXISTS "${CMAKE_SOURCE_DIR}/deps/entt/single_include/entt/entt.hpp")
-    message(STATUS "EnTT found in deps/entt")
+# Check for EnTT (prefer src/ layout used by v3.16.0+, fall back to single_include/)
+if(EXISTS "${CMAKE_SOURCE_DIR}/deps/entt/src/entt/entt.hpp")
+    message(STATUS "EnTT found in deps/entt (src layout)")
+    set(ENTT_INCLUDE_DIR "${CMAKE_SOURCE_DIR}/deps/entt/src")
+    set(ENTT_FOUND TRUE)
+elseif(EXISTS "${CMAKE_SOURCE_DIR}/deps/entt/single_include/entt/entt.hpp")
+    message(STATUS "EnTT found in deps/entt (single_include layout)")
     set(ENTT_INCLUDE_DIR "${CMAKE_SOURCE_DIR}/deps/entt/single_include")
     set(ENTT_FOUND TRUE)
 else()
@@ -69,11 +73,15 @@ else()
             GIT_SHALLOW TRUE
         )
         FetchContent_MakeAvailable(EnTT)
-        # EnTT v3.16.0 single_include structure differs - use src for proper headers
-        set(ENTT_INCLUDE_DIR "${entt_SOURCE_DIR}/src")
+        # EnTT v3.16.0+ uses src/ layout; fall back to single_include/ for older versions
+        if(EXISTS "${entt_SOURCE_DIR}/src/entt/entt.hpp")
+            set(ENTT_INCLUDE_DIR "${entt_SOURCE_DIR}/src")
+        else()
+            set(ENTT_INCLUDE_DIR "${entt_SOURCE_DIR}/single_include")
+        endif()
         set(ENTT_FOUND TRUE)
     else()
-        message(FATAL_ERROR "EnTT not found. Run: git clone --branch v3.16.0 https://github.com/skypjack/entt.git deps/entt")
+        message(FATAL_ERROR "EnTT not found. Run: git clone https://github.com/skypjack/entt.git deps/entt (supports both src/ and single_include/ layouts)")
     endif()
 endif()
 
