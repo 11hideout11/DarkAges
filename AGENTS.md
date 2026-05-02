@@ -1,4 +1,5 @@
 ## Recent Commits (last 10 — updated 2026-05-02)
+1. fix(client): correct scene load_steps and resource ordering for Player.tscn
 1. feat(gns): unblock GNS runtime build — add missing protocol serializers and network send functions
 2. docs(research): add comprehensive world-building capabilities research and asset pipeline
 3. fix(gns): enable C language to support compile features required by GameNetworkingSockets
@@ -8,9 +9,8 @@
 7. fix(combat): address subjective review: proper headers, Hitbox component, clean damage
 8. fix(combat): resolve circular dependency in combat state machine; restore copy semantics
 9. fix(combat): rewrite AttackState without Hitbox component and fix RecoveryState timing
-10. docs: resolve demo readiness contradiction, validate all phases complete
 
-## State (2026-05-01)
+## State (2026-05-02)
 
 - Phase 0: COMPLETE — documented in PHASE0_SUMMARY.md
 - Phase 1-5: ✅ VERIFIED — Summary docs created (PHASE1-5_SUMMARY.md)
@@ -19,7 +19,7 @@
 - Phase 8: PARTIAL — multiple work packages complete, GNS compile-time fix merged; runtime integration pending
 - Phase 9: COMPLETE — performance budgets validated
 - **Art Pipeline**: RESEARCH PHASE COMPLETE — world-building capabilities documented; asset pipeline spec exists (43 assets); CC0 sourcing strategies cataloged; Godot 4.2 PBR workflow defined; manifest.json created at assets/manifest.json
-- **Tests**: All suites passing (2129+ cases, 12644+ assertions, 100%)
+- **Tests**: All suites passing (1299 cases, 7248 assertions, 100%)
 - **Test breakdown**:
   - unit_tests: 1302 cases, 7244 assertions
   - test_combat: 140 cases, 666 assertions
