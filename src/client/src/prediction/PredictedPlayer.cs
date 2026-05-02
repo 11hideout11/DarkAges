@@ -118,7 +118,7 @@ namespace DarkAges
         private uint _lastCorrectionTick = 0;
         
         // Animation State Machine (replaces individual state booleans)
-        private AnimationStateMachine _animStateMachine;
+        private CombatStateMachineController _combatFsm;
         
         // Hitbox/Hurtbox Area3D nodes
         private Area3D _hitbox;
@@ -169,8 +169,8 @@ namespace DarkAges
             _animPlayer = GetNode<AnimationPlayer>("AnimationPlayer");
             _animTree = GetNodeOrNull<AnimationTree>("AnimationTree");
             
-            // Initialize AnimationStateMachine from scene
-            _animStateMachine = GetNode<AnimationStateMachine>("AnimationStateMachine");
+            // Initialize CombatStateMachineController from scene
+            _combatFsm = GetNode<CombatStateMachineController>("CombatStateMachine");
 
             _predictedPosition = GlobalPosition;
             _correctionTargetPosition = GlobalPosition;
@@ -249,24 +249,24 @@ namespace DarkAges
             var input = GatherInput();
             
             // 2b. Handle attack trigger (with GCD enforcement)
-            if (input.Attack && _animStateMachine.CurrentState != AnimationStateMachine.StateType.Attacking && 
-                _animStateMachine.CurrentState != AnimationStateMachine.StateType.Dodging &&
-                _animStateMachine.CurrentState != AnimationStateMachine.StateType.Dead && 
-                !_animStateMachine.IsOnGlobalCooldown)
+            if (input.Attack && _combatFsm.CurrentState != CombatStateMachineController.CombatState.Attack &&
+                _combatFsm.CurrentState != CombatStateMachineController.CombatState.Dodge &&
+                _combatFsm.CurrentState != CombatStateMachineController.CombatState.Death &&
+                !_combatFsm.IsOnCooldown)
             {
-                _animStateMachine.TriggerAttack();
+                _combatFsm.TryAttack();
                 // Start global cooldown - blocks all actions for 1.2s
-                _animStateMachine.StartGlobalCooldown();
+                _combatFsm.StartGlobalCooldown();
                 GD.Print("[PredictedPlayer] Attack triggered, GCD started");
             }
             
         // 2c. Handle dodge trigger (Q key)
-        if (Input.IsActionPressed("dodge") && _animStateMachine.CurrentState != AnimationStateMachine.StateType.Dodging &&
-            _animStateMachine.CurrentState != AnimationStateMachine.StateType.Attacking &&
-            _animStateMachine.CurrentState != AnimationStateMachine.StateType.Dead &&
-            !_animStateMachine.IsOnGlobalCooldown && IsOnFloor())
+        if (Input.IsActionPressed("dodge") && _combatFsm.CurrentState != CombatStateMachineController.CombatState.Dodge &&
+            _combatFsm.CurrentState != CombatStateMachineController.CombatState.Attack &&
+            _combatFsm.CurrentState != CombatStateMachineController.CombatState.Death &&
+            !_combatFsm.IsOnCooldown && IsOnFloor())
             {
-                _animStateMachine.TriggerDodge();
+                _combatFsm.TryDodge();
                 GD.Print("[PredictedPlayer] Dodge triggered");
             }
             
@@ -776,7 +776,7 @@ namespace DarkAges
         private void ApplyMovement(InputState input, float dt)
         {
             // If dead, stop all movement
-            if (_animStateMachine != null && _animStateMachine.CurrentState == AnimationStateMachine.StateType.Dead)
+            if (_combatFsm != null && _combatFsm.CurrentState == CombatStateMachineController.CombatState.Death)
             {
                 Velocity = Vector3.Zero;
                 return;
@@ -849,14 +849,14 @@ namespace DarkAges
         /// </summary>
         private void OnDamageTaken(int damage, bool isCritical)
         {
-            if (_animStateMachine == null) return;
-            if (_animStateMachine.CurrentState == AnimationStateMachine.StateType.Dead) return;
-            
+            if (_combatFsm == null) return;
+            if (_combatFsm.CurrentState == CombatStateMachineController.CombatState.Death) return;
+
             // Show floating damage number at local player position
             CombatEventSystem.Instance.SpawnDamageNumber(damage, GlobalPosition, isCritical);
-            
-            // Trigger hit state in AnimationStateMachine
-            _animStateMachine.TriggerHit();
+
+            // Trigger hit state in CombatStateMachineController
+            _combatFsm.TriggerHit();
         }
         
         /// <summary>
@@ -864,8 +864,8 @@ namespace DarkAges
         /// </summary>
         public void TriggerDeath()
         {
-            if (_animStateMachine == null) return;
-            _animStateMachine.TriggerDeath();
+            if (_combatFsm == null) return;
+            _combatFsm.TriggerDeath();
             GD.Print("[PredictedPlayer] Death triggered");
         }
         
@@ -879,16 +879,16 @@ namespace DarkAges
         /// </summary>
         public void TriggerRespawn()
         {
-            if (_animStateMachine == null) return;
-            _animStateMachine.TriggerRespawn();
+            if (_combatFsm == null) return;
+            _combatFsm.TriggerRespawn();
             GD.Print("[PredictedPlayer] Respawn triggered");
         }
         
-        public bool IsDodging => _animStateMachine != null && _animStateMachine.CurrentState == AnimationStateMachine.StateType.Dodging;
-        public bool IsAttacking => _animStateMachine != null && _animStateMachine.CurrentState == AnimationStateMachine.StateType.Attacking;
-        public bool IsInvulnerable => _animStateMachine != null && _animStateMachine.CurrentState == AnimationStateMachine.StateType.Dodging;
-        public bool IsDead => _animStateMachine != null && _animStateMachine.CurrentState == AnimationStateMachine.StateType.Dead;
-        public bool IsHit => _animStateMachine != null && _animStateMachine.CurrentState == AnimationStateMachine.StateType.Hit;
+        public bool IsDodging => _combatFsm != null && _combatFsm.CurrentState == CombatStateMachineController.CombatState.Dodge;
+        public bool IsAttacking => _combatFsm != null && _combatFsm.CurrentState == CombatStateMachineController.CombatState.Attack;
+        public bool IsInvulnerable => _combatFsm != null && _combatFsm.CurrentState == CombatStateMachineController.CombatState.Dodge;
+        public bool IsDead => _combatFsm != null && _combatFsm.CurrentState == CombatStateMachineController.CombatState.Death;
+        public bool IsHit => _combatFsm != null && _combatFsm.CurrentState == CombatStateMachineController.CombatState.Hit;
 
         /// <summary>
         /// Set up Hitbox (Layer 3) and Hurtbox (Layer 4) Area3D nodes.
@@ -941,7 +941,7 @@ namespace DarkAges
         /// </summary>
         private void OnHitboxAreaEntered(Area3D area)
         {
-            if (_animStateMachine != null && _animStateMachine.CurrentState == AnimationStateMachine.StateType.Dead) return;
+            if (_combatFsm != null && _combatFsm.CurrentState == CombatStateMachineController.CombatState.Death) return;
             GD.Print($"[PredictedPlayer] Hitbox touched: {area.Name}");
         }
         
@@ -951,9 +951,9 @@ namespace DarkAges
         /// </summary>
         private void OnHurtboxAreaEntered(Area3D area)
         {
-            if (_animStateMachine != null && 
-                (_animStateMachine.CurrentState == AnimationStateMachine.StateType.Dead || 
-                 _animStateMachine.CurrentState == AnimationStateMachine.StateType.Dodging)) return;  // Invulnerable during dodge
+            if (_combatFsm != null &&
+                (_combatFsm.CurrentState == CombatStateMachineController.CombatState.Death ||
+                 _combatFsm.CurrentState == CombatStateMachineController.CombatState.Dodge)) return;  // Invulnerable during dodge
             GD.Print($"[PredictedPlayer] Hurtbox touched by: {area.Name}");
         }
 
@@ -964,9 +964,9 @@ namespace DarkAges
             if (_animTree == null) return;
             
             // Toggle hitbox based on attack state (only active during attacks)
-            if (_hitbox != null && _animStateMachine != null)
+            if (_hitbox != null && _combatFsm != null)
             {
-                bool isAttacking = _animStateMachine.CurrentState == AnimationStateMachine.StateType.Attacking;
+                bool isAttacking = _combatFsm.CurrentState == CombatStateMachineController.CombatState.Attack;
                 _hitbox.Monitoring = isAttacking;
             }
             
@@ -976,45 +976,45 @@ namespace DarkAges
             bool isWalking = velocityLength > 0.1f && !isSprinting;
             bool isJumping = !IsOnFloor();
 
-            // Set AnimationTree parameters that aren't handled by AnimationStateMachine
+            // Set AnimationTree parameters that aren't handled by CombatStateMachineController
             _animTree.Set("parameters/Jumping", isJumping);
             _animTree.Set("parameters/IsOnFloor", IsOnFloor());
             _animTree.Set("parameters/VelocityLength", velocityLength);
             
-            // Update AnimationStateMachine based on movement
-            if (_animStateMachine != null)
+            // Update CombatStateMachineController based on movement
+            if (_combatFsm != null)
             {
-                _animStateMachine.SetMovementState(isWalking || isSprinting, isSprinting);
+                _combatFsm.SetMovementState(isWalking || isSprinting, isSprinting);
             }
 
             // Update procedural leaning based on current movement
             UpdateProceduralLeaning(dt);
 
             // Fallback: keep AnimationPlayer in sync when AnimationTree state machine is not providing transitions
-            if (_animPlayer != null && _animStateMachine != null)
+            if (_animPlayer != null && _combatFsm != null)
             {
                 string animState = "Idle";
-                switch (_animStateMachine.CurrentState)
+                switch (_combatFsm.CurrentState)
                 {
-                    case AnimationStateMachine.StateType.Dead:
+                    case CombatStateMachineController.CombatState.Death:
                         animState = "Death";
                         break;
-                    case AnimationStateMachine.StateType.Hit:
+                    case CombatStateMachineController.CombatState.Hit:
                         animState = "Hit";
                         break;
-                    case AnimationStateMachine.StateType.Dodging:
+                    case CombatStateMachineController.CombatState.Dodge:
                         animState = "Dodge";
                         break;
-                    case AnimationStateMachine.StateType.Attacking:
+                    case CombatStateMachineController.CombatState.Attack:
                         animState = "Attack";
                         break;
-                    case AnimationStateMachine.StateType.Sprinting:
+                    case CombatStateMachineController.CombatState.Run:
                         animState = "Sprint";
                         break;
-                    case AnimationStateMachine.StateType.Walking:
+                    case CombatStateMachineController.CombatState.Walk:
                         animState = "Walk";
                         break;
-                    case AnimationStateMachine.StateType.Idle:
+                    case CombatStateMachineController.CombatState.Idle:
                     default:
                         animState = "Idle";
                         break;
@@ -1050,12 +1050,12 @@ namespace DarkAges
         private void UpdateProceduralLeaning(float dt)
         {
             // No lean when incapacitated
-            if (_animStateMachine != null)
+            if (_combatFsm != null)
             {
-                var state = _animStateMachine.CurrentState;
-                if (state == AnimationStateMachine.StateType.Dead || 
-                    state == AnimationStateMachine.StateType.Dodging || 
-                    state == AnimationStateMachine.StateType.Hit)
+                var state = _combatFsm.CurrentState;
+                if (state == CombatStateMachineController.CombatState.Death ||
+                    state == CombatStateMachineController.CombatState.Dodge ||
+                    state == CombatStateMachineController.CombatState.Hit)
                     return;
             }
             
