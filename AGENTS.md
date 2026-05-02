@@ -95,7 +95,7 @@
 ### PRDs Addressed
 - **12 total PRDs completed** during execution (ADDED PRD-023)
 - **3 PRDs pending** (requires specialized agents or Docker)
-- **Test baseline**: 1305 cases, 7252 assertions, 100% passing
+- **Test baseline**: 2129 cases, 12644 assertions, 100% passing
 
 ### Files Created (11 files)
 1. `CombatStateMachine.tscn` - Node-based FSM template
