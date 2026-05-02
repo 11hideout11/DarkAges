@@ -398,13 +398,14 @@ enum class LockState : uint8_t {
  * @brief Target lock component for lock-on targeting system
  *
  * Stores target lock state for server-authoritative targeting.
- * The client initiates lock requests, but the server confirms
- * whether the lock is valid based on visibility and distance.
+ * The client initiates lock requests, and the server confirms
+ * whether the requested target is valid based on existence, alive state,
+ * and distance.
  *
  * ## Lock Lifecycle
- * 1. Client presses lock button → sets lockState to Pending
- * 2. Server validates target → sets lockState to Confirmed or None
- * 3. Server broadcasts lock to all clients in range
+ * 1. Client submits a lock request for a target
+ * 2. Server validates the target and sets lockState to Confirmed or None
+ * 3. Server sends lock confirmation to the requesting client
  *
  * @note LockState is server-authoritative. Client-side predictions
  * are overridden by server state.
