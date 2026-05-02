@@ -1,0 +1,75 @@
+[gd_scene load_steps=6 format=3 uid="uid://hiteffect"]
+
+[ext_resource type="Script" path="res://src/combat/HitEffect.cs" id="1_hiteffect"]
+
+[sub_resource type="ParticleProcessMaterial" id="ParticleProcessMaterial_sparks"]
+emission_shape = 1
+emission_sphere_radius = 0.1f
+direction = Vector3(0, 1, 0)
+spread = 180f
+gravity = Vector3(0, -5, 0)
+initial_velocity_min = 2f
+initial_velocity_max = 5f
+orbit_velocity_min = 0f
+orbit_velocity_max = 0f
+damping_min = 0f
+damping_max = 1f
+scale_min = 0.05f
+scale_max = 0.15f
+color = Color(1, 0.8f, 0.3f, 1)
+
+[sub_resource type="ParticleProcessMaterial" id="ParticleProcessMaterial_blood"]
+emission_shape = 1
+emission_sphere_radius = 0.15f
+direction = Vector3(0, 1, 0)
+spread = 160f
+gravity = Vector3(0, -3, 0)
+initial_velocity_min = 1f
+initial_velocity_max = 3f
+scale_min = 0.08f
+scale_max = 0.2f
+color = Color(0.8f, 0.1f, 0.1f, 1)
+
+[sub_resource type="ParticleProcessMaterial" id="ParticleProcessMaterial_dust"]
+emission_shape = 1
+emission_sphere_radius = 0.2f
+direction = Vector3(0, 0.5f, 0)
+spread = 120f
+gravity = Vector3(0, 0.5, 0)
+initial_velocity_min = 0.5f
+initial_velocity_max = 2f
+damping_min = 1f
+damping_max = 3f
+scale_min = 0.1f
+scale_max = 0.3f
+color = Color(0.6f, 0.5f, 0.4f, 0.7f)
+
+[sub_resource type="QuadMesh" id="QuadMesh_particle"]
+size = Vector2(0.2f, 0.2f)
+
+[node name="HitEffect" type="Node3D"]
+script = ExtResource("1_hiteffect")
+
+[node name="Sparks" type="GPUParticles3D" parent="."]
+emitting = false
+amount = 16
+lifetime = 0.4f
+explosiveness = 1f
+process_material = SubResource("ParticleProcessMaterial_sparks")
+draw_pass_1 = SubResource("QuadMesh_particle")
+
+[node name="Blood" type="GPUParticles3D" parent="."]
+emitting = false
+amount = 24
+lifetime = 0.6f
+explosiveness = 1f
+process_material = SubResource("ParticleProcessMaterial_blood")
+draw_pass_1 = SubResource("QuadMesh_particle")
+
+[node name="Dust" type="GPUParticles3D" parent="."]
+emitting = false
+amount = 12
+lifetime = 0.5f
+explosiveness = 1f
+process_material = SubResource("ParticleProcessMaterial_dust")
+draw_pass_1 = SubResource("QuadMesh_particle")

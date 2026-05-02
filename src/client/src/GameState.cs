@@ -58,6 +58,11 @@ namespace DarkAges
         public int InputBufferSize { get; set; } = 0;
         public uint LastProcessedInput { get; set; } = 0;
         public int ReconciliationCount { get; set; } = 0;
+        
+        // Dialogue state
+        public bool IsDialogueActive { get; private set; } = false;
+        public uint ActiveNpcId { get; private set; } = 0;
+        public uint ActiveDialogueId { get; private set; } = 0;
 
         public override void _EnterTree()
         {
@@ -91,6 +96,14 @@ namespace DarkAges
             {
                 EmitSignal(SignalName.EntityDespawned, entityId);
             }
+        }
+        
+        public void SetDialogueActive(bool active, uint npcId = 0, uint dialogueId = 0)
+        {
+            IsDialogueActive = active;
+            ActiveNpcId = npcId;
+            ActiveDialogueId = dialogueId;
+            GD.Print($"[GameState] Dialogue: {(active ? "active" : "inactive")} npc={npcId}");
         }
 
         public EntityData? GetEntity(uint entityId)

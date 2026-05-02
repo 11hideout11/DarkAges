@@ -3,6 +3,7 @@
 #include <entt/entt.hpp>
 
 #include <ctime>
+#include <cstring>
 
 namespace DarkAges
 {
@@ -234,9 +235,22 @@ namespace DarkAges
     return true;
   }
   
-  void ZoneObjectiveSystem::EmitEvent(entt::entity player, const ZoneObjectiveEvent& event)
-  {
-    // TODO: Integrate with snapshot system to send to client
-    // This would serialize the event and send via NetworkManager
+  void ZoneObjectiveSystem::EmitEvent(entt::entity player, const ZoneObjectiveEvent& event) {
+    if (!network_ || !getConnectionId_) return;
+
+    ConnectionID connId = getConnectionId_(player);
+    if (connId == INVALID_CONNECTION) return;
+
+    ZoneObjectiveUpdatePacket pkt{};
+    pkt.eventType = static_cast<uint8_t>(event.Type);
+    std::strncpy(pkt.objectiveId, event.ObjectiveId.c_str(), sizeof(pkt.objectiveId) - 1);
+    pkt.objectiveId[sizeof(pkt.objectiveId) - 1] = '\0';
+    pkt.currentProgress = event.CurrentProgress;
+    pkt.requiredProgress = event.RequiredProgress;
+    pkt.waveNumber = event.WaveNumber;
+    std::strncpy(pkt.message, event.Message.c_str(), sizeof(pkt.message) - 1);
+    pkt.message[sizeof(pkt.message) - 1] = '\0';
+
+    network_->sendZoneObjectiveUpdate(connId, pkt);
   }
 } // namespace DarkAges

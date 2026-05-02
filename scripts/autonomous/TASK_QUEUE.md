@@ -18,7 +18,7 @@ Prioritized list of autonomous improvements for DarkAges.
 
 ## P2 — Documentation
 - [x] Update stale documentation files (4 files reference old state) ✅ 2026-05-02
-- [x] Add inline documentation to key ECS components
+- [x] Add inline documentation to key ECS components ✅ 2026-05-02
 - [x] Document network protocol message format ✅ 2026-04-26 (docs/NETWORK_PROTOCOL.md)
 
 ## P2 — Phase 9 Completion
@@ -35,13 +35,13 @@ Prioritized list of autonomous improvements for DarkAges.
 - [x] Penetration testing (packet manipulation, replay attacks) ✅ 2026-05-02
 
 ## P3 — Phase 11: Chaos Testing
-- [ ] Zone failure simulation
-- [ ] Network partition handling
-- [ ] Database failure recovery
-- [ ] Process crash resilience
+- [x] Zone failure simulation ✅ 2026-05-02 (TestChaosZones.cpp - 30 test cases)
+- [x] Network partition handling ✅ 2026-05-02 (TestChaosNetwork.cpp - 25+ test cases)
+- [x] Database failure recovery ✅ 2026-05-02 (TestChaosDatabase.cpp - 25+ test cases)
+- [x] Process crash resilience ✅ 2026-05-02 (TestChaosCrash.cpp - 25+ test cases)
 
 ## P2.5 — Demo Visual Polish & Missing Interactions
-- [ ] NPC interaction system (E key to interact, interaction prompt UI, dialogue trigger)
+- [x] NPC interaction system (E key to interact, interaction prompt UI, dialogue trigger)
 - [ ] Sound effects integration (footsteps, weapon attacks, ambient, UI sounds)
 - [ ] Particle effects for combat/hits/spells/deaths
 - [ ] Replace capsule placeholder models with proper 3D character/monster models

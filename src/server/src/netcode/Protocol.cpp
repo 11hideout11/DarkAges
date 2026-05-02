@@ -511,6 +511,61 @@ std::vector<uint8_t> serializeQuestUpdate(const QuestUpdatePacket& pkt) {
     return data;
 }
 
+std::vector<uint8_t> serializeZoneObjectiveUpdate(const ZoneObjectiveUpdatePacket& pkt) {
+    std::vector<uint8_t> data;
+    size_t objLen = strnlen(pkt.objectiveId, 63);
+    size_t msgLen = strnlen(pkt.message, 127);
+    data.reserve(1 + 1 + objLen + 2 + 2 + 1 + 1 + msgLen);
+
+    data.push_back(static_cast<uint8_t>(pkt.eventType));
+    data.push_back(static_cast<uint8_t>(objLen));
+    data.insert(data.end(), pkt.objectiveId, pkt.objectiveId + objLen);
+    // currentProgress (little-endian)
+    data.push_back(static_cast<uint8_t>(pkt.currentProgress & 0xFF));
+    data.push_back(static_cast<uint8_t>((pkt.currentProgress >> 8) & 0xFF));
+    // requiredProgress (little-endian)
+    data.push_back(static_cast<uint8_t>(pkt.requiredProgress & 0xFF));
+    data.push_back(static_cast<uint8_t>((pkt.requiredProgress >> 8) & 0xFF));
+    // waveNumber
+    data.push_back(pkt.waveNumber);
+    // message
+    data.push_back(static_cast<uint8_t>(msgLen));
+    data.insert(data.end(), pkt.message, pkt.message + msgLen);
+
+    return data;
+}
+
+bool deserializeZoneObjectiveUpdate(std::span<const uint8_t> data, ZoneObjectiveUpdatePacket& outPkt) {
+    size_t idx = 0;
+    if (idx >= data.size()) return false;
+    outPkt.eventType = data[idx++];
+
+    if (idx >= data.size()) return false;
+    uint8_t objLen = data[idx++];
+    if (idx + objLen > data.size()) return false;
+    std::memcpy(outPkt.objectiveId, &data[idx], objLen);
+    outPkt.objectiveId[objLen] = '\0';
+    idx += objLen;
+
+    if (idx + 2 > data.size()) return false;
+    outPkt.currentProgress = static_cast<uint16_t>(data[idx] | (data[idx+1] << 8));
+    idx += 2;
+    if (idx + 2 > data.size()) return false;
+    outPkt.requiredProgress = static_cast<uint16_t>(data[idx] | (data[idx+1] << 8));
+    idx += 2;
+
+    if (idx >= data.size()) return false;
+    outPkt.waveNumber = data[idx++];
+
+    if (idx >= data.size()) return false;
+    uint8_t msgLen = data[idx++];
+    if (idx + msgLen > data.size()) return false;
+    std::memcpy(outPkt.message, &data[idx], msgLen);
+    outPkt.message[msgLen] = '\0';
+
+    return true;
+}
+
 std::vector<uint8_t> serializeDialogueStart(const DialogueStartPacket& pkt) {
     std::vector<uint8_t> data;
     size_t optionsSize = 0;

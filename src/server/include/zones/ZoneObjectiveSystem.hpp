@@ -3,10 +3,13 @@
 #include "zones/ZoneDefinition.hpp"
 #include "zones/ZoneObjectiveComponent.hpp"
 
+#include "netcode/NetworkManager.hpp"
+
 #include <entt/entt.hpp>
 
 #include <vector>
 #include <unordered_map>
+#include <functional>
 #include <string>
 
 namespace DarkAges
@@ -95,6 +98,8 @@ namespace DarkAges
      * Tick objective timers (called each server tick)
      * @param deltaTime Time since last tick
      */
+    void SetNetwork(NetworkManager* network) { network_ = network; }
+    void SetConnectionResolver(std::function<ConnectionID(entt::entity)> resolver) { getConnectionId_ = std::move(resolver); }
     void Tick(float deltaTime);
     
     /**
@@ -136,6 +141,8 @@ namespace DarkAges
     
   private:
     entt::registry* _registry = nullptr;
+    NetworkManager* network_ = nullptr;
+    std::function<ConnectionID(entt::entity)> getConnectionId_;
     
     /// Player entity -> zone definition
     std::unordered_map<entt::entity, ZoneDefinition> _playerZoneDefs;

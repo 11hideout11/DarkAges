@@ -1,0 +1,252 @@
+{
+  "version": "1.0",
+  "quests": [
+    {
+      "id": 10001,
+      "name": "A New Beginning",
+      "description": "Speak with the village elder to learn about your destiny.",
+      "startDialogue": "Welcome, traveler! I've been expecting you. Dark times are upon us, and you may be our only hope.",
+      "completionDialogue": "Ah, you've returned! I knew you were special. Take this and seek out the forest ruins to the north.",
+      "requiredLevel": 1,
+      "prerequisiteQuestId": 0,
+      "objectives": [
+        {
+          "type": "ReachLevel",
+          "targetId": 0,
+          "requiredCount": 1,
+          "description": "Reach level 1"
+        }
+      ],
+      "reward": {
+        "xpReward": 100,
+        "goldReward": 50,
+        "itemId": 0,
+        "itemQuantity": 0
+      },
+      "repeatable": false
+    },
+    {
+      "id": 10002,
+      "name": "Into the Wild",
+      "description": "Clear the goblins from the eastern trail so merchants can travel safely.",
+      "startDialogue": "The eastern trail has been overrun by goblins! Clear them out and I'll reward you.",
+      "completionDialogue": "You've done it! The trail is safe once more. Thank you, brave adventurer!",
+      "requiredLevel": 3,
+      "prerequisiteQuestId": 10001,
+      "objectives": [
+        {
+          "type": "KillNPC",
+          "targetId": 2001,
+          "requiredCount": 10,
+          "description": "Defeat 10 Forest Goblins"
+        }
+      ],
+      "reward": {
+        "xpReward": 250,
+        "goldReward": 100,
+        "itemId": 1001,
+        "itemQuantity": 1
+      },
+      "repeatable": false
+    },
+    {
+      "id": 10003,
+      "name": "Gathering Materials",
+      "description": "Collect iron ore for the village blacksmith.",
+      "startDialogue": "I need iron ore to forge weapons. Bring me 5 pieces and I'll pay you well.",
+      "completionDialogue": "Perfect ore! This will make fine weapons. Here's your payment.",
+      "requiredLevel": 2,
+      "prerequisiteQuestId": 10001,
+      "objectives": [
+        {
+          "type": "CollectItem",
+          "targetId": 5001,
+          "requiredCount": 5,
+          "description": "Collect 5 Iron Ore"
+        }
+      ],
+      "reward": {
+        "xpReward": 150,
+        "goldReward": 75,
+        "itemId": 0,
+        "itemQuantity": 0
+      },
+      "repeatable": true
+    },
+    {
+      "id": 10004,
+      "name": "Wolf Problem",
+      "description": "The eastern trail is plagued by dire wolves. Thin their numbers.",
+      "startDialogue": "Dire wolves attack travelers on the trail. Kill 5 of them and we'll be safe.",
+      "completionDialogue": "The wolves have returned to the forest. You're a true hero!",
+      "requiredLevel": 5,
+      "prerequisiteQuestId": 10002,
+      "objectives": [
+        {
+          "type": "KillNPC",
+          "targetId": 2005,
+          "requiredCount": 5,
+          "description": "Slay 5 Dire Wolves"
+        }
+      ],
+      "reward": {
+        "xpReward": 400,
+        "goldReward": 200,
+        "itemId": 3001,
+        "itemQuantity": 1
+      },
+      "repeatable": true
+    },
+    {
+      "id": 10005,
+      "name": "Spider Infestation",
+      "description": "Giant spiders have been seen in the caves south of town. Clear them out.",
+      "startDialogue": "The cave spiders are threatening the village! Please eliminate them.",
+      "completionDialogue": "You've freed us from that menace! Accept this reward with our gratitude.",
+      "requiredLevel": 5,
+      "prerequisiteQuestId": 10002,
+      "objectives": [
+        {
+          "type": "KillNPC",
+          "targetId": 2010,
+          "requiredCount": 8,
+          "description": "Defeat 8 Giant Cave Spiders"
+        }
+      ],
+      "reward": {
+        "xpReward": 350,
+        "goldReward": 175,
+        "itemId": 2002,
+        "itemQuantity": 1
+      },
+      "repeatable": true
+    },
+    {
+      "id": 10006,
+      "name": "Explore the Ruins",
+      "description": "Visit the ancient ruins to the north and report what you find.",
+      "startDialogue": "Those ancient ruins hold secrets. Go there and learn what you can.",
+      "completionDialogue": "Fascinating! The ruins still stand? This is valuable information.",
+      "requiredLevel": 3,
+      "prerequisiteQuestId": 10001,
+      "objectives": [
+        {
+          "type": "TalkToNPC",
+          "targetId": 5001,
+          "requiredCount": 1,
+          "description": "Report back to Village Elder Marcus about the Ancient Ruins"
+        }
+      ],
+      "reward": {
+        "xpReward": 200,
+        "goldReward": 100,
+        "itemId": 0,
+        "itemQuantity": 0
+      },
+      "repeatable": false
+    },
+    {
+      "id": 10007,
+      "name": "Rise to Level 5",
+      "description": "Prove your worth by reaching level 5.",
+      "startDialogue": "Grow stronger to defend against the darkness. Reach level 5 and return.",
+      "completionDialogue": "I sense great power within you. The village is safe with you here.",
+      "requiredLevel": 1,
+      "prerequisiteQuestId": 10001,
+      "objectives": [
+        {
+          "type": "ReachLevel",
+          "targetId": 5,
+          "requiredCount": 5,
+          "description": "Reach level 5"
+        }
+      ],
+      "reward": {
+        "xpReward": 500,
+        "goldReward": 250,
+        "itemId": 3003,
+        "itemQuantity": 1
+      },
+      "repeatable": false
+    },
+    {
+      "id": 10008,
+      "name": "Dark Forces",
+      "description": "Investigate reports of cultists near the old mine.",
+      "startDialogue": "Cultists have been seen near the abandoned mine. Find out what they're planning.",
+      "completionDialogue": "You've uncovered a sinister plot. We must prepare for battle!",
+      "requiredLevel": 8,
+      "prerequisiteQuestId": 10004,
+      "objectives": [
+        {
+          "type": "KillNPC",
+          "targetId": 2030,
+          "requiredCount": 5,
+          "description": "Defeat 5 Dark Cultists"
+        },
+        {
+          "type": "ExploreZone",
+          "targetId": 15,
+          "requiredCount": 1,
+          "description": "Investigate the Abandoned Mine"
+        }
+      ],
+      "reward": {
+        "xpReward": 750,
+        "goldReward": 400,
+        "itemId": 1020,
+        "itemQuantity": 1
+      },
+      "repeatable": false
+    },
+    {
+      "id": 10009,
+      "name": "The Hunt Begins",
+      "description": "A legendary beast stalks the northern forest. Hunt it down.",
+      "startDialogue": "A great dire wolf has been terrorizing the hunters. Find and slay this beast!",
+      "completionDialogue": "The Great Wolf is slain! Your name will be legendary!",
+      "requiredLevel": 10,
+      "prerequisiteQuestId": 10004,
+      "objectives": [
+        {
+          "type": "KillNPC",
+          "targetId": 2050,
+          "requiredCount": 1,
+          "description": "Slay the Alpha Dire Wolf"
+        }
+      ],
+      "reward": {
+        "xpReward": 1000,
+        "goldReward": 500,
+        "itemId": 1030,
+        "itemQuantity": 1
+      },
+      "repeatable": true
+    },
+    {
+      "id": 10010,
+      "name": "Arming the Militia",
+      "description": "The village needs weapons. Craft or gather 3 iron swords.",
+      "startDialogue": "We need to arm our defenders. Bring me 3 iron swords.",
+      "completionDialogue": "Now our people can defend themselves. Thank you!",
+      "requiredLevel": 5,
+      "prerequisiteQuestId": 10003,
+      "objectives": [
+        {
+          "type": "CollectItem",
+          "targetId": 1001,
+          "requiredCount": 3,
+          "description": "Gather 3 Iron Swords"
+        }
+      ],
+      "reward": {
+        "xpReward": 300,
+        "goldReward": 150,
+        "itemId": 0,
+        "itemQuantity": 0
+      },
+      "repeatable": true
+    }
+  ]
+}
+}
