@@ -3,6 +3,27 @@
 [ext_resource type="Script" path="res://src/combat/fsm/CombatStateMachineController.cs" id="1_controller"]
 [ext_resource type="AnimationLibrary" path="res://scenes/PlayerAnimations.tres" id="2_animlib"]
 
+[sub_resource type="AnimationNodeStateMachineTransition" id="Transition_Idle_Walk"]
+
+[sub_resource type="AnimationNodeStateMachineTransition" id="Transition_Walk_Idle"]
+
+[sub_resource type="AnimationNodeStateMachineTransition" id="Transition_Idle_Run"]
+
+[sub_resource type="AnimationNodeStateMachineTransition" id="Transition_Run_Idle"]
+
+[sub_resource type="AnimationNodeStateMachineTransition" id="Transition_Idle_Attack"]
+
+[sub_resource type="AnimationNodeStateMachineTransition" id="Transition_Attack_Idle"]
+
+[sub_resource type="AnimationNodeStateMachineTransition" id="Transition_Idle_Dodge"]
+
+[sub_resource type="AnimationNodeStateMachineTransition" id="Transition_Dodge_Idle"]
+
+[sub_resource type="AnimationNodeStateMachineTransition" id="Transition_Idle_Hit"]
+
+[sub_resource type="AnimationNodeStateMachineTransition" id="Transition_Hit_Idle"]
+
+[sub_resource type="AnimationNodeStateMachineTransition" id="Transition_Idle_Death"]
 [sub_resource type="AnimationNodeStateMachine" id="StateMachine"]
 node_path_parent = ".."
 States/Idle/wrap_mode = 1
@@ -81,28 +102,6 @@ SubResource("Transition_Idle_Hit"),
 SubResource("Transition_Hit_Idle"),
 SubResource("Transition_Idle_Death"),
 ]
-
-[sub_resource type="AnimationNodeStateMachineTransition" id="Transition_Idle_Walk"]
-
-[sub_resource type="AnimationNodeStateMachineTransition" id="Transition_Walk_Idle"]
-
-[sub_resource type="AnimationNodeStateMachineTransition" id="Transition_Idle_Run"]
-
-[sub_resource type="AnimationNodeStateMachineTransition" id="Transition_Run_Idle"]
-
-[sub_resource type="AnimationNodeStateMachineTransition" id="Transition_Idle_Attack"]
-
-[sub_resource type="AnimationNodeStateMachineTransition" id="Transition_Attack_Idle"]
-
-[sub_resource type="AnimationNodeStateMachineTransition" id="Transition_Idle_Dodge"]
-
-[sub_resource type="AnimationNodeStateMachineTransition" id="Transition_Dodge_Idle"]
-
-[sub_resource type="AnimationNodeStateMachineTransition" id="Transition_Idle_Hit"]
-
-[sub_resource type="AnimationNodeStateMachineTransition" id="Transition_Hit_Idle"]
-
-[sub_resource type="AnimationNodeStateMachineTransition" id="Transition_Idle_Death"]
 
 [node name="CombatStateMachine" type="Node3D"]
 script = ExtResource("1_controller")

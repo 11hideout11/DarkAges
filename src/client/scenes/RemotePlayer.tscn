@@ -2,7 +2,7 @@
 
 [ext_resource type="Script" path="res://src/entities/RemotePlayer.cs" id="1_remoteplayer"]
 [ext_resource type="AnimationLibrary" path="res://scenes/PlayerAnimations.tres" id="2_animlib"]
-[ext_resource type="AnimationTree" path="res://scenes/PlayerAnimationTree.tres" id="3_animationtree"]
+[ext_resource type="AnimationNodeStateMachine" path="res://scenes/PlayerAnimationTree.tres" id="3_animationtree"]
 [ext_resource type="PackedScene" path="res://scenes/CombatStateMachine.tscn" id="X_combatfsm_remote"]
 
 [sub_resource type="CapsuleShape3D" id="CapsuleShape3D_remote"]

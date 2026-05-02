@@ -69,23 +69,6 @@ bool deserializeInput(std::span<const uint8_t> data, InputState& outInput) {
     return true;
 }
 
-bool EntityStateData::equalsPosition(const EntityStateData& other) const {
-    return position.x == other.position.x &&
-           position.y == other.position.y &&
-           position.z == other.position.z;
-}
-
-bool EntityStateData::equalsRotation(const EntityStateData& other) const {
-    return rotation.yaw == other.rotation.yaw &&
-           rotation.pitch == other.rotation.pitch;
-}
-
-bool EntityStateData::equalsVelocity(const EntityStateData& other) const {
-    return velocity.dx == other.velocity.dx &&
-           velocity.dy == other.velocity.dy &&
-           velocity.dz == other.velocity.dz;
-}
-
 std::vector<uint8_t> createDeltaSnapshot(
     uint32_t serverTick,
     uint32_t baselineTick,

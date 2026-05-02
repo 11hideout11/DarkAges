@@ -14,8 +14,8 @@ public:
     State* GetNextState(CombatState* /*combat*/) const override;
 
 private:
-    float timer_ = 0.0f;
-    float duration_ = 0.5f;  // default 500ms (overridden by config)
+    float timer_ = 0.0f; // retained for potential compatibility, not used in absolute-time logic
+    uint32_t attackCooldownMs_ = 0; // cooldown duration in milliseconds
 };
 
 } // namespace DarkAges::combat::detail

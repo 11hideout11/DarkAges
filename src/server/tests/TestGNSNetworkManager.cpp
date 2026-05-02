@@ -8,6 +8,7 @@
 #include <vector>
 
 using namespace DarkAges::Netcode;
+using DarkAges::ConnectionID;
 
 // ============================================================================
 // Always-available type tests (header is includable even without ENABLE_GNS)

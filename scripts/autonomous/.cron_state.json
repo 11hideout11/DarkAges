@@ -1,7 +1,7 @@
 {
   "consecutive_failures": 0,
-  "last_success": "2026-04-27T20:41:02.044126+00:00",
+  "last_success": "2026-05-02T04:05:39.056757+00:00",
   "last_failure": "2026-04-23T22:06:34.201292+00:00",
-  "empty_queue_count": 5,
+  "empty_queue_count": 0,
   "rate_limited_until": null
 }

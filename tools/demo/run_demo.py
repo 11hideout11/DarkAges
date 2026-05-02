@@ -256,6 +256,8 @@ class DemoPipeline:
                 "--npc-count", str(self.args.npcs),
                 "--npc-movement",
                 "--tick-budget",
+                "--combat",  # Enable combat validation
+                "--combat-duration", "10",  # Test combat for 10 seconds
             ]
             if self.args.demo_mode:
                 deep_cmd.append("--demo-mode")

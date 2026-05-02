@@ -16,7 +16,7 @@ height = 1.8
 radius = 0.3
 height = 1.8
 
-[ext_resource type="AnimationTree" path="res://scenes/PlayerAnimationTree.tres" id="4_animationtree"]
+[ext_resource type="AnimationNodeStateMachine" path="res://scenes/PlayerAnimationTree.tres" id="4_animationtree"]
 
 [node name="Player" type="CharacterBody3D"]
 collision_layer = 2

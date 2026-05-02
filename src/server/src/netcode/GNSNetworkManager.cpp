@@ -178,8 +178,8 @@ void GNSNetworkManager::update(uint32_t currentTimeMs) {
                 SteamNetConnectionRealTimeStatus_t status;
                 if (sockets_->GetConnectionRealTimeStatus(info.handle, &status, 0, nullptr) == k_EResultOK) {
                     info.stats.ping_ms = status.m_nPing;
-                    info.stats.packet_loss_percent = status.m_flPacketsLostPercent;
-                    info.stats.bytes_sent = status.m_nBytesQueuedForSend;
+                    info.stats.packet_loss_percent = (1.0f - status.m_flConnectionQualityRemote) * 100.0f;
+                    info.stats.bytes_sent = status.m_cbPendingUnreliable + status.m_cbPendingReliable;
                 }
             }
         }
@@ -346,7 +346,7 @@ void GNSNetworkManager::handleConnectionStatusChanged(SteamNetConnectionStatusCh
                     auto it = connections_.find(connId);
                     if (it != connections_.end()) {
                         it->second.state = ConnectionState::Connected;
-                        it->second.connectTimeMs = GetTickCount64();
+                        it->second.connectTimeMs = SteamNetworkingUtils()->GetLocalTimestamp() / 1000;
                     }
                 }
                 
@@ -409,11 +409,11 @@ void GNSNetworkManager::processMessages() {
             onClientInput_(connId, msg->m_pData, msg->m_cbSize);
             
             // Queue for getPendingInputs
-            ClientInputPacket packet;
+            ClientInputPacket packet{};
             packet.connectionId = connId;
             packet.data.assign(static_cast<uint8_t*>(msg->m_pData),
                                static_cast<uint8_t*>(msg->m_pData) + msg->m_cbSize);
-            packet.receiveTimeMs = static_cast<uint32_t>(GetTickCount64());
+packet.receiveTimeMs = static_cast<uint32_t>(SteamNetworkingUtils()->GetLocalTimestamp() / 1000);
             
             std::lock_guard<std::mutex> lock(inputMutex_);
             pendingInputs_.push_back(std::move(packet));
@@ -442,7 +442,7 @@ void GNSNetworkManager::addConnection(ConnectionID id, uint32_t handle) {
     info.handle = handle;
     info.state = ConnectionState::Connecting;
     info.connectTimeMs = 0;
-    info.lastActivityMs = GetTickCount64();
+info.lastActivityMs = static_cast<uint32_t>(SteamNetworkingUtils()->GetLocalTimestamp() / 1000);
     connections_[id] = std::move(info);
 }
 

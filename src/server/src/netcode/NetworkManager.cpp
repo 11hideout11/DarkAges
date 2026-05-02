@@ -15,6 +15,7 @@
 #include <memory>
 #include <unordered_map>
 #include <string>
+#include <netinet/in.h>
 
 namespace DarkAges {
 
@@ -133,7 +134,7 @@ void GNSInternal::SteamNetConnectionStatusChangedCallback(SteamNetConnectionStat
     NetworkManager* manager = nullptr;
     {
         std::lock_guard<std::mutex> lock(g_managerMutex);
-        auto it = g_listenSocketToManager.find(pInfo->m_hListenSocket);
+        auto it = g_listenSocketToManager.find(pInfo->m_info.m_hListenSocket);
         if (it != g_listenSocketToManager.end()) {
             manager = it->second;
         }
@@ -163,14 +164,14 @@ void GNSInternal::onConnectionStatusChanged(SteamNetConnectionStatusChangedCallb
 
             // Check DDoS protection
             if (!manager_->shouldAcceptConnection(ipAddress)) {
-                interface_->CloseConnection(pInfo->m_hConn, k_ESteamNetConnectionEnd_App_Kick,
+                interface_->CloseConnection(pInfo->m_hConn, k_ESteamNetConnectionEnd_App_Generic,
                     "Connection rejected by DDoS protection", false);
                 break;
             }
 
             // Accept the connection
             if (interface_->AcceptConnection(pInfo->m_hConn) != k_EResultOK) {
-                interface_->CloseConnection(pInfo->m_hConn, k_ESteamNetConnectionEnd_App_Kick,
+                interface_->CloseConnection(pInfo->m_hConn, k_ESteamNetConnectionEnd_App_Generic,
                     "Failed to accept connection", false);
                 break;
             }
@@ -314,7 +315,9 @@ bool NetworkManager::initialize(uint16_t port) {
     // Create bind address (dual-stack IPv4/IPv6)
     SteamNetworkingIPAddr addr;
     addr.Clear();
-    addr.SetIPv6(::in6addr_any, port);  // Bind to all interfaces (IPv6 includes IPv4)
+    // Bind to all interfaces: IPv6 any address (::) with port
+    uint8_t anyAddr[16] = {};  // 16 zero bytes = IPv6 ::
+    addr.SetIPv6(anyAddr, port);
 
     // Create listen socket
     SteamNetworkingConfigValue_t opts[2] = {opt, timeoutOpt};
@@ -449,7 +452,7 @@ void NetworkManager::update(uint32_t currentTimeMs) {
                 switch (static_cast<PacketType>(packetType)) {
                     case PacketType::ClientInput: {
                         // Parse input packet
-                        if (msg->m_cbSize >= sizeof(uint8_t) + sizeof(InputState)) {
+                        if (static_cast<size_t>(msg->m_cbSize) >= sizeof(uint8_t) + sizeof(InputState)) {
                             InputState input;
                             std::memcpy(&input,
                                 static_cast<const uint8_t*>(msg->m_pData) + sizeof(uint8_t),
@@ -719,8 +722,8 @@ ConnectionQuality NetworkManager::getConnectionQuality(ConnectionID connectionId
         SteamNetConnectionRealTimeStatus_t status;
         if (internal_->interface_->GetConnectionRealTimeStatus(conn, &status, 0, nullptr)) {
             quality.rttMs = static_cast<uint32_t>(status.m_nPing);
-            quality.packetLoss = status.m_flPacketsDroppedPct;
-            quality.jitterMs = status.m_flJitterConnection;
+            quality.packetLoss = (1.0f - status.m_flConnectionQualityRemote) * 100.0f;
+            quality.jitterMs = 0.0f;
         }
     }
 

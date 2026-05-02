@@ -59,11 +59,11 @@ StateStatus AttackState::Update(Registry& registry, EntityID entity, float dt, u
     // Phase 2: Active — single-tick collision check, then finish immediately
     if (phase_ == Phase::Active) {
         bool hitOccurred = checkCollision(registry, entity);
-        // On any hit, stamp attacker's cooldowns
+        // On any hit, stamp attacker's attack cooldown (global cooldown set at cast time in processAttack)
         if (hitOccurred) {
             if (CombatState* combat = registry.try_get<CombatState>(entity)) {
                 combat->lastAttackTime = currentTimeMs;
-                combat->lastGlobalCooldownTime = currentTimeMs;
+                // Note: lastGlobalCooldownTime is NOT updated here; it was set at attack initiation in processAttack
             }
         }
         return StateStatus::Finish;      // Transition to Cooldown immediately

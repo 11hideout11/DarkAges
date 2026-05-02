@@ -2,7 +2,8 @@
 // Implements binary serialization for client-server communication
 
 #include "netcode/NetworkManager.hpp"
-#include "generated_proto/network_protocol.pb.h"
+#include "network_protocol.pb.h"
+#include "netcode/ProtobufProtocol.hpp"
 #include <cstring>
 
 namespace DarkAges {

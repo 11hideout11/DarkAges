@@ -4,17 +4,19 @@
 
 namespace DarkAges::combat::detail {
 
-CooldownState::CooldownState() : timer_(0.0f), duration_(0.5f) {}
+CooldownState::CooldownState() = default;
 
 void CooldownState::Enter(Registry& registry, EntityID entity, const CombatConfig& config) {
     timer_ = 0.0f;
-    duration_ = config.attackCooldownMs / 1000.0f;
+    attackCooldownMs_ = config.attackCooldownMs;
 }
 
-StateStatus CooldownState::Update(Registry& registry, EntityID entity, float dt, uint32_t currentTimeMs) {
-    timer_ += dt;
-    if (timer_ >= duration_) {
-        return StateStatus::Finish;
+StateStatus CooldownState::Update(Registry& registry, EntityID entity, float deltaSec, uint32_t currentTimeMs) {
+    if (const CombatState* cs = registry.try_get<CombatState>(entity)) {
+        // Use absolute time to ensure cooldown respects real time even if FSM updates are skipped
+        if (cs->lastAttackTime > 0 && currentTimeMs >= cs->lastAttackTime + attackCooldownMs_) {
+            return StateStatus::Finish;
+        }
     }
     return StateStatus::Continue;
 }

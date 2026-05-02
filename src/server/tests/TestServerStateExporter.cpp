@@ -47,7 +47,7 @@ TEST_CASE("ServerStateExporter setEnabled controls export", "[instrumentation]")
     exporter.setExportInterval(1); // export every tick
 
     Registry reg;
-    reg.create();
+    (void)reg.create();
 
     // Tick 1: export immediately (counter starts at 0, increments to 1, >=1 triggers export)
     exporter.maybeExport(reg, 1, 0);
@@ -64,7 +64,7 @@ TEST_CASE("ServerStateExporter export interval respected", "[instrumentation]") 
     exporter.setExportInterval(3);
 
     Registry reg;
-    reg.create();
+    (void)reg.create();
 
     for (int i = 1; i <= 6; ++i) {
         exporter.maybeExport(reg, i, i * 16);
@@ -335,7 +335,7 @@ TEST_CASE("ServerStateExporter tickCounter resets after export", "[instrumentati
     exporter.setExportInterval(2);
 
     Registry reg;
-    reg.create();
+    (void)reg.create();
 
     // Tick 1: counter=1, no export
     exporter.maybeExport(reg, 1, 0);
@@ -363,7 +363,7 @@ TEST_CASE("ServerStateExporter JSON output is pretty-printed with 4-space indent
     exporter.setExportInterval(1);
 
     Registry reg;
-    reg.create();
+    (void)reg.create();
     exporter.maybeExport(reg, 1, 0);
 
     std::string file = dir + "/server_1.json";
@@ -383,11 +383,13 @@ TEST_CASE("ServerStateExporter timestamp is recent", "[instrumentation]") {
     exporter.setExportInterval(1);
 
     Registry reg;
-    reg.create();
+    (void)reg.create();
     using namespace std::chrono;
     auto before = steady_clock::now();
     exporter.maybeExport(reg, 123, 5000);
     auto after = steady_clock::now();
+    (void)before;
+    (void)after;
 
     std::string file = dir + "/server_123.json";
     std::ifstream ifs(file);

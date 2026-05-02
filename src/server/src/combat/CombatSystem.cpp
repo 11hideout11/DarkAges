@@ -6,6 +6,7 @@
 #include <memory>
 #include "combat/detail/State.hpp"
 #include "combat/detail/IdleState.hpp"
+#include "combat/detail/AttackState.hpp"
 #include <cmath>
 #include <algorithm>
 #include <cstdlib>
@@ -31,9 +32,15 @@ HitResult CombatSystem::processAttack(Registry& registry, EntityID attacker,
                                      const AttackInput& input, uint32_t currentTimeMs) {
     HitResult result;
 
-    // Check if can attack
+    // Check if attacker can attack (dead/cooldown/stunned)
     if (!canAttack(registry, attacker, currentTimeMs)) {
-        result.hitType = "cooldown";
+        // Distinguish dead from cooldown for clearer response
+        const CombatState* cs = registry.try_get<CombatState>(attacker);
+        if (cs && cs->isDead) {
+            result.hitType = "dead";
+        } else {
+            result.hitType = "cooldown";
+        }
         return result;
     }
 
@@ -76,7 +83,20 @@ HitResult CombatSystem::processAttack(Registry& registry, EntityID attacker,
             break;
         }
     }
-
+    
+    // Transition FSM to Attack state for melee/ranged attacks (if currently Idle or uninitialized)
+    if (input.type != AttackInput::ABILITY) {
+        if (CombatState* cs = registry.try_get<CombatState>(attacker)) {
+            if (!cs->currentState || std::string(cs->currentState->Name()) == "Idle") {
+                if (cs->currentState) {
+                    cs->currentState->Exit(registry, attacker);
+                }
+                cs->currentState = std::make_unique<combat::detail::AttackState>();
+                cs->currentState->Enter(registry, attacker, config_);
+            }
+        }
+    }
+    
     // Update attack cooldown
     if (CombatState* combat = registry.try_get<CombatState>(attacker)) {
         combat->lastAttackTime = currentTimeMs;

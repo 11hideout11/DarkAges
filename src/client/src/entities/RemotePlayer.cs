@@ -2,6 +2,7 @@ using Godot;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using DarkAges.Combat.FSM;
 
 namespace DarkAges.Entities
 {
@@ -98,6 +99,9 @@ namespace DarkAges.Entities
         private Vector3 _originalMeshPosition;
         private Vector3 _originalMeshScale;
 
+        // Combat FSM sync
+        private CombatStateMachineController _combatFsm;
+
         public override void _Ready()
         {
             // Get components
@@ -107,7 +111,10 @@ namespace DarkAges.Entities
             _nameLabel = GetNode<Label3D>("NameLabel");
             _healthBarBg = GetNode<MeshInstance3D>("HealthBarBg");
             _healthBarFill = GetNode<MeshInstance3D>("HealthBarFill");
-            
+
+            // Get Combat FSM for state bookkeeping
+            _combatFsm = GetNode<CombatStateMachineController>("CombatStateMachine");
+
             // Initialize display state
             _displayPosition = GlobalPosition;
             _displayRotation = Quaternion.Identity;
@@ -581,7 +588,7 @@ namespace DarkAges.Entities
         private void UpdateExtrapolationVisuals()
         {
             if (!ShowDebugVisualization || _meshInstance == null) return;
-            
+ 
             if (_isExtrapolating && _extrapolationTime > 0.1f)
             {
                 // Turn yellow when extrapolating for a while
@@ -593,7 +600,53 @@ namespace DarkAges.Entities
                 _meshInstance.MaterialOverride = _normalMaterial;
             }
         }
-        
+ 
+        /// <summary>
+        /// Sync server animation state to CombatStateMachineController FSM
+        /// RemotePlayer uses server-authoritative state - we directly set FSM conditions
+        /// </summary>
+        private void SyncServerStateToFsm(byte animState)
+        {
+            if (_combatFsm == null) return;
+
+            // Server animation state mapping:
+            // 0=Idle, 1=Walk, 2=Run, 3=Jump, 4=Attack, 5=Dodge, 6=Hit, 7=Death
+            // -> CombatState: Idle(0), Walk(1), Run(2), Attack(3), Dodge(4), Hit(5), Death(6)
+            // Jump (3) has no FSM equivalent — keep current movement state
+            switch (animState)
+            {
+                case 0: // Idle
+                    _combatFsm.SetMovementState(false, false);
+                    break;
+                case 1: // Walk
+                    _combatFsm.SetMovementState(true, false);
+                    break;
+                case 2: // Run
+                    _combatFsm.SetMovementState(true, true);
+                    break;
+                case 3: // Jump
+                    // Jump not represented in combat FSM — keep current movement state
+                    // (do nothing — FSM stays in whatever movement state it was in)
+                    break;
+                case 4: // Attack
+                    _combatFsm.TryAttack();
+                    break;
+                case 5: // Dodge
+                    _combatFsm.TryDodge();
+                    break;
+                case 6: // Hit
+                    _combatFsm.TriggerHit();
+                    break;
+                case 7: // Death
+                    _combatFsm.TriggerDeath();
+                    break;
+                default:
+                    // Unknown state, default to idle
+                    _combatFsm.SetMovementState(false, false);
+                    break;
+            }
+        }
+ 
         /// <summary>
         /// Update health display
         /// </summary>
@@ -689,6 +742,9 @@ QueueFree();
         private void UpdateAnimationState(EntityFrame frame)
         {
             if (_animTree == null) return;
+
+            // Sync combat FSM state to match server animation state
+            SyncServerStateToFsm(frame.AnimationState);
 
             // Map animation state byte to state machine parameter
             // State enum from server: 0=Idle, 1=Walk, 2=Run, 3=Jump, 4=Attack, 5=Dodge, 6=Hit, 7=Death

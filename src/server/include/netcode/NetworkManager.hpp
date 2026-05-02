@@ -226,8 +226,9 @@ public:
                                      uint32_t currentTimeMs);
 
 private:
+    friend struct GNSInternal;
     std::unique_ptr<GNSInternal> internal_;
-    Security::DDoSProtection ddosProtection_;
+    mutable Security::DDoSProtection ddosProtection_;
     
     ConnectionCallback onConnected_;
     ConnectionCallback onDisconnected_;
@@ -262,6 +263,7 @@ namespace Protocol {
         uint8_t healthPercent{0};
         uint8_t animState{0};
         uint8_t entityType{0};  // 0=player, 1=projectile, 2=loot, 3=NPC
+        uint32_t teamId{0};            // Team ID for PvP/faction
         uint32_t timestamp{0};  // For lag compensation and reconciliation
 
         // Interactable component data (for NPCs and interactable objects)
@@ -270,9 +272,20 @@ namespace Protocol {
         uint32_t dialogueTreeId{0};            // Dialogue tree identifier
 
         // Equality comparison for delta detection
-        [[nodiscard]] bool equalsPosition(const EntityStateData& other) const;
-        [[nodiscard]] bool equalsRotation(const EntityStateData& other) const;
-        [[nodiscard]] bool equalsVelocity(const EntityStateData& other) const;
+        [[nodiscard]] inline bool equalsPosition(const EntityStateData& other) const {
+            return position.x == other.position.x &&
+                   position.y == other.position.y &&
+                   position.z == other.position.z;
+        }
+        [[nodiscard]] inline bool equalsRotation(const EntityStateData& other) const {
+            return rotation.yaw == other.rotation.yaw &&
+                   rotation.pitch == other.rotation.pitch;
+        }
+        [[nodiscard]] inline bool equalsVelocity(const EntityStateData& other) const {
+            return velocity.dx == other.velocity.dx &&
+                   velocity.dy == other.velocity.dy &&
+                   velocity.dz == other.velocity.dz;
+        }
     };
     
     // Delta entity state - only includes changed fields
