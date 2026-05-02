@@ -23,7 +23,7 @@ include(FetchContent)
 FetchContent_Declare(
     entt
     GIT_REPOSITORY https://github.com/skypjack/entt.git
-    GIT_TAG v3.13.1
+    GIT_TAG v3.16.0
     GIT_SHALLOW TRUE
 )
 FetchContent_MakeAvailable(entt)
@@ -41,7 +41,7 @@ endif()
 FetchContent_Declare(
     glm
     GIT_REPOSITORY https://github.com/g-truc/glm.git
-    GIT_TAG 0.9.9.8
+    GIT_TAG 1.0.3
     GIT_SHALLOW TRUE
 )
 FetchContent_MakeAvailable(glm)
@@ -74,6 +74,7 @@ set(SERVER_SOURCES
     src/physics/MovementSystem.cpp
     src/physics/NavigationGrid.cpp
     src/zones/ZoneServer.cpp
+    src/zones/ZoneObjectiveSystem.cpp
     src/zones/CombatEventHandler.cpp
     src/zones/AuraZoneHandler.cpp
     src/zones/ZoneOrchestrator.cpp
