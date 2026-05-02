@@ -321,6 +321,7 @@ private:
 
     // State
     std::atomic<bool> running_{false};
+    std::atomic<bool> initialized_{false};
     std::atomic<bool> shutdownRequested_{false};
     uint32_t currentTick_{0};
 
