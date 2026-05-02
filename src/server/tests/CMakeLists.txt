@@ -76,6 +76,7 @@ set(TEST_SOURCES
     TestZoneServer.cpp
     TestProtocolStub.cpp
     TestHitboxCollision.cpp
+    TestHitboxEdgeCases.cpp
 )
 
 # Conditional test sources based on dependencies
@@ -130,6 +131,8 @@ set(TEST_SERVER_SOURCES
     ${CMAKE_SOURCE_DIR}/src/combat/ProjectileSystem.cpp
     ${CMAKE_SOURCE_DIR}/src/combat/PartySystem.cpp
     ${CMAKE_SOURCE_DIR}/src/combat/GuildSystem.cpp
+    ${CMAKE_SOURCE_DIR}/src/combat/CraftingSystem.cpp
+    ${CMAKE_SOURCE_DIR}/src/combat/SpawnSystem.cpp
     ${CMAKE_SOURCE_DIR}/src/physics/NavigationGrid.cpp
     ${CMAKE_SOURCE_DIR}/src/zones/InputHandler.cpp
     ${CMAKE_SOURCE_DIR}/src/monitoring/MetricsExporter.cpp
@@ -139,6 +142,7 @@ set(TEST_SERVER_SOURCES
     ${CMAKE_SOURCE_DIR}/src/db/AntiCheatLogger_stub.cpp
     ${CMAKE_SOURCE_DIR}/src/db/CombatEventLogger_stub.cpp
     ${CMAKE_SOURCE_DIR}/src/db/PlayerSessionManager.cpp
+    ${CMAKE_SOURCE_DIR}/src/netcode/INetworkSocket.cpp
 )
 
 # Network manager: use stub if GNS not available
@@ -164,6 +168,7 @@ endif()
 # ZoneManager and StreamManager always compiled (have #else stub branches)
 list(APPEND TEST_SERVER_SOURCES ${CMAKE_SOURCE_DIR}/src/db/ZoneManager.cpp)
 list(APPEND TEST_SERVER_SOURCES ${CMAKE_SOURCE_DIR}/src/db/StreamManager.cpp)
+list(APPEND TEST_SERVER_SOURCES ${CMAKE_SOURCE_DIR}/src/db/ZoneMessage.cpp)
 
 # Scylla: always use stub
 list(APPEND TEST_SERVER_SOURCES ${CMAKE_SOURCE_DIR}/src/db/ScyllaManager_stub.cpp)
@@ -172,6 +177,7 @@ add_executable(darkages-tests ${TEST_SOURCES} ${TEST_SERVER_SOURCES})
 
 target_include_directories(darkages-tests PRIVATE
     ${CMAKE_SOURCE_DIR}/include
+    ${CMAKE_SOURCE_DIR}/src
     ${CMAKE_SOURCE_DIR}/../shared
 )
 

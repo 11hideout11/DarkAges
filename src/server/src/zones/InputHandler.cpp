@@ -11,7 +11,9 @@
 #include "combat/CraftingSystem.hpp"
 #include "combat/TradeSystem.hpp"
 #include "netcode/NetworkManager.hpp"
+#ifdef DARKAGES_HAS_PROTOBUF
 #include "netcode/ProtobufProtocol.hpp"
+#endif
 #include "security/AntiCheat.hpp"
 #include <iostream>
 #include <cmath>
@@ -300,6 +302,7 @@ void InputHandler::processAttackInput(EntityID entity, const ClientInputPacket& 
             }
 
             // [NETWORK_AGENT] Send damage event to target
+#ifdef DARKAGES_HAS_PROTOBUF
             auto targetConnIt = entityToConnection->find(hit.target);
             if (targetConnIt != entityToConnection->end()) {
                 auto damageEvent = Netcode::ProtobufProtocol::createDamageEvent(
@@ -328,6 +331,7 @@ void InputHandler::processAttackInput(EntityID entity, const ClientInputPacket& 
                 std::cerr << "[NETWORK] Sent hit confirmation: " << hit.damageDealt
                           << " to attacker entity " << static_cast<uint32_t>(entity) << std::endl;
             }
+#endif  // DARKAGES_HAS_PROTOBUF
 
             // [DATABASE_AGENT] Log combat event for analytics
         }
@@ -394,6 +398,7 @@ void InputHandler::processAbilityInput(EntityID entity, const ClientInputPacket&
 
         // Send ability cast event to relevant clients
         if (network_) {
+#ifdef DARKAGES_HAS_PROTOBUF
             auto* entityToConnection = server_.getEntityToConnectionPtr();
             auto connIt = entityToConnection->find(entity);
             if (connIt != entityToConnection->end()) {
@@ -407,6 +412,7 @@ void InputHandler::processAbilityInput(EntityID entity, const ClientInputPacket&
                 auto eventData = Netcode::ProtobufProtocol::serializeEvent(castEvent);
                 network_->sendEvent(connIt->second, eventData);
             }
+#endif  // DARKAGES_HAS_PROTOBUF
         }
     }
 }
@@ -429,6 +435,7 @@ void InputHandler::processItemUseInput(EntityID entity, const ClientInputPacket&
 
         // Send health/mana update to the player
         if (network_) {
+#ifdef DARKAGES_HAS_PROTOBUF
             auto* entityToConnection = server_.getEntityToConnectionPtr();
             auto connIt = entityToConnection->find(entity);
             if (connIt != entityToConnection->end()) {
@@ -442,6 +449,7 @@ void InputHandler::processItemUseInput(EntityID entity, const ClientInputPacket&
                 auto eventData = Netcode::ProtobufProtocol::serializeEvent(updateEvent);
                 network_->sendEvent(connIt->second, eventData);
             }
+#endif  // DARKAGES_HAS_PROTOBUF
         }
     }
 }
@@ -480,6 +488,7 @@ void InputHandler::processCraftingInput(EntityID entity, uint32_t recipeId,
         if (recipe && recipe->craftTimeMs == 0) {
             // Instant craft — send state update
             if (network_) {
+#ifdef DARKAGES_HAS_PROTOBUF
                 auto* entityToConnection = server_.getEntityToConnectionPtr();
                 auto connIt = entityToConnection->find(entity);
                 if (connIt != entityToConnection->end()) {
@@ -492,6 +501,7 @@ void InputHandler::processCraftingInput(EntityID entity, uint32_t recipeId,
                     auto eventData = Netcode::ProtobufProtocol::serializeEvent(craftEvent);
                     network_->sendEvent(connIt->second, eventData);
                 }
+#endif  // DARKAGES_HAS_PROTOBUF
             }
         }
     }

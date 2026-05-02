@@ -93,6 +93,10 @@ bool ZoneServer::initialize(const ZoneConfig& config) {
     playerManager_.setZoneId(config_.zoneId);
     std::cout << "[ZONE " << config_.zoneId << "] Player manager initialized" << std::endl;
 
+    // [PRD-009] Initialize zone objective system
+    zoneObjectiveSystem_.Initialize(registry_);
+    std::cout << "[ZONE " << config_.zoneId << "] Zone objective system initialized" << std::endl;
+
     // Initialize network
     network_ = std::make_unique<NetworkManager>();
     if (!network_->initialize(config_.port)) {
@@ -958,6 +962,9 @@ void ZoneServer::updateGameLogic() {
     // [PHASE 4E] Update zone handoffs
     auraZoneHandler_.updateZoneHandoffs();
 
+    // [PRD-009] Update zone objective system
+    zoneObjectiveSystem_.Tick(Constants::DT_SECONDS);
+
     auto elapsed = std::chrono::steady_clock::now() - start;
     metrics_.gameLogicTimeUs += std::chrono::duration_cast<std::chrono::microseconds>(elapsed).count();
 }
@@ -1176,6 +1183,10 @@ void ZoneServer::onClientConnected(ConnectionID connectionId) {
     // so the connection response contains the correct entity mapping
     network_->setConnectionEntityId(connectionId, entity);
 
+    // [PRD-009] Notify zone objective system that the player has entered this zone
+    zoneObjectiveSystem_.OnPlayerEnterZone(
+        entity, static_cast<uint16_t>(config_.zoneId), buildCurrentZoneDef());
+
     std::cout << "[ZONE " << config_.zoneId << "] Spawned entity " << static_cast<uint32_t>(entity)
               << " for connection " << connectionId << std::endl;
 }
@@ -1187,6 +1198,9 @@ void ZoneServer::onClientDisconnected(ConnectionID connectionId) {
     EntityID entity = playerManager_.getEntityByConnection(connectionId);
 
     if (entity != entt::null) {
+        // [PRD-009] Remove player from zone objective tracking before cleanup
+        zoneObjectiveSystem_.OnPlayerLeaveZone(entity);
+
         // [GAMEPLAY_AGENT] Cancel any active trade on disconnect
         if (tradeSystem_.isTrading(registry_, entity)) {
             tradeSystem_.cancelTrade(registry_, entity);
@@ -1874,15 +1888,7 @@ void ZoneServer::initializeHandoffController() {
     );
 
     // Set up zone definition for distance calculations
-    ZoneDefinition zoneDef;
-    zoneDef.zoneId = config_.zoneId;
-    zoneDef.minX = config_.minX;
-    zoneDef.maxX = config_.maxX;
-    zoneDef.minZ = config_.minZ;
-    zoneDef.maxZ = config_.maxZ;
-    zoneDef.centerX = (config_.minX + config_.maxX) / 2.0f;
-    zoneDef.centerZ = (config_.minZ + config_.maxZ) / 2.0f;
-    handoffController_->setMyZoneDefinition(zoneDef);
+    handoffController_->setMyZoneDefinition(buildCurrentZoneDef());
 
     // Set up zone lookup callbacks
     handoffController_->setZoneLookupCallbacks(
@@ -1954,6 +1960,19 @@ void ZoneServer::onHandoffCompleted(uint64_t playerId, uint32_t sourceZone,
     }
 
     // Update metrics, logging, etc.
+}
+
+// Build a ZoneDefinition from this server's current config (avoids repetitive field copying).
+ZoneDefinition ZoneServer::buildCurrentZoneDef() const {
+    ZoneDefinition def;
+    def.zoneId  = config_.zoneId;
+    def.minX    = config_.minX;
+    def.maxX    = config_.maxX;
+    def.minZ    = config_.minZ;
+    def.maxZ    = config_.maxZ;
+    def.centerX = (config_.minX + config_.maxX) * 0.5f;
+    def.centerZ = (config_.minZ + config_.maxZ) * 0.5f;
+    return def;
 }
 
 // [PHASE 4E] Zone lookup callback - returns zone definition by ID
