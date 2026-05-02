@@ -11,10 +11,10 @@
       "prerequisiteQuestId": 0,
       "objectives": [
         {
-          "type": "TalkToNPC",
-          "targetId": 5001,
+          "type": "ReachLevel",
+          "targetId": 0,
           "requiredCount": 1,
-          "description": "Speak with Village Elder Marcus"
+          "description": "Reach level 1"
         }
       ],
       "reward": {
