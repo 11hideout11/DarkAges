@@ -67,17 +67,9 @@ namespace DarkAges
             // Find main scene
             _main = GetTree().CurrentScene as Main;
             
-            // Setup additional UI panels (interaction, dialogue, quest, inventory)
-            SetupInteractionUI();
-            SetupDialogueUI();
-            SetupQuestUI();
-            SetupInventoryUI();
-            
-            // Connect network events for interaction/dialogue
-            NetworkManager.Instance.DialogueStartReceived += OnDialogueStart;
-            NetworkManager.Instance.QuestUpdateReceived += OnQuestUpdateReceived;
-            // Entity interaction is detected via GameState entities in _Process
-            GameState.Instance.EntitySpawned += OnEntitySpawned;
+            // Interaction/dialogue/quest/inventory UI is owned by HUDController in Main.tscn.
+            // Do not initialize or subscribe here as well, otherwise both UI layers will
+            // respond to the same gameplay/network signals and show duplicate UI.
             
             // Show connection panel initially
             UpdateUIState(GameState.ConnectionState.Disconnected);
@@ -288,7 +280,7 @@ namespace DarkAges
         private void OnEntityInteractionRange(EntityData data)
         {
             // Show interaction prompt when in range of interactive NPC
-            if (data.InteractionRange > 0 && data.NpcId > 0)
+            if (data.InteractionRange > 0 && data.DialogueTreeId > 0)
             {
                 ShowInteractionPrompt($"[E] Talk to {data.Name}");
             }
@@ -391,11 +383,6 @@ namespace DarkAges
             _dialogueOptions = new VBoxContainer();
             _dialogueOptions.AddThemeConstantOverride("separation", 5);
             vbox.AddChild(_dialogueOptions);
-        }
-        
-        private void OnDialogueStartReceived(uint npcId, uint dialogueId, string npcName, string dialogueText, string[] options)
-        {
-            ShowDialogue(npcName, dialogueText, options);
         }
         
         private void ShowDialogue(string npcName, string text, string[] options)

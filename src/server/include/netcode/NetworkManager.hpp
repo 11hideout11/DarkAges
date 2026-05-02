@@ -91,6 +91,16 @@ struct QuestUpdatePacket {
     uint8_t status{0};  // 0=in_progress, 1=complete, 2=rewarded
 };
 
+// Zone objective update packet (server -> client)
+struct ZoneObjectiveUpdatePacket {
+    uint8_t eventType{0};            // ZoneObjectiveEvent::EventType
+    char objectiveId[64]{0};         // Null-terminated objective ID (max 63 chars)
+    uint16_t currentProgress{0};     // For ObjectiveProgress
+    uint16_t requiredProgress{0};    // For ObjectiveProgress
+    uint8_t waveNumber{0};           // For WaveStarted/WaveComplete
+    char message[128]{0};            // Optional event message text
+};
+
 // Snapshot packet for serialization
 struct SnapshotPacket {
     uint32_t serverTick{0};
@@ -197,6 +207,7 @@ public:
     
     // Send quest update to a specific client
     void sendQuestUpdate(ConnectionID connectionId, const QuestUpdatePacket& msg);
+    void sendZoneObjectiveUpdate(ConnectionID connectionId, const ZoneObjectiveUpdatePacket& msg);
 
     // Send dialogue start (NPC conversation) to a specific client
     void sendDialogueStart(ConnectionID connectionId, const Protocol::DialogueStartPacket& pkt);

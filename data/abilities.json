@@ -4,93 +4,58 @@
     {
       "id": 1,
       "name": "Power Strike",
-      "description": "A powerful melee attack dealing 150% weapon damage.",
-      "cooldownMs": 3000,
-      "manaCost": 0,
+      "cooldown": 3000,
+      "mana": 0,
       "range": 2.0,
-      "effectType": "Damage",
-      "effectValue": 150,
-      "targetType": "enemy",
-      "castTimeMs": 0,
-      "icon": "sword"
+      "effectType": "Damage"
     },
     {
       "id": 2,
       "name": "Quick Slash",
-      "description": "A fast dual attack striking twice.",
-      "cooldownMs": 5000,
-      "manaCost": 5,
+      "cooldown": 5000,
+      "mana": 5,
       "range": 2.0,
-      "effectType": "Damage",
-      "effectValue": 80,
-      "targetType": "enemy",
-      "castTimeMs": 0,
-      "icon": "sword"
+      "effectType": "Damage"
     },
     {
       "id": 3,
       "name": "Shield Bash",
-      "description": "Bash an enemy with your shield, stunning them briefly.",
-      "cooldownMs": 8000,
-      "manaCost": 10,
+      "cooldown": 8000,
+      "mana": 10,
       "range": 2.0,
-      "effectType": "Stun",
-      "effectValue": 2000,
-      "targetType": "enemy",
-      "castTimeMs": 200,
-      "icon": "shield"
+      "effectType": "Stun"
     },
     {
       "id": 4,
       "name": "Battle Cry",
-      "description": "Roar to increase your attack power by 25% for 10 seconds.",
-      "cooldownMs": 15000,
-      "manaCost": 15,
+      "cooldown": 15000,
+      "mana": 15,
       "range": 0.0,
-      "effectType": "Buff",
-      "effectValue": 25000,
-      "targetType": "self",
-      "castTimeMs": 0,
-      "icon": "yell"
+      "effectType": "Buff"
     },
     {
       "id": 10,
       "name": "Fireball",
-      "description": "Launch a ball of fire that explodes on impact.",
-      "cooldownMs": 6000,
-      "manaCost": 25,
+      "cooldown": 6000,
+      "mana": 25,
       "range": 30.0,
-      "effectType": "Damage",
-      "effectValue": 120,
-      "targetType": "enemy",
-      "castTimeMs": 500,
-      "icon": "fire"
+      "effectType": "Damage"
     },
     {
       "id": 11,
       "name": "Ice Bolt",
-      "description": "Launch a bolt of ice that slows enemies.",
-      "cooldownMs": 5000,
-      "manaCost": 20,
+      "cooldown": 5000,
+      "mana": 20,
       "range": 25.0,
-      "effectType": "Debuff",
-      "effectValue": 5000,
-      "targetType": "enemy",
-      "castTimeMs": 300,
-      "icon": "ice"
+      "effectType": "Debuff"
     },
     {
       "id": 12,
       "name": "Lightning Bolt",
-      "description": "Strike an enemy with lightning.",
-      "cooldownMs": 4000,
-      "manaCost": 15,
+      "cooldown": 4000,
+      "mana": 15,
       "range": 28.0,
-      "effectType": "Damage",
-      "effectValue": 80,
-      "targetType": "enemy",
-      "castTimeMs": 200,
-      "icon": "lightning"
+      "effectType": "Damage"
     },
     {
       "id": 13,
