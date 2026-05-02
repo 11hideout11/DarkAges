@@ -74,7 +74,7 @@ namespace DarkAges.Combat
         
         private CharacterBody3D _player;
         private Node3D _model;
-        private AnimationStateMachine _animStateMachine;
+        private CombatStateMachineController _combatFsm;
         
         private Vector3 _velocity;
         private Vector3 _lastVelocity;
@@ -106,7 +106,7 @@ namespace DarkAges.Combat
             }
             
             // Get animation state machine
-            _animStateMachine = GetParentOrNull<AnimationStateMachine>("AnimationStateMachine");
+            _combatFsm = GetParentOrNull<CombatStateMachineController>("CombatStateMachine");
             
             GD.Print("[ProceduralLeaning] Initialized");
         }
@@ -171,12 +171,12 @@ namespace DarkAges.Combat
                 return false;
             
             // Check combat states if disabled during combat
-            if (!_enableDuringCombat && _animStateMachine != null)
+            if (!_enableDuringCombat && _combatFsm != null)
             {
-                var state = _animStateMachine.CurrentState;
-                if (state != AnimationStateMachine.StateType.Idle &&
-                    state != AnimationStateMachine.StateType.Walking &&
-                    state != AnimationStateMachine.StateType.Sprinting)
+                var state = _combatFsm.CurrentState;
+                if (state != CombatStateMachineController.CombatState.Idle &&
+                    state != CombatStateMachineController.CombatState.Walk &&
+                    state != CombatStateMachineController.CombatState.Run)
                 {
                     return false;
                 }
