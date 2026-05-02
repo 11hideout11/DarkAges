@@ -1,4 +1,21 @@
 
+/**
+ * @file CoreTypes.hpp
+ * @brief Core ECS component definitions for DarkAges server
+ *
+ * This file contains all fundamental ECS components used throughout the server.
+ * Components are designed as POD (Plain Old Data) for cache efficiency and
+ * deterministic simulation.
+ *
+ * ## Design Principles
+ * - All components are POD structs with no virtual methods
+ * - Fixed-point arithmetic for deterministic physics
+ * - Network-optimized bit packing where applicable
+ * - Thread-safe snapshot semantics for zone handoffs
+ *
+ * @namespace DarkAges
+ */
+
 #pragma once
 
 #include "Constants.hpp"
@@ -14,22 +31,70 @@
 
 namespace DarkAges {
 
+/**
+ * @brief Entity identifier type
+ *
+ * Typedef alias for entt::entity, representing a unique entity in the ECS.
+ * Internally stored as a 32-bit index with optional generation counter.
+ */
 using EntityID = entt::entity;
+
+/**
+ * @brief EnTT registry alias
+ *
+ * The central data store for all ECS entities and components.
+ * Provides view-based iteration and component access.
+ */
 using Registry = entt::registry;
+
+/**
+ * @brief Network connection handle type
+ *
+ * Unique identifier for a client connection, assigned during authentication.
+ * Used to route network packets to specific clients.
+ */
 using ConnectionID = uint32_t;  // Network connection handle
 
 // ============================================================================
 // TRANSFORM COMPONENTS
 // ============================================================================
 
-// [PHYSICS_AGENT] Position using fixed-point for determinism
+/**
+ * @brief Position component using fixed-point arithmetic
+ *
+ * Stores entity position in 3D space using fixed-point representation for
+ * deterministic simulation across all server ticks. The fixed-point precision
+ * ensures identical physics calculations on all server instances.
+ *
+ * ## Fixed-Point Representation
+ * - Units: 1.0f world unit = 1000 fixed-point units
+ * - Range: ±2,147,483,647 fixed-point units (~±2,147,483 world units or ~±2,147 km world space)
+ * - Precision: 0.001f world units (1mm)
+ *
+ * ## Usage
+ * @code
+ * auto& pos = registry.get<Position>(entity);
+ * pos.x = pos.x + velocity.dx;  // Simple integration
+ * @endcode
+ *
+ * ## Snapshot Compatibility
+ * This component is directly serializable for zone handoffs and persistence.
+ * The timestamp_ms field tracks when the position was last updated on the
+ * authoritative server.
+ *
+ * @see Velocity
+ * @see Rotation
+ */
 struct Position {
-    Constants::Fixed x{0};
-    Constants::Fixed y{0};
-    Constants::Fixed z{0};
-    uint32_t timestamp_ms{0};  // Server tick timestamp
+    Constants::Fixed x{0};  ///< X coordinate in fixed-point units
+    Constants::Fixed y{0};  ///< Y coordinate (vertical/up in fixed-point units)
+    Constants::Fixed z{0};  ///< Z coordinate in fixed-point units
+    uint32_t timestamp_ms{0};  ///< Server tick timestamp of last update
 
-    // Helper methods for float conversion
+    /**
+     * @brief Convert fixed-point position to floating-point glm vector
+     * @return glm::vec3 with world-space float coordinates
+     */
     [[nodiscard]] glm::vec3 toVec3() const {
         return glm::vec3(
             x * Constants::FIXED_TO_FLOAT,
@@ -38,6 +103,12 @@ struct Position {
         );
     }
 
+    /**
+     * @brief Create Position from floating-point vector
+     * @param v Source vector in world units
+     * @param timestamp Server tick timestamp (default 0)
+     * @return Position with converted fixed-point coordinates
+     */
     static Position fromVec3(const glm::vec3& v, uint32_t timestamp = 0) {
         return Position{
             static_cast<Constants::Fixed>(v.x * Constants::FLOAT_TO_FIXED),
@@ -47,7 +118,15 @@ struct Position {
         };
     }
 
-    // Distance squared (for performance - avoid sqrt when possible)
+    /**
+     * @brief Calculate squared distance to another position
+     *
+     * Returns distance squared to avoid expensive sqrt operation.
+     * Use for comparisons (closer than X) without needing actual distance.
+     *
+     * @param other Target position
+     * @return Squared distance in fixed-point units
+     */
     [[nodiscard]] Constants::Fixed distanceSqTo(const Position& other) const {
         const Constants::Fixed dx = x - other.x;
         const Constants::Fixed dy = y - other.y;
@@ -61,12 +140,31 @@ struct Position {
     }
 };
 
-// [PHYSICS_AGENT] Velocity (also fixed-point)
+/**
+ * @brief Velocity component for movement integration
+ *
+ * Represents rate of change in 3D space. Velocity is applied each tick
+ * to update Position. Values are in fixed-point units per second.
+ *
+ * ## Integration
+ * @code
+ * // Each tick:
+ * auto& pos = registry.get<Position>(entity);
+ * auto& vel = registry.get<Velocity>(entity);
+ * pos.x += vel.dx * TICK_DURATION_SECONDS;
+ * @endcode
+ *
+ * @see Position
+ */
 struct Velocity {
-    Constants::Fixed dx{0};
-    Constants::Fixed dy{0};
-    Constants::Fixed dz{0};
+    Constants::Fixed dx{0};  ///< X velocity in units per second
+    Constants::Fixed dy{0};  ///< Y velocity (vertical rate of change)
+    Constants::Fixed dz{0};  ///< Z velocity in units per second
 
+    /**
+     * @brief Calculate current speed magnitude
+     * @return Speed as floating-point m/s
+     */
     [[nodiscard]] float speed() const {
         float fx = dx * Constants::FIXED_TO_FLOAT;
         float fy = dy * Constants::FIXED_TO_FLOAT;
@@ -74,6 +172,10 @@ struct Velocity {
         return std::sqrt(fx * fx + fy * fy + fz * fz);
     }
 
+    /**
+     * @brief Calculate squared speed (avoids sqrt)
+     * @return Speed squared for fast comparisons
+     */
     [[nodiscard]] float speedSq() const {
         float fx = dx * Constants::FIXED_TO_FLOAT;
         float fy = dy * Constants::FIXED_TO_FLOAT;
@@ -82,57 +184,104 @@ struct Velocity {
     }
 };
 
-// [PHYSICS_AGENT] Rotation (yaw only for top-down/3rd person)
+/**
+ * @brief Rotation component for orientation
+ *
+ * Stores yaw and pitch angles in radians. Yaw represents horizontal
+ * rotation around the vertical axis. Pitch represents vertical look angle.
+ *
+ * ## Angle Conventions
+ * - Yaw: 0 = facing +Z direction, PI/2 = facing +X direction
+ * - Pitch: 0 = horizontal, positive = looking up
+ */
 struct Rotation {
-    float yaw{0.0f};    // Radians, 0 = +Z, PI/2 = +X
-    float pitch{0.0f};  // Radians, for looking up/down
+    float yaw{0.0f};    ///< Horizontal rotation (radians, 0 = +Z)
+    float pitch{0.0f};  ///< Vertical rotation (radians, for looking up/down)
 };
 
 // ============================================================================
 // INPUT COMPONENT
 // ============================================================================
 
-// [NETWORK_AGENT] Bit-packed input state from client
+/**
+ * @brief Client input state - bit-packed player input data
+ *
+ * Represents all player input commands from the client. The first 8 fields
+ * use bit-fields for compact network representation (1 byte total).
+ *
+ * ## Bit-Packed Fields (Byte 0)
+ * | Bit | Field   | Description           |
+ * |-----|---------|---------------------|
+ * | 0   | forward | Forward movement     |
+ * | 1   | backward| Backward movement  |
+ * | 2   | left    | Strafe left        |
+ * | 3   | right   | Strafe right       |
+ * | 4   | jump    | Jump action       |
+ * | 5   | attack  | Primary attack    |
+ * | 6   | block   | Block/defend       |
+ * | 7   | sprint  | Sprint/run         |
+ *
+ * ## Client-to-Server Protocol
+ * Client sends InputState each network tick (60Hz). The server processes
+ * inputs in order, using sequence number for input reconciliation.
+ *
+ * @note This component is attached to player entities and updated as
+ * network packets are received. It is NOT persisted to database.
+ *
+ * @see InputHandler for processing logic
+ */
 struct InputState {
     // Bit flags (1 byte total)
-    uint8_t forward : 1;
-    uint8_t backward : 1;
-    uint8_t left : 1;
-    uint8_t right : 1;
-    uint8_t jump : 1;
-    uint8_t attack : 1;
-    uint8_t block : 1;
-    uint8_t sprint : 1;
-    uint8_t interact{0};  // Interact with NPCs (E key)
+    uint8_t forward : 1;    ///< Forward movement bit (W key)
+    uint8_t backward : 1;   ///< Backward movement bit (S key)
+    uint8_t left : 1;        ///< Strafe left bit (A key)
+    uint8_t right : 1;       ///< Strafe right bit (D key)
+    uint8_t jump : 1;        ///< Jump action bit (Space key)
+    uint8_t attack : 1;     ///< Primary attack (Left click)
+    uint8_t block : 1;      ///< Block/defend (Right click)
+    uint8_t sprint : 1;     ///< Sprint modifier (Shift key)
+    uint8_t interact{0};    ///< Interact with NPCs (E key)
 
     // Camera rotation
-    float yaw{0.0f};
-    float pitch{0.0f};
+    float yaw{0.0f};       ///< Camera yaw (radians)
+    float pitch{0.0f};     ///< Camera pitch (radians)
 
     // Networking metadata
-    uint32_t sequence{0};      // Monotonic counter for reconciliation
-    uint32_t timestamp_ms{0};  // Client send time
-    uint32_t targetEntity{0};  // Target entity ID for abilities/combat
-    uint8_t abilitySlot{0};    // 0=melee attack, 1-4=ability slot cast
-    uint8_t itemSlot{0};       // 0=no item use, 1-24=inventory slot to consume
-    uint8_t chatChannel{0};    // 0=no chat, 1=local, 2=global, 3=whisper, 4=party, 5=guild
-    uint32_t craftingRecipeId{0}; // 0=no craft, >0=recipe ID to craft
-    uint8_t tradeAction{0};     // 0=no trade, 1=request, 2=accept, 3=decline, 4=cancel, 5=lock, 6=unlock, 7=confirm
-    uint8_t tradeSlotIndex{0};  // For addItem: inventory slot, for removeItem: trade slot
-    uint32_t tradeItemId{0};    // Item to add to trade offer (0=none)
-    uint32_t tradeQuantity{0};  // Quantity for trade item
-    float tradeGoldOffer{0.0f}; // Gold to offer in trade
+    uint32_t sequence{0};        ///< Monotonic counter for input reconciliation
+    uint32_t timestamp_ms{0};    ///< Client timestamp when input was sent
+    uint32_t targetEntity{0};      ///< Targeted entity ID for abilities/combat
+    uint8_t abilitySlot{0};       ///< Ability slot (0=melee, 1-4=abilities)
+    uint8_t itemSlot{0};          ///< Inventory slot to use (0=none, 1-24)
+    uint8_t chatChannel{0};       ///< Chat channel (0=none, 1=local, 2=global, 3=whisper, 4=party, 5=guild)
+    uint32_t craftingRecipeId{0};  ///< Recipe ID to craft (0=none)
+    uint8_t tradeAction{0};        ///< Trade action: 0=none, 1=request, 2=accept, 3=decline, 4=cancel, 5=lock, 6=unlock, 7=confirm
+    uint8_t tradeSlotIndex{0};   ///< Trade window slot index
+    uint32_t tradeItemId{0};      ///< Item ID for trade
+    uint32_t tradeQuantity{0};    ///< Item quantity for trade
+    float tradeGoldOffer{0.0f};  ///< Gold offered in trade
 
-    // Initialize all bits to 0
+    /**
+     * @brief Default constructor initializes all bits to 0
+     */
     InputState() : forward(0), backward(0), left(0), right(0),
                    jump(0), attack(0), block(0), sprint(0) {}
 
-    // Helper to check if any movement input is active
+    /**
+     * @brief Check if any movement keys are pressed
+     * @return true if forward, backward, left, or right is active
+     */
     [[nodiscard]] bool hasMovementInput() const {
         return forward || backward || left || right;
     }
 
-    // Get input direction vector (normalized, before rotation)
+    /**
+     * @brief Get normalized input direction vector
+     *
+     * Returns the raw direction (before camera rotation is applied).
+     * Use Rotation component to transform to world space.
+     *
+     * @return glm::vec3 normalized direction
+     */
     [[nodiscard]] glm::vec3 getInputDirection() const {
         glm::vec3 dir(0.0f);
         if (forward)  dir.z -= 1.0f;
@@ -151,15 +300,44 @@ struct InputState {
 // COMBAT COMPONENTS
 // ============================================================================
 
+/**
+ * @brief Combat state component - tracks health and combat state machine
+ *
+ * Core component for all combat-capable entities (players and NPCs).
+ * Contains health values, team affiliation, and the polymorphic
+ * combat Finite State Machine (FSM).
+ *
+ * ## FSM States
+ * The combat FSM manages attack animations, recovery periods,
+ * and ability cooldowns. States are polymorphic via unique_ptr.
+ *
+ * ## Copy Semantics
+ * Copy constructor resets the FSM state to nullptr. This is by design
+ * for snapshot serialization - the FSM is rebuilt from state on
+ * the destination server.
+ *
+ * ## Usage
+ * @code
+ * auto& combat = registry.get<CombatState>(entity);
+ * combat.health -= damage;
+ * if (combat.health <= 0) {
+ *     combat.isDead = true;
+ * }
+ * @endcode
+ *
+ * @see combat::State
+ * @see combat::AttackState
+ * @see combat::RecoveryState
+ */
 struct CombatState {
-    int16_t health{10000};      // 0-10000 (100.0 health)
-    int16_t maxHealth{10000};
-    uint8_t teamId{0};
-    uint8_t classType{0};
-    EntityID lastAttacker{entt::null};
-    uint32_t lastAttackTime{0};
-    uint32_t lastGlobalCooldownTime{0};  // Last time any ability/attack was used (for GCD)
-    bool isDead{false};
+    int16_t health{10000};           ///< Current health (0-10000, displayed as 0-100.0)
+    int16_t maxHealth{10000};          ///< Maximum health value
+    uint8_t teamId{0};               ///< Team identifier (0=neutral, 1+=teams)
+    uint8_t classType{0};            ///< Class/build identifier
+    EntityID lastAttacker{entt::null}; ///< Last entity that dealt damage
+    uint32_t lastAttackTime{0};      ///< Timestamp of last attack received
+    uint32_t lastGlobalCooldownTime{0};  ///< Global cooldown timestamp (for ability GCD)
+    bool isDead{false};                ///< Death state flag
 
     // FSM: polymorphic state machine
     std::unique_ptr<State> currentState{nullptr};
@@ -202,37 +380,104 @@ struct CombatState {
     }
 };
 
-// [COMBAT_AGENT] Target lock state for lock-on targeting system
+/**
+ * @brief Lock-on targeting state enumeration
+ *
+ * Used to track the state of the server-authoritative lock-on system.
+ * Client requests locks, but server confirms them.
+ *
+ * @see TargetLock
+ */
 enum class LockState : uint8_t {
-    None = 0,       // No lock active
-    Pending = 1,    // Lock request sent, awaiting confirmation
-    Confirmed = 2   // Lock confirmed by server
+    None = 0,       ///< No lock request in progress
+    Pending = 1,    ///< Lock request sent, awaiting server confirmation
+    Confirmed = 2   ///< Lock confirmed by server, target locked
 };
 
-// [COMBAT_AGENT] Component storing target lock information
+/**
+ * @brief Target lock component for lock-on targeting system
+ *
+ * Stores target lock state for server-authoritative targeting.
+ * The client initiates lock requests, and the server confirms
+ * whether the requested target is valid based on existence, alive state,
+ * and distance.
+ *
+ * ## Lock Lifecycle
+ * 1. Client submits a lock request for a target
+ * 2. Server validates the target and sets lockState to Confirmed or None
+ * 3. Server sends lock confirmation to the requesting client
+ *
+ * @note LockState is server-authoritative. Client-side predictions
+ * are overridden by server state.
+ *
+ * @see PhantomCamera for client-side lock UI
+ */
 struct TargetLock {
-    EntityID lockedTarget{entt::null};   // Currently locked target entity
-    LockState lockState{LockState::None}; // Current lock state
-    uint32_t lockTimeMs{0};              // Timestamp when lock was confirmed
-    uint32_t lastLockAttempt{0};         // Timestamp of last lock attempt (for rate limiting)
+    EntityID lockedTarget{entt::null};           ///< Currently locked target entity
+    LockState lockState{LockState::None};     ///< Lock lifecycle state
+    uint32_t lockTimeMs{0};                 ///< Timestamp when lock was confirmed
+    uint32_t lastLockAttempt{0};              ///< Last lock attempt timestamp (rate limiting)
 };
 
 // ============================================================================
 // SPATIAL COMPONENTS
 // ============================================================================
 
-// [PHYSICS_AGENT] Spatial hash cell tracking
+/**
+ * @brief Spatial hash grid cell identifier
+ *
+ * Used for efficient spatial queries and Area of Interest (AoI)
+ * determination. Entities are mapped to grid cells based on
+ * their XZ position.
+ *
+ * ## Grid Size
+ * Cell size is 10m × 10m, matching
+ * Constants::SPATIAL_HASH_CELL_SIZE and providing O(1)
+ * lookup for nearby entity queries.
+ *
+ * @see ReplicationOptimizer
+ * @see AreaOfInterest
+ */
 struct SpatialCell {
-    int32_t cellX{0};
-    int32_t cellZ{0};
-    uint32_t zoneId{0};
+    int32_t cellX{0};     ///< Grid cell X coordinate
+    int32_t cellZ{0};     ///< Grid cell Z coordinate
+    uint32_t zoneId{0};    ///< Zone identifier
 };
 
-// [PHYSICS_AGENT] Bounding volume for collision
+/**
+ * @brief Cylinder bounding volume for collision detection
+ *
+ * Simple cylindrical collision volume for character/NPC collision.
+ * Uses 2D circle intersection on XZ plane (y is ignored).
+ *
+ * ## Usage
+ * @code
+ * // Check if two entities could collide
+ * auto& vol = registry.get<BoundingVolume>(entityA);
+ * auto& posA = registry.get<Position>(entityA);
+ * auto& posB = registry.get<Position>(entityB);
+ * if (vol.intersects(posA, posB)) {
+ *     // Handle collision response
+ * }
+ * @endcode
+ *
+ * @note This is NOT a full physics collider. For physics
+ * simulation, use the physics engine integration.
+ */
 struct BoundingVolume {
-    float radius{0.5f};      // Cylinder radius
-    float height{1.8f};      // Cylinder height
+    float radius{0.5f};     ///< Cylinder radius in meters
+    float height{1.8f};      ///< Cylinder height in meters
 
+    /**
+     * @brief Check cylinder intersection (XZ plane only)
+     *
+     * Simple 2D circle intersection test.
+     * Does not check Y axis (height overlap).
+     *
+     * @param posA Position of first entity
+     * @param posB Position of second entity
+     * @return true if cylinders intersect
+     */
     [[nodiscard]] bool intersects(const Position& posA, const Position& posB) const {
         // 2D circle intersection (XZ plane)
         float dx = (posA.x - posB.x) * Constants::FIXED_TO_FLOAT;
@@ -247,29 +492,58 @@ struct BoundingVolume {
 // PLAYER COMPONENTS
 // ============================================================================
 
-// [DATABASE_AGENT] Player identification
+/**
+ * @brief Player identification and session attachment data
+ *
+ * Combines persistent player identity data with runtime metadata
+ * populated for the current authenticated session.
+ * Contains the permanent player ID, player display name,
+ * active connection handle, and session start timestamp.
+ *
+ * @note The persistent identity fields (for example `playerId`)
+ * are loaded from storage at login, while `connectionId` and
+ * `sessionStart` describe only the current live session and
+ * should not be assumed to persist across reconnects.
+ *
+ * @see ScyllaManager for database loading
+ */
 struct PlayerInfo {
-    uint64_t playerId{0};      // Persistent player ID from DB
-    uint32_t connectionId{0};  // Network connection handle
-    char username[32]{0};
-    uint64_t sessionStart{0};
+    uint64_t playerId{0};           ///< Persistent player ID from database
+    uint32_t connectionId{0};       ///< Active network connection
+    char username[32]{0};          ///< Player display name
+    uint64_t sessionStart{0};          ///< Session start timestamp
 };
 
-// [NETWORK_AGENT] Network connection state
+/**
+ * @brief Network connection state tracking
+ *
+ * Per-connection networking metrics for lag compensation
+ * and anti-cheat validation.
+ *
+ * @note Updated each network tick with incoming packets.
+ */
 struct NetworkState {
-    uint32_t lastInputSequence{0};
-    uint32_t lastInputTime{0};
-    uint32_t rttMs{0};
-    float packetLoss{0.0f};
-    uint32_t snapshotSequence{0};
+    uint32_t lastInputSequence{0};   ///< Last processed input sequence
+    uint32_t lastInputTime{0};        ///< Last input timestamp
+    uint32_t rttMs{0};               ///< Round-trip time estimate
+    float packetLoss{0.0f};          ///< Packet loss ratio (0-1)
+    uint32_t snapshotSequence{0};      ///< Last world snapshot number
 };
 
-// [SECURITY_AGENT] Anti-cheat tracking
+/**
+ * @brief Anti-cheat validation state
+ *
+ * Stores historical position data for speed hack and teleport
+ * detection. Tracks maximum recorded speed to identify
+ * potential cheating.
+ *
+ * @see AntiCheatHandler
+ */
 struct AntiCheatState {
-    Position lastValidPosition;
-    uint32_t lastValidationTime{0};
-    uint32_t suspiciousMovements{0};
-    float maxRecordedSpeed{0.0f};
+    Position lastValidPosition;         ///< Last validated position
+    uint32_t lastValidationTime{0};      ///< Last validation timestamp
+    uint32_t suspiciousMovements{0};   ///< Count of suspicious movements
+    float maxRecordedSpeed{0.0f};       ///< Maximum observed speed
     uint32_t inputCount{0};
     uint32_t inputWindowStart{0};
 };
