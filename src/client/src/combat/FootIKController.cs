@@ -25,7 +25,7 @@ namespace DarkAges.Combat
         
         private SkeletonIK3D _leftFootIK;
         private SkeletonIK3D _rightFootIK;
-        private AnimationStateMachine _animStateMachine;
+        private CombatStateMachineController _combatFsm;
         private CharacterBody3D _player;
         
         // Raycast states
@@ -55,7 +55,7 @@ namespace DarkAges.Combat
             
             _leftFootIK = GetParent().GetNode<SkeletonIK3D>("LeftFootIK");
             _rightFootIK = GetParent().GetNode<SkeletonIK3D>("RightFootIK");
-            _animStateMachine = GetParent().GetNodeOrNull<AnimationStateMachine>("AnimationStateMachine");
+            _combatFsm = GetParent().GetNodeOrNull<CombatStateMachineController>("CombatStateMachine");
             
             if (_leftFootIK == null || _rightFootIK == null)
             {
@@ -101,13 +101,13 @@ namespace DarkAges.Combat
         
         private bool ShouldDisableIK()
         {
-            if (_animStateMachine == null)
+            if (_combatFsm == null)
                 return false;
                 
-            var state = _animStateMachine.CurrentState;
-            return state == AnimationStateMachine.StateType.Dodging ||
-                   state == AnimationStateMachine.StateType.Hit ||
-                   state == AnimationStateMachine.StateType.Dead ||
+            var state = _combatFsm.CurrentState;
+            return state == CombatState.Dodge ||
+                   state == CombatState.Hit ||
+                   state == CombatState.Death ||
                    _player is CharacterBody3D cb && !cb.IsOnFloor();
         }
         
