@@ -184,7 +184,10 @@ public:
      *
      * Safe for broadcasts and bulk operations.
      *
-     * @param callback Function called with (entity, connectionId, playerInfo)
+     * @param callback Function called with (entity, connectionId, playerInfo).
+     *        The playerInfo pointer may be nullptr if the entity does not have
+     *        a PlayerInfo component, so callbacks must null-check before
+     *        dereferencing it.
      */
     void forEachPlayer(const std::function<void(EntityID, ConnectionID, const PlayerInfo*)>& callback);
 
