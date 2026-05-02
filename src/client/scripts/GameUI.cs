@@ -36,6 +36,14 @@ namespace DarkAges
         private Label? _goldLabel;
         
         private Main? _main;
+        
+        // DarkAges theme colors (consistent across all UI)
+        private static readonly Color ThemeDarkBg = new Color(0.08f, 0.08f, 0.12f, 0.9f);
+        private static readonly Color ThemePanelBg = new Color(0.12f, 0.12f, 0.18f, 0.95f);
+        private static readonly Color ThemeAccent = new Color(0.9f, 0.6f, 0.2f, 1.0f);  // Gold accent
+        private static readonly Color ThemeText = new Color(0.9f, 0.9f, 0.85f, 1.0f);    // Off-white text
+        private static readonly Color ThemeHighlight = new Color(0.2f, 0.6f, 0.9f, 1.0f);  // Blue highlight
+        private static readonly Color ThemeQuestComplete = new Color(0.2f, 0.8f, 0.3f, 1.0f); // Green for completion
 
         public override void _Ready()
         {
@@ -250,6 +258,9 @@ namespace DarkAges
             _interactionPanel.OffsetRight = -10;
             _interactionPanel.OffsetBottom = -60;
             _interactionPanel.Visible = false;
+            // Theme styling
+            _interactionPanel.Modulate = ThemePanelBg;
+            _interactionPanel.AddThemeStyleBoxOverride("panel", CreateThemedPanelStyle());
             AddChild(_interactionPanel);
             
             var container = new HBoxContainer();
@@ -260,7 +271,21 @@ namespace DarkAges
             _interactionPrompt = new Label();
             _interactionPrompt.Text = "[E] Interact";
             _interactionPrompt.HorizontalAlignment = HorizontalAlignment.Center;
+            _interactionPrompt.Modulate = ThemeAccent;
+            _interactionPrompt.AddThemeFontSizeOverride("font_size", 18);
             container.AddChild(_interactionPrompt);
+        }
+        
+        private StyleBoxFlat CreateThemedPanelStyle()
+        {
+            var style = new StyleBoxFlat();
+            style.BgColor = ThemePanelBg;
+            style.CornerRadiusTopLeft = 8;
+            style.CornerRadiusTopRight = 8;
+            style.CornerRadiusBottomLeft = 8;
+            style.CornerRadiusBottomRight = 8;
+            style.SetContentMargins(10, 10, 10, 10);
+            return style;
         }
         
         private void OnEntityInteractionRange(EntityData data)
@@ -345,6 +370,9 @@ namespace DarkAges
             _dialoguePanel.SizeFlagsVertical = Control.SizeFlags.ShrinkCenter;
             _dialoguePanel.SetSize(new Vector2(400, 300));
             _dialoguePanel.Visible = false;
+            // Theme styling
+            _dialoguePanel.Modulate = ThemePanelBg;
+            _dialoguePanel.AddThemeStyleBoxOverride("panel", CreateThemedPanelStyle());
             AddChild(_dialoguePanel);
             
             var vbox = new VBoxContainer();
@@ -354,11 +382,13 @@ namespace DarkAges
             
             _dialogueNpcName = new Label();
             _dialogueNpcName.Text = "NPC Name";
+            _dialogueNpcName.Modulate = ThemeAccent;
             _dialogueNpcName.AddThemeFontSizeOverride("font_size", 18);
             vbox.AddChild(_dialogueNpcName);
             
             _dialogueText = new Label();
             _dialogueText.Text = "Dialogue text...";
+            _dialogueText.Modulate = ThemeText;
             _dialogueText.AutowrapMode = TextServer.AutowrapMode.Word;
             vbox.AddChild(_dialogueText);
             
@@ -426,6 +456,9 @@ namespace DarkAges
             _questPanel.OffsetRight = -10;
             _questPanel.OffsetBottom = 130;
             _questPanel.Visible = false;
+            // Theme styling
+            _questPanel.Modulate = ThemePanelBg;
+            _questPanel.AddThemeStyleBoxOverride("panel", CreateThemedPanelStyle());
             AddChild(_questPanel);
             
             var vbox = new VBoxContainer();
@@ -435,17 +468,20 @@ namespace DarkAges
             
             var title = new Label();
             title.Text = "Quests";
+            title.Modulate = ThemeAccent;
             title.AddThemeFontSizeOverride("font_size", 14);
             title.HorizontalAlignment = HorizontalAlignment.Center;
             vbox.AddChild(title);
             
             _questTitle = new Label();
             _questTitle.Text = "No active quests";
+            _questTitle.Modulate = ThemeText;
             _questTitle.AddThemeFontSizeOverride("font_size", 12);
             vbox.AddChild(_questTitle);
             
             _questProgress = new Label();
             _questProgress.Text = "";
+            _questProgress.Modulate = ThemeText;
             _questProgress.AddThemeFontSizeOverride("font_size", 11);
             vbox.AddChild(_questProgress);
         }
@@ -464,10 +500,12 @@ namespace DarkAges
             {
                 if (completed)
                 {
+                    _questProgress.Modulate = ThemeQuestComplete;
                     _questProgress.Text = "COMPLETED!";
                 }
                 else
                 {
+                    _questProgress.Modulate = ThemeText;
                     _questProgress.Text = $"{current} / {required}";
                 }
             }
@@ -487,6 +525,9 @@ namespace DarkAges
             _inventoryPanel.OffsetRight = 200;
             _inventoryPanel.OffsetBottom = -10;
             _inventoryPanel.Visible = false;
+            // Theme styling
+            _inventoryPanel.Modulate = ThemePanelBg;
+            _inventoryPanel.AddThemeStyleBoxOverride("panel", CreateThemedPanelStyle());
             AddChild(_inventoryPanel);
             
             var hbox = new HBoxContainer();
@@ -496,10 +537,12 @@ namespace DarkAges
             
             var goldIcon = new Label();
             goldIcon.Text = "Gold: ";
+            goldIcon.Modulate = ThemeAccent;
             hbox.AddChild(goldIcon);
             
             _goldLabel = new Label();
             _goldLabel.Text = "0";
+            _goldLabel.Modulate = ThemeQuestComplete;
             hbox.AddChild(_goldLabel);
         }
         
