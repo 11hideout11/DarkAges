@@ -36,7 +36,7 @@
 ### PRD-008: Node-Based Combat FSM Template
 - ✅ Created: `CombatStateMachine.tscn` scene with AnimationTree structure
 - ✅ Created: `CombatStateMachineController.cs` (C# controller script)
-- 📋 Integration pending: Connect to Player.tscn/RemotePlayer.tscn
+- ✅ INTEGRATED: FSM wired to Player.tscn/RemotePlayer.tscn, input plumbed in PredictedPlayer.cs
 
 ### PRD-009: Demo Zones with Objectives
 - ✅ Zone configs enriched with objectives, events, wave configuration
@@ -76,7 +76,7 @@
 - ✅ Created: `ProceduralLeaning.cs` - Velocity-based tilt
 
 ### PRD-016: SDFGI/SSAO Lighting
-- 📋 Not started - requires Godot rendering expertise
+- ✅ IMPLEMENTED in `Main.tscn` lines 36-38: sdfgi_enabled=true, ssao_enabled=true, ssil_enabled=true
 
 ---
 
