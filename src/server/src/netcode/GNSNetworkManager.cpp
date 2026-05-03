@@ -472,6 +472,110 @@ void GNSNetworkManager::dumpStats() const {
     std::cout << "  Connected: " << connected << "\n";
 }
 
+
+void GNSNetworkManager::sendInventorySync(ConnectionID connectionId, const Protocol::InventorySyncPacket& pkt) {
+    auto handle = getConnectionHandle(connectionId);
+    if (handle == 0 || !sockets_) return;
+
+    // Serialize packet
+    auto payload = Protocol::serializeInventorySync(pkt);
+    if (payload.empty()) return;
+
+    // Build full packet: [type:1][payload]
+    std::vector<uint8_t> packet;
+    packet.reserve(1 + payload.size());
+    packet.push_back(static_cast<uint8_t>(Protocol::PacketType::PACKET_INVENTORY_SYNC));
+    packet.insert(packet.end(), payload.begin(), payload.end());
+
+    // Send reliably to ensure inventory data arrives
+    sockets_->SendMessageToConnection(handle, packet.data(), static_cast<uint32_t>(packet.size()),
+                                      k_nSteamNetworkingSend_Reliable, nullptr);
+    
+    // Update stats
+    std::lock_guard<std::mutex> lock(connectionsMutex_);
+    auto it = connections_.find(connectionId);
+    if (it != connections_.end()) {
+        it->second.stats.bytes_sent += packet.size();
+        it->second.stats.packets_sent++;
+    }
+}
+
+void GNSNetworkManager::sendInventoryUpdate(ConnectionID connectionId, const Protocol::InventoryUpdatePacket& pkt) {
+    auto handle = getConnectionHandle(connectionId);
+    if (handle == 0 || !sockets_) return;
+
+    auto payload = Protocol::serializeInventoryUpdate(pkt);
+    if (payload.empty()) return;
+
+    std::vector<uint8_t> packet;
+    packet.reserve(1 + payload.size());
+    packet.push_back(static_cast<uint8_t>(Protocol::PacketType::PACKET_INVENTORY_UPDATE));
+    packet.insert(packet.end(), payload.begin(), payload.end());
+
+    sockets_->SendMessageToConnection(handle, packet.data(), static_cast<uint32_t>(packet.size()),
+                                      k_nSteamNetworkingSend_Reliable, nullptr);
+    
+    std::lock_guard<std::mutex> lock(connectionsMutex_);
+    auto it = connections_.find(connectionId);
+    if (it != connections_.end()) {
+        it->second.stats.bytes_sent += packet.size();
+        it->second.stats.packets_sent++;
+    }
+}
+
+void GNSNetworkManager::sendDialogueStart(ConnectionID connectionId, const Protocol::DialogueStartPacket& pkt) {
+    auto handle = getConnectionHandle(connectionId);
+    if (handle == 0 || !sockets_) return;
+
+    // Serialize payload
+    auto payload = Protocol::serializeDialogueStart(pkt);
+    if (payload.empty()) return;
+
+    // Build packet: [type:1][payload:N]
+    std::vector<uint8_t> packet;
+    packet.reserve(1 + payload.size());
+    packet.push_back(static_cast<uint8_t>(Protocol::PacketType::DialogueStart));
+    packet.insert(packet.end(), payload.begin(), payload.end());
+
+    // Send reliably
+    sockets_->SendMessageToConnection(handle, packet.data(), static_cast<uint32_t>(packet.size()),
+                                      k_nSteamNetworkingSend_Reliable, nullptr);
+
+    // Update stats
+    std::lock_guard<std::mutex> lock(connectionsMutex_);
+    auto it = connections_.find(connectionId);
+    if (it != connections_.end()) {
+        it->second.stats.bytes_sent += packet.size();
+        it->second.stats.packets_sent++;
+    }
+}
+
+void GNSNetworkManager::sendDialogueResponse(ConnectionID connectionId, const Protocol::DialogueResponsePacket& pkt) {
+    auto handle = getConnectionHandle(connectionId);
+    if (handle == 0 || !sockets_) return;
+
+    // Serialize payload
+    auto payload = Protocol::serializeDialogueResponse(pkt);
+    if (payload.empty()) return;
+
+    // Build packet: [type:1][payload:N]
+    std::vector<uint8_t> packet;
+    packet.reserve(1 + payload.size());
+    packet.push_back(static_cast<uint8_t>(Protocol::PacketType::DialogueResponse));
+    packet.insert(packet.end(), payload.begin(), payload.end());
+
+    // Send reliably
+    sockets_->SendMessageToConnection(handle, packet.data(), static_cast<uint32_t>(packet.size()),
+                                      k_nSteamNetworkingSend_Reliable, nullptr);
+
+    // Update stats
+    std::lock_guard<std::mutex> lock(connectionsMutex_);
+    auto it = connections_.find(connectionId);
+    if (it != connections_.end()) {
+        it->second.stats.bytes_sent += packet.size();
+        it->second.stats.packets_sent++;
+    }
+}
 } // namespace Netcode
 } // namespace DarkAges
 

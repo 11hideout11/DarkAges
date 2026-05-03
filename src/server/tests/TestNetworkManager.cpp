@@ -7,6 +7,7 @@
 #include "netcode/NetworkManager.hpp"
 #include "ecs/CoreTypes.hpp"
 #include "Constants.hpp"
+#include <atomic>
 
 using namespace DarkAges;
 using Catch::Approx;
@@ -35,7 +36,7 @@ TEST_CASE("PacketType enum values are distinct", "[network]") {
     CHECK(static_cast<uint8_t>(PacketType::ServerSnapshot) == 2);
     CHECK(static_cast<uint8_t>(PacketType::ReliableEvent) == 3);
     CHECK(static_cast<uint8_t>(PacketType::Ping) == 4);
-    CHECK(static_cast<uint8_t>(PacketType::Handshake) == 5);
+    CHECK(static_cast<uint8_t>(PacketType::LockOnRequest) == 5);
     CHECK(static_cast<uint8_t>(PacketType::Disconnect) == 6);
 }
 
@@ -45,7 +46,7 @@ TEST_CASE("PacketType all values unique", "[network]") {
         static_cast<uint8_t>(PacketType::ServerSnapshot),
         static_cast<uint8_t>(PacketType::ReliableEvent),
         static_cast<uint8_t>(PacketType::Ping),
-        static_cast<uint8_t>(PacketType::Handshake),
+        static_cast<uint8_t>(PacketType::LockOnRequest),
         static_cast<uint8_t>(PacketType::Disconnect),
     };
     std::sort(values.begin(), values.end());
@@ -295,3 +296,66 @@ TEST_CASE("ConnectionID can store large values", "[network]") {
     CHECK(large != INVALID_CONNECTION);
     CHECK(large == UINT32_MAX);
 }
+
+
+    // ============================================================================
+    // NetworkManager behavioral tests (autonomous expansion)
+    // ============================================================================
+
+
+    // ============================================================================
+    // NetworkManager behavioral tests (autonomous expansion)
+    // ============================================================================
+
+    TEST_CASE("NetworkManager is a complete type", "[networkmanager]") {
+        REQUIRE(sizeof(NetworkManager) > 0);
+    }
+
+    TEST_CASE("NetworkManager initialize/shutdown lifecycle", "[networkmanager]") {
+        NetworkManager obj;
+
+        SECTION("initialize returns true") {
+            REQUIRE(obj.initialize());
+        }
+
+        SECTION("shutdown before init is safe") {
+            REQUIRE_NOTHROW(obj.shutdown());
+        }
+
+        SECTION("double initialize is safe") {
+            REQUIRE(obj.initialize());
+            REQUIRE_NOTHROW(obj.initialize());
+        }
+
+        SECTION("shutdown after init is safe") {
+            obj.initialize();
+            REQUIRE_NOTHROW(obj.shutdown());
+        }
+    }
+
+    TEST_CASE("NetworkManager update requires time parameter", "[networkmanager]") {
+        NetworkManager obj;
+        obj.initialize();
+        REQUIRE_NOTHROW(obj.update(0));
+        REQUIRE_NOTHROW(obj.update(100));
+        for (int i = 0; i < 10; ++i) {
+            REQUIRE_NOTHROW(obj.update(i * 16));
+        }
+    }
+
+    TEST_CASE("NetworkManager callback setters are noexcept", "[networkmanager]") {
+        NetworkManager obj;
+        obj.initialize();
+        // Public callback setters should accept any callable without throwing
+        REQUIRE_NOTHROW(obj.setOnClientConnected([](ConnectionID) {}));
+        REQUIRE_NOTHROW(obj.setOnClientDisconnected([](ConnectionID) {}));
+        REQUIRE_NOTHROW(obj.setOnInputReceived([](const ClientInputPacket&) {}));
+        REQUIRE_NOTHROW(obj.setOnCombatAction([](const CombatActionPacket&) {}));
+        REQUIRE_NOTHROW(obj.setOnLockOnRequest([](const LockOnRequestPacket&) {}));
+        REQUIRE_NOTHROW(obj.setOnChatReceived([](ConnectionID, const ChatMessage&) {}));
+        REQUIRE_NOTHROW(obj.setOnQuestActionReceived([](const QuestActionPacket&) {}));
+        REQUIRE_NOTHROW(obj.setOnDialogueResponseReceived([](const Protocol::DialogueResponsePacket&) {}));
+    }
+
+    // Note: Connection status callbacks (SteamNetConnectionStatusChangedCallback,
+    // onConnectionStatusChanged) are internal GNS mechanisms exercised via init/shutdown.

@@ -488,7 +488,7 @@ void NetworkManager::update(uint32_t currentTimeMs) {
                     }
 
                     // --- GNS receive-side: handle client->server packets (previously unimplemented) ---
-                    case 5: { // PACKET_LOCK_ON_REQUEST
+                    case PacketType::LockOnRequest: { // PACKET_LOCK_ON_REQUEST
                         if (msg->m_cbSize < 13) break;
                         uint32_t targetEntity = *reinterpret_cast<const uint32_t*>(static_cast<const uint8_t*>(msg->m_pData) + 1);
                         uint32_t clientTimestamp = *reinterpret_cast<const uint32_t*>(static_cast<const uint8_t*>(msg->m_pData) + 5);
@@ -521,14 +521,14 @@ void NetworkManager::update(uint32_t currentTimeMs) {
                         break;
                     }
 
-                    case 9: { // PACKET_RESPAWN_REQUEST
+                    case PacketType::RespawnRequest: { // PACKET_RESPAWN_REQUEST
                         if (msg->m_cbSize < 5) break;
                         uint32_t entityId = *reinterpret_cast<const uint32_t*>(static_cast<const uint8_t*>(msg->m_pData) + 1);
                         pendingRespawnRequests_.push_back(static_cast<EntityID>(entityId));
                         break;
                     }
 
-                    case 10: { // PACKET_COMBAT_ACTION
+                    case PacketType::CombatAction: { // PACKET_COMBAT_ACTION
                         if (msg->m_cbSize < 10) break;
                         uint8_t actionType = static_cast<const uint8_t*>(msg->m_pData)[1];
                         uint32_t targetEntity = *reinterpret_cast<const uint32_t*>(static_cast<const uint8_t*>(msg->m_pData) + 2);
@@ -549,7 +549,7 @@ void NetworkManager::update(uint32_t currentTimeMs) {
                         break;
                     }
 
-                    case 14: { // PACKET_CHAT
+                    case PacketType::Chat: { // PACKET_CHAT
                         if (msg->m_cbSize < 8) break;
                         uint8_t channel = static_cast<const uint8_t*>(msg->m_pData)[1];
                         uint32_t targetEntity = *reinterpret_cast<const uint32_t*>(static_cast<const uint8_t*>(msg->m_pData) + 2);
@@ -574,7 +574,7 @@ void NetworkManager::update(uint32_t currentTimeMs) {
                         break;
                     }
 
-                    case 16: { // PACKET_QUEST_ACTION
+                    case PacketType::QuestAction: { // PACKET_QUEST_ACTION
                         if (msg->m_cbSize < 10) break;
                         QuestActionPacket qap;
                         qap.connectionId = connId;
@@ -1032,6 +1032,26 @@ void NetworkManager::setConnectionEntityId(ConnectionID connectionId, EntityID e
     if (it != internal_->connections.end()) {
         it->second.entityId = entityId;
     }
+}
+
+void NetworkManager::sendInventorySync(ConnectionID connectionId, const Protocol::InventorySyncPacket& pkt) {
+    auto payload = Protocol::serializeInventorySync(pkt);
+    if (payload.empty()) return;
+    std::vector<uint8_t> packet;
+    packet.reserve(1 + payload.size());
+    packet.push_back(static_cast<uint8_t>(Protocol::PacketType::PACKET_INVENTORY_SYNC));
+    packet.insert(packet.end(), payload.begin(), payload.end());
+    sendEvent(connectionId, std::span<const uint8_t>(packet));
+}
+
+void NetworkManager::sendInventoryUpdate(ConnectionID connectionId, const Protocol::InventoryUpdatePacket& pkt) {
+    auto payload = Protocol::serializeInventoryUpdate(pkt);
+    if (payload.empty()) return;
+    std::vector<uint8_t> packet;
+    packet.reserve(1 + payload.size());
+    packet.push_back(static_cast<uint8_t>(Protocol::PacketType::PACKET_INVENTORY_UPDATE));
+    packet.insert(packet.end(), payload.begin(), payload.end());
+    sendEvent(connectionId, std::span<const uint8_t>(packet));
 }
 
 } // namespace DarkAges

@@ -36,7 +36,11 @@ enum class PacketType : uint8_t {
     LockOnRequest = 5,    // Client -> Server: request target lock-on
     Disconnect = 6,       // Graceful disconnect
     DialogueStart = 7,    // Server -> Client: Begin dialogue with NPC
-    DialogueResponse = 8  // Client -> Server: Player selected dialogue option
+    DialogueResponse = 8,  // Client -> Server: Player selected dialogue option
+    RespawnRequest = 9,    // Client -> Server: Request respawn after death
+    CombatAction = 10,     // Client -> Server: Attack/ability activation
+    Chat = 14,             // Client -> Server: Chat message
+    QuestAction = 16       // Client -> Server: Quest accept/complete
 };
 
 // Connection quality metrics

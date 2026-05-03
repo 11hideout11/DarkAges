@@ -1,16 +1,16 @@
 ## Recent Commits (last 12 — updated 2026-05-03)
 
-1. `1eca781`: Merge PR — UI style overhaul (panel animations, hover effects, theme enhancements)
-2. `ca179e3`: Merge PR — Boss zone npc_presets added to boss.json
-3. `f720726`: Merge PR — PRD gap analysis complete (15 gaps documented, objectives to all zones)
-4. `05915a1`: fix(boss-zone): add npc_presets to boss.json
-5. `dacc3e3`: chore: mark UI style overhaul complete in TASK_QUEUE
-6. `34f963b`: feat(client): UI style overhaul — enhanced theme system and animations
-7. `83b9708`: fix(prd): complete gap analysis — objectives to all zones, fix quests.json
-8. `89ce2d8`: Merge PR #83 — Client warnings cleanup (CS8618 documented)
-9. `e421f3a`: fix(data): fix duplicate closing brace in quests.json
-10. `34869f2`: docs: update PLAN.md with completions
-11. `fc3168d`: fix(client): enable NPC proximity check for dialogue
+1. `0978401`: feat(gns): complete GNS receive-side integration + headless SafeAddChild
+2. `4a3108d`: feat(protocol): add entityType byte to snapshots + wire NPC proximity check
+3. `bc48895`: fix(client): wire InteractionPrompt into NPCManager proximity check
+4. `1eca781`: Merge PR — UI style overhaul (panel animations, hover effects, theme enhancements)
+5. `ca179e3`: Merge PR — Boss zone npc_presets added to boss.json
+6. `f720726`: Merge PR — PRD gap analysis complete (15 gaps documented, objectives to all zones)
+7. `05915a1`: fix(boss-zone): add npc_presets to boss.json
+8. `dacc3e3`: chore: mark UI style overhaul complete in TASK_QUEUE
+9. `34f963b`: feat(client): UI style overhaul — enhanced theme system and animations
+10. `83b9708`: fix(prd): complete gap analysis — objectives to all zones, fix quests.json
+11. `89ce2d8`: Merge PR #83 — Client warnings cleanup (CS8618 documented)
 12. `0c37f62`: feat(server): add data-driven boss encounter system
 
 ## State (2026-05-03 — updated post-merge)
@@ -54,7 +54,7 @@
 | PRD-017 (Protocol Decouple) | ✅ Complete | Protocol.cpp uses FlatBuffers only, not GNS |
 | PRD-018 (Production DB) | ⚠️ Blocked | Docker-compose exists; requires Docker daemon |
 | PRD-019 (Blend Spaces) | ✅ Complete | LocomotionBlendTree.tres with BlendSpace2D |
-| PRD-020 (Headless Fixes) | ✅ Complete | CallDeferred AddChild patch merged |
+|| PRD-020 (Headless Fixes) | 🔄 Partial | CallDeferred patch merged; CI stability work pending (demo validator robustness, scene tree leak prevention)
 | PRD-021 (Validator Conns) | ✅ RESOLVED | No WebSocket client exists |
 | PRD-022 (FSM Finalize) | ✅ Complete | Usage guide created (docs/state-machine-usage.md) |
 | PRD-023 (Combat Text) | ✅ Complete | CombatEventSystem + CombatTextSystem in Main.tscn |

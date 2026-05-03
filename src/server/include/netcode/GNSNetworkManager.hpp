@@ -4,6 +4,7 @@
 // Production-ready networking with encryption, reliable channels, and NAT traversal
 
 #include "ecs/CoreTypes.hpp"
+#include "netcode/Protocol.hpp"
 #include <string>
 #include <functional>
 #include <memory>
@@ -89,7 +90,11 @@ public:
     void sendToClient(ConnectionID connectionId, const void* data, size_t size, bool reliable = false);
     void broadcast(const void* data, size_t size, bool reliable = false);
     void broadcastExcept(ConnectionID excludeId, const void* data, size_t size, bool reliable = false);
-    
+    // Packet-specific sends (Protocol::)
+    void sendInventorySync(ConnectionID connectionId, const Protocol::InventorySyncPacket& pkt);
+    void sendInventoryUpdate(ConnectionID connectionId, const Protocol::InventoryUpdatePacket& pkt);
+    void sendDialogueStart(ConnectionID connectionId, const Protocol::DialogueStartPacket& pkt);
+    void sendDialogueResponse(ConnectionID connectionId, const Protocol::DialogueResponsePacket& pkt);
     // Receive messages
     std::vector<ClientInputPacket> getPendingInputs();
     

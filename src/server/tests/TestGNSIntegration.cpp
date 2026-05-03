@@ -222,7 +222,7 @@ TEST_CASE("GNS Packet Type Enumeration", "[network][gns]") {
         REQUIRE(static_cast<uint8_t>(PacketType::ServerSnapshot) == 2);
         REQUIRE(static_cast<uint8_t>(PacketType::ReliableEvent) == 3);
         REQUIRE(static_cast<uint8_t>(PacketType::Ping) == 4);
-        REQUIRE(static_cast<uint8_t>(PacketType::Handshake) == 5);
+        REQUIRE(static_cast<uint8_t>(PacketType::LockOnRequest) == 5);
         REQUIRE(static_cast<uint8_t>(PacketType::Disconnect) == 6);
     }
 }
