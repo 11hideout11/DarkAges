@@ -17,6 +17,10 @@ struct QuestUpdatePacket;
 // Forward declaration for zone objective update packet
 struct ZoneObjectiveUpdatePacket;
 
+// Forward declaration for inventory sync packet
+struct InventorySyncPacket;
+struct InventoryUpdatePacket;
+
 namespace Protocol {
 
 enum class MessageType : uint8_t {
@@ -40,7 +44,9 @@ enum class PacketType : uint8_t {
     PACKET_CHAT = 14,
     PACKET_QUEST_UPDATE = 15,
     PACKET_QUEST_ACTION = 16,
-    PACKET_ZONE_OBJECTIVE_UPDATE = 18
+    PACKET_ZONE_OBJECTIVE_UPDATE = 18,
+    PACKET_INVENTORY_SYNC = 19,      // Server -> Client: full inventory sync on login
+    PACKET_INVENTORY_UPDATE = 20    // Server -> Client: incremental inventory change
 };
 
 // Serialize ZoneObjectiveUpdatePacket for UDP delivery
@@ -90,6 +96,40 @@ std::vector<uint8_t> serializeDialogueResponse(const DialogueResponsePacket& pkt
 
 // Deserialize DialogueResponsePacket from UDP buffer
 bool deserializeDialogueResponse(std::span<const uint8_t> data, DialogueResponsePacket& outPkt);
+
+// ============================================================================
+// Inventory Packet Payloads
+// ============================================================================
+
+// Server -> Client: full inventory sync on login
+// Wire format: [type:1=19][gold:4][slotCount:4][slots: 8 * 24 = 192]
+// Each slot: itemId:4, quantity:4
+struct InventorySyncPacket {
+    float gold{0.0f};
+    uint32_t slotCount{24};
+    struct Slot { uint32_t itemId{0}; uint32_t quantity{0}; } slots[24];
+};
+
+// Serialize InventorySyncPacket to UDP buffer
+std::vector<uint8_t> serializeInventorySync(const InventorySyncPacket& pkt);
+
+// Deserialize InventorySyncPacket from UDP buffer
+bool deserializeInventorySync(std::span<const uint8_t> data, InventorySyncPacket& outPkt);
+
+// Server -> Client: incremental inventory update
+// Wire format: [type:1=20][slotIndex:1][itemId:4][quantity:4]
+// quantity=0 means clear slot
+struct InventoryUpdatePacket {
+    uint8_t slotIndex{0};
+    uint32_t itemId{0};
+    uint32_t quantity{0};
+};
+
+// Serialize InventoryUpdatePacket to UDP buffer
+std::vector<uint8_t> serializeInventoryUpdate(const InventoryUpdatePacket& pkt);
+
+// Deserialize InventoryUpdatePacket from UDP buffer
+bool deserializeInventoryUpdate(std::span<const uint8_t> data, InventoryUpdatePacket& outPkt);
 
 } // namespace Protocol
 } // namespace DarkAges

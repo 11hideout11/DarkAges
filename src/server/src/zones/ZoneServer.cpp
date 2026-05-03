@@ -1211,8 +1211,28 @@ void ZoneServer::onClientConnected(ConnectionID connectionId) {
     zoneObjectiveSystem_.OnPlayerEnterZone(
         entity, static_cast<uint16_t>(config_.zoneId), buildZoneDefinition());
 
+    // [PRD-029] Build and send inventory sync to new client
+    sendInventorySyncToClient(connectionId, entity);
+
     std::cout << "[ZONE " << config_.zoneId << "] Spawned entity " << static_cast<uint32_t>(entity)
               << " for connection " << connectionId << std::endl;
+}
+
+void ZoneServer::sendInventorySyncToClient(ConnectionID connectionId, EntityID entity) {
+    // Build inventory sync packet from player's inventory
+    auto* inv = registry_.try_get<Inventory>(entity);
+    if (!inv) return;
+
+    Protocol::InventorySyncPacket pkt;
+    pkt.gold = inv->gold;
+    pkt.slotCount = inv->slotCount;
+
+    for (uint32_t i = 0; i < inv->slotCount && i < 24; ++i) {
+        pkt.slots[i].itemId = inv->slots[i].itemId;
+        pkt.slots[i].quantity = inv->slots[i].quantity;
+    }
+
+    network_->sendInventorySync(connectionId, pkt);
 }
 
 void ZoneServer::onClientDisconnected(ConnectionID connectionId) {

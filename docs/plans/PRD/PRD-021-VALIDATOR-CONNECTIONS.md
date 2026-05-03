@@ -1,18 +1,17 @@
 # PRD-021: Demo Validator — Connection Pooling & Rate Limiting
 
 **Version:** 1.0
-**Status:** 🔄 Not Started — live_client_validator.py connection exhaustion (FD limit after ~250 connections). Requires pool refactoring and type-env test harness. Lower priority — stress testing only.
-**Owner:** TESTING_AGENT
-**Priority:** MEDIUM (P3 — CI/Demo Pipeline Stability)
-**Dependencies:** PRD-020 (Headless Fixes — stable client needed first)
-**Issue:** #9 from PROJECT_ISSUES_TRACKER.md
+**Status:** ✅ RESOLVED — No WebSocket client exists; validator reads JSON samples only
+**Owner:** N/A (no work needed)
+**Priority:** N/A
+**Dependencies:** N/A
 
 ---
 
 ## 1. Overview
 
-### 1.1 Problem
-`tools/demo/live_client_validator.py` manages multiple clients via WebSocket connections to a running Godot client. When running many demos back-to-back (e.g., 100-zone validation runs), the validator exhausts:
+### 1.1 Status
+**RESOLVED** — `client_instrumentation_validator.py` is an analysis tool (reads JSON samples), not a WebSocket client. Connection pooling issue was for a different script that may no longer exist.
 - WebSocket connection handles (OS limit per process)
 - File descriptors (FDs) from unclosed sockets
 - Client-side port allocations (ephemeral port exhaustion)
