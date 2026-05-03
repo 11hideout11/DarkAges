@@ -132,8 +132,16 @@
 - ✅ InventorySyncPacket and InventoryUpdatePacket protocol structs
 - ✅ Server: NetworkManager send methods implemented
 - ✅ ZoneServer: sends inventory sync on player connect
-- ⚠️ InventoryPanel signal handlers (code-complete)
-- ✅ TSCN: QuestTracker.tscn updated with ZoneObjectiveList RichTextLabel
+- ✅ InventoryPanel signal handlers wired to NetworkManager
+- ✅ Item name/color lookups added
+
+---
+
+## PRD-030: Zone Objective Client Replication
+- ✅ ZoneObjectiveSystem event emission implemented
+- ✅ PACKET_ZONE_OBJECTIVE_UPDATE in Protocol.cpp
+- ✅ NetworkManager.ProcessZoneObjectiveUpdate signal
+- ✅ QuestTracker.tscn displays zone objectives
 
 ---
 
