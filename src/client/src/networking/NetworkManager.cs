@@ -65,6 +65,10 @@ namespace DarkAges.Networking
     public delegate void ZoneObjectiveUpdateReceivedEventHandler(byte eventType, string objectiveId, ushort currentProgress, ushort requiredProgress, byte waveNumber, string message);
     [Signal]
     public delegate void DialogueStartReceivedEventHandler(uint npcId, uint dialogueId, string npcName, string dialogueText, string[] options);
+    [Signal]
+    public delegate void InventorySyncReceivedEventHandler(float gold, int[] itemIds, int[] quantities);
+    [Signal]
+    public delegate void InventoryUpdateReceivedEventHandler(int slotIndex, int itemId, int quantity);
 
  // Socket
         private UdpClient? _udpClient;
@@ -105,6 +109,8 @@ namespace DarkAges.Networking
         private const byte PACKET_QUEST_ACTION = 16;        // Client -> Server: accept/complete quest
         private const byte PACKET_DIALOGUE_START = 17;      // Server -> Client: begin NPC dialogue
         private const byte PACKET_ZONE_OBJECTIVE_UPDATE = 18; // Server -> Client: zone objective progress/events
+        private const byte PACKET_INVENTORY_SYNC = 19;       // Server -> Client: full inventory sync on login
+        private const byte PACKET_INVENTORY_UPDATE = 20;      // Server -> Client: incremental inventory change
         private const byte PACKET_DIALOGUE_RESPONSE = 8;  // Client -> Server: dialogue option selected
 
         public override void _EnterTree()
@@ -452,6 +458,12 @@ namespace DarkAges.Networking
 
                 case PACKET_ZONE_OBJECTIVE_UPDATE:
                     ProcessZoneObjectiveUpdate(data);
+                    break;
+                case PACKET_INVENTORY_SYNC:
+                    ProcessInventorySync(data);
+                    break;
+                case PACKET_INVENTORY_UPDATE:
+                    ProcessInventoryUpdate(data);
                     break;
                 default:
                     GD.Print($"[NetworkManager] Unknown packet type: {packetType}");
@@ -988,6 +1000,49 @@ namespace DarkAges.Networking
 
             GD.Print($"[NetworkManager] Chat from {senderName} (chan:{channel}): {message}");
             EmitSignal(SignalName.ChatMessageReceived, senderId, channel, senderName, message);
+        }
+
+        /// <summary>
+        /// Process full inventory sync from server on login.
+        /// Format: [type:1=19][gold:4][slotCount:4][slots: 8*24]
+        /// </summary>
+        private void ProcessInventorySync(byte[] data)
+        {
+            if (data.Length < 9) return;
+
+            float gold = BitConverter.ToSingle(data, 1);
+            uint slotCount = BitConverter.ToUInt32(data, 5);
+            slotCount = Math.Min(slotCount, 24);
+
+            int[] itemIds = new int[slotCount];
+            int[] quantities = new int[slotCount];
+
+            int offset = 9;
+            for (uint i = 0; i < slotCount && offset + 8 <= data.Length; i++)
+            {
+                itemIds[i] = BitConverter.ToInt32(data, offset);
+                quantities[i] = BitConverter.ToInt32(data, offset + 4);
+                offset += 8;
+            }
+
+            GD.Print($"[NetworkManager] Inventory sync: gold={gold}, slots={slotCount}");
+            EmitSignal(SignalName.InventorySyncReceived, gold, itemIds, quantities);
+        }
+
+        /// <summary>
+        /// Process incremental inventory update from server.
+        /// Format: [type:1=20][slotIndex:1][itemId:4][quantity:4]
+        /// </summary>
+        private void ProcessInventoryUpdate(byte[] data)
+        {
+            if (data.Length < 10) return;
+
+            int slotIndex = data[1];
+            int itemId = BitConverter.ToInt32(data, 2);
+            int quantity = BitConverter.ToInt32(data, 6);
+
+            GD.Print($"[NetworkManager] Inventory update: slot={slotIndex} item={itemId} qty={quantity}");
+            EmitSignal(SignalName.InventoryUpdateReceived, slotIndex, itemId, quantity);
         }
     }
 }

@@ -35,10 +35,27 @@ namespace DarkAges.Client.UI
             _isVisible = VisibleByDefault;
             Visible = _isVisible;
             
-            // Populate with demo items
+            // Connect to network signals if NetworkManager available
+            if (NetworkManager.Instance != null)
+            {
+                NetworkManager.Instance.InventorySyncReceived += OnInvSync;
+                NetworkManager.Instance.InventoryUpdateReceived += OnInvUpdate;
+                GD.Print("[InventoryPanel] Network connected");
+            }
+            
+            // Populate with demo items (fallback)
             PopulateDemoItems();
             
             GD.Print($"[InventoryPanel] Initialized with {SlotCount} slots");
+        }
+        
+        public override void _ExitTree()
+        {
+            if (NetworkManager.Instance != null)
+            {
+                NetworkManager.Instance.InventorySyncReceived -= OnInvSync;
+                NetworkManager.Instance.InventoryUpdateReceived -= OnInvUpdate;
+            }
         }
         
         private void SetupUI()
@@ -188,6 +205,64 @@ namespace DarkAges.Client.UI
             Visible = show;
             
             GD.Print($"[InventoryPanel] Visibility: {show}");
+        }
+        
+        // Network signal handlers
+        private void OnInvSync(float gold, int[] itemIds, int[] quantities)
+        {
+            GD.Print($"[InventoryPanel] Sync: gold={gold}, slots={itemIds?.Length ?? 0}");
+            
+            // Clear all slots
+            for (int i = 0; i < SlotCount; i++)
+                if (_slots.ContainsKey(i)) _slots[i].ClearItem();
+            
+            // Populate from sync
+            if (itemIds != null && quantities != null)
+            {
+                for (int i = 0; i < itemIds.Length && i < SlotCount; i++)
+                {
+                    if (itemIds[i] > 0 && quantities[i] > 0 && _slots.ContainsKey(i))
+                    {
+                        string name = ItemIdToName((uint)itemIds[i]);
+                        var color = ItemIdToColor((uint)itemIds[i]);
+                        _slots[i].SetItem(name, quantities[i], color);
+                    }
+                }
+            }
+        }
+        
+        private void OnInvUpdate(int slotIdx, int itemId, int qty)
+        {
+            if (slotIdx < 0 || slotIdx >= SlotCount || !_slots.ContainsKey(slotIdx)) return;
+            
+            if (itemId > 0 && qty > 0)
+            {
+                _slots[slotIdx].SetItem(ItemIdToName((uint)itemId), qty, ItemIdToColor((uint)itemId));
+            }
+            else
+            {
+                _slots[slotIdx].ClearItem();
+            }
+            GD.Print($"[InventoryPanel] Update: slot={slotIdx} item={itemId} qty={qty}");
+        }
+
+        public string ItemIdToName(uint id)
+        {
+            var m = new Dictionary<uint, string> {
+                {1,"HP"}, {2,"MP"}, {3,"Sword"}, {4,"Armor"}, {5,"Wood"}, {6,"Stone"},
+                {7,"Gold"}, {8,"Bread"}, {9,"Arrow"}, {10,"Scroll"}
+            };
+            return m.TryGetValue(id, out var n) ? n : $"Item{id}";
+        }
+
+        public Color ItemIdToColor(uint id)
+        {
+            var c = new Dictionary<uint, Color> {
+                {1,new Color(0.8f,0.2f,0.2f)}, {2,new Color(0.2f,0.4f,0.9f)},
+                {3,new Color(0.6f,0.6f,0.7f)}, {4,new Color(0.6f,0.6f,0.7f)},
+                {7,new Color(1f,0.84f,0f)}
+            };
+            return c.TryGetValue(id, out var cl) ? cl : new Color(0.9f,0.9f,0.7f);
         }
         
         /// <summary>

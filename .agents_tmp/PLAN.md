@@ -1,179 +1,173 @@
-# DarkAges Project Status Review & Forward Plan
+# DarkAges Implementation Plan - PRD Progression
 
-**Last Updated:** 2026-05-02  
-**Review Focus:** End-to-end status across AGENTS.md, PROJECT_STATUS.md, PLAN.md, and all PRD-*.md files  
+**Last Updated:** 2026-05-03  
+**Review Focus:** Progress critical PRDs from gap analysis  
+**Selected Task:** Complete PRD-029 Client UI Integration + PRD-031 NPC AI Integration
 
 ---
 
 # 1. OBJECTIVE
 
-Perform comprehensive status review comparing documentation state with codebase reality, identify completed vs. outstanding PRDs, and select highest-impact next task based on dependency order and MVP criteria.
+Complete meaningful PRD work that delivers player-facing gameplay impact:
+
+1. **PRD-029: Client UI Integration** (HIGH priority) - Wire client UI panels to server data
+2. **PRD-031: NPC AI Behavior System** (MEDIUM priority) - Integrate AI into zone tick loop
+
+These are explicitly identified as gaps in PRD_GAP_ANALYSIS_SUMMARY.md and are autonomous-safe.
 
 ---
 
 # 2. CONTEXT SUMMARY
 
-## Documentation Overview
-| Document | Status | Last Updated |
-|----------|--------|--------------|
-| AGENTS.md | Authoritative state reference | 2026-05-02 |
-| PROJECT_STATUS.md | Gap analysis + MVP criteria | 2026-04-29 |
-| TASK_QUEUE.md | Improvement backlog | 2026-05-02 |
-| PLAN.md | Current implementation plan | 2026-05-02 |
+## Verified State
+| Component | Status |
+|-----------|--------|
+| Server Inventory System | ✅ Implemented (PRD-021) |
+| Server Ability System | ✅ Implemented (PRD-022) |
+| Server Quest System | ✅ Implemented (PRD-025) |
+| NPCAISystem.hpp | ✅ Exists (stub implementation) |
+| InventoryPanel.cs | ✅ Exists (demo data) |
+| AbilityBar.cs | ✅ Exists |
+| QuestTracker.cs | ✅ Exists |
 
-## Test Baseline (per AGENTS.md and verified docs)
-- **Test Cases:** 1299-2129 depending on suite count
-- **Test Assertions:** 7248-12644
-- **Test Suites:** 11 (all passing)
-- **Test Breakdown:**
-  - unit_tests: 724 cases, 4012 assertions
-  - test_combat: 140 cases, 666 assertions
-  - test_zones: 198 cases, 1265 assertions
-  - test_security: 234 cases, 1660 assertions
-  - test_anticheat: 50 cases, 445 assertions
-  - test_database: 53 cases, 260 assertions
-  - test_penetration: 20+ cases
-  - test_fuzz: 25+ cases
-  - remaining: 152 cases, 1104 assertions
-
-## Phase Progress
-| Phase | Status | Details |
-|-------|--------|---------|
-| Phase 0 | COMPLETE | Documented in PHASE0_SUMMARY.md |
-| Phase 1-5 | ✅ VERIFIED | Summary docs created |
-| Phase 6 | COMPLETE | Build system hardening |
-| Phase 7 | COMPLETE | All tests pass (1299 cases, 7248 assertions, 100%) |
-| Phase 8 | PARTIAL | GNS compile-time fix merged; runtime integration pending |
-| Phase 9 | COMPLETE | Performance budgets validated |
-
-## Codebase LOC
-- Server: ~32K LOC (C++20, EnTT ECS, 60Hz tick)
-- Client: ~9K LOC (C# Godot 4.2)
+## What's Missing (Gap Analysis)
+| Gap | PRD | Impact |
+|-----|-----|--------|
+| Client UI panels not wired to server | PRD-029 | Players can't see inventory/abilities/quests |
+| NPCAISystem not in tick loop | PRD-031 | NPCs don't have AI behavior |
 
 ---
 
-# 3. PRD STATUS MATRIX
+# 3. APPROACH OVERVIEW
 
-## Completed PRDs ✅
-| PRD | Status | Evidence |
-|-----|--------|----------|
-| PRD-008 | ✅ COMPLETE | CombatStateMachine.tscn, CombatStateMachineController.cs, integrated to Player.tscn/RemotePlayer.tscn |
-| PRD-009 | ✅ COMPLETE | Zone configs enriched with objectives, events, wave config; ZoneObjectiveComponent.hpp, ZoneObjectiveSystem.hpp/.cpp, TestZoneObjectives.cpp |
-| PRD-010 | ✅ COMPLETE | Collision matrix documented; Hitbox.hpp exists; Test files created |
-| PRD-012 | ⚠️ COMPILE-FIX DONE | Build compiles with GNS; Protocol.cpp and NetworkManager.cpp updated |
-| PRD-013 | ✅ COMPLETE | PHASE1_SUMMARY.md through PHASE5_SUMMARY.md exist |
-| PRD-014 | ✅ COMPLETE | PhantomCamera.cs - Lock-on targeting system |
-| PRD-015 | ✅ COMPLETE | ProceduralLeaning.cs - Velocity-based tilt |
-| PRD-016 | ✅ COMPLETE | SDFGI/SSAO in Main.tscn |
-| PRD-018 | ✅ COMPLETE | FSM integration complete |
-| PRD-021 | ✅ COMPLETE | Inventory/Equipment: CoreTypes.hpp, Inventory/Equipment Components, data/items.json (52 items), TestInventory.cpp |
-| PRD-022 | ✅ COMPLETE | Abilities/Talents: AbilitySystem.hpp, data/abilities.json (22 abilities), TestAbilitySystem.cpp |
-| PRD-023 | ✅ COMPLETE | CombatEventSystem, CombatTextSystem in Main.tscn |
-| PRD-024 | ✅ COMPLETE | Party Component, MAX_PARTY_SIZE=5 |
-| PRD-025 | ✅ COMPLETE | Quest Definition, Quest Log, data/quests.json (10 quests), TestQuest.cpp |
-| PRD-026 | ✅ COMPLETE | Guild Component, MAX_GUILD_SIZE=100, TradeSystem, TradeState machine, TestPartyGuildTrade.cpp |
+## Selected Approach
+1. **Phase 1: PRD-029 Client UI Integration**
+   - Wire InventoryPanel to receive server sync data
+   - Wire AbilityBar to receive ability data from server
+   - Wire QuestTracker to quest log data
+   - Add network packet handlers for RPG data sync
 
-## Partially Complete PRDs ⚠️
-| PRD | Status | Remaining Gap |
-|-----|--------|---------------|
-| PRD-012 GNS | Runtime pending | GNSSocketclass is stub (returns false); Not wired to tick loop |
-| PRD-018 Database | Docker required | Requires Docker daemon (not available); docker-compose.dev.yml ready |
-| PRD-009 Objectives | Snapshot replication | EmitEvent TODO for network replication |
+2. **Phase 2: PRD-031 NPC AI Integration**
+   - Add NPCAISystem::update() to ZoneServer tick loop
+   - Wire AI damage callback to combat events
+   - Add AI state component to NPCs
 
-## Pending PRDs (P2.5 - Visual Polish)
-Per TASK_QUEUE.md, these items are pending:
-- [ ] Sound effects integration (footsteps, weapon attacks, ambient, UI sounds)
-- [ ] Particle effects for combat/hits/spells/deaths
-- [ ] Replace capsule placeholder models with proper 3D character/monster models
-- [ ] Full UI style overhaul (consistent theme, animations, visual polish)
-- [ ] Foot IK for terrain alignment
-- [ ] Lighting upgrades (SDFGI/SSAO) for visual fidelity
+## Why This Approach
+- Explicitly identified as HIGH priority gaps
+- Autonomous-safe (no specialists required)
+- High gameplay impact for demo
+- Server components already exist
 
 ---
 
-# 4. COMPARISON: DOCS vs. CODEBASE
+# 4. IMPLEMENTATION STEPS
 
-## Verified Matches ✅
-- Test suite status matches (all passing)
-- Phase completion status accurate
-- PRD completion status accurate
+## Step 4.1: Prepare Network Protocol for RPG Data Sync
+**Goal:** Add packet types for inventory/ability/quest sync
+**Method:** Extend Protocol.cpp with serialization functions
 
-## Minor Gaps (non-blocking)
-- AGENTS.md mentions PR #50 pending review - check status
-- PRD-012 GNS runtime not in current PLAN.md scope but mentioned in AGENTS.md as pending
-
----
-
-# 5. HIGHEST-IMPACT NEXT TASK SELECTION
-
-## Candidate Analysis
-
-| Task | Impact | Dependencies | Autonomy | Risk |
-|------|--------|--------------|----------|------|
-| PRD-017 GNS Runtime | High (critical network) | Requires network stack knowledge | Requires specialist | Medium |
-| Sound Effects P2.5 | Medium (demo polish) | None - AudioSystem already exists | ✅ SAFE | Low |
-| Particle Effects | Medium (demo polish) | None | Safe | Low |
-| Foot IK | Medium (animation polish) | FootIKController.cs exists | Safe | Low |
-
-## Selected: Sound Effects Integration (P2.5)
-**Rationale:**
-1. ✅ No dependencies (AudioSystem exists)
-2. ✅ Safe to implement autonomously
-3. ✅ Clear requirements (footsteps, weapon attacks, ambient, UI sounds)
-4. ✅ Improves demo quality meaningfully
-5. ✅ Does not risk breaking existing test baseline
-
----
-
-# 6. IMPLEMENTATION STEPS
-
-## Step 6.1: Implement Sound Effects System
-**Goal:** Integrate sound effects into combat and gameplay loop
-**Method:** Use Godot's AudioStreamPlayer or existing AudioSystem
-
-Reference: `src/client/` (AudioSystem likely in scripts/)
+Reference: `src/server/src/netcode/Protocol.cpp`
 
 Tasks:
-1. Identify existing AudioSystem or create sound hook in CombatEventSystem
-2. Add AudioStreamPlayer nodes for SFX categories (combat, UI, ambient)
-3. Hook attack events to weapon sound playback
-4. Hook damage events to hit sound playback
-5. Hook movement to footstep sounds based on animation blend
-6. Add UI interaction sounds (menu, button, selection)
-7. Test with demo mode
+- [x] Add PACKET_INVENTORY_UPDATE serialization
+- [x] Add PACKET_ABILITY_UPDATE serialization  
+- [x] Add PACKET_QUEST_LOG_SYNC serialization
+- [x] Add corresponding packet IDs to PacketTypes.hpp
 
-**Estimated:** 2-3 hours
-**Risk:** LOW - isolated to client audio, no server changes
+## Step 4.2: Add Client Network Handlers
+**Goal:** Process server data on client
+**Method:** Add handler methods in NetworkManager
+
+Reference: `src/client/src/networking/NetworkManager.cs`
+
+Tasks:
+- [x] Add ProcessInventoryUpdate() method
+- [x] Add ProcessAbilityUpdate() method
+- [x] Add ProcessQuestSync() method
+- [x] Emit signals for UI update
+
+## Step 4.3: Wire Inventory Panel to Network
+**Goal:** Display real inventory data
+**Method:** Connect NetworkManager signals to InventoryPanel
+
+Reference: `src/client/src/ui/InventoryPanel.cs`
+
+Tasks:
+- [x] Add NetworkManager reference
+- [x] Connect to InventoryUpdate signal
+- [x] Add UpdateSlots() method to refresh display
+- [x] Add item icon loading (placeholder textures)
+
+## Step 4.4: Wire Ability Bar to Network
+**Goal:** Display real ability data  
+**Method:** Connect NetworkManager signals to AbilityBar
+
+Reference: `src/client/src/ui/AbilityBar.cs`
+
+Tasks:
+- [x] Add NetworkManager reference
+- [x] Connect to AbilityUpdate signal  
+- [x] Populate ability buttons from server data
+- [x] Add cooldown visualization
+
+## Step 4.5: Wire Quest Tracker to Quest Log
+**Goal:** Display real quest data
+**Method:** Connect network signals to QuestTracker
+
+Reference: `src/client/src/ui/QuestTracker.cs`
+
+Tasks:
+- [x] Add NetworkManager reference
+- [x] Connect to QuestSync signal
+- [x] Update objectives display from server data
+- [x] Add progress tracking UI
+
+## Step 4.6: Integrate NPC AI into ZoneServer Tick
+**Goal:** NPCs exhibit behavior (idle/wander/chase/attack)
+**Method:** Call NPCAISystem::update() in zone loop
+
+Reference: `src/server/src/zones/ZoneServer.cpp`
+
+Tasks:
+- [x] Add npcAiSystem_ member to ZoneServer
+- [x] Call aiSystem.update() in Tick()
+- [x] Wire AI damage callback to combat events
+- [ ] Add NPCAIState component to spawned NPCs
+
+## Step 4.7: Build and Test
+**Goal:** Verify no regressions
+**Method:** Compile + run test suite
+
+Reference: `tools/demo/demo --quick`
+
+Tasks:
+- [ ] Compile server with -DENABLE_GNS=OFF
+- [ ] Run unit tests (1299 cases minimum)
+- [ ] Verify GNS build compiles
+- [ ] Verify no warnings in new code
 
 ---
 
-# 7. TESTING AND VALIDATION
+# 5. TESTING AND VALIDATION
 
 ## Validation Criteria
 
-### For Sound Implementation
-- [ ] Combat attacks play weapon swing sound
-- [ ] Combat hits play impact sound
-- [ ] Player movement plays footstep sounds
-- [ ] UI interactions play click/select sounds
-- [ ] Demo mode includes audio playback
-- [ ] No test regressions (maintain 100% passing)
+### For PRD-029 (Client UI)
+- [ ] Inventory panel shows items from server sync
+- [ ] Ability bar shows abilities with cooldowns
+- [ ] Quest tracker shows active quests
+- [ ] Network packets deserialize correctly
+- [ ] UI updates on data change
+
+### For PRD-031 (NPC AI)
+- [ ] NPCAISystem::update() compiles and runs
+- [ ] NPCs transition between states (idle->chase->attack)
+- [ ] AI damages players in melee range
+- [ ] No compile errors in ZoneServer
 
 ### Success Indicators
-- Sound plays during demo combat
-- No console errors related to audio
-- Existing tests unaffected
-
----
-
-# 8. DELEGATION ASSESSMENT
-
-Per task analysis:
-- **Local agents working:** None detected (AUTONOMOUS_LOG shows task queue exhausted as of 2026-04-20)
-- **Safe for immediate implementation:** Yes - Sound Effects is isolated client-side work
-- **Recommendation:** Implement autonomously rather than delegate
-
----
-
-**Plan Status:** Ready for implementation  
-**Focus:** Sound Effects Integration (P2.5) - Demo polish
+- Server compiles without errors
+- All 1299+ test cases pass
+- GNS build compiles (no regressions)
+- Client UI panels functional with real data
+- NPCs exhibit basic AI behavior in demo zones
