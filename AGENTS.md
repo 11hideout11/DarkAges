@@ -18,11 +18,11 @@
 - Phase 0: COMPLETE — documented in PHASE0_SUMMARY.md
 - Phase 1-5: ✅ VERIFIED — Summary docs created (PHASE1-5_SUMMARY.md)
 - Phase 6: COMPLETE — build system hardening
-- Phase 7: COMPLETE — All tests pass (1305 cases, 7254 assertions, 100%)
+- Phase 7: COMPLETE — All tests pass (1309 cases, 7267 assertions, 100%)
 - Phase 8: COMPLETE — compile-time fix merged; GNS runtime integration pending (blocked by WebRTC submodule auth)
 - Phase 9: COMPLETE — performance budgets validated
 - **Art Pipeline**: RESEARCH PHASE COMPLETE — world-building capabilities documented
-- **Tests**: All suites passing (1305 cases, 7254 assertions, 100%)
+- **Tests**: All suites passing (1309 cases, 7267 assertions, 100%)
 - **Client Build**: C# Godot 4.2.2 — 0 errors, 208 warnings (all CS8618 non-nullable field patterns, standard Godot)
 - **Demo Pipeline**: ✅ 5/5 checks passed — UDP ping, handshake, snapshots (123 in 5s), clean logs, binary
 - **Zone Advancement**: ✅ Wired — `onZoneComplete`→`getNextZoneId`→`triggerMigration` pipeline active (tutorial→arena→boss→tutorial). Tested: 15 handoff test cases, 96 assertions, including triggerMigration edge cases.
@@ -54,7 +54,7 @@
 | PRD-017 (Protocol Decouple) | ✅ Complete | Protocol.cpp uses FlatBuffers only, not GNS |
 | PRD-018 (Production DB) | ⚠️ Blocked | Docker-compose exists; requires Docker daemon |
 | PRD-019 (Blend Spaces) | ✅ Complete | LocomotionBlendTree.tres with BlendSpace2D |
-|| PRD-020 (Headless Fixes) | 🔄 Partial | CallDeferred patch merged; CI stability work pending (demo validator robustness, scene tree leak prevention)
+| PRD-020 (Headless Fixes) | 🔄 Partial | CallDeferred patch merged; CI stability work pending (demo validator robustness, scene tree leak prevention) |
 | PRD-021 (Validator Conns) | ✅ RESOLVED | No WebSocket client exists |
 | PRD-022 (FSM Finalize) | ✅ Complete | Usage guide created (docs/state-machine-usage.md) |
 | PRD-023 (Combat Text) | ✅ Complete | CombatEventSystem + CombatTextSystem in Main.tscn |
@@ -216,6 +216,27 @@
 ### Remaining Gaps (as of 2026-05-03)
 1. **GNS runtime** — Requires WebRTC auth token (external blocker)
 2. **Production DB** — Requires Docker daemon (external blocker)
+
+## This Session's Work (2026-05-03 — session 5: GNS send-side + NPC integration)
+
+### New Commits Merged
+- `0978401` — **GNS receive-side integration**: P5 LockOnRequest, P8 DialogueResponse, P9 RespawnRequest, P10 CombatAction, P14 Chat, P16 QuestAction receive handlers. Client headless SafeAddChild helper.
+- `4a3108d` — **entityType byte in snapshots**: Server adds entityType (1B) to createFullSnapshot (103B/entity). Client NPCManager uses GameState.Entities for proximity checks. Tests updated (1309 cases, 7267 assertions).
+- `bc48895` — **InteractionPrompt wired**: NPC proximity check now calls ShowPrompt/HidePrompt via 'interaction_prompt' group lookup.
+
+### Uncommitted (WIP — completed this session)
+- ✅ **GNS send-side dialogue wrappers**: `sendDialogueStart` and `sendDialogueResponse` implemented in GNSNetworkManager.cpp (follows same pattern as inventory sync/update)
+- ✅ **PacketType enum cleanup**: Renamed `Handshake → LockOnRequest` in both NetworkManager.hpp and test files
+- ✅ **New PacketType values**: Added RespawnRequest=9, CombatAction=10, Chat=14, QuestAction=16 to NetworkManager.hpp
+- ✅ **GNS receive handler refactor**: Switched hardcoded case numbers to named `PacketType::` enum values
+- ✅ **Behavioral tests added**: NetworkManager lifecycle tests (init/shutdown/update safety, callback setter noexcept)
+- ✅ Missing EOF newlines fixed
+
+### Current State
+- 22/24 PRDs complete (PRD-012 GNS compile OK, runtime blocked; PRD-020 headless Partial)
+- Test baseline: 1309 cases, 7267 assertions, 100% pass
+- GNS send-side inventory + dialogue wrappers fully implemented
+- Next priority: commit + push WIP changes, then PRD-020 headless CI hardening
 
 ## OpenHands Integration Updates (2026-05-02)
 
