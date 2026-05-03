@@ -1,0 +1,91 @@
+[gd_scene load_steps=8 format=3 uid="uid://spelleffect"]
+
+[ext_resource type="Script" path="res://src/combat/SpellEffect.cs" id="1_spelleffect"]
+
+[sub_resource type="ParticleProcessMaterial" id="ParticleProcessMaterial_fire"]
+emission_shape = 1
+emission_sphere_radius = 0.3f
+direction = Vector3(0, 1, 0)
+spread = 180f
+gravity = Vector3(0, -2, 0)
+initial_velocity_min = 1f
+initial_velocity_max = 3f
+scale_min = 0.1f
+scale_max = 0.3f
+color = Color(1, 0.5f, 0.1f, 1)
+
+[sub_resource type="ParticleProcessMaterial" id="ParticleProcessMaterial_ice"]
+emission_shape = 1
+emission_sphere_radius = 0.3f
+direction = Vector3(0, 1, 0)
+spread = 180f
+gravity = Vector3(0, 1, 0)
+initial_velocity_min = 0.5f
+initial_velocity_max = 1.5f
+scale_min = 0.15f
+scale_max = 0.25f
+color = Color(0.6f, 0.8f, 1f, 1)
+
+[sub_resource type="ParticleProcessMaterial" id="ParticleProcessMaterial_lightning"]
+emission_shape = 1
+emission_sphere_radius = 0.2f
+direction = Vector3(0, 0, 1)
+spread = 90f
+gravity = Vector3(0, 0, 0)
+initial_velocity_min = 3f
+initial_velocity_max = 6f
+damping_min = 2f
+damping_max = 5f
+scale_min = 0.08f
+scale_max = 0.2f
+color = Color(0.9f, 0.9f, 1f, 1)
+
+[sub_resource type="ParticleProcessMaterial" id="ParticleProcessMaterial_heal"]
+emission_shape = 2
+emission_box_extents = Vector3(0.3f, 0.1f, 0.3f)
+direction = Vector3(0, 1, 0)
+spread = 30f
+gravity = Vector3(0, 1, 0)
+initial_velocity_min = 0.5f
+initial_velocity_max = 1f
+scale_min = 0.1f
+scale_max = 0.2f
+color = Color(0.3f, 1f, 0.5f, 0.8f)
+
+[sub_resource type="QuadMesh" id="QuadMesh_particle"]
+size = Vector2(0.25f, 0.25f)
+
+[node name="SpellEffect" type="Node3D"]
+script = ExtResource("1_spelleffect")
+
+[node name="Fire" type="GPUParticles3D" parent="."]
+emitting = false
+amount = 32
+lifetime = 0.8f
+explosiveness = 0.3f
+process_material = SubResource("ParticleProcessMaterial_fire")
+draw_pass_1 = SubResource("QuadMesh_particle")
+
+[node name="Ice" type="GPUParticles3D" parent="."]
+emitting = false
+amount = 24
+lifetime = 1f
+explosiveness = 0.2f
+process_material = SubResource("ParticleProcessMaterial_ice")
+draw_pass_1 = SubResource("QuadMesh_particle")
+
+[node name="Lightning" type="GPUParticles3D" parent="."]
+emitting = false
+amount = 16
+lifetime = 0.3f
+explosiveness = 1f
+process_material = SubResource("ParticleProcessMaterial_lightning")
+draw_pass_1 = SubResource("QuadMesh_particle")
+
+[node name="Heal" type="GPUParticles3D" parent="."]
+emitting = false
+amount = 20
+lifetime = 1.2f
+explosiveness = 0f
+process_material = SubResource("ParticleProcessMaterial_heal")
+draw_pass_1 = SubResource("QuadMesh_particle")

@@ -1,16 +1,16 @@
 ## Recent Commits (last 10 — updated 2026-05-02)
-1. fix(client): exclude test files from production build; fix RemotePlayer.tscn load_steps count
-2. Merge pull request #58 from 11hideout11/feat/optimize-prd-edge-cases
-3. Merge pull request #59 from 11hideout11/fix/protocol-stub-conditional-on-updated-main
-4. docs(agents): update State metrics for 2026-05-02 build (1299 tests, 7248 assertions); add fix branch
-5. feat(tests): optimize PRD edge cases with robust error handling
-6. docs(agents): update State test metrics (1299 cases, 7248 assertions); refresh Recent Commits
-7. fix(client): correct scene load_steps and resource ordering for Player.tscn
-8. fix(build): conditionally compile TestProtocolStub only when FlatBuffers disabled; add RecoveryState smoke test
-9. feat(gns): unblock GNS runtime build — add missing protocol serializers and network send functions
-10. docs(research): add comprehensive world-building capabilities research and asset pipeline
+1. fix(build): conditionally compile TestProtocolStub only when FlatBuffers disabled; add RecoveryState smoke test
+2. feat(gns): unblock GNS runtime build — add missing protocol serializers and network send functions
+3. docs(research): add comprehensive world-building capabilities research and asset pipeline
+4. fix(gns): enable C language to support compile features required by GameNetworkingSockets
+5. feat(combat): complete FSM refactor; circular dependency resolved; hitbox component added; proper headers and final review fixes
+6. fix(skill): correct namespace heuristic to avoid false positives on DarkAges namespace
+7. docs(agents): update Recent Commits ordering and restore State section with test metrics
+8. fix(combat): address subjective review: proper headers, Hitbox component, clean damage
+9. fix(combat): resolve circular dependency in combat state machine; restore copy semantics
+10. fix(combat): rewrite AttackState without Hitbox component and fix RecoveryState timing
 
-## State (2026-05-02)
+## State (2026-05-03)
 
 - Phase 0: COMPLETE — documented in PHASE0_SUMMARY.md
 - Phase 1-5: ✅ VERIFIED — Summary docs created (PHASE1-5_SUMMARY.md)
@@ -18,7 +18,7 @@
 - Phase 7: COMPLETE — All tests pass (1299 cases, 7248 assertions, 100%)
 - Phase 8: PARTIAL — multiple work packages complete, GNS compile-time fix merged; runtime integration pending
 - Phase 9: COMPLETE — performance budgets validated
-- **Art Pipeline**: RESEARCH PHASE COMPLETE — world-building capabilities documented; asset pipeline spec exists (43 assets); CC0 sourcing strategies cataloged; Godot 4.2 PBR workflow defined; manifest.json created at assets/manifest.json
+- **Art Pipeline**: RESEARCH PHASE COMPLETE — world-building capabilities documented
 - **Tests**: All suites passing (1299 cases, 7248 assertions, 100%)
 - **Test breakdown**:
   - unit_tests: 724 cases, 4012 assertions
@@ -33,7 +33,7 @@
 - Server: ~32K LOC (C++20, EnTT ECS, 60Hz tick) | Client: ~9K LOC (C# Godot 4.2)
 - **PR #29 status**: MERGED — Combat FSM refactor completed; two-agent review passed (objective test + subjective architectural); all 1299 tests passing.
 - **PR #57 status**: MERGED — UDP socket implementation with real BSD sockets; GNS build unblocked; protocol decoupling complete.
-- **PR #50 status**: MERGED — JSON database integration for RPG core systems resolved via PR #58/#59.
+- **PR #50 status**: PENDING REVIEW — JSON database integration for RPG core systems (items, abilities, quests, zones).
 
 ## PLAN.md Execution Updates (2026-05-01)
 
@@ -51,7 +51,7 @@
 - ✅ buildZoneDefinition() enhanced with JSON parsing (objectives, wave count, time limits)
 - ✅ Include paths fixed (consolidated to entt/entt.hpp)
 - ✅ getZoneObjectiveSystem() accessor added to ZoneServer
-- ✅ Snapshot replication implemented (origin PR #58)
+- ✅ COMPLETE: Zone objective client replication via event-based sync (PACKET_ZONE_OBJECTIVE_UPDATE)
 
 ### PRD-010: Hitbox/Hurtbox Validation
 - ✅ Collision matrix documented at `docs/collision-matrix.md`
@@ -127,14 +127,24 @@
 ### PRD-016: SDFGI/SSAO Lighting
 - ✅ IMPLEMENTED in `Main.tscn` lines 36-38: sdfgi_enabled=true, ssao_enabled=true, ssil_enabled=true
 
+### PRD-030: Zone Objective Client Replication
+- ✅ Server: ZoneObjectiveSystem with event emission (EmitEvent method)
+- ✅ Network: serializeZoneObjectiveUpdate / PACKET_ZONE_OBJECTIVE_UPDATE in Protocol.cpp
+- ✅ Client: NetworkManager.ProcessZoneObjectiveUpdate parses packet and emits ZoneObjectiveUpdateReceived signal
+- ✅ UI: QuestTracker.cs displays zone objectives in dedicated panel
+- ✅ TSCN: QuestTracker.tscn updated with ZoneObjectiveList RichTextLabel
+
 ---
 
-## Execution Summary (2026-05-02)
+## Execution Summary (2026-05-03)
 
 ### PRDs Addressed
 - **16 total PRDs completed** during execution
 - **3 PRDs pending** (requires specialized agents or Docker)
 - **Test baseline**: 1299 cases, 7248 assertions, 100% passing
+
+### This Session's Commits
+- feat(client): Zone objective client replication (PRD-030) - QuestTracker displays zone objectives
 
 ### Files Created (11 files)
 1. `CombatStateMachine.tscn` - Node-based FSM template
@@ -150,15 +160,12 @@
 11. `PLAN_EXECUTION_SUMMARY.md` - Tracking document
 
 ### This Session's Commits
-- `38acc46`: fix(client) — exclude test files from production build; fix RemotePlayer.tscn load_steps
-- `3ec249f`: Merge PR #58 — edge case hardening  
-- `65b4693`: Merge PR #59 — protocol stub conditional
-- `7b271f5`: docs(agents) — update State metrics
-- `b71e3d6`: feat(tests) — optimize PRD edge cases
-- `8b32f80`: docs(agents) — update State test metrics
-- `ead7a36`: fix(client) — correct scene load_steps
-- `01054ea`: fix(build) — TestProtocolStub conditional
-- `f893419`: docs(agents) — AGENTS.md accuracy
+- `f893419`: docs - AGENTS.md accuracy (PRD-008 integrated, PRD-016 implemented)
+- `c7cc8be`: feat(client) - Combat text integration into Main.tscn
+- `13b11d7`: fix(build) - Protocol decoupling from GNS flag
+
+### This Session's Commits
+- `a7f1d65`: security - penetration testing and protocol fuzzing tests added
 
 ## OpenHands Integration Updates (2026-05-02)
 
@@ -168,4 +175,4 @@
 - Microagents present in `.openhands/microagents/` for Godot 4.2 pinning, server C++ conventions, networking, repo context
 - Documentation: `OPENHANDS_SKILLS_REFERENCE.md` — comprehensive skill reference
 
-Last updated: 2026-05-02 (18:00 UTC)
+Last updated: 2026-04-29

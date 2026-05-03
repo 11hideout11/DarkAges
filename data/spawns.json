@@ -1,0 +1,131 @@
+{
+  "spawn_zones": [
+    {
+      "zoneId": 1,
+      "name": "Village",
+      "description": "Starting village area",
+      "spawn_points": [
+        {
+          "id": "guide_1",
+          "entity_type": "npc",
+          "npc_id": 1003,
+          "name": "Village Guide",
+          "position": {"x": 0, "y": 0, "z": 5},
+          "behavior": "idle",
+          "interact_distance": 3,
+          "greeting": "npc_guide_01"
+        },
+        {
+          "id": "merchant_1",
+          "entity_type": "npc",
+          "npc_id": 1001,
+          "name": "Merchant",
+          "position": {"x": 5, "y": 0, "z": 0},
+          "behavior": "idle",
+          "interact_distance": 3,
+          "greeting": "npc_merchant_01"
+        },
+        {
+          "id": "elder_1",
+          "entity_type": "npc",
+          "npc_id": 1002,
+          "name": "Village Elder",
+          "position": {"x": -3, "y": 0, "z": 3},
+          "behavior": "idle",
+          "interact_distance": 3,
+          "greeting": "npc_quest_giver_01"
+        }
+      ]
+    },
+    {
+      "zoneId": 2,
+      "name": "Goblin Camp",
+      "description": "Goblin raider camp",
+      "spawn_points": [
+        {
+          "id": "goblin_1",
+          "entity_type": "enemy",
+          "enemy_id": 201,
+          "name": "Goblin Scout",
+          "position": {"x": 15, "y": 0, "z": 20},
+          "behavior": "aggressive",
+          "aggro_radius": 10,
+          "respawn_time": 60,
+          "loot_table": "goblin_common"
+        },
+        {
+          "id": "goblin_2",
+          "entity_type": "enemy",
+          "enemy_id": 201,
+          "name": "Goblin Scout",
+          "position": {"x": 18, "y": 0, "z": 22},
+          "behavior": "patrol",
+          "respawn_time": 60,
+          "loot_table": "goblin_common"
+        },
+        {
+          "id": "goblin_3",
+          "entity_type": "enemy",
+          "enemy_id": 202,
+          "name": "Goblin Warrior",
+          "position": {"x": 20, "y": 0, "z": 18},
+          "behavior": "aggressive",
+          "aggro_radius": 12,
+          "respawn_time": 90,
+          "loot_table": "goblin_elite"
+        }
+      ]
+    },
+    {
+      "zoneId": 99,
+      "name": "Combat Arena",
+      "description": "Demo combat area",
+      "spawn_points": [
+        {
+          "id": "practice_dummy_1",
+          "entity_type": "enemy",
+          "enemy_id": 999,
+          "name": "Training Dummy",
+          "position": {"x": 10, "y": 0, "z": 0},
+          "behavior": "idle",
+          "respawn_time": 10,
+          "loot_table": "none"
+        },
+        {
+          "id": "practice_dummy_2",
+          "entity_type": "enemy",
+          "enemy_id": 999,
+          "name": "Training Dummy",
+          "position": {"x": -10, "y": 0, "z": 0},
+          "behavior": "idle",
+          "respawn_time": 10,
+          "loot_table": "none"
+        }
+      ]
+    }
+  ],
+  "loot_tables": {
+    "goblin_common": {
+      "gold": {"min": 5, "max": 25, "chance": 100},
+      "items": [
+        {"itemId": 101, "dropChance": 15, "minQty": 1, "maxQty": 3},
+        {"itemId": 201, "dropChance": 5, "minQty": 1, "maxQty": 1}
+      ]
+    },
+    "goblin_elite": {
+      "gold": {"min": 25, "max": 100, "chance": 100},
+      "items": [
+        {"itemId": 101, "dropChance": 30, "minQty": 2, "maxQty": 5},
+        {"itemId": 301, "dropChance": 10, "minQty": 1, "maxQty": 1},
+        {"itemId": 201, "dropChance": 15, "minQty": 1, "maxQty": 2}
+      ]
+    },
+    "boss_treasure": {
+      "gold": {"min": 100, "max": 500, "chance": 100},
+      "items": [
+        {"itemId": 401, "dropChance": 100, "minQty": 1, "maxQty": 1},
+        {"itemId": 501, "dropChance": 50, "minQty": 1, "maxQty": 1}
+      ]
+    }
+  }
+}

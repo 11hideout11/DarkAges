@@ -13,19 +13,38 @@ namespace DarkAges.Client.UI
     {
         [Export] public int MaxHistoryLines = 100;
 
+        private ColorRect _background;
         private RichTextLabel _history;
         private LineEdit _input;
-        private Color _colorGlobal = Colors.White;
-        private Color _colorLocal = Colors.Yellow;
-        private Color _colorWhisper = Colors.Cyan;
-        private Color _colorParty = Colors.LightGreen;
-        private Color _colorGuild = Colors.LightPink;
-        private Color _colorSystem = Colors.OrangeRed;
 
         public override void _Ready()
         {
+            _background = GetNode<ColorRect>("Background");
             _history = GetNode<RichTextLabel>("History");
             _input = GetNode<LineEdit>("Input");
+
+            // Apply theme background
+            if (_background != null)
+            {
+                _background.Color = UITheme.PanelBackground;
+            }
+
+            // Apply theme to history
+            if (_history != null)
+            {
+                var historyStyle = new StyleBoxFlat { BgColor = new Color(0, 0, 0, 0) };
+                _history.AddThemeStyleboxOverride("normal", historyStyle);
+            }
+
+            // Apply theme to input
+            if (_input != null)
+            {
+                var inputStyle = UITheme.CreatePanelStyle(cornerRadius: 4f, borderWidth: 1f);
+                inputStyle.BgColor = new Color(0.1f, 0.1f, 0.15f, 0.9f);
+                _input.AddThemeStyleboxOverride("normal", inputStyle);
+                
+                _input.Modulate = UITheme.TextPrimary;
+            }
 
             // Connect NetworkManager chat signal
             NetworkManager.Instance.ChatMessageReceived += OnChatMessageReceived;
@@ -54,21 +73,12 @@ namespace DarkAges.Client.UI
 
         private void OnChatMessageReceived(uint senderId, byte channel, string senderName, string message)
         {
-            // Determine channel color
-            Color col = _colorGlobal;
-            switch (channel)
-            {
-                case 0: col = _colorSystem; break;   // System
-                case 1: col = _colorLocal; break;    // Local
-                case 2: col = _colorGlobal; break;   // Global
-                case 3: col = _colorWhisper; break;  // Whisper
-                case 4: col = _colorParty; break;    // Party
-                case 5: col = _colorGuild; break;    // Guild
-            }
+            // Use theme channel colors
+            Color col = UITheme.GetChannelColor(channel);
 
-            string prefix = $"[{senderName}]: ";
-            string line = $"{prefix}{message}";
-            _history.AppendText($"[color={col.ToHtml()}]{line}[/color]\n");
+            // Format: [Sender]: Message
+            string line = $"[color={col.ToHtml()}][{senderName}]: {message}[/color]\n";
+            _history.AppendText(line);
         }
 
         private void OnTextSubmitted(string text)

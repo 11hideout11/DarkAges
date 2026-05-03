@@ -58,7 +58,7 @@ See [CURRENT_STATUS.md](CURRENT_STATUS.md) for daily updates • [PROJECT_STATUS
 
 ### What's Implemented
 - ✅ **Server**: ~32,000 lines (C++20, EnTT ECS, 60Hz tick, 2096 tests passing)
-- ✅ **Client**: ~6,200 lines (Godot 4.3 C#, prediction, interpolation, combat UI)
+- ✅ **Client**: ~6,200 lines (Godot 4.2 C#, prediction, interpolation, combat UI)
 - ✅ **Testing**: ~15,000 lines (Catch2, 11 suites, 2096 test cases)
 - ✅ **Build System**: CMake, MSVC 2022, cross-platform CI/CD — COMPLETE
 - ✅ **External Libraries**: Redis stubs, FlatBuffers, Protobuf
@@ -134,7 +134,7 @@ docker-compose up -d
 
 ## Architecture
 
-```
+```text
 ┌─────────────────────────────────────────────────────────────┐
 │                         CLIENT (Godot 4)                    │
 │  ┌──────────────┐  ┌──────────────┐  ┌──────────────────┐  │
@@ -178,7 +178,7 @@ docker-compose up -d
 
 ## Project Structure
 
-```
+```text
 C:\Dev\DarkAges\
 ├── src/
 │   ├── client/          # Godot 4.x project
@@ -266,13 +266,13 @@ using Fixed = int32_t;  // 1000 units = 1.0f
 - Circuit breakers: External service failures don't crash server
 
 ### Commit Messages
-```
-[AGENT] Brief description - Performance impact
 
-Examples:
-[NETWORK] Implement delta compression - Reduces bandwidth by 80%
-[PHYSICS] Optimize spatial hash queries - 2x faster collision
-```
+Format: `[AGENT] Brief description - Performance impact`
+
+**Examples:**
+
+- `[NETWORK] Implement delta compression - Reduces bandwidth by 80%`
+- `[PHYSICS] Optimize spatial hash queries - 2x faster collision`
 
 ## Testing
 

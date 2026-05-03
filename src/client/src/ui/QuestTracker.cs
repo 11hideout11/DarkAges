@@ -12,14 +12,46 @@ namespace DarkAges.Client.UI
     public partial class QuestTracker : CanvasLayer
     {
         [Export] public int MaxDisplayedQuests = 10;
+        [Export] public int MaxDisplayedZoneObjectives = 5;
 
+        private ColorRect _background;
         private RichTextLabel _questList;
+        private RichTextLabel _zoneObjectiveList;
         private Dictionary<uint, Dictionary<uint, (uint current, uint required, byte status)>> _quests;
+        private Dictionary<string, (ushort current, ushort required, byte type, byte wave)> _zoneObjectives;
 
         public override void _Ready()
         {
+            _background = GetNode<ColorRect>("Background");
             _questList = GetNode<RichTextLabel>("QuestList");
-            _quests = new Dictionary<uint, Dictionary<uint, (uint, uint, byte)>>();
+            _zoneObjectiveList = GetNode<RichTextLabel>("ZoneObjectiveList");
+            _quests = new Dictionary<uint, Dictionary<uint, (uint, uint, byte)>();
+            _zoneObjectives = new Dictionary<string, (ushort, ushort, byte, byte)>();
+
+            // Apply theme styling to background
+            if (_background != null)
+            {
+                _background.Color = UITheme.PanelBackground;
+            }
+
+            // Apply theme styling to text labels
+            if (_questList != null)
+            {
+                var questStyle = new StyleBoxFlat
+                {
+                    BgColor = new Color(0, 0, 0, 0)
+                };
+                _questList.AddThemeStyleboxOverride("normal", questStyle);
+            }
+
+            if (_zoneObjectiveList != null)
+            {
+                var zoneStyle = new StyleBoxFlat
+                {
+                    BgColor = new Color(0, 0, 0, 0)
+                };
+                _zoneObjectiveList.AddThemeStyleboxOverride("normal", zoneStyle);
+            }
 
             // Subscribe to network quest updates
             if (NetworkManager.Instance != null)
@@ -64,9 +96,12 @@ namespace DarkAges.Client.UI
 
         private void OnZoneObjectiveUpdateReceived(byte eventType, string objectiveId, ushort currentProgress, ushort requiredProgress, byte waveNumber, string message)
         {
-            // For now, log zone objective events.
-            // TODO: display in dedicated zone objective UI panel
-            GD.Print($"[QuestTracker] Zone objective event: type={eventType} id={objectiveId} progress={currentProgress}/{requiredProgress} wave={waveNumber} msg=\"{message}\"");
+            // Store zone objective progress
+            _zoneObjectives[objectiveId] = (currentProgress, requiredProgress, eventType, waveNumber);
+            
+            GD.Print($"[QuestTracker] Zone objective: id={objectiveId} progress={currentProgress}/{requiredProgress} wave={waveNumber}");
+            
+            RefreshDisplay();
         }
 
         private void RefreshDisplay()
@@ -80,14 +115,33 @@ namespace DarkAges.Client.UI
                 var objectives = kvp.Value;
 
                 string questTitle = questId == 99 ? "Kill Rats" : $"Quest {questId}";
-                _questList.AppendText($"[color=Yellow]{questTitle}[/color]\n");
+                _questList.AppendText($"[color={UITheme.AccentPrimary.ToHtml()}]{questTitle}[/color]\n");
 
                 foreach (var objKvp in objectives)
                 {
                     uint idx = objKvp.Key;
                     var (cur, req, status) = objKvp.Value;
-                    string statusText = status == 1 ? "[color=Green]✓ COMPLETE[/color]" : $"[color=White]{cur}/{req}[/color]";
+                    string statusText = status == 1 
+                        ? $"[color={UITheme.StatusComplete.ToHtml()}]✓ COMPLETE[/color]" 
+                        : $"[color={UITheme.TextPrimary.ToHtml()}]{cur}/{req}[/color]";
                     _questList.AppendText($"  Obj {idx}: {statusText}\n");
+                }
+            }
+            
+            // Also display zone objectives if any
+            if (_zoneObjectiveList != null && _zoneObjectives.Count > 0)
+            {
+                _zoneObjectiveList.Clear();
+                _zoneObjectiveList.AppendText($"[color={UITheme.StatusMana.ToHtml()}]Zone Objectives:[/color]\n");
+                foreach (var kvp in _zoneObjectives)
+                {
+                    string objId = kvp.Key;
+                    var (cur, req, type, wave) = kvp.Value;
+                    string statusText = cur >= req 
+                        ? $"[color={UITheme.StatusComplete.ToHtml()}]✓ COMPLETE[/color]" 
+                        : $"[color={UITheme.TextPrimary.ToHtml()}]{cur}/{req}[/color]";
+                    string waveText = wave > 0 ? $" (Wave {wave})" : "";
+                    _zoneObjectiveList.AppendText($"  {objId}: {statusText}{waveText}\n");
                 }
             }
         }
