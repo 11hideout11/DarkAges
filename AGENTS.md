@@ -1,6 +1,6 @@
 ## Recent Commits (last 12 — updated 2026-05-03)
 
-1. `[commit_hash]`: feat(progression): wire WorldProgressionSystem into ZoneServer lifecycle
+1. `817bbeb`: feat(progression): wire WorldProgressionSystem into ZoneServer lifecycle
 2. `5c35b31`: docs: update PRD-012 status to COMPLETE with GNS receive-side integration validation summary
 3. `5062b6a`: docs: update recent commits list in AGENTS.md
 4. `66af8e3`: docs: AGENTS.md — PRD-020 headless CI hardening complete (24/24 PRDs)
@@ -188,25 +188,7 @@
 - ✅ Deprecated code cleaned up across server and client
 - ✅ Gap docs cover: boss spawning, zone objectives, client warnings, GNS runtime workaround, production DB workaround, character model infrastructure
 
-## This Session's Work (2026-05-03 — resume session)
-- **Pull + merge**: Pulled latest remote, merged 3 pending branches into main
-  - ✅ `fix/prd-gap-analysis-complete` — 15 gap PRDs, zone objective enrichment, deprecated code cleanup
-  - ✅ `fix/boss-zone-npc-presets` — npc_presets added to boss.json
-  - ✅ `task/ui-style-overhaul` — Enhanced UITheme, DeathRespawnUI, InteractionPrompt animations
-- **Cross-reference audit**: Verified all 24 PRDs against actual codebase — all 24 match commit state
-- **Zone advancement pipeline**: Fixed and validated `onZoneComplete` signal subscription:
-  - `OnZoneComplete()` → `OnZoneCompleted()` (wrong method name; would not compile)
-  - Removed duplicate/broken `onZoneObjectiveCompleted` subscription
-  - Fixed `unique_ptr` access (`handoffController_.` → `handoffController->`)
-  - `getNextZoneId()`: tutorial(98)→arena(99)→boss(100)→tutorial(98)
-  - `triggerMigration()`: full handoff initialization in ZoneHandoffController
-  - ObjectiveSystem tick: emits `_zoneCompleteSignal` when all objectives met
-- **Build**: 0 errors (server C++), 11/11 test suites pass (100%)
-- **AGENTS.md**: Updated P0-2 to ✅ COMPLETE, corrected remaining gaps (both zone JSON gaps now resolved)
-- **Boss zone**: Already has NPC presets (ogre_chieftain boss + phases) — no longer a gap
-- **Zone advancement tests**: 2 new test cases (7 sections) for `triggerMigration` covering basic migration, duplicate/same-zone/unknown-zone rejection, multi-player concurrency, and missing zoneLookup edge case. All 15 handoff tests pass (96 assertions).
-
-### MVP Readiness Assessment (2026-04-28 Criteria)
+## ThiP Readiness Assessment (2026-04-28 Criteria)
 | Requirement | Status | Notes |
 |---|---|---|
 | P0-1: Combat Multiplayer Template | ✅ COMPLETE | FSM, hitbox/hurtbox, AnimationTree, IK, lock-on, PhantomCamera |
@@ -215,29 +197,6 @@
 
 ### Remaining Gaps (as of 2026-05-03)
 1. **Production DB** — Requires Docker daemon (external blocker)
-
-## This Session's Work (2026-05-03 — session 5: GNS send-side + NPC integration)
-
-### New Commits Merged
-- `0978401` — **GNS receive-side integration**: P5 LockOnRequest, P8 DialogueResponse, P9 RespawnRequest, P10 CombatAction, P14 Chat, P16 QuestAction receive handlers. Client headless SafeAddChild helper.
-- `4a3108d` — **entityType byte in snapshots**: Server adds entityType (1B) to createFullSnapshot (103B/entity). Client NPCManager uses GameState.Entities for proximity checks. Tests updated (1316 cases, 7304 assertions).
-- `bc48895` — **InteractionPrompt wired**: NPC proximity check now calls ShowPrompt/HidePrompt via 'interaction_prompt' group lookup.
-
-### Uncommitted (WIP — completed this session)
-- ✅ **GNS send-side dialogue wrappers**: `sendDialogueStart` and `sendDialogueResponse` implemented in GNSNetworkManager.cpp (follows same pattern as inventory sync/update)
-- ✅ **PacketType enum cleanup**: Renamed `Handshake → LockOnRequest` in both NetworkManager.hpp and test files
-- ✅ **New PacketType values**: Added RespawnRequest=9, CombatAction=10, Chat=14, QuestAction=16 to NetworkManager.hpp
-- ✅ **GNS receive handler refactor**: Switched hardcoded case numbers to named `PacketType::` enum values
-- ✅ **Behavioral tests added**: NetworkManager lifecycle tests (init/shutdown/update safety, callback setter noexcept)
-- ✅ Missing EOF newlines fixed
-
-### Current State
-- **24/24 PRDs complete** (PRD-020 headless ✅ Complete)
-- Test baseline: 1316 cases, 7304 assertions, 100% pass
-- GNS send+receive fully integrated (inventory, dialogue, lock-on, combat, chat, quest, respawn)
-- **Only remaining gap**: Production DB (external blocker — Docker daemon)
-
-## OpenHands Integration Updates (2026-05-02)
 
 ## This Session's Work (2026-05-03 — session 8: WorldProgressionSystem wiring + AGENTS.md PRD audit)
 
@@ -266,34 +225,9 @@
 - WorldProgressionSystem fully wired into ZoneServer lifecycle
 
 ### Commit
-- `[commit_hash]`: feat(progression): wire WorldProgressionSystem into ZoneServer lifecycle
+- `817bbeb`: feat(progression): wire WorldProgressionSystem into ZoneServer lifecycle
 
 Last updated: 2026-05-03 (session 8 — WorldProgressionSystem wiring complete)
-
-### Completed
-- ✅ **Main.tscn load_steps**: Fixed from 19→31 (matches actual ext_resource + sub_resource count)
-- ✅ **6 additional .tscn files** with mismatched load_steps fixed:
-  CombatStateMachine 15→14, DeathEffect 5→4, HitEffect 6→5,
-  Player_embedded 8→48, SpellEffect 8→6, UI 2→1
-- ✅ **E2E validator robustness**: Added `_clean_stale_logs()` to remove logs >1hr old before scan
-- ✅ **False-positive filtering**: Log scanner now limits to latest 2 files and ignores benign patterns
-- ✅ **Godot integration test**: Migrated from `--headless` to `xvfb-run` (Godot 4.2 headless rendering has known scene-load failures)
-- ✅ **PRD-020 status**: 🔄 Partial → ✅ Complete
-
-### Current Milestone Status
-- **24/24 PRDs complete** — all internal technical requirements met
-- **Only remaining gap**: Production DB (external blocker — Docker daemon)
-- All 7 .tscn load_steps validated: no mismatches across entire scene tree
-- GNS send+receive fully integrated
-- All tests: 1316 cases, 7304 assertions, 100% pass
-
-- Added 4 new standalone skills: `test-flakiness.py`, `coverage-report.py`, `pr-create.py`, `pr-comment.py`, `code-format.py`
-- Fixed CMake JSON include bug — switched from direct `target_include_directories` to `target_link_libraries(nlohmann_json::nlohmann_json)` to resolve missing header error in `build_validate`
-- Skills installed to `~/.hermes/skills/scripts/` as symlinks to `openhands-adaptation/skills/`
-- Microagents present in `.openhands/microagents/` for Godot 4.2 pinning, server C++ conventions, networking, repo context
-- Documentation: `OPENHANDS_SKILLS_REFERENCE.md` — comprehensive skill reference
-
-Last updated: 2026-05-03 (session 6 — PRD-020 headless CI hardening, 24/24 PRDs complete)
 
 ## Orchestration Execution Plan
 
