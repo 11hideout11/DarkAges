@@ -103,30 +103,40 @@ namespace DarkAges.Client.UI
         private void CheckNPCProximity()
         {
             if (_isInteracting) return;
-            // Guard: LocalPlayer lookup not yet implemented
-            // if (GameState.Instance?.LocalPlayer == null) return;
-            _isInteracting = false;
-            return;
-            /* DISABLED: GameState.LocalPlayer not yet implemented
-            var player = GameState.Instance.LocalPlayer;
-            var playerPos = player.Position;
             
-            // Find nearest NPC
+            // Get local player - use PredictedPlayer if available
+            var player = GetTree.CurrentScene?.GetNodeOrNull<PredictedPlayer>("../Player");
+            if (player == null)
+                player = GetTree().Root.GetNodeOrNull<PredictedPlayer>("Main/Players/Player");
+            if (player == null)
+                player = GetTree().Root.GetNodeOrNull<PredictedPlayer>("Players/Player");
+            if (player == null)
+                return;
+            
+            var playerPos = player.GlobalPosition;
+
+            // Find nearest NPC within interaction range
             uint nearestNPC = 0;
             float nearestDist = 3.0f; // Interaction range
-            
+
             foreach (var npcId in _activeNPCs)
             {
-                // In real implementation, get NPC position from entity
-                // For now, check against known NPC positions
+                // Get NPC entity position - use networking if available
+                // For now, use a simple distance check if we have NPC positions
+                // Skip for now - NPC positions come from server snapshots
             }
-            
+
             if (nearestNPC != _interactionTarget)
             {
                 _interactionTarget = nearestNPC;
-                // Show interaction prompt
+                // TODO: Show interaction prompt when NPC is in range
             }
-            */
+            
+            // Check for interaction key press
+            if (Input.IsActionJustPressed("interact") && _interactionTarget != 0)
+            {
+                StartInteraction(_interactionTarget);
+            }
         }
         
         /// <summary>
