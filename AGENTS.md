@@ -1,17 +1,17 @@
 ## Recent Commits (last 12 — updated 2026-05-03)
 
-1. `fd7d414`: docs: AGENTS.md — session 8 summary, remove stale session entries, update commit hash
-2. `817bbeb`: feat(progression): wire WorldProgressionSystem into ZoneServer lifecycle
-3. `5c35b31`: docs: update PRD-012 status to COMPLETE with GNS receive-side integration validation summary
-4. `5062b6a`: docs: update recent commits list in AGENTS.md
-5. `66af8e3`: docs: AGENTS.md — PRD-020 headless CI hardening complete (24/24 PRDs)
-6. `b8918c2`: Merge PR #87 — orchestration phases 1-3 implementation
-7. `80b4e7d`: fix(prd-020): headless CI hardening — validator robustness, scene tree leak prevention
-8. `2148829`: docs: AGENTS.md — PRD-012 GNS Complete (23/24)
-9. `dd3e039`: docs: AGENTS.md state for PRD-012 completion
-10. `5836384`: feat(gns): complete GNS receive-side integration for all client->server packets
-11. `59bc9e8`: feat: implement orchestration phases 1-3 server systems
-12. `0978401`: feat(gns): complete GNS receive-side integration + headless SafeAddChild
+1. `(current)`: docs: PRD inventory audit — PRD_INVENTORY.md, AGENTS.md scope clarification
+2. `fd7d414`: docs: AGENTS.md — session 8 summary, remove stale session entries, update commit hash
+3. `817bbeb`: feat(progression): wire WorldProgressionSystem into ZoneServer lifecycle
+4. `5c35b31`: docs: update PRD-012 status to COMPLETE with GNS receive-side integration validation summary
+5. `5062b6a`: docs: update recent commits list in AGENTS.md
+6. `66af8e3`: docs: AGENTS.md — PRD-020 headless CI hardening complete (24/24 PRDs)
+7. `b8918c2`: Merge PR #87 — orchestration phases 1-3 implementation
+8. `80b4e7d`: fix(prd-020): headless CI hardening — validator robustness, scene tree leak prevention
+9. `2148829`: docs: AGENTS.md — PRD-012 GNS Complete (23/24)
+10. `dd3e039`: docs: AGENTS.md state for PRD-012 completion
+11. `5836384`: feat(gns): complete GNS receive-side integration for all client->server packets
+12. `59bc9e8`: feat: implement orchestration phases 1-3 server systems
 
 ## State (2026-05-03 — updated post-merge)
 
@@ -152,8 +152,10 @@
 ## Execution Summary (2026-05-03)
 
 ### PRDs Addressed
-- **22 PRDs completed** during execution
-- **2 PRDs blocked** (GNS runtime — WebRTC auth; Production DB — Docker)
+- **22 core PRDs completed** (PRD-001 through PRD-024 scope)
+- **1 core PRD blocked** (PRD-018 Production DB — Docker)
+- **1 core PRD partial** (PRD-020 Headless/CI stability)
+- **~120 additional PRD specs in `prd/`** — all "Proposed", largely unimplemented
 - **Test baseline**: 1316 cases, 7304 assertions, 100% passing
 
 ### Recent Work (2026-05-03 — post-merge)
@@ -198,36 +200,26 @@
 ### Remaining Gaps (as of 2026-05-03)
 1. **Production DB** — Requires Docker daemon (external blocker)
 
-## This Session's Work (2026-05-03 — session 8: WorldProgressionSystem wiring + AGENTS.md PRD audit)
+> ⚠️ **Scope Note:** The 24 PRDs above represent the *original core scope* (PRD-001 through PRD-024). The `prd/` directory additionally contains ~120 specification documents (feature PRDs, gap analyses, orchestration phase PRDs) — all currently marked "Proposed" and largely unimplemented. See [PRD_INVENTORY.md](docs/PRD_INVENTORY.md) for the complete inventory.
+
+## This Session's Work (2026-05-03 — session 9: Full PRD inventory audit)
 
 ### Completed
-- ✅ **AGENTS.md State section audited**: Removed stale session-entry sections that accumulated without cleanup:
-  - This Session's Work (resume session) — work already consumed upstream
-  - This Session's Work (session 5: GNS send-side + NPC integration) — work already committed
-  - This Session's Work (session 6: PRD-020 headless CI hardening) — work already committed
-  - OpenHands Integration Updates (2026-05-02) — obsolete references
-  - All other stale entries removed. Only active/most-recent entry retained.
-- ✅ **PRD-036 (Progression) assessment**: Gap identified — WorldProgressionSystem.hpp/.cpp exist with all methods declared/defined, but NOT wired into ZoneServer lifecycle. ZoneServer.hpp includes it, declares worldProgressionSystem_ member, but ZoneServer.cpp never calls init(), tick(), or any WorldProgressionSystem methods.
-- ✅ **WorldProgressionSystem wired into ZoneServer**: Added calls to the 6 lifecycle methods:
-  - `init()` — initializes zone unlock data
-  - `tick()` — per-tick progression state machine updates
-  - `onPlayerEnterZone()` / `onPlayerLeaveZone()` — entity tracking
-  - `onObjectiveCompleted()` — cross-zone progression triggers
-  - `getSpawnZone()` — uses progression state to determine respawn point
-- ✅ **CMakeLists.txt (root)**: Added `src/server/src/combat/WorldProgressionSystem.cpp` to SERVER_SOURCES list
-- ✅ **Build**: 0 errors (fresh build succeeds)
-- ✅ **Tests**: All 1316 cases, 7304 assertions — 100% pass
+- ✅ **Comprehensive PRD inventory audit**: Scanned all 146 PRD specification files across `docs/plans/PRD/` and `prd/`. Discovered that `prd/` contains ~120 documents all marked "Proposed" — none tracked in AGENTS.md.
+- ✅ **Created `docs/PRD_INVENTORY.md`**: Full inventory with categories (Core PRDs 001-024, Numbered PRDs 017-035, Orchestration PRDs 036-043, Gap PRDs GAP-001 to 014, Feature PRDs, OpenHands PRDs). Cross-referenced each against actual codebase.
+- ✅ **Updated AGENTS.md**: Added scope note clarifying that the 24/24 claim covers only core scope; linked to PRD_INVENTORY.md for full picture.
 
 ### Current Milestone Status
-- **24/24 PRDs complete** — all internal technical requirements met
-- **Only remaining gap**: Production DB (external blocker — Docker daemon)
+- **24/24 core PRDs complete** — all internal technical requirements met
+- **~120 additional PRD specifications in `prd/`** — all marked "Proposed", largely unimplemented (see [PRD_INVENTORY.md](docs/PRD_INVENTORY.md))
+- **Only remaining gap from core scope**: Production DB (external blocker — Docker daemon)
 - All tests: 1316 cases, 7304 assertions, 100% pass
 - WorldProgressionSystem fully wired into ZoneServer lifecycle
 
-### Commit
+### Commits
 - `817bbeb`: feat(progression): wire WorldProgressionSystem into ZoneServer lifecycle
 
-Last updated: 2026-05-03 (session 8 — WorldProgressionSystem wiring complete)
+Last updated: 2026-05-03 (session 9 — Full PRD inventory audit + PRD_INVENTORY.md)
 
 ## Orchestration Execution Plan
 
