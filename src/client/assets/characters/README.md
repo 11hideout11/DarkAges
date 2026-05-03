@@ -2,6 +2,14 @@
 
 This directory contains 3D character and monster models for the DarkAges client.
 
+## Infrastructure (2026-05-03)
+
+The game now includes **`CharacterModelLoader.cs`** - a runtime model loading system that:
+- Automatically attempts to load 3D models when available
+- Falls back to colored capsule placeholders when no model exists
+- Supports caching to avoid repeated loading
+- Provides color-coded distinction between character types
+
 ## Directory Structure
 
 ```
