@@ -347,7 +347,7 @@ namespace Protocol {
     
     // [CLIENT_AGENT] Create full snapshot in client-compatible format
     // Format: [type:1=2][server_tick:4][last_input:4][entity_count:4][entity_data...]
-    // Each entity: [id:4][pos_x:4f][pos_y:4f][pos_z:4f][vel_x:4f][vel_y:4f][vel_z:4f][health:1][anim:1]
+    // Each entity: [id:4][pos_x:4f][pos_y:4f][pos_z:4f][vel_x:4f][vel_y:4f][vel_z:4f][health:1][anim:1][type:1]
     std::vector<uint8_t> createFullSnapshot(
         uint32_t serverTick,
         uint32_t lastProcessedInput,

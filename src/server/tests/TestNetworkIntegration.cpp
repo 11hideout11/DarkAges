@@ -302,7 +302,7 @@ TEST_CASE("Network integration - snapshot broadcast received by client", "[netwo
     entities.push_back(e);
 
     auto snapshot = Protocol::createFullSnapshot(100, 5, entities);
-    REQUIRE(snapshot.size() == 13 + 102);  // header + 1 entity (102 bytes with Interactable)
+    REQUIRE(snapshot.size() == 13 + 103);  // header + 1 entity (103 bytes with Interactable + type)
 
     // Broadcast snapshot to all connections
     server.broadcastSnapshot(snapshot);

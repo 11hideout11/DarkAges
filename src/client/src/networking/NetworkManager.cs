@@ -500,8 +500,8 @@ namespace DarkAges.Networking
                 
                 var currentEntities = new HashSet<uint>();
                 
-                // Each entity: [id:4][pos_x:4][pos_y:4][pos_z:4][vel_x:4][vel_y:4][vel_z:4][health:1][anim:1][range:4][prompt:64][treeId:4]
-                const int ENTITY_DATA_SIZE = 102;
+                // Each entity: [id:4][pos_x:4][pos_y:4][pos_z:4][vel_x:4][vel_y:4][vel_z:4][health:1][anim:1][type:1][range:4][prompt:64][treeId:4]
+                const int ENTITY_DATA_SIZE = 103;
                 
                 for (int i = 0; i < entityCount && offset + ENTITY_DATA_SIZE <= data.Length; i++)
                 {
@@ -545,7 +545,10 @@ namespace DarkAges.Networking
                     
                     byte animState = data[offset];
                     offset += 1;
-                    
+
+                    byte entityType = data[offset];
+                    offset += 1;
+
                     // Interactable fields
                     float interactionRange = BitConverter.ToSingle(data, offset);
                     offset += 4;
@@ -567,6 +570,7 @@ namespace DarkAges.Networking
                         entityData = new EntityData
                         {
                             Id = entityId,
+                            Type = entityType,
                             Position = new Vector3(x, y, z),
                             Velocity = new Vector3(vx, vy, vz),
                             TargetPosition = new Vector3(x, y, z),
@@ -589,6 +593,7 @@ namespace DarkAges.Networking
                         entityData.Velocity = new Vector3(vx, vy, vz);
                         entityData.HealthPercent = health;
                         entityData.AnimState = animState;
+                        entityData.Type = entityType;
                         entityData.InteractionRange = interactionRange;
                         entityData.PromptText = promptText;
                         entityData.DialogueTreeId = dialogueTreeId;

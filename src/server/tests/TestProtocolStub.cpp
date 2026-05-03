@@ -23,7 +23,7 @@ TEST_CASE("Protocol stub - createFullSnapshot basic format", "[protocol][network
 
     auto data = Protocol::createFullSnapshot(1000, 42, entities);
 
-    REQUIRE(data.size() == 13 + 102);  // header + 1 entity (102 bytes with Interactable)
+    REQUIRE(data.size() == 13 + 103);  // header + 1 entity (103 bytes with Interactable + type)
     REQUIRE(data[0] == static_cast<uint8_t>(PacketType::ServerSnapshot));
 
     uint32_t tick, lastInput, count;
@@ -153,7 +153,7 @@ TEST_CASE("Protocol stub - createFullSnapshot matches client expected layout", "
     // This test verifies the snapshot format matches what the Godot client
     // NetworkManager.cs ProcessSnapshot expects:
     // [type:1][server_tick:4][last_input:4][entity_count:4]
-    // Each entity: [id:4][x:4f][y:4f][z:4f][vx:4f][vy:4f][vz:4f][health:1][anim:1]
+    // Each entity: [id:4][x:4f][y:4f][z:4f][vx:4f][vy:4f][vz:4f][health:1][anim:1][type:1]
 
     std::vector<Protocol::EntityStateData> entities;
     Protocol::EntityStateData e;
@@ -164,6 +164,7 @@ TEST_CASE("Protocol stub - createFullSnapshot matches client expected layout", "
     e.velocity.dz = Constants::Fixed(30);
     e.healthPercent = 100;
     e.animState = 0;
+    e.entityType = 3;  // NPC type
     entities.push_back(e);
 
     auto data = Protocol::createFullSnapshot(1234, 5678, entities);
@@ -205,4 +206,5 @@ TEST_CASE("Protocol stub - createFullSnapshot matches client expected layout", "
 
     REQUIRE(data[41] == 100);  // health
     REQUIRE(data[42] == 0);    // animState
+    REQUIRE(data[43] == 3);    // entityType (NPC)
 }

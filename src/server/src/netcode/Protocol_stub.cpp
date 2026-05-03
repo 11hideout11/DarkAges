@@ -285,7 +285,7 @@ bool applyDeltaSnapshot(
 // [CLIENT_AGENT] Create full snapshot in client-compatible binary format
 // Matches NetworkManager_udp.cpp documented format and client NetworkManager.cs expectations
 // Format: [type:1=2][server_tick:4][last_input:4][entity_count:4][entity_data...]
-// Each entity: [id:4][pos_x:4f][pos_y:4f][pos_z:4f][vel_x:4f][vel_y:4f][vel_z:4f][health:1][anim:1]
+// Each entity: [id:4][pos_x:4f][pos_y:4f][pos_z:4f][vel_x:4f][vel_y:4f][vel_z:4f][health:1][anim:1][type:1][interaction_range:4f][prompt:64][dialogue_tree:4]
 std::vector<uint8_t> createFullSnapshot(
     uint32_t serverTick,
     uint32_t lastProcessedInput,
@@ -333,6 +333,7 @@ std::vector<uint8_t> createFullSnapshot(
 
         data.push_back(entity.healthPercent);
         data.push_back(entity.animState);
+        data.push_back(static_cast<uint8_t>(entity.entityType));
 
         // Interactable fields
         appendFloat(entity.interactionRange);

@@ -114,16 +114,39 @@ namespace DarkAges.Client.UI
                 return;
             
             var playerPos = player.GlobalPosition;
+            uint localEntityId = GameState.Instance.LocalEntityId;
 
             // Find nearest NPC within interaction range
             uint nearestNPC = 0;
-            float nearestDist = 3.0f; // Interaction range
+            float nearestDist = float.MaxValue;
+            string nearestName = "";
 
-            foreach (var npcId in _activeNPCs)
+            foreach (var kvp in GameState.Instance.Entities)
             {
-                // Get NPC entity position - use networking if available
-                // For now, use a simple distance check if we have NPC positions
-                // Skip for now - NPC positions come from server snapshots
+                uint entityId = kvp.Key;
+                EntityData entity = kvp.Value;
+
+                // Skip local player
+                if (entityId == localEntityId)
+                    continue;
+
+                // Only process NPC-type entities (EntityType::NPC = 3)
+                if (entity.Type != 3)
+                    continue;
+
+                // Skip entities with no interaction range (non-interactable)
+                if (entity.InteractionRange <= 0.0f)
+                    continue;
+
+                // Calculate distance from player to NPC
+                float dist = playerPos.DistanceTo(entity.Position);
+
+                if (dist < entity.InteractionRange && dist < nearestDist)
+                {
+                    nearestNPC = entityId;
+                    nearestDist = dist;
+                    nearestName = entity.PromptText;
+                }
             }
 
             if (nearestNPC != _interactionTarget)
@@ -131,12 +154,25 @@ namespace DarkAges.Client.UI
                 _interactionTarget = nearestNPC;
                 
                 // Show/hide interaction prompt
-                if (nearestNPC != 0 && _dialogues.TryGetValue(nearestNPC, out var dialogue))
+                if (nearestNPC != 0)
                 {
+                    // Try to find dialogue data for this NPC
+                    string promptText = nearestName;
+                    if (_dialogues.TryGetValue(nearestNPC, out var dialogue))
+                    {
+                        promptText = $"Press E to talk to {dialogue.name}";
+                    }
+                    else
+                    {
+                        // Fall back to entity's prompt text if no dialogue registered
+                        if (string.IsNullOrEmpty(promptText) || promptText == "Press E to interact")
+                            promptText = $"Press E to interact";
+                    }
+                    
                     var prompt = GetTree().GetFirstNodeInGroup("interaction_prompt");
                     if (prompt is InteractionPrompt ip)
                     {
-                        ip.ShowPrompt(nearestNPC, $"Press E to talk to {dialogue.name}", 3.0f);
+                        ip.ShowPrompt(nearestNPC, promptText, nearestDist);
                     }
                 }
                 else
@@ -152,7 +188,7 @@ namespace DarkAges.Client.UI
             // Check for interaction key press
             if (Input.IsActionJustPressed("interact") && _interactionTarget != 0)
             {
-                StartInteraction(_interactionTarget);
+                InteractWithNPC(_interactionTarget);
             }
         }
         
