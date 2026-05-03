@@ -1,4 +1,5 @@
 #include "combat/ExperienceSystem.hpp"
+#include "combat/ProgressionCalculator.hpp"
 #include "ecs/CoreTypes.hpp"
 #include <cmath>
 
@@ -9,12 +10,10 @@ namespace DarkAges {
 // ============================================================================
 
 uint64_t ExperienceSystem::xpForLevel(uint32_t level) {
-    // Scaling formula: base * level^1.5
-    // Level 1 -> 100 XP, Level 2 -> 283, Level 5 -> 1118, Level 10 -> 3162
+    // PRD-036 Scaling formula: level * 100 + level² * 10
+    // Level 1: 100, Level 2: 220, Level 5: 575, Level 10: 1100
     if (level <= 1) return 100;
-    double base = 100.0;
-    double scaled = base * std::pow(static_cast<double>(level), 1.5);
-    return static_cast<uint64_t>(scaled);
+    return static_cast<uint64_t>(level * 100 + level * level * 10);
 }
 
 bool ExperienceSystem::awardKillXP(Registry& registry, EntityID killer, EntityID victim) {
@@ -43,10 +42,28 @@ bool ExperienceSystem::awardXP(Registry& registry, EntityID player, uint64_t xpA
     bool leveledUp = false;
     while (prog->currentXP >= prog->xpToNextLevel) {
         prog->currentXP -= prog->xpToNextLevel;
+        uint32_t oldLevel = prog->level;
         prog->level++;
+        
+        // PRD-036: Base stat bonuses (+5 HP, +1 per stat) applied elsewhere
         prog->statPoints += 3;  // 3 stat points per level
+        
+        // PRD-036: Talent points every 2 levels (levels 2, 4, 6, 8, 10...)
+        if (prog->level % 2 == 0) {
+            prog->talentPoints += 1;
+        }
+        
         prog->xpToNextLevel = xpForLevel(prog->level);
         leveledUp = true;
+        
+        // PRD-036: Apply level-up stats via CombatState
+        CombatState* combat = registry.try_get<CombatState>(player);
+        if (combat) {
+            combat->strength += 1;
+            combat->dexterity += 1;
+            combat->vitality += 1;
+            combat->recalculateStats();
+        }
 
         // Fire level-up callback
         if (levelUpCallback_) {

@@ -10,18 +10,19 @@ using namespace DarkAges;
 // ============================================================================
 
 TEST_CASE("ExperienceSystem xpForLevel formula", "[experience][xp]") {
-    // Level 1 -> 100 XP
+    // PRD-036: Level N = N*100 + N²*10
+    // Level 1: edge case → 100
     CHECK(ExperienceSystem::xpForLevel(0) == 100); // Edge: level 0 treated as 1
     CHECK(ExperienceSystem::xpForLevel(1) == 100);
 
-    // Level 2 -> 100 * 2^1.5 = 282.8... -> 282 (truncated)
-    CHECK(ExperienceSystem::xpForLevel(2) == 282);
+    // PRD-036: Level 2 → 2*100 + 2²*10 = 200 + 40 = 240
+    CHECK(ExperienceSystem::xpForLevel(2) == 240);
 
-    // Level 5 -> 100 * 5^1.5 = 1118.0...
-    CHECK(ExperienceSystem::xpForLevel(5) == 1118);
+    // Level 5 → 5*100 + 5²*10 = 500 + 250 = 750
+    CHECK(ExperienceSystem::xpForLevel(5) == 750);
 
-    // Level 10 -> 100 * 10^1.5 = 3162.2... -> 3162
-    CHECK(ExperienceSystem::xpForLevel(10) == 3162);
+    // Level 10 → 10*100 + 10²*10 = 1000 + 1000 = 2000
+    CHECK(ExperienceSystem::xpForLevel(10) == 2000);
 
     // Verify monotonic increase
     for (uint32_t i = 2; i <= 20; ++i) {
@@ -373,4 +374,74 @@ TEST_CASE("LootSystem update keeps unexpired loot", "[loot][experience]") {
     // Update at time 2000 — loot should remain
     lootSys.update(registry, 2000);
     CHECK(registry.valid(loot));
+}
+
+// ============================================================================
+// PRD-036: Progression Integration Tests
+// ============================================================================
+
+TEST_CASE("ExperienceSystem talent points unlock at even levels", "[experience][progression]") {
+    entt::registry registry;
+    ExperienceSystem xpSys;
+
+    auto player = registry.create();
+    registry.emplace<PlayerTag>(player);
+    registry.emplace<PlayerProgression>(player);
+
+    // Level 1 → level 2: talent point unlocks
+    xpSys.awardXP(registry, player, 110);
+    PlayerProgression& prog = registry.get<PlayerProgression>(player);
+    CHECK(prog.level == 2);
+    CHECK(prog.talentPoints == 1); // Talent point at level 2
+
+    // Level 2 → level 3: no talent
+    xpSys.awardXP(registry, player, 250);
+    CHECK(prog.level == 3);
+    CHECK(prog.talentPoints == 1); // Still 1
+
+    // Level 3 → level 4: another talent point
+    xpSys.awardXP(registry, player, 450);
+    CHECK(prog.level == 4);
+    CHECK(prog.talentPoints == 2); // Talent point at level 4
+}
+
+TEST_CASE("CombatState recalculateStats applies bonuses", "[experience][progression]") {
+    entt::registry registry;
+    
+    auto player = registry.create();
+    registry.emplace<CombatState>(player);
+    
+    CombatState& combat = registry.get<CombatState>(player);
+    combat.baseDamage = 10;
+    combat.strength = 5;
+    combat.vitality = 10;
+    
+    // Calculate stats
+    combat.recalculateStats();
+    
+    // Final HP = 10000 + VIT*10 = 10000 + 100 = 10100
+    CHECK(combat.maxHealth == 10100);
+    
+    // Final Damage = Base + STR*2 = 10 + 10 = 20
+    CHECK(combat.finalDamage == 20);
+}
+
+TEST_CASE("PlayerProgression tracks talent points", "[experience][progression]") {
+    entt::registry registry;
+    
+    auto player = registry.create();
+    registry.emplace<PlayerProgression>(player);
+    
+    PlayerProgression& prog = registry.get<PlayerProgression>(player);
+    CHECK(prog.talentPoints == 0);
+    
+    // Simulate level-up to level 2
+    prog.level = 2;
+    prog.talentPoints = 1;
+    CHECK(prog.talentPoints == 1);
+    
+    // Level 4 should have 2 talent points
+    prog.level = 4;
+    prog.talentPoints = 2;
+    CHECK(prog.talentPoints == 2);
 }

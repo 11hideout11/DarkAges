@@ -199,6 +199,32 @@
 
 Last updated: 2026-05-03 (session 3)
 
+## Orchestration Execution Plan
+
+### Execution Phases (2026-05-03)
+
+| Phase | Focus | Weeks | Key PRDs | Status |
+|-------|-------|-------|---------|--------|
+| Phase 1 | Core Gameplay | 1-4 | PRD-036, PRD-037, PRD-043 | Ready |
+| Phase 2 | Production Ready | 5-8 | PRD-038, PRD-039, PRD-041 | Ready |
+| Phase 3 | AAA Polish | 9-12 | PRD-040, PRD-042 | Ready |
+
+**Execution Plan:** See `/workspace/project/DarkAges/planning/ORCHESTRATION_PLAN.md`
+
+### Work Package Tracking
+
+- **Phase 1:** 11 work packages, 5 quality gates (G-1.1 to G-1.5)
+- **Phase 2:** 12 work packages, 4 quality gates (G-2.1 to G-2.4)
+- **Phase 3:** 11 work packages, 4 quality gates (G-3.1 to G-3.4)
+
+### Integration Points
+
+- PRD-036 (Progression) ↔ CombatSystem, QuestSystem, SaveSystem
+- PRD-037 (World) ↔ ZoneServer, WorldMap UI
+- PRD-043 (Quest) ↔ DialogueSystem, Progression, Save
+
+---
+
 ## Validation Attempt (2026-05-03)
 
 ### Environment Note

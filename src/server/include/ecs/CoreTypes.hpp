@@ -332,6 +332,12 @@ struct InputState {
 struct CombatState {
     int16_t health{10000};           ///< Current health (0-10000, displayed as 0-100.0)
     int16_t maxHealth{10000};          ///< Maximum health value
+    int16_t baseDamage{10};           ///< PRD-036: Base damage before equipment/stats
+    int16_t finalDamage{10};          ///< PRD-036: Final damage (base + equipment + stats)
+    int16_t finalArmor{0};          ///< PRD-036: Final armor from equipment
+    int16_t strength{0};            ///< PRD-036: STR stat (affects damage)
+    int16_t dexterity{0};             ///< PRD-036: DEX stat (affected by level)
+    int16_t vitality{0};             ///< PRD-036: VIT stat (affects HP)
     uint8_t teamId{0};               ///< Team identifier (0=neutral, 1+=teams)
     uint8_t classType{0};            ///< Class/build identifier
     EntityID lastAttacker{entt::null}; ///< Last entity that dealt damage
@@ -348,8 +354,10 @@ struct CombatState {
 
     // Copy constructor: for snapshot/migration; copies only data, resets FSM state.
     CombatState(const CombatState& other)
-        : health(other.health), maxHealth(other.maxHealth), teamId(other.teamId),
-          classType(other.classType), lastAttacker(other.lastAttacker),
+        : health(other.health), maxHealth(other.maxHealth),
+          baseDamage(other.baseDamage), finalDamage(other.finalDamage), finalArmor(other.finalArmor),
+          strength(other.strength), dexterity(other.dexterity), vitality(other.vitality),
+          teamId(other.teamId), classType(other.classType), lastAttacker(other.lastAttacker),
           lastAttackTime(other.lastAttackTime), lastGlobalCooldownTime(other.lastGlobalCooldownTime),
           isDead(other.isDead), currentState(nullptr) {}
 
@@ -358,6 +366,12 @@ struct CombatState {
         if (this != &other) {
             health = other.health;
             maxHealth = other.maxHealth;
+            baseDamage = other.baseDamage;
+            finalDamage = other.finalDamage;
+            finalArmor = other.finalArmor;
+            strength = other.strength;
+            dexterity = other.dexterity;
+            vitality = other.vitality;
             teamId = other.teamId;
             classType = other.classType;
             lastAttacker = other.lastAttacker;
@@ -377,6 +391,19 @@ struct CombatState {
 
     [[nodiscard]] float healthPercent() const {
         return static_cast<float>(health) / static_cast<float>(maxHealth) * 100.0f;
+    }
+    
+    // PRD-036: Calculate final combat stats from base + level + equipment
+    // Call when: level changes, equipment changes, stat points spent
+    void recalculateStats() {
+        // Final HP = Base + (VIT * 10) + Equipment
+        maxHealth = 10000 + static_cast<int16_t>(vitality * 10);
+        
+        // Final Damage = Base + (STR * 2) + Equipment  
+        finalDamage = baseDamage + static_cast<int16_t>(strength * 2);
+        
+        // Final Armor from equipment only (no stat)
+        // (already in finalArmor field)
     }
 };
 
@@ -701,6 +728,13 @@ struct BossProfile {
      uint64_t currentXP{0};
      uint64_t xpToNextLevel{100};             // XP needed for next level
      uint32_t statPoints{0};                  // Unspent stat points
+     uint32_t talentPoints{0};                // Unspent talent points (unlock every 2 levels)
+     
+     // PRD-037: World Progression - Zone unlocks
+     bool tutorialComplete{false};            // Tutorial zone (98) completed
+     bool arenaComplete{false};             // Arena zone (99) completed  
+     bool bossComplete{false};             // Boss zone (100) completed
+     uint32_t highestZoneUnlocked{98};      // Highest zone accessible
  };
 
  // Player entity tag (marks an entity as a player character)
@@ -825,6 +859,10 @@ struct ItemStats {
     int16_t manaBonus{0};         // Flat mana increase
     float speedBonus{0.0f};       // Movement speed multiplier
     float critChanceBonus{0.0f};  // Critical hit chance bonus
+    int16_t strengthBonus{0};    // STR bonus
+    int16_t dexterityBonus{0};    // DEX bonus  
+    int16_t vitalityBonus{0};    // VIT bonus
+    int16_t levelScalePercent{100}; // PRD-036: Equipment power scales with level (100 = no scaling)
 };
 
 // Item definition — describes an item type
