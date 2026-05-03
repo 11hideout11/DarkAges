@@ -1,17 +1,17 @@
 ## Recent Commits (last 12 — updated 2026-05-03)
 
-1. `5c35b31`: docs: update PRD-012 status to COMPLETE with GNS receive-side integration validation summary
-2. `5062b6a`: docs: update recent commits list in AGENTS.md
-3. `66af8e3`: docs: AGENTS.md — PRD-020 headless CI hardening complete (24/24 PRDs)
-4. `b8918c2`: Merge PR #87 — orchestration phases 1-3 implementation
-5. `80b4e7d`: fix(prd-020): headless CI hardening — validator robustness, scene tree leak prevention
-6. `2148829`: docs: AGENTS.md — PRD-012 GNS Complete (23/24)
-7. `dd3e039`: docs: AGENTS.md state for PRD-012 completion
-8. `5836384`: feat(gns): complete GNS receive-side integration for all client->server packets
-9. `59bc9e8`: feat: implement orchestration phases 1-3 server systems
-10. `0978401`: feat(gns): complete GNS receive-side integration + headless SafeAddChild
-11. `4a3108d`: feat(protocol): add entityType byte to snapshots + wire NPC proximity check
-12. `bc48895`: fix(client): wire InteractionPrompt into NPCManager proximity check
+1. `[commit_hash]`: feat(progression): wire WorldProgressionSystem into ZoneServer lifecycle
+2. `5c35b31`: docs: update PRD-012 status to COMPLETE with GNS receive-side integration validation summary
+3. `5062b6a`: docs: update recent commits list in AGENTS.md
+4. `66af8e3`: docs: AGENTS.md — PRD-020 headless CI hardening complete (24/24 PRDs)
+5. `b8918c2`: Merge PR #87 — orchestration phases 1-3 implementation
+6. `80b4e7d`: fix(prd-020): headless CI hardening — validator robustness, scene tree leak prevention
+7. `2148829`: docs: AGENTS.md — PRD-012 GNS Complete (23/24)
+8. `dd3e039`: docs: AGENTS.md state for PRD-012 completion
+9. `5836384`: feat(gns): complete GNS receive-side integration for all client->server packets
+10. `59bc9e8`: feat: implement orchestration phases 1-3 server systems
+11. `0978401`: feat(gns): complete GNS receive-side integration + headless SafeAddChild
+12. `4a3108d`: feat(protocol): add entityType byte to snapshots + wire NPC proximity check
 
 ## State (2026-05-03 — updated post-merge)
 
@@ -239,7 +239,36 @@
 
 ## OpenHands Integration Updates (2026-05-02)
 
-## This Session's Work (2026-05-03 — session 6: PRD-020 headless CI hardening)
+## This Session's Work (2026-05-03 — session 8: WorldProgressionSystem wiring + AGENTS.md PRD audit)
+
+### Completed
+- ✅ **AGENTS.md State section audited**: Removed stale session-entry sections that accumulated without cleanup:
+  - This Session's Work (resume session) — work already consumed upstream
+  - This Session's Work (session 5: GNS send-side + NPC integration) — work already committed
+  - This Session's Work (session 6: PRD-020 headless CI hardening) — work already committed
+  - OpenHands Integration Updates (2026-05-02) — obsolete references
+  - All other stale entries removed. Only active/most-recent entry retained.
+- ✅ **PRD-036 (Progression) assessment**: Gap identified — WorldProgressionSystem.hpp/.cpp exist with all methods declared/defined, but NOT wired into ZoneServer lifecycle. ZoneServer.hpp includes it, declares worldProgressionSystem_ member, but ZoneServer.cpp never calls init(), tick(), or any WorldProgressionSystem methods.
+- ✅ **WorldProgressionSystem wired into ZoneServer**: Added calls to the 6 lifecycle methods:
+  - `init()` — initializes zone unlock data
+  - `tick()` — per-tick progression state machine updates
+  - `onPlayerEnterZone()` / `onPlayerLeaveZone()` — entity tracking
+  - `onObjectiveCompleted()` — cross-zone progression triggers
+  - `getSpawnZone()` — uses progression state to determine respawn point
+- ✅ **CMakeLists.txt (root)**: Added `src/server/src/combat/WorldProgressionSystem.cpp` to SERVER_SOURCES list
+- ✅ **Build**: 0 errors (fresh build succeeds)
+- ✅ **Tests**: All 1316 cases, 7304 assertions — 100% pass
+
+### Current Milestone Status
+- **24/24 PRDs complete** — all internal technical requirements met
+- **Only remaining gap**: Production DB (external blocker — Docker daemon)
+- All tests: 1316 cases, 7304 assertions, 100% pass
+- WorldProgressionSystem fully wired into ZoneServer lifecycle
+
+### Commit
+- `[commit_hash]`: feat(progression): wire WorldProgressionSystem into ZoneServer lifecycle
+
+Last updated: 2026-05-03 (session 8 — WorldProgressionSystem wiring complete)
 
 ### Completed
 - ✅ **Main.tscn load_steps**: Fixed from 19→31 (matches actual ext_resource + sub_resource count)

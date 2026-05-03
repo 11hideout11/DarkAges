@@ -2532,6 +2532,18 @@ void ZoneServer::onZoneComplete(entt::entity player, uint16_t zoneId)
     
     // Determine target zone
     uint32_t targetZone = getNextZoneId(zoneId);
+
+    // [PRD-037] Update world progression based on completed zone
+    if (zoneId == ZONE_TUTORIAL) {
+        worldProgressionSystem_.completeTutorial(registry_, player);
+        std::cout << "[ZONE] Tutorial complete — Arena unlocked for player " << playerId << std::endl;
+    } else if (zoneId == ZONE_ARENA) {
+        worldProgressionSystem_.completeArena(registry_, player);
+        std::cout << "[ZONE] Arena complete — Boss zone unlocked for player " << playerId << std::endl;
+    } else if (zoneId == ZONE_BOSS) {
+        worldProgressionSystem_.completeBoss(registry_, player);
+        std::cout << "[ZONE] Boss complete — all zones unlocked for player " << playerId << std::endl;
+    }
     
     std::cout << "[ZONE] Zone " << zoneId << " complete for player " << playerId 
               << " → triggering migration to zone " << targetZone << std::endl;

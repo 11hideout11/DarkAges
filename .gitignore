@@ -182,3 +182,6 @@ tools/analysis/reports/*.json
 
 # Audit build directory
 /build_audit/
+
+# CMake build directory
+build-cmake/

@@ -82,6 +82,7 @@ set(TEST_SOURCES
     TestProtocolStub.cpp
     TestHitboxCollision.cpp
     TestHitboxEdgeCases.cpp
+    TestWorldProgression.cpp
 )
 
 # Conditional test sources based on dependencies
@@ -132,6 +133,7 @@ set(TEST_SERVER_SOURCES
     ${CMAKE_SOURCE_DIR}/src/combat/ChatSystem.cpp
     ${CMAKE_SOURCE_DIR}/src/combat/NPCAISystem.cpp
     ${CMAKE_SOURCE_DIR}/src/combat/ExperienceSystem.cpp
+    ${CMAKE_SOURCE_DIR}/src/combat/WorldProgressionSystem.cpp
     ${CMAKE_SOURCE_DIR}/src/combat/StatusEffectSystem.cpp
     ${CMAKE_SOURCE_DIR}/src/combat/ProjectileSystem.cpp
     ${CMAKE_SOURCE_DIR}/src/combat/PartySystem.cpp

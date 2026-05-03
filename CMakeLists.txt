@@ -515,6 +515,7 @@ set(SERVER_SOURCES
     src/server/src/combat/AchievementSystem.cpp
     src/server/src/combat/LeaderboardSystem.cpp
     src/server/src/combat/TargetLockSystem.cpp
+    src/server/src/combat/WorldProgressionSystem.cpp
     src/server/src/instrumentation/ServerStateExporter.cpp
     src/server/src/zones/AreaOfInterest.cpp
     src/server/src/zones/AuraProjection.cpp

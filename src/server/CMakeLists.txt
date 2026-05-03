@@ -116,6 +116,7 @@ set(SERVER_SOURCES
     src/combat/NPCAISystem.cpp
     src/combat/ItemSystem.cpp
     src/combat/ExperienceSystem.cpp
+    src/combat/WorldProgressionSystem.cpp
     src/combat/StatusEffectSystem.cpp
     src/combat/ProjectileSystem.cpp
     src/combat/CollisionLayerManager.cpp

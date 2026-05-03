@@ -34,6 +34,7 @@
 #include "combat/CraftingSystem.hpp"
 #include "combat/TradeSystem.hpp"
 #include "combat/ZoneEventSystem.hpp"
+#include "combat/WorldProgressionSystem.hpp"
 #include "combat/DialogueSystem.hpp"
 #include "combat/SpawnSystem.hpp"
 #include "security/AntiCheat.hpp"
@@ -321,6 +322,9 @@ private:
     ZoneEventSystem zoneEventSystem_;
     DialogueSystem dialogueSystem_;
     SpawnSystem spawnSystem_;
+
+    // [PROGRESSION_AGENT] World progression tracking (zone locks, completion)
+    WorldProgressionSystem worldProgressionSystem_;
 
     // [COMBAT_AGENT] Boss encounter state for zone-based boss events
     BossEncounterConfig currentBossConfig_;
