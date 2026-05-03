@@ -1,4 +1,4 @@
-[gd_scene load_steps=15 format=3 uid="uid://combat_state_machine"]
+[gd_scene load_steps=14 format=3 uid="uid://combat_state_machine"]
 
 [ext_resource type="Script" path="res://src/combat/fsm/CombatStateMachineController.cs" id="1_controller"]
 [ext_resource type="AnimationLibrary" path="res://scenes/PlayerAnimations.tres" id="2_animlib"]

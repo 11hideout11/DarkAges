@@ -1,4 +1,4 @@
-[gd_scene load_steps=8 format=3 uid="uid://spelleffect"]
+[gd_scene load_steps=6 format=3 uid="uid://spelleffect"]
 
 [ext_resource type="Script" path="res://src/combat/SpellEffect.cs" id="1_spelleffect"]
 

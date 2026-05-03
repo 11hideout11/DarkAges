@@ -1,4 +1,4 @@
-[gd_scene load_steps=5 format=3 uid="uid://deatheffect"]
+[gd_scene load_steps=4 format=3 uid="uid://deatheffect"]
 
 [ext_resource type="Script" path="res://src/combat/DeathEffect.cs" id="1_deatheffect"]
 

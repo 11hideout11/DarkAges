@@ -1,4 +1,4 @@
-[gd_scene load_steps=8 format=3 uid="uid://player"]
+[gd_scene load_steps=48 format=3 uid="uid://player"]
 
 [ext_resource type="Script" path="res://src/prediction/PredictedPlayer.cs" id="1_player"]
 [ext_resource type="Script" path="res://src/combat/AttackFeedbackSystem.cs" id="2_attack"]

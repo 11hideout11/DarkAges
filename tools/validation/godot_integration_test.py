@@ -62,10 +62,10 @@ def main():
         return 1
     print("[TEST] Server is ready")
 
-    # Start Godot client headless
+    # Start Godot client headless (use xvfb-run, not --headless — Godot 4.2 headless rendering has known issues)
     godot_cmd = [
-        GODOT, '--headless',
-        '--path', CLIENT_DIR,
+        'xvfb-run', '-a', '--server-args=-screen 0 1280x720x24',
+        GODOT, '--path', CLIENT_DIR,
         '--', '--server', '127.0.0.1', '--port', str(PORT),
         '--auto-connect', '--demo-duration', '5'
     ]
