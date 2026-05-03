@@ -262,6 +262,9 @@ private:
     void processPendingChatMessages();
     void processPendingQuestActions();
     void processPendingDialogueResponses();
+    // Zone advancement — trigger migration when objectives complete
+    void onZoneComplete(entt::entity player, uint16_t zoneId);
+    uint32_t getNextZoneId(uint32_t currentZone) const;
 
     // Performance monitoring (delegated to PerformanceHandler)
 

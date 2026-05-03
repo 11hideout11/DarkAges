@@ -290,6 +290,56 @@ bool ZoneHandoffController::cancelHandoff(uint64_t playerId) {
     return true;
 }
 
+  void ZoneHandoffController::triggerMigration(uint64_t playerId, EntityID entity, ConnectionID conn, uint32_t targetZoneId)
+  {
+    // Validate preconditions
+    if (!zoneLookup_) {
+        std::cerr << "[HANDOFF] triggerMigration failed: zoneLookup not set" << std::endl;
+        return;
+    }
+    if (isHandoffInProgress(playerId)) {
+        std::cerr << "[HANDOFF] triggerMigration: handoff already in progress for player " << playerId << std::endl;
+        return;
+    }
+    if (targetZoneId == myZoneId_) {
+        std::cerr << "[HANDOFF] triggerMigration: target zone equals source; ignoring" << std::endl;
+        return;
+    }
+
+    // Look up target zone information
+    ZoneDefinition* targetDef = zoneLookup_(targetZoneId);
+    if (!targetDef) {
+        std::cerr << "[HANDOFF] triggerMigration: unknown target zone " << targetZoneId << std::endl;
+        return;
+    }
+
+    // Capture current time
+    uint32_t now = static_cast<uint32_t>(
+        std::chrono::duration_cast<std::chrono::milliseconds>(
+            std::chrono::steady_clock::now().time_since_epoch()).count());
+
+    // Create handoff entry
+    ActiveHandoff handoff;
+    handoff.playerId = playerId;
+    handoff.entity = entity;
+    handoff.connection = conn;
+    handoff.sourceZoneId = myZoneId_;
+    handoff.targetZoneId = targetZoneId;
+    handoff.phase = HandoffPhase::NONE;
+    handoff.phaseStartTime = now;
+    handoff.distanceToEdge = 0.0f;
+    handoff.movementDirection = glm::vec2(0.0f, 0.0f);
+    handoff.targetZoneHost = targetDef->host;
+    handoff.targetZonePort = targetDef->port;
+    handoff.handoffToken.clear();
+
+    activeHandoffs_[playerId] = handoff;
+
+    // Begin preparation phase immediately
+    enterPreparation(activeHandoffs_[playerId], targetZoneId, now);
+  }
+
+
 HandoffPhase ZoneHandoffController::getPlayerPhase(uint64_t playerId) const {
     auto it = activeHandoffs_.find(playerId);
     if (it != activeHandoffs_.end()) {

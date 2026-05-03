@@ -127,6 +127,9 @@ public:
     };
     [[nodiscard]] const HandoffStats& getStats() const { return stats_; }
 
+    // Trigger immediate handoff (bypass boundary detection) — used for demo zone sequencing
+    void triggerMigration(uint64_t playerId, EntityID entity, ConnectionID conn, uint32_t targetZoneId);
+
 private:
     uint32_t myZoneId_;
     ZoneDefinition myZoneDef_;

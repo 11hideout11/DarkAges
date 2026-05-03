@@ -227,6 +227,34 @@ namespace DarkAges
           component.TimeRemaining = 0;
       }
     }
+
+    // Check for zone completion on non-wave-defense zones
+    for (auto& [entity, zoneDef] : _playerZoneDefs)
+    {
+      if (entity == entt::null) continue;
+      if (!_registry->all_of<ZoneObjectiveComponent>(entity)) continue;
+      
+      auto& component = _registry->get<ZoneObjectiveComponent>(entity);
+      
+      // Skip if already completed, no objectives, or zoneId zero
+      if (component.ZoneComplete || zoneDef.objectives.empty() || component.ZoneId == 0)
+        continue;
+      
+      // Check if all required objectives are met
+      if (CheckObjectivesComplete(entity, zoneDef))
+      {
+        component.ZoneComplete = true;
+        
+        // Emit zone complete signal to ZoneServer for handoff
+        _zoneCompleteSignal.publish(entity, component.ZoneId);
+        
+        // Send ZoneComplete event for client UI
+        ZoneObjectiveEvent event;
+        event.Type = ZoneObjectiveEvent::EventType::ZoneComplete;
+        event.Message = "Zone complete!";
+        EmitEvent(entity, event);
+      }
+    }
   }
   
   bool ZoneObjectiveSystem::CheckObjectivesComplete(entt::entity player, const ZoneDefinition& zoneDef) const

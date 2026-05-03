@@ -141,6 +141,8 @@ bool ZoneServer::initialize(const ZoneConfig& config) {
         auto it = entityToConnection_.find(e);
         return (it != entityToConnection_.end()) ? it->second : INVALID_CONNECTION;
     });
+    // [PRD-009] Subscribe to zone completion for demo zone advancement
+    zoneObjectiveSystem_.OnZoneCompleted().connect<&ZoneServer::onZoneComplete>(this);
 
     // Initialize Redis
     redis_ = std::make_unique<RedisManager>();
@@ -2315,6 +2317,49 @@ void ZoneServer::populateNPCsFromDemoConfig() {
         std::cerr << "[ZONE " << config_.zoneId << "] Failed to populate from demo config: " << e.what() << std::endl;
         populateNPCs();
     }
+}
+
+
+// Demo zone sequencing — determine next zone in the tutorial→arena→boss loop
+uint32_t ZoneServer::getNextZoneId(uint32_t currentZone) const
+{
+    switch (currentZone)
+    {
+        case 98: return 99;   // tutorial → arena
+        case 99: return 100;  // arena → boss
+        case 100: return 98;  // boss → back to tutorial (demo restart)
+        default: return 98;   // fallback: start at tutorial
+    }
+}
+
+// Zone completion handler — trigger migration to next zone
+void ZoneServer::onZoneComplete(entt::entity player, uint16_t zoneId)
+{
+    // Look up player ID from PlayerInfo component
+    const PlayerInfo* info = registry_.try_get<PlayerInfo>(player);
+    if (!info) {
+        std::cerr << "[ZONE] onZoneComplete: missing PlayerInfo for entity " << static_cast<uint32_t>(player) << std::endl;
+        return;
+    }
+    
+    uint64_t playerId = info->playerId;
+    
+    // Look up connection ID
+    auto connIt = entityToConnection_.find(player);
+    if (connIt == entityToConnection_.end()) {
+        std::cerr << "[ZONE] onZoneComplete: no connection for player " << playerId << std::endl;
+        return;
+    }
+    ConnectionID conn = connIt->second;
+    
+    // Determine target zone
+    uint32_t targetZone = getNextZoneId(zoneId);
+    
+    std::cout << "[ZONE] Zone " << zoneId << " complete for player " << playerId 
+              << " → triggering migration to zone " << targetZone << std::endl;
+    
+    // Trigger migration via handoff controller
+    handoffController_->triggerMigration(playerId, player, conn, targetZone);
 }
 
 } // namespace DarkAges
