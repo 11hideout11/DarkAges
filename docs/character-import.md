@@ -8,6 +8,21 @@ This document guides the import of CC0 3D character models into the DarkAges God
 - RemotePlayer uses CapsuleMesh placeholder
 - Need to replace with proper humanoid models
 
+**Asset Directory Structure:**
+```
+src/client/assets/characters/
+├── player_male/          # Player character models
+├── player_female/       # Female player variants
+├── monsters/
+│   ├── goblin/          # Goblin enemies
+│   ├── skeleton/        # Skeleton enemies
+│   ├── orc/            # Orc enemies
+│   ├── troll/          # Troll enemies
+│   └── boss/           # Boss entities
+└── npcs/
+    └── village_guide/  # NPC characters
+```
+
 ## CC0 Character Sources
 
 ### Recommended Assets
