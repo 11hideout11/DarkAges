@@ -69,10 +69,10 @@ These are explicitly identified as gaps in PRD_GAP_ANALYSIS_SUMMARY.md and are a
 Reference: `src/server/src/netcode/Protocol.cpp`
 
 Tasks:
-- [ ] Add PACKET_INVENTORY_UPDATE serialization
-- [ ] Add PACKET_ABILITY_UPDATE serialization  
-- [ ] Add PACKET_QUEST_LOG_SYNC serialization
-- [ ] Add corresponding packet IDs to PacketTypes.hpp
+- [x] Add PACKET_INVENTORY_UPDATE serialization
+- [x] Add PACKET_ABILITY_UPDATE serialization  
+- [x] Add PACKET_QUEST_LOG_SYNC serialization
+- [x] Add corresponding packet IDs to PacketTypes.hpp
 
 ## Step 4.2: Add Client Network Handlers
 **Goal:** Process server data on client
@@ -81,10 +81,10 @@ Tasks:
 Reference: `src/client/src/networking/NetworkManager.cs`
 
 Tasks:
-- [ ] Add ProcessInventoryUpdate() method
-- [ ] Add ProcessAbilityUpdate() method
-- [ ] Add ProcessQuestSync() method
-- [ ] Emit signals for UI update
+- [x] Add ProcessInventoryUpdate() method
+- [x] Add ProcessAbilityUpdate() method
+- [x] Add ProcessQuestSync() method
+- [x] Emit signals for UI update
 
 ## Step 4.3: Wire Inventory Panel to Network
 **Goal:** Display real inventory data
@@ -93,10 +93,10 @@ Tasks:
 Reference: `src/client/src/ui/InventoryPanel.cs`
 
 Tasks:
-- [ ] Add NetworkManager reference
-- [ ] Connect to InventoryUpdate signal
-- [ ] Add UpdateSlots() method to refresh display
-- [ ] Add item icon loading (placeholder textures)
+- [x] Add NetworkManager reference
+- [x] Connect to InventoryUpdate signal
+- [x] Add UpdateSlots() method to refresh display
+- [x] Add item icon loading (placeholder textures)
 
 ## Step 4.4: Wire Ability Bar to Network
 **Goal:** Display real ability data  
@@ -105,10 +105,10 @@ Tasks:
 Reference: `src/client/src/ui/AbilityBar.cs`
 
 Tasks:
-- [ ] Add NetworkManager reference
-- [ ] Connect to AbilityUpdate signal  
-- [ ] Populate ability buttons from server data
-- [ ] Add cooldown visualization
+- [x] Add NetworkManager reference
+- [x] Connect to AbilityUpdate signal  
+- [x] Populate ability buttons from server data
+- [x] Add cooldown visualization
 
 ## Step 4.5: Wire Quest Tracker to Quest Log
 **Goal:** Display real quest data
@@ -117,10 +117,10 @@ Tasks:
 Reference: `src/client/src/ui/QuestTracker.cs`
 
 Tasks:
-- [ ] Add NetworkManager reference
-- [ ] Connect to QuestSync signal
-- [ ] Update objectives display from server data
-- [ ] Add progress tracking UI
+- [x] Add NetworkManager reference
+- [x] Connect to QuestSync signal
+- [x] Update objectives display from server data
+- [x] Add progress tracking UI
 
 ## Step 4.6: Integrate NPC AI into ZoneServer Tick
 **Goal:** NPCs exhibit behavior (idle/wander/chase/attack)
@@ -129,9 +129,9 @@ Tasks:
 Reference: `src/server/src/zones/ZoneServer.cpp`
 
 Tasks:
-- [ ] Add npcAiSystem_ member to ZoneServer
-- [ ] Call aiSystem.update() in Tick()
-- [ ] Wire AI damage callback to combat events
+- [x] Add npcAiSystem_ member to ZoneServer
+- [x] Call aiSystem.update() in Tick()
+- [x] Wire AI damage callback to combat events
 - [ ] Add NPCAIState component to spawned NPCs
 
 ## Step 4.7: Build and Test
