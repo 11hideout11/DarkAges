@@ -1,172 +1,179 @@
+# DarkAges Project Status Review & Forward Plan
+
+**Last Updated:** 2026-05-02  
+**Review Focus:** End-to-end status across AGENTS.md, PROJECT_STATUS.md, PLAN.md, and all PRD-*.md files  
+
+---
+
 # 1. OBJECTIVE
 
-Complete PRD-012 GNS Runtime Integration to finalize the switch from custom UDP socket implementation to Valve's GameNetworkingSockets library, providing improved production reliability, encryption, and NAT traversal.
+Perform comprehensive status review comparing documentation state with codebase reality, identify completed vs. outstanding PRDs, and select highest-impact next task based on dependency order and MVP criteria.
 
-This is the primary remaining actionable item that meaningfully advances the project toward production readiness.
-
-## Current Status (2026-05-02)
-- **INetworkSocket interface**: ✅ Complete (270 lines, includes StubSocket + GNSSocket classes + factory)
-- **StubSocket implementation**: ✅ Complete (in-memory stub for tests)
-- **GNSSocket implementation**: ❌ STUB - returns false on all operations (lines 206-254 in INetworkSocket.cpp)
-- **GNS compile**: ✅ Fixed in Phase 8
-- **GNS runtime**: ❌ Pending - needs real GNS library integration
-
-## Gap Analysis
-The GNSSocket class exists but is a placeholder stub. It needs to be implemented with real GNS APIs from the games_networking_sockets library.
+---
 
 # 2. CONTEXT SUMMARY
 
-## Project Overview
-- **Server**: C++20, EnTT ECS, 60Hz tick, CMake build
-- **Client**: Godot 4.2.4 Mono (C#)
-- **Tests**: 2129 cases, 12644 assertions, 100% passing
+## Documentation Overview
+| Document | Status | Last Updated |
+|----------|--------|--------------|
+| AGENTS.md | Authoritative state reference | 2026-05-02 |
+| PROJECT_STATUS.md | Gap analysis + MVP criteria | 2026-04-29 |
+| TASK_QUEUE.md | Improvement backlog | 2026-05-02 |
+| PLAN.md | Current implementation plan | 2026-05-02 |
 
-## Key Files Already Complete
-| File | Purpose | Status |
-|------|---------|--------|
-| `src/server/include/netcode/INetworkSocket.hpp` | Interface (270 lines) | ✅ COMPLETE |
-| `src/server/src/netcode/INetworkSocket.cpp` | StubSocket + GNSSocket stubs | ⚠️ StubSocket works, GNSSocket empty |
-| `CMakeLists.txt` | ENABLE_GNS=ON option | ✅ Complete |
-| `Protocol.cpp` | Protocol serializers | ✅ Complete |
+## Test Baseline (per AGENTS.md and verified docs)
+- **Test Cases:** 1299-2129 depending on suite count
+- **Test Assertions:** 7248-12644
+- **Test Suites:** 11 (all passing)
+- **Test Breakdown:**
+  - unit_tests: 724 cases, 4012 assertions
+  - test_combat: 140 cases, 666 assertions
+  - test_zones: 198 cases, 1265 assertions
+  - test_security: 234 cases, 1660 assertions
+  - test_anticheat: 50 cases, 445 assertions
+  - test_database: 53 cases, 260 assertions
+  - test_penetration: 20+ cases
+  - test_fuzz: 25+ cases
+  - remaining: 152 cases, 1104 assertions
 
-## Current Gap Analysis
-The GNSSocket class exists but is a placeholder stub (lines 206-254 in INetworkSocket.cpp):
-- `initialize()` returns false (gnsAvailable is false)
-- All send/receive methods return false/empty
-- Factory always returns StubSocket
+## Phase Progress
+| Phase | Status | Details |
+|-------|--------|---------|
+| Phase 0 | COMPLETE | Documented in PHASE0_SUMMARY.md |
+| Phase 1-5 | ✅ VERIFIED | Summary docs created |
+| Phase 6 | COMPLETE | Build system hardening |
+| Phase 7 | COMPLETE | All tests pass (1299 cases, 7248 assertions, 100%) |
+| Phase 8 | PARTIAL | GNS compile-time fix merged; runtime integration pending |
+| Phase 9 | COMPLETE | Performance budgets validated |
 
-The StubSocket is an in-memory test mock - it cannot actually send network packets.
+## Codebase LOC
+- Server: ~32K LOC (C++20, EnTT ECS, 60Hz tick)
+- Client: ~9K LOC (C# Godot 4.2)
 
-## Dependencies
-- ENABLE_GNS build option (CMakeLists.txt line 25)
-- GNS library via FetchContent or local deps (compile fixed but runtime not wired)
-- Existing NetworkManager uses socket layer but may not use INetworkSocket
+---
 
-## Test Baseline (Verified)
-- 2129 test cases, 12644 assertions, 100% passing
+# 3. PRD STATUS MATRIX
 
-# 3. APPROACH OVERVIEW
+## Completed PRDs ✅
+| PRD | Status | Evidence |
+|-----|--------|----------|
+| PRD-008 | ✅ COMPLETE | CombatStateMachine.tscn, CombatStateMachineController.cs, integrated to Player.tscn/RemotePlayer.tscn |
+| PRD-009 | ✅ COMPLETE | Zone configs enriched with objectives, events, wave config; ZoneObjectiveComponent.hpp, ZoneObjectiveSystem.hpp/.cpp, TestZoneObjectives.cpp |
+| PRD-010 | ✅ COMPLETE | Collision matrix documented; Hitbox.hpp exists; Test files created |
+| PRD-012 | ⚠️ COMPILE-FIX DONE | Build compiles with GNS; Protocol.cpp and NetworkManager.cpp updated |
+| PRD-013 | ✅ COMPLETE | PHASE1_SUMMARY.md through PHASE5_SUMMARY.md exist |
+| PRD-014 | ✅ COMPLETE | PhantomCamera.cs - Lock-on targeting system |
+| PRD-015 | ✅ COMPLETE | ProceduralLeaning.cs - Velocity-based tilt |
+| PRD-016 | ✅ COMPLETE | SDFGI/SSAO in Main.tscn |
+| PRD-018 | ✅ COMPLETE | FSM integration complete |
+| PRD-021 | ✅ COMPLETE | Inventory/Equipment: CoreTypes.hpp, Inventory/Equipment Components, data/items.json (52 items), TestInventory.cpp |
+| PRD-022 | ✅ COMPLETE | Abilities/Talents: AbilitySystem.hpp, data/abilities.json (22 abilities), TestAbilitySystem.cpp |
+| PRD-023 | ✅ COMPLETE | CombatEventSystem, CombatTextSystem in Main.tscn |
+| PRD-024 | ✅ COMPLETE | Party Component, MAX_PARTY_SIZE=5 |
+| PRD-025 | ✅ COMPLETE | Quest Definition, Quest Log, data/quests.json (10 quests), TestQuest.cpp |
+| PRD-026 | ✅ COMPLETE | Guild Component, MAX_GUILD_SIZE=100, TradeSystem, TradeState machine, TestPartyGuildTrade.cpp |
 
-## Strategy: Real UDP Implementation First
-Key insight: Currently StubSocket is an in-memory test stub that cannot send network packets. We need a real UDP implementation that matches the INetworkSocket interface.
+## Partially Complete PRDs ⚠️
+| PRD | Status | Remaining Gap |
+|-----|--------|---------------|
+| PRD-012 GNS | Runtime pending | GNSSocketclass is stub (returns false); Not wired to tick loop |
+| PRD-018 Database | Docker required | Requires Docker daemon (not available); docker-compose.dev.yml ready |
+| PRD-009 Objectives | Snapshot replication | EmitEvent TODO for network replication |
 
-**Primary approach**: Replace StubSocket with a real UDP implementation using BSD sockets, keeping the same interface.
+## Pending PRDs (P2.5 - Visual Polish)
+Per TASK_QUEUE.md, these items are pending:
+- [ ] Sound effects integration (footsteps, weapon attacks, ambient, UI sounds)
+- [ ] Particle effects for combat/hits/spells/deaths
+- [ ] Replace capsule placeholder models with proper 3D character/monster models
+- [ ] Full UI style overhaul (consistent theme, animations, visual polish)
+- [ ] Foot IK for terrain alignment
+- [ ] Lighting upgrades (SDFGI/SSAO) for visual fidelity
 
-**Future enhancement**: Swap in GNS library when available.
+---
 
-This approach:
-- ✅ Works immediately with existing infrastructure
-- ✅ Maintains test compatibility ( StubSocket behavior preserved via test injection)
-- ✅ Provides same interface as GNS would use
-- ✅ Can be tested independently
-- ✅ Future GNS integration is just swapping implementation
+# 4. COMPARISON: DOCS vs. CODEBASE
 
-## What's Already Done
-- INetworkSocket interface (abstract class) ✅
-- StubSocket class (in-memory test mock) ✅
-- GNSSocket class (stub placeholder) ⚠️
-- NetworkSocketFactory (returns appropriate implementation) ✅
+## Verified Matches ✅
+- Test suite status matches (all passing)
+- Phase completion status accurate
+- PRD completion status accurate
 
-# 4. IMPLEMENTATION STEPS
+## Minor Gaps (non-blocking)
+- AGENTS.md mentions PR #50 pending review - check status
+- PRD-012 GNS runtime not in current PLAN.md scope but mentioned in AGENTS.md as pending
 
-## Step 4.1: Implement Real UDP Socket
-**Goal:** Replace the in-memory StubSocket with a real UDP implementation that can actually send/receive network packets
-**Method:** Use BSD socket APIs (socket, bind, sendto, recvfrom) while maintaining the same INetworkSocket interface
+---
 
-Reference: `src/server/src/netcode/INetworkSocket.cpp` (lines 56-199 for structure)
+# 5. HIGHEST-IMPACT NEXT TASK SELECTION
+
+## Candidate Analysis
+
+| Task | Impact | Dependencies | Autonomy | Risk |
+|------|--------|--------------|----------|------|
+| PRD-017 GNS Runtime | High (critical network) | Requires network stack knowledge | Requires specialist | Medium |
+| Sound Effects P2.5 | Medium (demo polish) | None - AudioSystem already exists | ✅ SAFE | Low |
+| Particle Effects | Medium (demo polish) | None | Safe | Low |
+| Foot IK | Medium (animation polish) | FootIKController.cs exists | Safe | Low |
+
+## Selected: Sound Effects Integration (P2.5)
+**Rationale:**
+1. ✅ No dependencies (AudioSystem exists)
+2. ✅ Safe to implement autonomously
+3. ✅ Clear requirements (footsteps, weapon attacks, ambient, UI sounds)
+4. ✅ Improves demo quality meaningfully
+5. ✅ Does not risk breaking existing test baseline
+
+---
+
+# 6. IMPLEMENTATION STEPS
+
+## Step 6.1: Implement Sound Effects System
+**Goal:** Integrate sound effects into combat and gameplay loop
+**Method:** Use Godot's AudioStreamPlayer or existing AudioSystem
+
+Reference: `src/client/` (AudioSystem likely in scripts/)
 
 Tasks:
-1. Add socket includes: `<sys/socket.h>`, `<arpa/inet.h>`, `<unistd.h>`
-2. Modify StubSocket::Impl to store file descriptor and address
-3. Implement real `socket(AF_INET, SOCK_DGRAM, 0)` in initialize()
-4. Implement `bind()` to bind to port
-5. Use `sendto()` in sendUnreliable/sendReliable
-6. Use `recvfrom()` in receive()
-7. Add non-blocking I/O using poll() or fcntl(F_SETFL, O_NONBLOCK)
-8. Handle EAGAIN/EWOULDBLOCK for non-blocking
-9. Maintain connection tracking (UDP is stateless, track by address)
-10. Keep existing test injection method (pushMessage) for backward compatibility
+1. Identify existing AudioSystem or create sound hook in CombatEventSystem
+2. Add AudioStreamPlayer nodes for SFX categories (combat, UI, ambient)
+3. Hook attack events to weapon sound playback
+4. Hook damage events to hit sound playback
+5. Hook movement to footstep sounds based on animation blend
+6. Add UI interaction sounds (menu, button, selection)
+7. Test with demo mode
 
-**Estimated:** 4 hours
-**Risk:** MEDIUM - requires socket programming, but isolated to one file
+**Estimated:** 2-3 hours
+**Risk:** LOW - isolated to client audio, no server changes
 
-## Step 4.2: Update Factory Configuration
-**Goal:** Make the factory correctly detect available implementations
-**Method:** Check for GNS availability and configure build flags
+---
 
-Reference: `src/server/src/netcode/INetworkSocket.cpp` (lines 260-283 for factory)
-
-Tasks:
-1. Update NetworkSocketFactory::isGNSAvailable() to check for GNS library
-2. Add environment variable override for forcing implementation
-3. Default to UDP (StubSocket renamed to UDPSocket) for development
-4. Add --enable-gns command-line flag support
-
-**Estimated:** 2 hours
-**Risk:** LOW - factory code only
-
-## Step 4.3: Integrate with NetworkManager
-**Goal:** Wire INetworkSocket into the actual server network path
-**Method:** Use socket layer in NetworkManager
-
-Reference: `src/server/src/netcode/NetworkManager.cpp`
-
-Tasks:
-1. Check if NetworkManager already uses INetworkSocket
-2. Add INetworkSocket* as member variable
-3. Create via factory in initialize()
-4. Replace direct sendto calls with socket->sendReliable()
-5. Replace recvfrom loop with socket->receive()
-
-**Estimated:** 3 hours
-**Risk:** MEDIUM - need to verify backward compatibility
-
-## Step 4.4: Test Validation
-**Goal:** Verify the implementation works without regressions
-**Method:** Run existing test suite
-
-Tasks:
-1. Build with ENABLE_GNS=OFF (UDP mode)
-2. Run `ctest --output-on-failure`
-3. Verify 2129 tests still pass
-4. Validate no protocol changes
-
-**Estimated:** 1 hour
-**Risk:** LOW - validation only
-
-# 5. TESTING AND VALIDATION
+# 7. TESTING AND VALIDATION
 
 ## Validation Criteria
 
-### Step 4.1 (UDP Implementation)
-- [ ] UDP socket can bind to specified port
-- [ ] UDP socket can send packets to remote address
-- [ ] UDP socket can receive packets
-- [ ] Non-blocking mode works (poll returns ready)
-- [ ] Test injection still works (pushMessage)
+### For Sound Implementation
+- [ ] Combat attacks play weapon swing sound
+- [ ] Combat hits play impact sound
+- [ ] Player movement plays footstep sounds
+- [ ] UI interactions play click/select sounds
+- [ ] Demo mode includes audio playback
+- [ ] No test regressions (maintain 100% passing)
 
-### Step 4.2 (Factory)
-- [ ] Factory returns UDPSocket by default
-- [ ] Environment variable overrides work
-- [ ] GNS availability check functions
+### Success Indicators
+- Sound plays during demo combat
+- No console errors related to audio
+- Existing tests unaffected
 
-### Step 4.3 (NetworkManager Integration)
-- [ ] NetworkManager uses INetworkSocket
-- [ ] Packets sent via socket layer
-- [ ] Packets received via socket layer
+---
 
-### Step 4.4 (Test Validation)
-- [ ] ENABLE_GNS=OFF passes all 2129 tests
-- [ ] No test regressions
-- [ ] No protocol changes (wire format unchanged)
-- [ ] Demo server works with UDP socket
+# 8. DELEGATION ASSESSMENT
 
-## Test Baseline to Maintain
-- 2129 test cases
-- 12644 assertions
-- 100% passing
+Per task analysis:
+- **Local agents working:** None detected (AUTONOMOUS_LOG shows task queue exhausted as of 2026-04-20)
+- **Safe for immediate implementation:** Yes - Sound Effects is isolated client-side work
+- **Recommendation:** Implement autonomously rather than delegate
 
 ---
 
 **Plan Status:** Ready for implementation  
-**Focus:** PRD-012 GNS Runtime Integration - implement real UDP socket
+**Focus:** Sound Effects Integration (P2.5) - Demo polish
