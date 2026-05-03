@@ -215,6 +215,12 @@ public:
     // Send dialogue response (player's choice) — typically client->server, but server may use for relay/validation
     void sendDialogueResponse(ConnectionID connectionId, const Protocol::DialogueResponsePacket& pkt);
 
+    // Send inventory sync to a specific client (full inventory on login)
+    void sendInventorySync(ConnectionID connectionId, const Protocol::InventorySyncPacket& pkt);
+
+    // Send inventory update to a specific client (incremental change)
+    void sendInventoryUpdate(ConnectionID connectionId, const Protocol::InventoryUpdatePacket& pkt);
+
     // Statistics
     [[nodiscard]] size_t getConnectionCount() const;
     [[nodiscard]] uint64_t getTotalBytesSent() const;

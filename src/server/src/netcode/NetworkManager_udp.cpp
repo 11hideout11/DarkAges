@@ -764,6 +764,52 @@ void NetworkManager::sendDialogueResponse(ConnectionID connectionId, const Proto
     it->second.quality.bytesSent += packet.size();
 }
 
+void NetworkManager::sendInventorySync(ConnectionID connectionId, const Protocol::InventorySyncPacket& pkt) {
+    auto* udp = static_cast<GNSInternal*>(internal_.get());
+    if (udp->sockfd < 0) return;
+
+    auto payload = Protocol::serializeInventorySync(pkt);
+    if (payload.empty()) return;
+
+    std::vector<uint8_t> packet;
+    packet.reserve(1 + payload.size());
+    packet.push_back(static_cast<uint8_t>(Protocol::PacketType::PACKET_INVENTORY_SYNC));
+    packet.insert(packet.end(), payload.begin(), payload.end());
+
+    std::lock_guard<std::recursive_mutex> lock(udp->connectionsMutex);
+    auto it = udp->connections.find(connectionId);
+    if (it == udp->connections.end()) return;
+
+    sendto(udp->sockfd, packet.data(), packet.size(), 0,
+           reinterpret_cast<sockaddr*>(&it->second.addr), sizeof(it->second.addr));
+    udp->totalBytesSent += packet.size();
+    it->second.quality.packetsSent++;
+    it->second.quality.bytesSent += packet.size();
+}
+
+void NetworkManager::sendInventoryUpdate(ConnectionID connectionId, const Protocol::InventoryUpdatePacket& pkt) {
+    auto* udp = static_cast<GNSInternal*>(internal_.get());
+    if (udp->sockfd < 0) return;
+
+    auto payload = Protocol::serializeInventoryUpdate(pkt);
+    if (payload.empty()) return;
+
+    std::vector<uint8_t> packet;
+    packet.reserve(1 + payload.size());
+    packet.push_back(static_cast<uint8_t>(Protocol::PacketType::PACKET_INVENTORY_UPDATE));
+    packet.insert(packet.end(), payload.begin(), payload.end());
+
+    std::lock_guard<std::recursive_mutex> lock(udp->connectionsMutex);
+    auto it = udp->connections.find(connectionId);
+    if (it == udp->connections.end()) return;
+
+    sendto(udp->sockfd, packet.data(), packet.size(), 0,
+           reinterpret_cast<sockaddr*>(&it->second.addr), sizeof(it->second.addr));
+    udp->totalBytesSent += packet.size();
+    it->second.quality.packetsSent++;
+    it->second.quality.bytesSent += packet.size();
+}
+
 void NetworkManager::disconnect(ConnectionID connectionId, const char* reason) {
     auto* udp = static_cast<GNSInternal*>(internal_.get());
     std::lock_guard<std::recursive_mutex> lock(udp->connectionsMutex);

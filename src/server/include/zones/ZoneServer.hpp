@@ -245,6 +245,7 @@ private:
     // Client connection handlers
     void onClientConnected(ConnectionID connectionId);
     void onClientDisconnected(ConnectionID connectionId);
+    void sendInventorySyncToClient(ConnectionID connectionId, EntityID entity);
 
     // [SECURITY_AGENT] Anti-cheat event handling delegated to AntiCheatHandler
 
