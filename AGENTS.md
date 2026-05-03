@@ -1,17 +1,17 @@
 ## Recent Commits (last 12 — updated 2026-05-03)
 
-1. `817bbeb`: feat(progression): wire WorldProgressionSystem into ZoneServer lifecycle
-2. `5c35b31`: docs: update PRD-012 status to COMPLETE with GNS receive-side integration validation summary
-3. `5062b6a`: docs: update recent commits list in AGENTS.md
-4. `66af8e3`: docs: AGENTS.md — PRD-020 headless CI hardening complete (24/24 PRDs)
-5. `b8918c2`: Merge PR #87 — orchestration phases 1-3 implementation
-6. `80b4e7d`: fix(prd-020): headless CI hardening — validator robustness, scene tree leak prevention
-7. `2148829`: docs: AGENTS.md — PRD-012 GNS Complete (23/24)
-8. `dd3e039`: docs: AGENTS.md state for PRD-012 completion
-9. `5836384`: feat(gns): complete GNS receive-side integration for all client->server packets
-10. `59bc9e8`: feat: implement orchestration phases 1-3 server systems
-11. `0978401`: feat(gns): complete GNS receive-side integration + headless SafeAddChild
-12. `4a3108d`: feat(protocol): add entityType byte to snapshots + wire NPC proximity check
+1. `fd7d414`: docs: AGENTS.md — session 8 summary, remove stale session entries, update commit hash
+2. `817bbeb`: feat(progression): wire WorldProgressionSystem into ZoneServer lifecycle
+3. `5c35b31`: docs: update PRD-012 status to COMPLETE with GNS receive-side integration validation summary
+4. `5062b6a`: docs: update recent commits list in AGENTS.md
+5. `66af8e3`: docs: AGENTS.md — PRD-020 headless CI hardening complete (24/24 PRDs)
+6. `b8918c2`: Merge PR #87 — orchestration phases 1-3 implementation
+7. `80b4e7d`: fix(prd-020): headless CI hardening — validator robustness, scene tree leak prevention
+8. `2148829`: docs: AGENTS.md — PRD-012 GNS Complete (23/24)
+9. `dd3e039`: docs: AGENTS.md state for PRD-012 completion
+10. `5836384`: feat(gns): complete GNS receive-side integration for all client->server packets
+11. `59bc9e8`: feat: implement orchestration phases 1-3 server systems
+12. `0978401`: feat(gns): complete GNS receive-side integration + headless SafeAddChild
 
 ## State (2026-05-03 — updated post-merge)
 
