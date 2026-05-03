@@ -1,6 +1,6 @@
 ## Recent Commits (last 12 — updated 2026-05-03)
 
-1. `(current)`: docs: PRD inventory audit — PRD_INVENTORY.md, AGENTS.md scope clarification
+1. `b98c393`: docs: PRD inventory audit — PRD_INVENTORY.md, AGENTS.md scope clarification
 2. `fd7d414`: docs: AGENTS.md — session 8 summary, remove stale session entries, update commit hash
 3. `817bbeb`: feat(progression): wire WorldProgressionSystem into ZoneServer lifecycle
 4. `5c35b31`: docs: update PRD-012 status to COMPLETE with GNS receive-side integration validation summary
