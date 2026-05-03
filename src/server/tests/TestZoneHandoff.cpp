@@ -723,3 +723,70 @@ TEST_CASE("ZoneHandoffController edge cases", "[zones][handoff]") {
         REQUIRE(controller.isHandoffInProgress(100));
     }
 }
+
+// ============================================================================
+// Programmatic Migration (triggerMigration) Tests
+// ============================================================================
+
+TEST_CASE("ZoneHandoffController triggerMigration", "[zones][handoff]") {
+    ZoneHandoffController controller(1, nullptr, nullptr, nullptr);
+    controller.initialize();
+    controller.setMyZoneDefinition(makeZone1Def());
+    setupZoneCallbacks(controller);
+
+    SECTION("Successfully triggers migration to another zone") {
+        controller.triggerMigration(100, static_cast<EntityID>(1), 1, 2);
+        REQUIRE(controller.isHandoffInProgress(100));
+        REQUIRE(controller.getPlayerPhase(100) == HandoffPhase::PREPARING);
+    }
+
+    SECTION("Rejects duplicate handoff for same player") {
+        controller.triggerMigration(100, static_cast<EntityID>(1), 1, 2);
+        REQUIRE(controller.isHandoffInProgress(100));
+
+        // Second attempt should be silently rejected
+        controller.triggerMigration(100, static_cast<EntityID>(1), 1, 2);
+        // Still in progress, no crash
+        REQUIRE(controller.isHandoffInProgress(100));
+    }
+
+    SECTION("Rejects migration to same zone") {
+        controller.triggerMigration(100, static_cast<EntityID>(1), 1, 1);
+        REQUIRE_FALSE(controller.isHandoffInProgress(100));
+    }
+
+    SECTION("Rejects migration to unknown zone") {
+        controller.triggerMigration(100, static_cast<EntityID>(1), 1, 999);
+        REQUIRE_FALSE(controller.isHandoffInProgress(100));
+    }
+
+    SECTION("Multiple players can migrate independently") {
+        controller.triggerMigration(100, static_cast<EntityID>(1), 1, 2);
+        controller.triggerMigration(200, static_cast<EntityID>(2), 2, 2);
+        REQUIRE(controller.isHandoffInProgress(100));
+        REQUIRE(controller.isHandoffInProgress(200));
+        REQUIRE(controller.getStats().totalHandoffs == 2);
+    }
+}
+
+TEST_CASE("ZoneHandoffController triggerMigration edge cases", "[zones][handoff]") {
+    ZoneHandoffController controller(1, nullptr, nullptr, nullptr);
+    controller.initialize();
+    controller.setMyZoneDefinition(makeZone1Def());
+
+    SECTION("Fails gracefully when zoneLookup not set") {
+        // Don't call setupZoneCallbacks — zoneLookup_ is null
+        controller.triggerMigration(100, static_cast<EntityID>(1), 1, 2);
+        REQUIRE_FALSE(controller.isHandoffInProgress(100));
+    }
+
+    SECTION("Succeeds when my zone definition not set but zoneLookup exists") {
+        ZoneHandoffController ctrl(1, nullptr, nullptr, nullptr);
+        // No setMyZoneDefinition — the def zoneId will be 0
+        setupZoneCallbacks(ctrl);
+        ctrl.triggerMigration(100, static_cast<EntityID>(1), 1, 2);
+        // This succeeds because targetZoneId (2) != myZoneId_ (0)
+        // and zoneLookup_ callback returns zone 2
+        REQUIRE(ctrl.isHandoffInProgress(100));
+    }
+}
