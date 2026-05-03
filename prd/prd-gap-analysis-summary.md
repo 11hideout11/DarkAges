@@ -1,8 +1,8 @@
 # PRD Gap Analysis Summary
 
-**Version:** 2.0  
+**Version:** 2.1  
 **Date:** 2026-05-03  
-**Status:** Complete with 8 new gap PRDs
+**Status:** Complete with 10 gap PRDs
 
 ---
 
@@ -22,6 +22,8 @@ This document consolidates all PRDs created for identified gaps in the DarkAges 
 | GAP-006 | prd-gap-006-client-warnings-resolution.md | P1-Medium | 208 C# warning fixes |
 | GAP-007 | prd-gap-007-arena-wave-spawning.md | P0-High | Arena wave spawning |
 | GAP-008 | prd-gap-008-tutorial-zone-npc-spawning.md | P0-High | Tutorial zone spawning |
+| GAP-009 | prd-gap-009-client-save-state-restore.md | P1-Medium | Save/load runtime state restore |
+| GAP-010 | prd-gap-010-party-quest-integration-tests.md | P2-Medium | Party XP & Quest integration tests |
 
 ## Previous PRD Inventory (Feb 2026)
 
@@ -53,9 +55,11 @@ This document consolidates all PRDs created for identified gaps in the DarkAges 
 - GAP-003: NPC AI Behavior
 - GAP-005: World Data Population
 - GAP-006: Client Warnings Resolution
+- GAP-009: Client Save State Restore
 
 ### P2 - Medium (Production)
 - GAP-004: Production Metrics Dashboard
+- GAP-010: Party/Quest Integration Tests
 
 ---
 
@@ -106,6 +110,8 @@ All PRDs saved to `/workspace/project/DarkAges/prd/`:
 - `prd-gap-006-client-warnings-resolution.md`
 - `prd-gap-007-arena-wave-spawning.md`
 - `prd-gap-008-tutorial-zone-npc-spawning.md`
+- `prd-gap-009-client-save-state-restore.md`
+- `prd-gap-010-party-quest-integration-tests.md`
 
 **Previous Gap PRDs (Feb 2026):**
 - `prd-npc-dialogue-system.md`
