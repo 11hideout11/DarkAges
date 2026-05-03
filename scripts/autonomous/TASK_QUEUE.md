@@ -43,7 +43,7 @@ Prioritized list of autonomous improvements for DarkAges.
 ## P2.5 — Demo Visual Polish & Missing Interactions
 - [x] NPC interaction system (E key to interact, interaction prompt UI, dialogue trigger)
 - [x] Sound effects integration (footsteps, weapon attacks, ambient, UI sounds)
-- [ ] Particle effects for combat/hits/spells/deaths
+- [x] Particle effects for combat/hits/spells/deaths ✅
 - [ ] Replace capsule placeholder models with proper 3D character/monster models
 - [ ] Full UI style overhaul (consistent theme, animations, visual polish)
 - [x] Foot IK for terrain alignment
