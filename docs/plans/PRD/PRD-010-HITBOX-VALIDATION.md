@@ -1,7 +1,7 @@
 # PRD-010: Server-Authoritative Hitbox/Hurtbox Validation System
 
 **Version:** 1.0
-**Status:** 🔄 In Progress — Collision matrix documented, tests expanding
+**Status:** ✅ Complete — Collision matrix documented, Hitbox.hpp verified, edge case hardening merged (PR #58), all tests passing
 **Owner:** PHYSICS_AGENT
 **Priority:** CRITICAL (P0 — MVP Blocking)
 **Dependencies:** PRD-003 (Combat System), PRD-008 (FSM)

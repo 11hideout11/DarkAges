@@ -1,7 +1,7 @@
 # PRD-023: Combat Floating Text Integration — Damage Numbers & Healing Indicators
 
 **Version:** 1.0
-**Status:** 🔄 In Progress — Components exist, integration needed
+**Status:** ✅ Complete — CombatEventSystem and CombatTextSystem integrated into Main.tscn; pooling and visual variety implemented
 **Owner:** UI_AGENT
 **Priority:** MEDIUM (P3 — Player Feedback Quality)
 **Dependencies:** PRD-008 (CombatStateMachine FSM), PRD-010 (Hitbox validation)

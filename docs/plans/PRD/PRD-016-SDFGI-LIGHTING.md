@@ -1,7 +1,7 @@
 # PRD-016: SDFGI/SSAO/SSIL Post-Processing Lighting
 
 **Version:** 1.0
-**Status:** 🔄 Not Started — WorldEnvironment not configured (COMPATIBILITY_ANALYSIS: "Not configured")
+**Status:** ✅ Complete — SDFGI/SSAO/SSIL configured in Main.tscn (lines 36-38), verified in codebase
 **Owner:** RENDERING_AGENT
 **Priority:** HIGH (P1 — Visual Coherence Requirement per COMPATIBILITY_ANALYSIS.md)
 **Dependencies:** None (independent visual polish)

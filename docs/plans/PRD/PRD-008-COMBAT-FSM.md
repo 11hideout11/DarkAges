@@ -1,7 +1,7 @@
 # PRD-008: CombatStateMachine Node-Based FSM Template
 
 **Version:** 1.0
-**Status:** 🔄 In Progress — Scene + Controller created, integration pending
+**Status:** ✅ Complete — Scene + Controller created, wired to Player/RemotePlayer, usage guide published
 **Owner:** COMBAT_AGENT
 **Priority:** CRITICAL (P0 — MVP Blocking)
 **Dependencies:** PRD-003 (Combat System), PRD-005 (Client)

@@ -1,7 +1,7 @@
 # PRD-021: Demo Validator — Connection Pooling & Rate Limiting
 
 **Version:** 1.0
-**Status:** 🔄 Not Started — live_client_validator.py connection exhaustion (Issue #9)
+**Status:** 🔄 Not Started — live_client_validator.py connection exhaustion (FD limit after ~250 connections). Requires pool refactoring and type-env test harness. Lower priority — stress testing only.
 **Owner:** TESTING_AGENT
 **Priority:** MEDIUM (P3 — CI/Demo Pipeline Stability)
 **Dependencies:** PRD-020 (Headless Fixes — stable client needed first)

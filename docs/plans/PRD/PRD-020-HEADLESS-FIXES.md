@@ -1,7 +1,7 @@
 # PRD-020: Godot Client Headless Artifacts — Test/CI Stability
 
 **Version:** 1.0
-**Status:** 🔄 Not Started — Headless test flakiness due to `_Ready() add_child()` in non-scene context
+**Status:** 🔄 Not Started — Godot client headless test flakiness (`_Ready()` context issues). Requires Godot 4.2 Mono build environment to test and fix. Not C++-side work.
 **Owner:** TESTING_AGENT
 **Priority:** MEDIUM (P3 — CI Reliability)
 **Dependencies:** None (affects test harness only)

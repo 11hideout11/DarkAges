@@ -1,7 +1,7 @@
 # PRD-017: Protocol Layer Decoupling from GNS
 
 **Version:** 1.0
-**Status:** 🔄 In Progress — Stub implementation exists
+**Status:** ✅ Complete — Protocol.cpp decoupled from GNS (FlatBuffers only); non-GNS build passes 100%
 **Owner:** NETWORKING_AGENT
 **Priority:** HIGH (P2 — Build Flexibility)
 **Dependencies:** PRD-012 (GNS Runtime Integration — must coordinate)
