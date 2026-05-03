@@ -243,7 +243,7 @@ Final security validation before production deployment:
 
 **Quality Gate**: Production-ready server with comprehensive security validation
 
-See [PHASE8_EXECUTION_PLAN.md](PHASE8_EXECUTION_PLAN.md) for detailed 8-week roadmap • [CURRENT_STATUS.md](CURRENT_STATUS.md) for daily progress
+See [phases/PHASE8_EXECUTION_PLAN.md](phases/PHASE8_EXECUTION_PLAN.md) for detailed roadmap • [AGENTS.md](AGENTS.md) for current state
 
 ## Performance Budgets
 
@@ -287,6 +287,7 @@ Format: `[AGENT] Brief description - Performance impact`
 ## Testing
 
 ### Unit Tests
+
 ```bash
 # Build and run tests
 ./build.sh Debug --tests
@@ -294,13 +295,14 @@ ctest --test-dir build --output-on-failure
 ```
 
 ### Stress Testing
+
 ```bash
 # Run Python bot swarm
 cd tools/stress-test
 python bot_swarm.py --count 100 --duration 300
 ```
 
-## Documentation
+### Documentation
 
 - [Implementation Roadmap](ImplementationRoadmapGuide.md) - Technical specs
 - [AI Coordination](AI_COORDINATION_PROTOCOL.md) - Multi-agent workflow
@@ -309,7 +311,7 @@ python bot_swarm.py --count 100 --duration 300
 
 ## License
 
-MIT License - See LICENSE file for details
+MIT License - See [LICENSE](LICENSE) file for details
 
 ## Contributing
 
