@@ -1,23 +1,24 @@
-## Recent Commits (last 18 — updated 2026-05-03)
+## Recent Commits (last 19 — updated 2026-05-03)
 
-1. `c5c6f78`: feat(prd-036): wire ProgressionCalculator into ExperienceSystem + ItemSystem pipelines
-2. `6c14d9c`: MAJOR: synchronize repo to single source of truth — Master Truth doc, drift correction, PRD renumbering
-3. `5937fba`: docs: fix commit hash in recent commits list
-4. `b98c393`: docs: PRD inventory audit — PRD_INVENTORY.md, AGENTS.md scope clarification
-5. `fd7d414`: docs: AGENTS.md — session 8 summary, remove stale session entries, update commit hash
-6. `817bbeb`: feat(progression): wire WorldProgressionSystem into ZoneServer lifecycle
-7. `30c3167`: fix: update XP formula test expectations to match PRD-036, sync AGENTS.md test counts
-8. `347c931`: Merge PR #88 — procedural character visuals (visually distinct placeholders)
-9. `fcf6837`: feat(client): procedural character visuals - visually distinct placeholders
-10. `5c35b31`: docs: update PRD-012 status to COMPLETE with GNS receive-side integration validation summary
-11. `5062b6a`: docs: update recent commits list in AGENTS.md
-12. `66af8e3`: docs: AGENTS.md — PRD-020 headless CI hardening complete (24/24 PRDs)
-13. `b8918c2`: Merge PR #87 — orchestration phases 1-3 implementation
-14. `80b4e7d`: fix(prd-020): headless CI hardening — validator robustness, scene tree leak prevention
-15. `59bc9e8`: feat: implement orchestration phases 1-3 server systems
-16. `109e5a4`: fix(cron): reset failure threshold
-17. `ee05f89`: feat: Add tests for DailyChallengeSystem
-18. `04d8d77`: Merge PR #90 — PRD-041 server performance baseline (15 suites, all <1% of 16ms budget)
+1. `042ee77`: feat(prd-040): WP-3.1 Hard Mode — ZoneDifficultySystem, spawn-time NPC stat scaling (1.5x HP/damage/XP)
+2. `c5c6f78`: feat(prd-036): wire ProgressionCalculator into ExperienceSystem + ItemSystem pipelines
+3. `6c14d9c`: MAJOR: synchronize repo to single source of truth — Master Truth doc, drift correction, PRD renumbering
+4. `5937fba`: docs: fix commit hash in recent commits list
+5. `b98c393`: docs: PRD inventory audit — PRD_INVENTORY.md, AGENTS.md scope clarification
+6. `fd7d414`: docs: AGENTS.md — session 8 summary, remove stale session entries, update commit hash
+7. `817bbeb`: feat(progression): wire WorldProgressionSystem into ZoneServer lifecycle
+8. `30c3167`: fix: update XP formula test expectations to match PRD-036, sync AGENTS.md test counts
+9. `347c931`: Merge PR #88 — procedural character visuals (visually distinct placeholders)
+10. `fcf6837`: feat(client): procedural character visuals - visually distinct placeholders
+11. `5c35b31`: docs: update PRD-012 status to COMPLETE with GNS receive-side integration validation summary
+12. `5062b6a`: docs: update recent commits list in AGENTS.md
+13. `66af8e3`: docs: AGENTS.md — PRD-020 headless CI hardening complete (24/24 PRDs)
+14. `b8918c2`: Merge PR #87 — orchestration phases 1-3 implementation
+15. `80b4e7d`: fix(prd-020): headless CI hardening — validator robustness, scene tree leak prevention
+16. `59bc9e8`: feat: implement orchestration phases 1-3 server systems
+17. `109e5a4`: fix(cron): reset failure threshold
+18. `ee05f89`: feat: Add tests for DailyChallengeSystem
+19. `04d8d77`: Merge PR #90 — PRD-041 server performance baseline (15 suites, all <1% of 16ms budget)
 
 ## State (2026-05-03 — updated post-merge)
 
@@ -210,31 +211,35 @@
 
 > ⚠️ **Scope Note:** The 25 PRDs above represent the *original core scope* (PRD-001 through PRD-024 + PRD-041). The `prd/` directory additionally contains ~120 specification documents (feature PRDs, gap analyses, orchestration phase PRDs) — all currently marked "Proposed" and largely unimplemented. See [PRD_INVENTORY.md](docs/PRD_INVENTORY.md) for the complete inventory.
 
-## This Session's Work (2026-05-03 — session 12: PRD-041 Server Performance Baseline)
+## This Session's Work (2026-05-03 — session 13: WP-3.1 Hard Mode)
 
 ### Completed
-- ✅ **PRD-041 Server Performance Baseline established**: 15 benchmark suites covering all critical systems
-- ✅ **Added 5 new benchmark suites** to BenchmarkTick.cpp:
-  - NPC AI System (50 and 200 NPCs with players)
-  - Zone Event System (register 20 events)
-  - Entity state serialization (full + delta snapshots)
-  - Full tick simulation (50 NPCs + 5 players)
-- ✅ **All benchmarks <1% of 16ms budget** — heaviest is spatial_insert_1000 at 134us (0.8%)
-- ✅ **Full tick simulation**: 3.9us for 50 NPCs + 5 players with combat, movement, and AI
-- ✅ **PERFORMANCE_BENCHMARK_REPORT.md** updated with comprehensive baseline
-- ✅ **DailyChallengeSystem.cpp build fix**: fixed redefinition error, added to CMakeLists.txt
-- ✅ **Test baseline**: 1322 cases, 7310 assertions, 100% pass — zero regressions
+- ✅ **ZoneDifficultySystem** — header-only scaling system (1.5x NPC HP, damage, XP; +5 levels)
+- ✅ **ZoneDefinition.hpp** — added `difficultyMultiplier` field (default 1.0f)
+- ✅ **ZoneServer wiring** — difficulty parsed from JSON in `loadDemoConfig()`, scaling applied in `spawnNPC()` and `spawnFromGroup()`
+- ✅ **All 4 zone JSONs** — tutorial, arena, boss, demo_zone have `"difficulty": 1.0`
+- ✅ **TestZoneDifficulty.cpp** — 10 test cases, 38 assertions, all passing
+- ✅ **Build** — server + tests compile cleanly, zero regressions
+- ✅ **Design**: scaling is 100% at spawn-time — CombatSystem, NPCAISystem unchanged
 
-### Commits
-- `04d8d77`: Merge PR #90 — PRD-041 server performance baseline (squashed)
-- `d383378`: feat(prd-041): performance benchmark baseline - 15 suites, all <1% of 16ms budget
+### Files Changed
+| File | Change |
+|------|--------|
+| `src/server/include/zones/ZoneDifficultySystem.hpp` | NEW — header-only scaling system |
+| `src/server/include/zones/ZoneDefinition.hpp` | Added `difficultyMultiplier` field |
+| `src/server/include/zones/ZoneServer.hpp` | Added include, member, getter, ZoneConfig field |
+| `src/server/src/zones/ZoneServer.cpp` | JSON parsing, init, scaling in spawn methods |
+| `src/server/tests/TestZoneDifficulty.cpp` | NEW — 10 test cases, 38 assertions |
+| `CMakeLists.txt` | Added test source |
+| `tools/demo/content/zones/arena.json` | Added `"difficulty": 1.0` |
+| `tools/demo/content/zones/boss.json` | Added `"difficulty": 1.0` |
+| `tools/demo/content/zones/tutorial.json` | Added `"difficulty": 1.0` |
+| `tools/demo/content/demo_zone.json` | Added `"difficulty": 1.0` |
 
 ### Current Milestone Status
-- **25/25 core PRDs + orchestration PRDs complete** — PRD-041 merged via PR #90
-- **Phase 2 (Production Ready) COMPLETE** — all 3 key PRDs done (PRD-038 monitoring, PRD-039 account system, PRD-041 server performance)
-- **~120 additional PRD specifications in `prd/`** — all "Proposed", largely unimplemented
-- **Only remaining gaps**: GNS WebRTC signaling token (production) and ScyllaDB GCC13 build issue
-- All tests: 1322 cases, 7310 assertions, 100% pass
+- **Phase 2 (Production Ready): COMPLETE**
+- **Phase 3 (AAA Polish): 🔄 In Progress — WP-3.1 done**
+- **Remaining Phase 3**: WP-3.2 Daily Challenge UI, WP-3.3 New Game Plus, WP-3.4 Leaderboard UI, PRD-042 client polish
 
 ## Orchestration Execution Plan
 
@@ -244,7 +249,7 @@
 |-------|-------|-------|---------|--------|
 | Phase 1 | Core Gameplay | 1-4 | PRD-036, PRD-037, PRD-043 | Ready |
 | Phase 2 | Production Ready | 5-8 | PRD-038, PRD-039, PRD-041 | ✅ Complete |
-| Phase 3 | AAA Polish | 9-12 | PRD-040, PRD-042 | Ready |
+| Phase 3 | AAA Polish | 9-12 | PRD-040, PRD-042 | 🔄 In Progress (WP-3.1 done) |
 
 **Execution Plan:** See `/workspace/project/DarkAges/planning/ORCHESTRATION_PLAN.md`
 
@@ -263,6 +268,16 @@
 ---
 
 ## Validation Attempt (2026-05-03)
+
+### WP-3.1: Hard Mode Implementation
+
+- ✅ **ZoneDifficultySystem.hpp** — header-only scaling system (1.5x HP/damage/XP, +5 levels)
+- ✅ **ZoneDefinition.hpp** — added `difficultyMultiplier` field (default 1.0f)
+- ✅ **ZoneServer** — difficulty parsed from JSON, scaling applied in spawnNPC/spawnFromGroup
+- ✅ **All zone JSONs** — tutorial/arena/boss/demo all have `"difficulty": 1.0`
+- ✅ **TestZoneDifficulty.cpp** — 10 test cases, 38 assertions, all passing
+- ✅ **Build** — server + tests compile cleanly, zero regressions
+- ⏭️ **Next**: WP-3.2 Daily Challenge client UI or WP-3.3 New Game Plus
 
 ### Environment Note
 - **CMake available in environment** — build and test pipeline operational

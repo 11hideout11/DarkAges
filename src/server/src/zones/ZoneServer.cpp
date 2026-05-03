@@ -532,6 +532,9 @@ bool ZoneServer::initialize(const ZoneConfig& config) {
         if (config_.demoMode && !config_.zoneConfigPath.empty()) {
             // Load demo configuration from JSON file
             if (loadDemoConfig(config_.zoneConfigPath)) {
+                // Initialize difficulty system from loaded config
+                difficultySystem_.setDifficultyMultiplier(config_.difficultyMultiplier);
+
                 // Load boss encounter configuration (must happen after demo config JSON is parsed)
                 loadBossEncounterConfig();
                 populateNPCsFromDemoConfig();
@@ -1601,6 +1604,14 @@ EntityID ZoneServer::spawnPlayer(ConnectionID connectionId, uint64_t playerId,
 EntityID ZoneServer::spawnNPC(const Position& spawnPos, uint8_t level, uint16_t baseDamage,
                                float aggroRange, float leashRange, float attackRange,
                                uint32_t xpReward, uint32_t respawnTimeMs) {
+    // Apply difficulty scaling before spawning
+    float diffMul = difficultySystem_.getDifficultyMultiplier();
+    if (diffMul > 1.01f) {
+        baseDamage = difficultySystem_.scaleDamage(baseDamage);
+        xpReward = difficultySystem_.scaleXpReward(xpReward);
+        level = difficultySystem_.scaleLevel(level);
+    }
+
     EntityID entity = registry_.create();
 
     // Core components
@@ -1609,11 +1620,15 @@ EntityID ZoneServer::spawnNPC(const Position& spawnPos, uint8_t level, uint16_t 
     registry_.emplace<Rotation>(entity);
     registry_.emplace<BoundingVolume>(entity);
 
-    // Combat state — scaled by level
+    // Combat state — scaled by level, then by difficulty
     registry_.emplace<CombatState>(entity);
     auto& combat = registry_.get<CombatState>(entity);
     combat.health = static_cast<int16_t>(1000 + (level - 1) * 200);
     combat.maxHealth = combat.health;
+    if (diffMul > 1.01f) {
+        combat.maxHealth = difficultySystem_.scaleHealth(combat.maxHealth);
+        combat.health = combat.maxHealth;
+    }
     combat.classType = 0;
 
     // Mana (NPCs don't use mana but the component is expected by some systems)
@@ -1661,6 +1676,14 @@ EntityID ZoneServer::spawnFromGroup(const Position& spawnPos, uint8_t level,
                                     uint16_t baseDamage, float aggroRange, float leashRange,
                                     float attackRange, uint32_t xpReward, uint32_t respawnTimeMs,
                                     uint32_t spawnGroupId, uint32_t npcTemplateId) {
+    // Apply difficulty scaling before spawning
+    float diffMul = difficultySystem_.getDifficultyMultiplier();
+    if (diffMul > 1.01f) {
+        baseDamage = difficultySystem_.scaleDamage(baseDamage);
+        xpReward = difficultySystem_.scaleXpReward(xpReward);
+        level = difficultySystem_.scaleLevel(level);
+    }
+
     EntityID entity = registry_.create();
 
     // Core components
@@ -1669,11 +1692,15 @@ EntityID ZoneServer::spawnFromGroup(const Position& spawnPos, uint8_t level,
     registry_.emplace<Rotation>(entity);
     registry_.emplace<BoundingVolume>(entity);
 
-    // Combat state — scaled by level
+    // Combat state — scaled by level, then by difficulty
     registry_.emplace<CombatState>(entity);
     auto& combat = registry_.get<CombatState>(entity);
     combat.health = static_cast<int16_t>(1000 + (level - 1) * 200);
     combat.maxHealth = combat.health;
+    if (diffMul > 1.01f) {
+        combat.maxHealth = difficultySystem_.scaleHealth(combat.maxHealth);
+        combat.health = combat.maxHealth;
+    }
     combat.classType = 0;
 
     // Mana
@@ -2071,6 +2098,12 @@ ZoneDefinition ZoneServer::buildZoneDefinition() const {
             } else if (j.contains("timeLimit")) {
                 def.timeLimit = j["timeLimit"].get<float>();
             }
+
+            // Parse difficulty multiplier
+            if (j.contains("difficulty") || j.contains("difficulty_multiplier")) {
+                def.difficultyMultiplier = std::max(1.0f,
+                    j.value("difficulty", j.value("difficulty_multiplier", 1.0f)));
+            }
         } catch (const std::exception& e) {
             std::cerr << "[ZONE " << config_.zoneId << "] Failed to parse zone definition from demo config: " << e.what() << std::endl;
         }
@@ -2148,6 +2181,14 @@ bool ZoneServer::loadDemoConfig(const std::string& configPath) {
         // Update zone ID from config if present
         if (j.contains("zone_id")) {
             config_.zoneId = j["zone_id"].get<uint32_t>();
+        }
+
+        // Parse difficulty multiplier
+        if (j.contains("difficulty") || j.contains("difficulty_multiplier")) {
+            float diff = j.value("difficulty", j.value("difficulty_multiplier", 1.0f));
+            config_.difficultyMultiplier = std::max(1.0f, diff);
+            std::cout << "[ZONE " << config_.zoneId << "] Difficulty multiplier: "
+                      << config_.difficultyMultiplier << "x" << std::endl;
         }
 
         std::cout << "[ZONE " << config_.zoneId << "] Loaded demo config: " << j.value("name", "Unnamed") << std::endl;

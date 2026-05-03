@@ -3,6 +3,7 @@
   "name": "Combat Arena",
   "description": "Wave defense combat zone with escalating encounters and rewards",
   "type": "combat",
+  "difficulty": 1.0,
   "spawn_points": [
     {
       "x": 0,

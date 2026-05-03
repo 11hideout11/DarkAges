@@ -3,6 +3,7 @@
   "name": "Training Grounds",
   "description": "Tutorial zone for learning basic movement, combat, and quest mechanics",
   "type": "tutorial",
+  "difficulty": 1.0,
   "spawn_points": [
     {
       "x": 0,

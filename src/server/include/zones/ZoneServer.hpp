@@ -19,6 +19,7 @@
 #include "zones/PerformanceHandler.hpp"
 #include "zones/AntiCheatHandler.hpp"
 #include "zones/ZoneObjectiveSystem.hpp"
+#include "zones/ZoneDifficultySystem.hpp"
 #include "combat/PositionHistory.hpp"
 #include "combat/LagCompensatedCombat.hpp"
 #include "combat/CombatSystem.hpp"
@@ -109,6 +110,10 @@ struct ZoneConfig {
     bool demoMode{false};            // Enable curated demo zone
     std::string zoneConfigPath;      // Path to JSON zone configuration file
     bool enableInstrumentation{false};  // Enable server tick-state export
+
+    // Difficulty multiplier (1.0f = normal, 1.5f = hard, 2.0f = nightmare).
+    // Applied to NPC health, damage, and XP rewards at spawn time.
+    float difficultyMultiplier{1.0f};
 };
 
 // [COMBAT_AGENT] Boss encounter configuration loaded from zone JSON
@@ -240,6 +245,7 @@ public:
     [[nodiscard]] DialogueSystem& getDialogueSystem() { return dialogueSystem_; }
     [[nodiscard]] SpawnSystem& getSpawnSystem() { return spawnSystem_; }
     [[nodiscard]] ZoneObjectiveSystem& getZoneObjectiveSystem() { return zoneObjectiveSystem_; }
+    [[nodiscard]] ZoneDifficultySystem& getDifficultySystem() { return difficultySystem_; }
     [[nodiscard]] LagCompensator* getLagCompensatorPtr() { return &lagCompensator_; }
     [[nodiscard]] MovementSystem& getMovementSystemRef() { return movementSystem_; }
     [[nodiscard]] Security::AntiCheatSystem& getAntiCheatRef() { return antiCheat_; }
@@ -462,6 +468,9 @@ public:
 
     // [PRD-009] Zone objective system for tracking player objectives
     ZoneObjectiveSystem zoneObjectiveSystem_;
+
+    // [PHASE 3] Zone difficulty system for Hard Mode scaling
+    ZoneDifficultySystem difficultySystem_;
 
     // Handoff integration methods
     void initializeHandoffController();

@@ -855,6 +855,7 @@ if(BUILD_TESTS AND TARGET Catch2::Catch2WithMain)
         src/server/tests/TestNetworkManager_udp.cpp
         src/server/tests/TestRedisManager.cpp
         src/server/tests/TestZoneDefinition.cpp
+        src/server/tests/TestZoneDifficulty.cpp
         src/server/tests/BenchmarkTick.cpp
         src/server/tests/TestLoadTesting.cpp
         src/server/tests/TestStatusEffectSystem.cpp

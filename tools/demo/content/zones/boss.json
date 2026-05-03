@@ -3,6 +3,7 @@
   "name": "Boss Lair",
   "description": "Epic boss encounter zone with phase mechanics and legendary rewards",
   "type": "boss",
+  "difficulty": 1.0,
   "spawn_points": [
     {
       "x": 0,
