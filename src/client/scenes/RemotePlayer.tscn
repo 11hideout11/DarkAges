@@ -1,4 +1,4 @@
-[gd_scene load_steps=7 format=3 uid="uid://remoteplayer"]
+[gd_scene load_steps=11 format=3 uid="uid://remoteplayer"]
 
 [ext_resource type="Script" path="res://src/entities/RemotePlayer.cs" id="1_remoteplayer"]
 [ext_resource type="AnimationLibrary" path="res://scenes/PlayerAnimations.tres" id="2_animlib"]

@@ -18,4 +18,8 @@
     <!-- System.Text.Json for config files -->
     <PackageReference Include="System.Text.Json" Version="8.0.5" />
   </ItemGroup>
+  <ItemGroup>
+    <!-- Exclude development test files from production build -->
+    <Compile Remove="tests/**/*.cs" />
+  </ItemGroup>
 </Project>
