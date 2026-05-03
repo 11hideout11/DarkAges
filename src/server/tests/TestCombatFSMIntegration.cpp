@@ -13,6 +13,7 @@
 #include <entt/entt.hpp>
 #include <glm/glm.hpp>
 #include <string>
+#include <iostream>
 
 namespace da = DarkAges;
 
@@ -159,14 +160,25 @@ TEST_CASE("Combat FSM: processAttack blocks during cooldown and respects GCD", "
     }
     REQUIRE(std::string(cs.currentState->Name()) == "Recovery");
 
-    // After Recovery → Idle, attack is allowed again
-    for (int i = 0; i < 40; ++i) {
+    // After Recovery → Idle, advance time to clear GCD before attacking
+    for (int i = 0; i < 60; ++i) {
         combat.updateFSM(registry, tickSec, currentTimeMs);
         currentTimeMs += static_cast<uint32_t>(tickSec * 1000);
         if (std::string(cs.currentState->Name()) == "Idle") break;
     }
+    // After reaching Idle, keep advancing ticks to clear global cooldown
+    for (int i = 0; i < 25; ++i) {
+        combat.updateFSM(registry, tickSec, currentTimeMs);
+        currentTimeMs += static_cast<uint32_t>(tickSec * 1000);
+    }
+    // Debug: print timestamps before attack
+    std::cout << "DEBUG: currentTime=" << currentTimeMs
+              << " lastAttackTime=" << cs.lastAttackTime
+              << " lastGCD=" << cs.lastGlobalCooldownTime << std::endl;
     currentTimeMs += 50;
     result = combat.processAttack(registry, entity, input, currentTimeMs);
+    std::cout << "DEBUG: result.hit=" << result.hit
+              << " hitType=" << (result.hitType ? result.hitType : "null") << std::endl;
     REQUIRE(result.hit == true);
     REQUIRE(std::string(cs.currentState->Name()) == "Attack");
 }

@@ -172,3 +172,13 @@ tools/analysis/reports/*.json
 
 # Hermes agent runtime files
 .hermes/
+
+# Generated protobuf/flatbuffers output
+/generated/
+/generated_proto/
+
+# Test binary (built at project root)
+/darkages_tests
+
+# Audit build directory
+/build_audit/

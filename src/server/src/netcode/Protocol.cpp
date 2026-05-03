@@ -681,8 +681,8 @@ bool deserializeInventoryUpdate(std::span<const uint8_t> data, InventoryUpdatePa
     // Helper to read uint32 from bytes (little-endian)
     auto readUInt32 = [](const uint8_t* p) -> uint32_t {
         return static_cast<uint32_t>(p[0]) |
-               (static_cast<uint32_t>(p[1]) << 8 |
-               (static_cast<uint32_t>(p[2]) << 16 |
+               (static_cast<uint32_t>(p[1]) << 8) |
+               (static_cast<uint32_t>(p[2]) << 16) |
                (static_cast<uint32_t>(p[3]) << 24);
     };
 
