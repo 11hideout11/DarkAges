@@ -67,8 +67,11 @@ struct ZoneDefinition {
     /// Number of waves for wave-defense zones (0 = no waves).
     uint8_t waveCount = 0;
 
-    /// Time limit in seconds (0 = no time limit).
+    // Time limit in seconds (0 = no time limit).
     float timeLimit = 0.0f;
+    
+    // Difficulty multiplier (1.0f = normal, 1.5f = hard mode, 2.0f = nightmare).
+    float difficultyMultiplier = 1.0f;
     
     // Check if position is within this zone (excluding buffer)
     bool containsPosition(float x, float z) const;

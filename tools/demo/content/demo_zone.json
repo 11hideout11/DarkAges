@@ -2,6 +2,7 @@
   "zone_id": 99,
   "name": "Showcase Grounds",
   "description": "Curated demo zone for DarkAges MMO showcase",
+  "difficulty": 1.0,
   "spawn_points": [
     {
       "x": 0,
