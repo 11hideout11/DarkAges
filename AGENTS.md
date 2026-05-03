@@ -186,8 +186,60 @@
 | P0-3: Gameplay | ✅ COMPLETE | Human-playable, visual feedback, demo mode, zone advancement pipeline wired |
 
 ### Remaining Gaps (as of 2026-05-03)
-1. **GNS runtime** — Requires WebRTC auth token (external blocker)
-2. **Production DB** — Requires Docker daemon (external blocker)
+
+#### External Blockers (Not Implementation Gaps)
+1. **GNS runtime** — Requires WebRTC auth token (external dependency)
+2. **Production DB** — Requires Docker daemon (environment constraint)
+
+#### Implementation Gaps (PRD Specified But Not Implemented)
+The following systems have PRD documents but NO server/client implementation:
+
+**Core Multiplayer Social Systems:**
+- Guild System (`prd/prd-guild-system.md`, `prd/prd-guild-ui-system.md`)
+- Party System (`prd/prd-party-system.md`, `prd/prd-party-ui-system.md`)
+- Friend System (`prd/prd-friend-system.md`, `prd/prd-friend-system-ui.md`)
+- Chat/Social System (`prd/prd-chat-social-system.md`)
+
+**Player Progression Systems:**
+- Crafting System (`prd/prd-crafting-system.md`)
+- Achievement System (`prd/prd-achievement-system.md`, `prd/prd-achievement-ui-system.md`)
+- Experience/Leveling (`prd/prd-experience-leveling-system.md`)
+- Mail System (`prd/prd-mail-system.md`)
+
+**Trading & Economy:**
+- Trade System (`prd/prd-trade-system.md`)
+- Economy/Trading (`prd/prd-economy-trading-system.md`)
+
+**Matchmaking & Leaderboard:**
+- Matchmaking Queue (`prd/prd-matchmaking-queue.md`)
+- Leaderboard (`prd/prd-leaderboard-system.md`, `prd/prd-leaderboard-ui.md`)
+
+**Client UI Systems:**
+- Minimap/World Map (`prd/prd-minimap-system.md`, `prd/prd-minimap-world-map.md`)
+- Loading Screen (`prd/prd-loading-screen.md`, `prd/prd-loading-screen-system.md`)
+- Audio/Sound (`prd/prd-audio-system.md`, `prd/prd-audio-system-client.md`)
+- Settings UI (`prd/prd-client-settings-ui.md`, `prd/prd-settings-ui.md`)
+- Character Creation (`prd/prd-character-creation-ui.md`)
+
+**Persistence:**
+- Save/Load System (`prd/prd-save-load-system.md`, `prd/prd-player-persistence.md`)
+
+**Integration Work Needed:**
+- NPC Dialogue (data exists in `dialogues.json`, needs server/client wiring)
+- Quest System (data exists in `quests.json`, needs full integration)
+
+#### Priority Recommendations
+1. **P0 (MVP Critical)**: Player persistence, Save/Load
+2. **P1 (Multiplayer)**: Guild, Party, Chat, Friends
+3. **P2 (Gameplay)**: Crafting, Achievements, Quest integration
+4. **P3 (Polish)**: Loading screens, Minimap, Audio, Settings UI
+
+#### Agent Notes
+- ALWAYS check AGENTS.md first for authoritative project state
+- PRD files in `/prd/` are design specs, NOT implementation status
+- Many PRD files exist for features that are NOT implemented
+- Do NOT assume a feature exists because a PRD file exists
+- Verify implementation by checking `src/server/` and `src/client/`
 
 ## OpenHands Integration Updates (2026-05-02)
 

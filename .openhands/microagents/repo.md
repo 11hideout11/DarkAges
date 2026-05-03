@@ -7,6 +7,27 @@ agent: CodeActAgent
 
 # DarkAges: Multiplayer MMO Server + Godot Client
 
+## Project Status (2026-05-03)
+**MVP READY** - Core combat multiplayer and 3 demo zones working
+- Server: ~32K LOC (C++20, EnTT ECS, 60Hz tick)
+- Client: ~9K LOC (C# Godot 4.2.4 Mono)
+- Tests: 1305 cases, 7254 assertions, 100% passing
+- Build: 0 errors (server), 208 warnings (client, all CS8618 patterns)
+
+## PRD Status
+- **PRD Collection**: 80+ files in `/prd/` directory
+- **Completed**: 24 core PRDs (PRD-001 to PRD-030)
+- **Blocked (external)**: GNS Runtime (WebRTC auth), Production DB (Docker)
+- **Gaps**: 16+ systems specified in PRDs but NOT implemented (see AGENTS.md)
+
+## Key References
+- `AGENTS.md` - AUTHORITATIVE source for project state
+- `prd/` - All PRD documents (80+)
+- `src/server/` - Server implementation (C++20, EnTT ECS)
+- `src/client/` - Client implementation (Godot 4.2 C#)
+- `phases/` - Phase execution summaries
+- `docs/` - Technical documentation
+
 ## Technologies
 - **Server**: C++20, EnTT ECS, 60 Hz fixed tick, protobuf UDP, CMake
 - **Client**: Godot 4.2.4 Mono (C#), RemoteSceneTree multiplayer, AnimationTree state machines

@@ -13,6 +13,12 @@ triggers:
 ---
 # Godot 4.2.4 Development — Pinned for DarkAges
 
+## Project Context
+- **Status**: MVP READY - Client builds successfully (0 errors, 208 warnings)
+- **Client LOC**: ~9K LOC (C# Godot 4.2.4 Mono)
+- **PRD Status**: PRD-005 (Client), PRD-008 (Combat FSM), PRD-011 (Foot IK), PRD-014/015 (Phantom Camera/Leaning), PRD-016 (SDFGI), PRD-019 (Blend Spaces), PRD-020 (Headless), PRD-022 (FSM), PRD-023 (Combat Text) ALL COMPLETE
+- **Reference**: `AGENTS.md` for authoritative project state
+
 ## Version Lock: 4.2.4 (NOT 4.6)
 All suggestions must be valid for Godot 4.2.4. Do NOT use 4.6 APIs.
 
@@ -41,3 +47,10 @@ All suggestions must be valid for Godot 4.2.4. Do NOT use 4.6 APIs.
 - Avoid `call_deferred` in hot loops; batch scene tree changes
 - Use `MultiMeshInstance3D` for many identical props
 - Monitor `Performance` singleton: `get_render_info().draw_call_count`
+
+## Gap Notes (Client UI Systems NOT Implemented)
+- Minimap/World Map
+- Loading Screen
+- Audio/Sound System
+- Settings UI (basic only)
+- Character Creation (minimal)

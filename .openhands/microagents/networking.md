@@ -11,6 +11,11 @@ triggers:
 ---
 # DarkAges Networking + ECS
 
+## Project Context
+- **Status**: MVP READY - Core networking working
+- **PRD Status**: PRD-001 (Server Core), PRD-002 (Networking), PRD-004 (Sharding) ALL COMPLETE
+- **Reference**: `AGENTS.md` for authoritative project state
+
 ## Server-authoritative model
 - Client: sends intent (move, attack, cast)
 - Server: validates, applies to ECS, broadcasts snapshot
@@ -35,3 +40,8 @@ triggers:
 - MovementValidator: checks speed/position validity (against max velocity, teleport-dist)
 - StatisticalDetector: flags anomalous stats (averages, distributions) for anti-cheat review
 - RateLimiter: per-action cooldowns enforced server-side
+
+## Gap Notes
+- GNS Runtime: BLOCKED (WebRTC auth issue) -PRD-012
+- Production DB: BLOCKED (Docker) - PRD-018
+- These are external blockers, not networking implementation gaps

@@ -11,6 +11,13 @@ triggers:
 ---
 # DarkAges C++ Server Development
 
+## Project Context
+- **Status**: MVP READY - Server builds successfully (0 errors)
+- **Server LOC**: ~32K LOC (C++20, EnTT ECS, 60Hz tick)
+- **Test Suite**: 1305 cases, 7254 assertions, 100% passing
+- **PRD Status**: PRD-001 (Server Core), PRD-002 (Networking), PRD-003 (Combat), PRD-004 (Sharding) ALL COMPLETE
+- **Reference**: `AGENTS.md` for authoritative project state
+
 ## Build Flags (CMake)
 - BUILD_TESTS=ON (always)
 - FETCH_DEPENDENCIES=ON (FetchContent)
@@ -44,3 +51,8 @@ RedisManager / ScyllaManager are stubs when disabled — they return canned resp
 - Manual entity destruction — use `registry.destroy(entity)`
 - Long-running work in tick systems — keep each system < 2 ms
 - Network packet allocation in hot path — use object pools
+
+## Gap Notes (Server Systems NOT Implemented)
+- Guild, Party, Chat, Friend, Mail systems
+- Crafting, Achievement, Leaderboard, Matchmaking
+- Player persistence/save-load
