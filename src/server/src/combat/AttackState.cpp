@@ -47,26 +47,19 @@ void AttackState::Enter(Registry& registry, EntityID entity, const CombatConfig&
 StateStatus AttackState::Update(Registry& registry, EntityID entity, float dt, uint32_t currentTimeMs) {
     timer_ += dt;
 
-    // Phase 1: Windup — animation prelude, no collision
+    // Phase 1: Windup — animation prelude; hitbox creation is handled server-authoritatively
     if (phase_ == Phase::Windup) {
         if (timer_ >= windupDuration_) {
             phase_ = Phase::Active;
-            createHitbox(registry, entity);
+            // Hit validation is performed by LagCompensatedCombat; skip local hitbox creation
         }
         return StateStatus::Continue;
     }
 
-    // Phase 2: Active — single-tick collision check, then finish immediately
+    // Phase 2: Active — damage already applied; just finish
     if (phase_ == Phase::Active) {
-        bool hitOccurred = checkCollision(registry, entity);
-        // On any hit, stamp attacker's attack cooldown (global cooldown set at cast time in processAttack)
-        if (hitOccurred) {
-            if (CombatState* combat = registry.try_get<CombatState>(entity)) {
-                combat->lastAttackTime = currentTimeMs;
-                // Note: lastGlobalCooldownTime is NOT updated here; it was set at attack initiation in processAttack
-            }
-        }
-        return StateStatus::Finish;      // Transition to Cooldown immediately
+        // Damage applied by LagCompensatedCombat; nothing to do here
+        return StateStatus::Finish;
     }
 
     // Should not reach Phase::Cooldown here; handled by state transitions

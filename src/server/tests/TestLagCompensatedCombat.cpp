@@ -5,6 +5,9 @@
 #include <catch2/catch_approx.hpp>
 #include "combat/LagCompensatedCombat.hpp"
 #include "combat/CombatSystem.hpp"
+#include "combat/HitboxComponent.hpp"
+#include "combat/HurtboxComponent.hpp"
+#include "ecs/CoreTypes.hpp"
 #include <entt/entt.hpp>
 #include <cmath>
 #include <cstdint>
@@ -38,6 +41,7 @@ public:
         registry.emplace<Rotation>(attacker, Rotation{0, 0});  // Facing +Z
         registry.emplace<CombatState>(attacker);
         registry.emplace<BoundingVolume>(attacker);
+        registry.emplace<combat::HitboxComponent>(attacker, glm::vec3(0.0f, 0.9f, 0.0f), 1.5f, 1.8f, CollisionLayerMask::HITBOX, true);
         
         // Create target entity
         target = registry.create();
@@ -46,6 +50,7 @@ public:
         registry.emplace<Rotation>(target, Rotation{0, 0});
         registry.emplace<CombatState>(target);
         registry.emplace<BoundingVolume>(target);
+        registry.emplace<combat::HurtboxComponent>(target, glm::vec3(0.0f, 0.9f, 0.0f), 2.0f, 2.2f, CollisionLayerMask::HURTBOX, true);
     }
     
     // Record position history for both entities
@@ -636,6 +641,7 @@ TEST_CASE("LagCompensatedCombat respects forced target via lock-on", "[combat][l
     registry.emplace<Rotation>(attacker, Rotation{0, 0});  // Facing +Z
     registry.emplace<CombatState>(attacker);
     registry.emplace<BoundingVolume>(attacker);
+    registry.emplace<combat::HitboxComponent>(attacker, glm::vec3(0.0f, 0.9f, 0.0f), 1.5f, 1.8f, CollisionLayerMask::HITBOX, true);
 
     // Create target A (the locked target) in front of attacker within melee range
     EntityID targetA = registry.create();
@@ -644,6 +650,7 @@ TEST_CASE("LagCompensatedCombat respects forced target via lock-on", "[combat][l
     registry.emplace<Rotation>(targetA, Rotation{0, 0});
     registry.emplace<CombatState>(targetA);
     registry.emplace<BoundingVolume>(targetA);
+    registry.emplace<combat::HurtboxComponent>(targetA, glm::vec3(0.0f, 0.9f, 0.0f), 2.0f, 2.2f, CollisionLayerMask::HURTBOX, true);
 
     // Create target B (another potential target) also in range but should be ignored
     EntityID targetB = registry.create();
@@ -652,6 +659,7 @@ TEST_CASE("LagCompensatedCombat respects forced target via lock-on", "[combat][l
     registry.emplace<Rotation>(targetB, Rotation{0, 0});
     registry.emplace<CombatState>(targetB);
     registry.emplace<BoundingVolume>(targetB);
+    registry.emplace<combat::HurtboxComponent>(targetB, glm::vec3(0.0f, 0.9f, 0.0f), 2.0f, 2.2f, CollisionLayerMask::HURTBOX, true);
 
     // Record position history for both entities at attack time (t=0)
     lagCompensator.recordPosition(attacker, 0, registry.get<Position>(attacker), Velocity{0,0,0}, Rotation{0,0});

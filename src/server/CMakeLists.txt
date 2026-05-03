@@ -118,6 +118,8 @@ set(SERVER_SOURCES
     src/combat/ExperienceSystem.cpp
     src/combat/StatusEffectSystem.cpp
     src/combat/ProjectileSystem.cpp
+    src/combat/CollisionLayerManager.cpp
+    src/combat/CollisionUtils.cpp
     src/combat/QuestSystem.cpp
     src/combat/PartySystem.cpp
     src/combat/GuildSystem.cpp

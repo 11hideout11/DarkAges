@@ -27,5 +27,3 @@ bool checkHitboxHurtboxCollision(glm::vec3 hitboxWorldPos, float hitboxRadius, f
                                   const CollisionLayerManager& layerManager);
 
 } // namespace DarkAges::combat
-
-#endif // DARKAGES_COMBAT_HITBOXCOMPONENT_HPP

@@ -8,7 +8,13 @@
 #include <cstdint>
 #include <vector>
 
+#include "combat/HitboxComponent.hpp"
+#include "combat/HurtboxComponent.hpp"
+#include "combat/CollisionLayerManager.hpp"
+
 namespace DarkAges {
+
+using namespace DarkAges::combat;
 
 // ============================================================================
 // Constructor
@@ -25,6 +31,7 @@ std::vector<HitResult> LagCompensatedCombat::processAttackWithRewind(
     Registry& registry, const LagCompensatedAttack& attack) {
     
     std::vector<HitResult> results;
+    bool createdHitbox = false;
     
     // Check if attacker can attack (cooldown, dead, etc.)
     if (!combatSystem_.canAttack(registry, attack.attacker, attack.serverTimestamp)) {
@@ -147,6 +154,9 @@ std::vector<HitResult> LagCompensatedCombat::processAttackWithRewind(
         results.push_back(result);
     }
     
+    if (createdHitbox) {
+        registry.remove<HitboxComponent>(attack.attacker);
+    }
     return results;
 }
 
@@ -297,52 +307,54 @@ bool LagCompensatedCombat::validateMeleeHitAtTime(Registry& registry, EntityID a
                                                  EntityID target, uint32_t targetTimestamp) {
     // Get historical positions for both attacker and target
     PositionHistoryEntry attackerEntry, targetEntry;
-    
     if (!lagCompensator_.getHistoricalPosition(attacker, targetTimestamp, attackerEntry)) {
         return false;  // No attacker history
     }
-    
     if (!lagCompensator_.getHistoricalPosition(target, targetTimestamp, targetEntry)) {
         return false;  // No target history
     }
-    
-    // Calculate distance at historical time
-    float dx = (targetEntry.position.x - attackerEntry.position.x) * Constants::FIXED_TO_FLOAT;
-    float dy = (targetEntry.position.y - attackerEntry.position.y) * Constants::FIXED_TO_FLOAT;
-    float dz = (targetEntry.position.z - attackerEntry.position.z) * Constants::FIXED_TO_FLOAT;
-    float dist = std::sqrt(dx*dx + dy*dy + dz*dz);
-    
-    // Check melee range (2.5m default)
-    const float MELEE_RANGE = combatSystem_.getConfig().meleeRange;
-    if (dist > MELEE_RANGE) {
-        return false;  // Too far at that time
+
+    // Retrieve attacker's HitboxComponent (must be active)
+    const HitboxComponent* hb = registry.try_get<HitboxComponent>(attacker);
+    if (!hb || !hb->isActive) return false;
+
+    // Retrieve target's HurtboxComponent (must be active)
+    const HurtboxComponent* hurt = registry.try_get<HurtboxComponent>(target);
+    if (!hurt || !hurt->isActive) return false;
+
+    // Convert fixed-point positions to world coordinates
+    auto toVec3 = [](const Position& p) -> glm::vec3 {
+        return glm::vec3(
+            p.x * Constants::FIXED_TO_FLOAT,
+            p.y * Constants::FIXED_TO_FLOAT,
+            p.z * Constants::FIXED_TO_FLOAT
+        );
+    };
+    glm::vec3 hbWorldPos = toVec3(attackerEntry.position) + hb->offset;
+    glm::vec3 hurtWorldPos = toVec3(targetEntry.position) + hurt->offset;
+
+    // Layer-based collision check via global manager
+    const CollisionLayerManager& layerMgr = getGlobalCollisionLayerManager();
+    if (!checkHitboxHurtboxCollision(hbWorldPos, hb->radius, hb->height,
+                                     hurtWorldPos, hurt->radius, hurt->height,
+                                     hb->layer, hurt->layer, layerMgr)) {
+        return false;
     }
-    
-    // Check angle (target must be in front of attacker)
-    // Note: We don't store rotation history, so we use current rotation with tolerance
-    // In a full implementation, we'd store rotation history too
-    const Rotation* attackerRot = registry.try_get<Rotation>(attacker);
-    if (attackerRot) {
-        float yaw = attackerRot->yaw;
-        glm::vec3 attackerForward = getForwardVector(yaw);
-        glm::vec3 toTarget(dx, 0.0f, dz);  // Ignore Y for horizontal angle
-        
-        float toTargetLen = std::sqrt(dx*dx + dz*dz);
-        if (toTargetLen > 0.001f) {
-            toTarget /= toTargetLen;
-            float dotProduct = glm::dot(attackerForward, toTarget);
-            // Clamp to avoid acos domain errors
-            dotProduct = std::max(-1.0f, std::min(1.0f, dotProduct));
-            float angle = std::acos(dotProduct) * 180.0f / 3.14159265359f;
-            
-            // Check against melee angle (60 degree cone, so 30 degrees each side)
-            const float MELEE_HALF_ANGLE = combatSystem_.getConfig().meleeAngle / 2.0f;
-            if (angle > MELEE_HALF_ANGLE) {
-                return false;  // Target not in front cone
-            }
-        }
-    }
-    
+
+    // Facing cone check (120 degree cone)
+    const Rotation* rot = registry.try_get<Rotation>(attacker);
+    if (!rot) return false;
+    glm::vec3 aimDir = glm::vec3(std::sin(rot->yaw), 0.0f, std::cos(rot->yaw));
+    glm::vec3 dirToTarget = glm::normalize(glm::vec3(
+        targetEntry.position.x - attackerEntry.position.x,
+        0.0f,
+        targetEntry.position.z - attackerEntry.position.z));
+    float dot = glm::dot(aimDir, dirToTarget);
+    const float MELEE_HALF_ANGLE = combatSystem_.getConfig().meleeAngle / 2.0f;
+    float halfConeRad = MELEE_HALF_ANGLE * static_cast<float>(M_PI) / 180.0f;
+    float halfConeCos = std::cos(halfConeRad);
+    if (dot < halfConeCos) return false;
+
     return true;
 }
 

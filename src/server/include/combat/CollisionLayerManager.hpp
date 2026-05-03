@@ -24,5 +24,3 @@ private:
 CollisionLayerManager& getGlobalCollisionLayerManager();
 
 } // namespace DarkAges::combat
-
-#endif // DARKAGES_COMBAT_COLLISIONLAYERMANAGER_HPP

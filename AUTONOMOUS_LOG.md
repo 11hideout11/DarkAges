@@ -887,3 +887,14 @@
 [dev-loop] Starting at 2026-05-02 04:05 UTC [mode=once]
 [dev-loop] Agent Map: /root/projects/DarkAges/AGENTS.md (age=0d)
 [dev-loop] Context
+
+[2026-05-03T01:17:11.574659+00:00] FAILURE: 
+--- Deep iteration 1/3 ---
+============================================================
+[dev-loop] Starting at 2026-05-03 01:15 UTC [mode=deep]
+[dev-loop] Agent Map: /root/projects/DarkAges/AGENTS.md
+
+[2026-05-03T04:06:47.051613+00:00] FAILURE: ============================================================
+[dev-loop] Starting at 2026-05-03 04:06 UTC [mode=once]
+[dev-loop] Agent Map: /root/projects/DarkAges/AGENTS.md (age=0d)
+[dev-loop] Context

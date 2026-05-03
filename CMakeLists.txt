@@ -506,6 +506,8 @@ set(SERVER_SOURCES
     src/server/src/combat/DialogueSystem.cpp
     src/server/src/combat/PositionHistory.cpp
     src/server/src/combat/LagCompensatedCombat.cpp
+    src/server/src/combat/CollisionLayerManager.cpp
+    src/server/src/combat/CollisionUtils.cpp
     src/server/src/combat/AttackState.cpp
     src/server/src/combat/CooldownState.cpp
     src/server/src/combat/RecoveryState.cpp
@@ -876,6 +878,8 @@ if(BUILD_TESTS AND TARGET Catch2::Catch2WithMain)
         src/server/tests/TestIntegration.cpp
         src/server/tests/TestServerStateExporter.cpp
         src/server/tests/TestRecoveryState.cpp
+        src/server/tests/TestCollisionUtils.cpp
+        src/server/tests/TestAttackState.cpp
     )
 
     # Conditionally include tests for optional features

@@ -20,5 +20,3 @@ struct HurtboxComponent {
 };
 
 } // namespace DarkAges::combat
-
-#endif // DARKAGES_COMBAT_HURTBOXCOMPONENT_HPP
