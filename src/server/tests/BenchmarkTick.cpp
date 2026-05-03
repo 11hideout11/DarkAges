@@ -8,6 +8,8 @@
 #include "physics/SpatialHash.hpp"
 #include "physics/MovementSystem.hpp"
 #include "zones/AreaOfInterest.hpp"
+#include "combat/NPCAISystem.hpp"
+#include "combat/ZoneEventSystem.hpp"
 #include "ecs/CoreTypes.hpp"
 #include <entt/entt.hpp>
 #include <glm/glm.hpp>
@@ -144,4 +146,192 @@ TEST_CASE("EnTT registry benchmark", "[.benchmark][ecs][performance]") {
             reg.clear();
         };
     }
+}
+
+// ============================================================================
+// NPC AI System benchmarks
+// ============================================================================
+
+static void populateWithNPCs(Registry& registry, int count, int players = 5) {
+    std::mt19937 rng(42);
+    std::uniform_real_distribution<float> posDist(-200.0f, 200.0f);
+    
+    // Create players (chase targets)
+    for (int i = 0; i < players; i++) {
+        EntityID entity = registry.create();
+        registry.emplace<Position>(entity, Position::fromVec3(
+            glm::vec3(posDist(rng), 0, posDist(rng)), 0));
+        registry.emplace<CombatState>(entity);
+        registry.emplace<PlayerComponent>(entity);
+        registry.emplace<Rotation>(entity);
+    }
+    
+    // Create NPCs with full AI state
+    for (int i = 0; i < count; i++) {
+        EntityID entity = registry.create();
+        registry.emplace<Position>(entity, Position::fromVec3(
+            glm::vec3(posDist(rng), 0, posDist(rng)), 0));
+        registry.emplace<CombatState>(entity);
+        registry.emplace<NPCTag>(entity);
+        registry.emplace<Rotation>(entity);
+        
+        NPCAIState ai;
+        ai.behavior = NPCBehavior::Idle;
+        ai.aggroRange = 30.0f;
+        ai.behaviorTimerMs = 0;
+        ai.spawnPoint = Position::fromVec3(glm::vec3(posDist(rng), 0, posDist(rng)), 0);
+        registry.emplace<NPCAIState>(entity, ai);
+        
+        NPCStats stats;
+        stats.level = 5;
+        stats.baseDamage = 10;
+        stats.archetype = NPCArchetype::Melee;
+        registry.emplace<NPCStats>(entity, stats);
+        
+        Velocity vel{Fixed(0), Fixed(0), Fixed(0)};
+        registry.emplace<Velocity>(entity, vel);
+    }
+}
+
+TEST_CASE("NPCAI System benchmark", "[.benchmark][npca][performance]") {
+    SECTION("Update 50 NPCs with 5 players") {
+        BENCHMARK_ADVANCED("npca_update_50")(Catch::Benchmark::Chronometer meter) {
+            Registry registry;
+            populateWithNPCs(registry, 50, 5);
+            NPCAISystem npcAI;
+            meter.measure([&] {
+                npcAI.update(registry, 1000);
+            });
+        };
+    }
+    
+    SECTION("Update 200 NPCs with 10 players") {
+        BENCHMARK_ADVANCED("npca_update_200")(Catch::Benchmark::Chronometer meter) {
+            Registry registry;
+            populateWithNPCs(registry, 200, 10);
+            NPCAISystem npcAI;
+            meter.measure([&] {
+                npcAI.update(registry, 1000);
+            });
+        };
+    }
+}
+
+// ============================================================================
+// Zone Event System benchmark
+// ============================================================================
+
+TEST_CASE("ZoneEventSystem benchmark", "[.benchmark][zonevent][performance]") {
+    SECTION("Register 20 events") {
+        BENCHMARK("zonevent_register_20") {
+            ZoneEventSystem events;
+            for (int i = 0; i < 20; i++) {
+                ZoneEventDefinition def;
+                def.eventId = i + 1;
+                def.type = (i % 2 == 0) ? ZoneEventType::WorldBoss : ZoneEventType::WaveDefense;
+                def.maxParticipants = 10;
+                def.requiredPlayers = 1;
+                def.spawnX = 0.0f;
+                def.spawnZ = 0.0f;
+                def.spawnRadius = 20.0f;
+                events.registerEvent(def);
+            }
+        };
+    }
+}
+
+// ============================================================================
+// Netcode: entity state serialization benchmark
+// ============================================================================
+
+#include "netcode/NetworkManager.hpp"
+
+TEST_CASE("Entity state serialization benchmark", "[.benchmark][netcode][performance]") {
+    std::vector<Protocol::EntityStateData> entities;
+    std::mt19937 rng(42);
+    std::uniform_real_distribution<float> dist(-200.0f, 200.0f);
+    
+    for (int i = 0; i < 100; i++) {
+        Protocol::EntityStateData state;
+        state.entity = EntityID(i + 1);
+        state.position.x = Fixed(dist(rng));
+        state.position.z = Fixed(dist(rng));
+        state.healthPercent = 100;
+        state.animState = 0;
+        state.entityType = 3; // NPC
+        entities.push_back(state);
+    }
+    
+    std::vector<EntityID> removed;
+    
+    // Construct a baseline (same entities, unchanged)
+    std::vector<Protocol::EntityStateData> baseline = entities;
+    
+    BENCHMARK_ADVANCED("snapshot_serialize_100")(Catch::Benchmark::Chronometer meter) {
+        meter.measure([&] {
+            auto data = Protocol::createFullSnapshot(100, 99, std::span<const Protocol::EntityStateData>(entities));
+            return data.size();
+        });
+    };
+    
+    BENCHMARK_ADVANCED("delta_serialize_100_unchanged")(Catch::Benchmark::Chronometer meter) {
+        meter.measure([&] {
+            auto data = Protocol::createDeltaSnapshot(101, 100,
+                std::span<const Protocol::EntityStateData>(entities),
+                std::span<const EntityID>(removed),
+                std::span<const Protocol::EntityStateData>(baseline));
+            return data.size();
+        });
+    };
+    
+    // Modify 50% of entities  
+    for (size_t i = 0; i < entities.size(); i += 2) {
+        entities[i].position.x += Fixed(10);
+        entities[i].healthPercent -= 20;
+    }
+    
+    BENCHMARK_ADVANCED("delta_serialize_100_half_changed")(Catch::Benchmark::Chronometer meter) {
+        meter.measure([&] {
+            auto data = Protocol::createDeltaSnapshot(102, 100,
+                std::span<const Protocol::EntityStateData>(entities),
+                std::span<const EntityID>(removed),
+                std::span<const Protocol::EntityStateData>(baseline));
+            return data.size();
+        });
+    };
+}
+
+// ============================================================================
+// Full tick simulation (combined systems)
+// ============================================================================
+
+TEST_CASE("Full tick benchmark — all systems", "[.benchmark][tick][performance]") {
+    BENCHMARK_ADVANCED("full_tick_50_npcs_5_players")(Catch::Benchmark::Chronometer meter) {
+        Registry registry;
+        populateWithNPCs(registry, 50, 5);
+        
+        CombatConfig config;
+        config.baseMeleeDamage = 100;
+        CombatSystem combat(config);
+        NPCAISystem npcAI;
+        MovementSystem movement;
+        uint32_t tick = 0;
+        
+        meter.measure([&] {
+            tick++;
+            movement.update(registry, 16.67f);
+            npcAI.update(registry, tick * 17);
+            // Simulate a few combat calculations
+            auto view = registry.view<CombatState>();
+            if (!view.empty()) {
+                EntityID first = *(view.begin());
+                for (auto e : view) {
+                    if (e != first) {
+                        bool crit = false;
+                        combat.calculateDamage(registry, first, e, 100, crit);
+                    }
+                }
+            }
+        });
+    };
 }
