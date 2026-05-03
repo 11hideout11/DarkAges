@@ -129,7 +129,24 @@ namespace DarkAges.Client.UI
             if (nearestNPC != _interactionTarget)
             {
                 _interactionTarget = nearestNPC;
-                // TODO: Show interaction prompt when NPC is in range
+                
+                // Show/hide interaction prompt
+                if (nearestNPC != 0 && _dialogues.TryGetValue(nearestNPC, out var dialogue))
+                {
+                    var prompt = GetTree().GetFirstNodeInGroup("interaction_prompt");
+                    if (prompt is InteractionPrompt ip)
+                    {
+                        ip.ShowPrompt(nearestNPC, $"Press E to talk to {dialogue.name}", 3.0f);
+                    }
+                }
+                else
+                {
+                    var prompt = GetTree().GetFirstNodeInGroup("interaction_prompt");
+                    if (prompt is InteractionPrompt ip)
+                    {
+                        ip.HidePrompt();
+                    }
+                }
             }
             
             // Check for interaction key press
