@@ -517,6 +517,7 @@ set(SERVER_SOURCES
     src/server/src/combat/TargetLockSystem.cpp
     src/server/src/combat/WorldProgressionSystem.cpp
     src/server/src/combat/ProgressionCalculator.cpp
+    src/server/src/combat/DailyChallengeSystem.cpp
     src/server/src/instrumentation/ServerStateExporter.cpp
     src/server/src/zones/AreaOfInterest.cpp
     src/server/src/zones/AuraProjection.cpp
@@ -883,6 +884,7 @@ if(BUILD_TESTS AND TARGET Catch2::Catch2WithMain)
         src/server/tests/TestCollisionUtils.cpp
         src/server/tests/TestAttackState.cpp
         src/server/tests/TestCollisionLayerManager.cpp
+        src/server/tests/TestDailyChallengeSystem.cpp
     )
 
     # Conditionally include tests for optional features

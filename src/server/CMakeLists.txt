@@ -118,6 +118,7 @@ set(SERVER_SOURCES
     src/combat/ExperienceSystem.cpp
     src/combat/WorldProgressionSystem.cpp
     src/combat/ProgressionCalculator.cpp
+    src/combat/DailyChallengeSystem.cpp
     src/combat/StatusEffectSystem.cpp
     src/combat/ProjectileSystem.cpp
     src/combat/CollisionLayerManager.cpp

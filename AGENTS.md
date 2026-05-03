@@ -1,19 +1,20 @@
-## Recent Commits (last 14 — updated 2026-05-03)
+## Recent Commits (last 15 — updated 2026-05-03)
 
-1. `6c14d9c`: MAJOR: synchronize repo to single source of truth — Master Truth doc, drift correction, PRD renumbering
-2. `5937fba`: docs: fix commit hash in recent commits list
-3. `b98c393`: docs: PRD inventory audit — PRD_INVENTORY.md, AGENTS.md scope clarification
-4. `fd7d414`: docs: AGENTS.md — session 8 summary, remove stale session entries, update commit hash
-5. `817bbeb`: feat(progression): wire WorldProgressionSystem into ZoneServer lifecycle
-6. `30c3167`: fix: update XP formula test expectations to match PRD-036, sync AGENTS.md test counts
-7. `347c931`: Merge PR #88 — procedural character visuals (visually distinct placeholders)
-8. `fcf6837`: feat(client): procedural character visuals - visually distinct placeholders
-9. `5c35b31`: docs: update PRD-012 status to COMPLETE with GNS receive-side integration validation summary
-10. `5062b6a`: docs: update recent commits list in AGENTS.md
-11. `66af8e3`: docs: AGENTS.md — PRD-020 headless CI hardening complete (24/24 PRDs)
-12. `b8918c2`: Merge PR #87 — orchestration phases 1-3 implementation
-13. `80b4e7d`: fix(prd-020): headless CI hardening — validator robustness, scene tree leak prevention
-14. `59bc9e8`: feat: implement orchestration phases 1-3 server systems
+1. `c5c6f78`: feat(prd-036): wire ProgressionCalculator into ExperienceSystem + ItemSystem pipelines
+2. `6c14d9c`: MAJOR: synchronize repo to single source of truth — Master Truth doc, drift correction, PRD renumbering
+3. `5937fba`: docs: fix commit hash in recent commits list
+4. `b98c393`: docs: PRD inventory audit — PRD_INVENTORY.md, AGENTS.md scope clarification
+5. `fd7d414`: docs: AGENTS.md — session 8 summary, remove stale session entries, update commit hash
+6. `817bbeb`: feat(progression): wire WorldProgressionSystem into ZoneServer lifecycle
+7. `30c3167`: fix: update XP formula test expectations to match PRD-036, sync AGENTS.md test counts
+8. `347c931`: Merge PR #88 — procedural character visuals (visually distinct placeholders)
+9. `fcf6837`: feat(client): procedural character visuals - visually distinct placeholders
+10. `5c35b31`: docs: update PRD-012 status to COMPLETE with GNS receive-side integration validation summary
+11. `5062b6a`: docs: update recent commits list in AGENTS.md
+12. `66af8e3`: docs: AGENTS.md — PRD-020 headless CI hardening complete (24/24 PRDs)
+13. `b8918c2`: Merge PR #87 — orchestration phases 1-3 implementation
+14. `80b4e7d`: fix(prd-020): headless CI hardening — validator robustness, scene tree leak prevention
+15. `59bc9e8`: feat: implement orchestration phases 1-3 server systems
 
 ## State (2026-05-03 — updated post-merge)
 
@@ -205,27 +206,26 @@
 
 > ⚠️ **Scope Note:** The 24 PRDs above represent the *original core scope* (PRD-001 through PRD-024). The `prd/` directory additionally contains ~120 specification documents (feature PRDs, gap analyses, orchestration phase PRDs) — all currently marked "Proposed" and largely unimplemented. See [PRD_INVENTORY.md](docs/PRD_INVENTORY.md) for the complete inventory.
 
-## This Session's Work (2026-05-03 — session 10: Comprehensive status audit + truth sync + production DB) 
+## This Session's Work (2026-05-03 — session 11: PRD-036 Progression Pipeline Integration)
 
 ### Completed
-- ✅ **Comprehensive status audit**: Verified all 1316 tests pass (7304 assertions), all 11 CTest targets pass, 0 build errors
-- ✅ **Fixed AGENTS.md drift**: Updated Recent Commits to include HEAD (6c14d9c, 5937fba), corrected PRD-018 status from blocked to Complete, updated blocked items and remaining gaps
-- ✅ **Fixed MASTER_SOURCE_OF_TRUTH.md drift**: Corrected test failure section (Tier 1 tasks already complete), marked Tier 1 items as done
-- ✅ **Production DB stack**: Started Redis 7 via docker-compose.dev.yml (infra/); Scylla 5.4 available on same compose file
-
-### Current Milestone Status
-- **24/24 core PRDs complete** — all internal technical requirements met, including PRD-018 (Docker IS running, docker-compose.dev.yml ready)
-- **~120 additional PRD specifications in `prd/`** — all marked "Proposed", largely unimplemented (see [PRD_INVENTORY.md](docs/PRD_INVENTORY.md))
-- **Only remaining gaps**: GNS WebRTC signaling token (production) and ScyllaDB GCC13 build issue
-- All tests: 1316 cases, 7304 assertions, 100% pass
-- WorldProgressionSystem fully wired into ZoneServer lifecycle
+- ✅ **PRD-036 Progression Pipeline fully wired**: Three-way integration between ProgressionCalculator ↔ ItemSystem ↔ ExperienceSystem
+- ✅ **ProgressionCalculator.cpp added to build** (both root and legacy CMakeLists)
+- ✅ **ItemSystem equip/unequip**: Now triggers `recalculateAllStats()` for real-time equipment stat scaling
+- ✅ **ExperienceSystem level-up**: Now routes through `ProgressionCalculator::applyLevelUp()` which incorporates equipment bonuses via `recalculateAllStats()`, replacing the old inline stat bump
+- ✅ **Fallback path preserved**: Tests without ProgressionCalculator continue using inline stat bump (no test changes needed)
+- ✅ **ZoneServer::initialize() wiring**: All three systems cross-wired at initialization
+- ✅ **Full test pass**: 1316 cases, 7304 assertions, 100% — zero regressions
+- ✅ **Types fixed**: `InventoryComponent`→`Inventory`, `getItemDefinition`→`getItem` to match actual codebase
 
 ### Commits
-- (No new commits — documentation-only changes. State verified against codebase.)
-- Full test re-run: 1316/1316 pass, 7304 assertions, 100%
-- All 11 CTest targets pass (including test_network, unit_tests, test_database)
+- `c5c6f78`: feat(prd-036): wire ProgressionCalculator into ExperienceSystem + ItemSystem pipelines
 
-Last updated: 2026-05-03 (session 10 — Comprehensive status audit + truth sync + production DB)
+### Current Milestone Status
+- **24/24 core PRDs complete** — PRD-036 progression pipeline now fully operational
+- **~120 additional PRD specifications in `prd/`** — all "Proposed", largely unimplemented
+- **Only remaining gaps**: GNS WebRTC signaling token (production) and ScyllaDB GCC13 build issue
+- All tests: 1316 cases, 7304 assertions, 100% pass
 
 ## Orchestration Execution Plan
 

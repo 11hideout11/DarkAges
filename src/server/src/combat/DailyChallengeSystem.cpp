@@ -6,26 +6,25 @@ namespace DarkAges {
 
 void DailyChallengeSystem::generateDailyChallenges() {
     uint32_t day = getDayOfYear();
-    if (day != lastGenerateDay_) {
-        generateDailyChallenges();  // Creates 3 challenges
-        lastGenerateDay_ = day;
+    if (day == lastGenerateDay_) {
+        return;  // Already generated for today
     }
-}
 
-void DailyChallengeSystem::generateDailyChallenges() {
     dailyChallenges_.clear();
-    
+
     std::time_t now = std::time(nullptr);
     std::tm* tm = std::localtime(&now);
     uint32_t seed = static_cast<uint32_t>(tm->tm_yday);
-    
+
     // Generate 3 challenges for today
-    DailyChallenge chal;
     for (int i = 0; i < 3; i++) {
-        generateChallenge(chal, seed + i);
+        DailyChallenge chal;
         chal.id = i + 1;
+        generateChallenge(chal, seed + i);
         dailyChallenges_.push_back(chal);
     }
+
+    lastGenerateDay_ = day;
 }
 
 void DailyChallengeSystem::generateChallenge(DailyChallenge& chal, uint32_t seed) {
