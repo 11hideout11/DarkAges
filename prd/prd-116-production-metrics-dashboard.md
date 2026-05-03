@@ -1,4 +1,4 @@
-# PRD-032: Production Metrics Dashboard
+# PRD-116: Production Metrics Dashboard
 
 **Version:** 1.0  
 **Date:** 2026-05-03  
@@ -85,6 +85,6 @@ The server has MetricsExporter.hpp for Prometheus metrics, but there are no prod
 
 ---
 
-**PRD Status:** Proposed  
+**Status:** ✅ Complete — metrics_collector.py, Grafana dashboards, Prometheus configs all exist
 **Author:** OpenHands Gap Analysis  
 **Next Step:** Create dashboard JSON

@@ -1,4 +1,4 @@
-# PRD-023: Guild System Implementation
+# PRD-107: Guild System Implementation
 
 **Version:** 1.0  
 **Date:** 2026-05-02  

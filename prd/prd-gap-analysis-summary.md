@@ -30,21 +30,32 @@ This document consolidates all PRDs created for identified gaps in the DarkAges 
 | GAP-014 | prd-gap-014-gns-runtime-workaround.md | ⚠️ EXTERNAL | UDP fallback works |
 | GAP-015 | prd-gap-015-production-database-workaround.md | ⚠️ EXTERNAL | JSON persistence works |
 
-## Previous PRD Inventory (Feb 2026)
+## Previous PRD Inventory (Feb 2026 - RENUMBERED to 100-119 range)
+
+**Note:** These PRDs initially used numbers 017-035 which collided with core PRD numbers. They have been renumbered to prd-101 through prd-119 to avoid collision. See [MASTER_SOURCE_OF_TRUTH.md](../docs/MASTER_SOURCE_OF_TRUTH.md) for the complete picture.
 
 | # | PRD | Priority | Status | Description |
-|---|-----|----------|--------|-------------|
-| 1 | prd-npc-dialogue-system.md | High | NPC interactions, quest handoff |
-| 2 | prd-client-ui-framework.md | Critical | Base UI framework for all panels |
-| 3 | prd-abilities-casting-ui.md | High | Ability hotbar and casting UI |
-| 4 | prd-production-database.md | High | Redis/Scylla persistence |
-| 5 | prd-loot-drop-system.md | High | Enemy loot drops |
-| 6 | prd-spawn-system-completion.md | High | NPC/enemy spawning |
-| 7 | prd-gns-runtime-integration.md | High | GNS network runtime |
-| 8 | prd-sound-music-system.md | Medium | Audio system |
-| 9 | prd-save-load-system.md | High | Save/load system |
-| 10 | prd-character-spawn-login.md | Critical | Character creation flow |
-| 11 | prd-death-respawn-system.md | High | Death and respawn |
+||---|-----|----------|--------|-------------|
+| 101 | prd-101-gns-runtime-integration.md | High | ✅ Complete (duplicate of core PRD-012) | GNS network runtime |
+| 102 | prd-102-fsm-integration.md | High | ✅ Complete (duplicate of core PRD-008/022) | Node-based FSM integration |
+| 103 | prd-103-zone-objectives-integration.md | High | ✅ Complete (duplicate of core PRD-009) | Zone objectives system |
+| 104 | prd-104-sdfgi-ssao-lighting.md | Medium | ✅ Complete (duplicate of core PRD-016) | SDFGI/SSAO lighting |
+| 105 | prd-105-inventory-equipment-system.md | High | ❌ Not implemented | Inventory & Equipment |
+| 106 | prd-106-abilities-talents-system.md | High | ❌ Not implemented | Abilities & Talents |
+| 107 | prd-107-guild-system.md | Medium | ❌ Not implemented | Guild System |
+| 108 | prd-108-party-system.md | Medium | ❌ Not implemented | Party System |
+| 109 | prd-109-quest-system.md | High | ✅ Complete | Quest System |
+| 110 | prd-110-trade-system.md | Low | ❌ Not implemented | Trade System |
+| 111 | prd-111-gns-runtime-network.md | High | ✅ Complete (duplicate of core PRD-012) | GNS network integration |
+| 112 | prd-112-rtt-tracking.md | Medium | ❌ Not implemented | RTT tracking |
+| 113 | prd-113-client-ui-integration.md | Critical | ❌ Not wired | Client UI integration |
+| 114 | prd-114-zone-objective-replication.md | High | ❌ Not wired | Zone objective replication |
+| 115 | prd-115-npc-ai-behavior.md | High | ❌ Not implemented | NPC AI behavior |
+| 116 | prd-116-production-metrics-dashboard.md | Medium | ✅ Complete | Metrics dashboard |
+| 117 | prd-117-world-data-population.md | High | ✅ Complete | World data population |
+| 118 | prd-118-player-persistence.md | High | ✅ Complete | Player save/load |
+| 119 | prd-119-matchmaking-queue.md | Low | ❌ Not implemented | Matchmaking queue |
+
 
 ---
 

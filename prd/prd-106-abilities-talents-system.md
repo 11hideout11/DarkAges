@@ -1,4 +1,4 @@
-# PRD-022: Abilities Talents System
+# PRD-106: Abilities Talents System
 
 **Version:** 1.0  
 **Date:** 2026-05-02  

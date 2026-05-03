@@ -1,4 +1,4 @@
-# PRD-017: GNS Runtime Integration - Network Stack
+# PRD-101: GNS Runtime Integration - Network Stack
 
 **Version:** 1.0  
 **Date:** 2026-05-02  

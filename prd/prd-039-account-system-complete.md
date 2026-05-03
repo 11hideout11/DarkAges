@@ -2,7 +2,7 @@
 
 **Version:** 1.0  
 **Date:** 2026-05-03  
-**Status:** Proposed  
+**Status:** ✅ Complete — AccountSystem.hpp/.cpp with register, auth, session token, ban/unban, statistics
 **Priority:** P1-High  
 **Category:** Security & Accounts - Player Identity
 

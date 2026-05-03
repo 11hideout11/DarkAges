@@ -1,4 +1,4 @@
-# PRD-020: SDFGI/SSAO Lighting System
+# PRD-104: SDFGI/SSAO Lighting System
 
 **Version:** 1.0  
 **Date:** 2026-05-02  

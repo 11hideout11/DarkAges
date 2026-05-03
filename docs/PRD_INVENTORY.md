@@ -55,31 +55,29 @@ These 24 PRDs (001-024) represent the original project scope. They are **complet
 
 ---
 
-## Part II: Numbered PRDs in prd/ (Overlapping Numbers)
-
-These PRDs exist in the `prd/` directory and use numbers 017-035. **They are DIFFERENT documents from the identically-numbered core PRDs above** — created during a separate gap analysis. All marked "Proposed" by default.
+### Numbered PRDs (renamed to 101-119 range to fix collision with Core PRDs)
 
 | File | Title | Claimed Status | Codebase Reality |
 |------|-------|----------------|-----------------|
-| prd-017-gns-runtime-integration.md | GNS Runtime Integration | Proposed | ✅ GNS send+receive integrated (PRD-012 core) |
-| prd-018-fsm-integration.md | Node-Based FSM Integration | ✅ COMPLETE (2026-05-02) | ✅ FSM wired to Player/RemotePlayer |
-| prd-019-zone-objectives-integration.md | Zone Objectives System Integration | Proposed | ✅ Server implementation exists |
-| prd-020-sdfgi-ssao-lighting.md | SDFGI/SSAO Lighting | Proposed | ✅ Configured in Main.tscn |
-| prd-021-inventory-equipment-system.md | Inventory Equipment System | Proposed | ❌ Client UI not wired |
-| prd-022-abilities-talents-system.md | Abilities Talents System | Proposed | ❌ Not implemented |
-| prd-023-guild-system.md | Guild System Implementation | Proposed | ❌ Not implemented |
-| prd-024-party-system.md | Party System Implementation | Proposed | ❌ Not implemented |
-| prd-025-quest-system.md | Quest System Implementation | Proposed | ✅ QuestSystem.hpp exists |
-| prd-026-trade-system.md | Trade System Implementation | Proposed | ❌ Not implemented |
-| prd-027-gns-runtime-integration.md | GNS Runtime Network Integration | Proposed | ✅ Already integrated (PRD-012) |
-| prd-028-rtt-tracking.md | Network RTT Tracking | Proposed | ❌ Not implemented |
-| prd-029-client-ui-integration.md | Client UI Integration | Proposed | ❌ Not wired |
-| prd-030-zone-objective-replication.md | Zone Objective Client Replication | Proposed | ❌ Client not wired |
-| prd-031-npc-ai-behavior.md | NPC AI Behavior System | Proposed | ❌ Not implemented |
-| prd-032-production-metrics-dashboard.md | Production Metrics Dashboard | Proposed | ✅ metrics_collector.py + grafana exist |
-| prd-033-world-data-population.md | World Data Population | Proposed | ✅ Data files exist (abilities, items, quests) |
-| prd-034-player-persistence.md | Player Save System | Proposed | ✅ SaveManager.cs exists |
-| prd-035-matchmaking-queue.md | Matchmaking & Queue System | Proposed | ❌ Not implemented |
+| prd-101-gns-runtime-integration.md | GNS Runtime Integration | Proposed | ✅ GNS send+receive integrated (core PRD-012) |
+| prd-102-fsm-integration.md | Node-Based FSM Integration | ✅ COMPLETE | ✅ FSM wired to Player/RemotePlayer |
+| prd-103-zone-objectives-integration.md | Zone Objectives System Integration | Proposed | ✅ Server implementation exists |
+| prd-104-sdfgi-ssao-lighting.md | SDFGI/SSAO Lighting | Proposed | ✅ Configured in Main.tscn |
+| prd-105-inventory-equipment-system.md | Inventory Equipment System | Proposed | ❌ Client UI not wired |
+| prd-106-abilities-talents-system.md | Abilities Talents System | Proposed | ❌ Not implemented |
+| prd-107-guild-system.md | Guild System Implementation | Proposed | ❌ Not implemented |
+| prd-108-party-system.md | Party System Implementation | Proposed | ❌ Not implemented |
+| prd-109-quest-system.md | Quest System Implementation | Proposed | ✅ QuestSystem.hpp exists |
+| prd-110-trade-system.md | Trade System Implementation | Proposed | ❌ Not implemented |
+| prd-111-gns-runtime-network.md | GNS Runtime Network Integration | Proposed | ✅ Already integrated (core PRD-012) |
+| prd-112-rtt-tracking.md | Network RTT Tracking | Proposed | ❌ Not implemented |
+| prd-113-client-ui-integration.md | Client UI Integration | Proposed | ❌ Not wired |
+| prd-114-zone-objective-replication.md | Zone Objective Client Replication | Proposed | ❌ Client not wired |
+| prd-115-npc-ai-behavior.md | NPC AI Behavior System | Proposed | ❌ Not implemented |
+| prd-116-production-metrics-dashboard.md | Production Metrics Dashboard | ✅ Complete | ✅ metrics_collector.py + grafana exist |
+| prd-117-world-data-population.md | World Data Population | ✅ Complete | ✅ Data files exist (abilities, items, quests) |
+| prd-118-player-persistence.md | Player Save System | ✅ Complete | ✅ SaveManager.cs exists |
+| prd-119-matchmaking-queue.md | Matchmaking & Queue System | Proposed | ❌ Not implemented |
 
 ---
 

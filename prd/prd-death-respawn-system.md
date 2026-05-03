@@ -301,6 +301,6 @@ Attack → HP=0 → Death Animation → UI Shows (5s)
 
 ---
 
-**PRD Status:** Proposed - Awaiting Implementation  
+**Status:** ✅ Complete — DeathRespawnUI.cs exists with styled respawn system (UITheme.cs integration)
 **Author:** OpenHands Analysis  
 **Next Step:** Death detection logic

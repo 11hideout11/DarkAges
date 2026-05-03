@@ -1,4 +1,4 @@
-# PRD-025: Quest System Implementation
+# PRD-109: Quest System Implementation
 
 **Version:** 1.0  
 **Date:** 2026-05-02  

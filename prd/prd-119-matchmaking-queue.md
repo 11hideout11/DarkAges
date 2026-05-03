@@ -1,4 +1,4 @@
-# PRD-035: Matchmaking & Queue System
+# PRD-119: Matchmaking & Queue System
 
 **Version:** 1.0  
 **Date:** 2026-05-03  

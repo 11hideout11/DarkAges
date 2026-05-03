@@ -1,4 +1,4 @@
-# PRD-033: World Data Population - NPC/Zone Definitions
+# PRD-117: World Data Population - NPC/Zone Definitions
 
 **Version:** 1.0  
 **Date:** 2026-05-03  
@@ -123,6 +123,6 @@ The server systems exist (CombatSystem, QuestSystem, SpawnSystem), but they have
 
 ---
 
-**PRD Status:** Proposed  
+**Status:** ✅ Complete — 22 abilities, 51 items, 10 quests, 3 spawn zones, dialogue data all populated
 **Author:** OpenHands Gap Analysis  
 **Next Step:** Create data/npcs.json and data/zones.json

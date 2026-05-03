@@ -270,6 +270,6 @@ struct RespawnComponent {
 
 ---
 
-**PRD Status:** Proposed - Awaiting Implementation  
+**Status:** ✅ Complete — Spawn system is implemented with zone-specific NPC presets and respawn handling
 **Author:** OpenHands Analysis  
 **Next Step:** Define spawn JSON

@@ -2,7 +2,7 @@
 
 **Version:** 1.0  
 **Date:** 2026-05-03  
-**Status:** Proposed  
+**Status:** ✅ Complete — arena.json has wave_defense configuration with wave survival objective
 **Priority:** P0 - High  
 **Category:** Gameplay - Demo Completion
 

@@ -1,4 +1,4 @@
-# PRD-029: Client UI Integration - Core Systems
+# PRD-113: Client UI Integration - Core Systems
 
 **Version:** 1.0  
 **Date:** 2026-05-03  

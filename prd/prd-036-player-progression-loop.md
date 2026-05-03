@@ -2,7 +2,7 @@
 
 **Version:** 1.0  
 **Date:** 2026-05-03  
-**Status:** Proposed  
+**Status:** ⚠️ Partial — ProgressionCalculator.hpp exists with stat recalculation and level-up methods, but XP/leveling not fully wired into game loop
 **Priority:** P0-Critical  
 **Category:** Player Progression - Cross-System Integration
 

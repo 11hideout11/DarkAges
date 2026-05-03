@@ -2,7 +2,7 @@
 
 **Version:** 1.0  
 **Date:** 2026-05-03  
-**Status:** Proposed  
+**Status:** ✅ Complete — QuestSystem.hpp/.cpp with 10 quests in JSON (quests.json), wired into game systems
 **Priority:** P1-High  
 **Category:** Game Design - Quest Progression
 

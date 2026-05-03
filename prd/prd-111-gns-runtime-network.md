@@ -1,4 +1,4 @@
-# PRD-027: GNS Runtime Network Integration
+# PRD-111: GNS Runtime Network Integration
 
 **Version:** 1.0  
 **Date:** 2026-05-03  

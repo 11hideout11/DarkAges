@@ -1,4 +1,4 @@
-# PRD-026: Trade System Implementation
+# PRD-110: Trade System Implementation
 
 **Version:** 1.0  
 **Date:** 2026-05-02  

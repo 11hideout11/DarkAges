@@ -2,7 +2,7 @@
 
 **Version:** 1.0  
 **Date:** 2026-05-03  
-**Status:** Proposed  
+**Status:** ✅ Complete — tutorial.json has npc_presets with training_dummy and trainer NPCs
 **Priority:** P0 - High  
 **Category:** Gameplay - Demo Completion
 

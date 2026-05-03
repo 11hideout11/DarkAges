@@ -222,6 +222,6 @@ public partial class DialogueUI : Control {
 
 ---
 
-**PRD Status:** Proposed - Awaiting Implementation  
+**Status:** ⚠️ Partial — DialogueSystem.hpp exists with NPC dialogue data, but not fully wired into player interactions
 **Author:** OpenHands Analysis  
 **Next Step:** Define dialogue JSON schema

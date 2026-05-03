@@ -2,7 +2,7 @@
 
 **Version:** 1.0
 **Date:** 2026-05-03
-**Status:** Proposed
+**Status:** ⚠️ Partial — DialogueSystem.hpp exists with dialogue data and interactions, but not fully wired into gameplay
 **Priority:** P1 - High
 **Category:** Gameplay - Quest System
 

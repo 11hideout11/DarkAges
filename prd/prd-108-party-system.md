@@ -1,4 +1,4 @@
-# PRD-024: Party System Implementation
+# PRD-108: Party System Implementation
 
 **Version:** 1.0  
 **Date:** 2026-05-02  
