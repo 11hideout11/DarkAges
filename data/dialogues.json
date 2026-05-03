@@ -1,0 +1,76 @@
+{
+  "dialogues": [
+    {
+      "id": "npc_merchant_01",
+      "npcId": 1001,
+      "name": "Merchant",
+      "greeting": "Welcome, traveler! What can I do for you?",
+      "nodes": {
+        "wares": {
+          "text": "Take a look at my wares.",
+          "action": "open_shop"
+        },
+        "farewell": {
+          "text": "Safe travels!"
+        }
+      },
+      "options": [
+        {"text": "Show me your wares", "next": "wares", "action": "open_shop"},
+        {"text": "Goodbye", "next": "farewell"}
+      ]
+    },
+    {
+      "id": "npc_quest_giver_01",
+      "npcId": 1002,
+      "name": "Elder",
+      "greeting": "Ah, a new adventurer! We have a problem...",
+      "nodes": {
+        "explain": {
+          "text": "Goblins have been raiding our village. Can you help us?",
+          "action": "show_quest_1"
+        },
+        "accept": {
+          "text": "I'll help you!",
+          "action": "accept_quest_1"
+        },
+        "complete": {
+          "text": "Thank you! The village is safe now.",
+          "action": "complete_quest_1"
+        },
+        "farewell": {
+          "text": "May the light guide your way."
+        }
+      },
+      "options": [
+        {"text": "What's wrong?", "next": "explain"},
+        {"text": "I'll help!", "next": "accept", "require": "quest_1_unstarted"},
+        {"text": "I'm back with the goblin ears!", "next": "complete", "require": "quest_1_complete"},
+        {"text": "Goodbye", "next": "farewell"}
+      ]
+    },
+    {
+      "id": "npc_guide_01",
+      "npcId": 1003,
+      "name": "Guide",
+      "greeting": "Welcome to our village!",
+      "nodes": {
+        "train": {
+          "text": "Here you can learn about combat. Press 1-8 for abilities, I for inventory, Q for quests.",
+          "action": "show_tutorial"
+        },
+        "zones": {
+          "text": "The combat arena is to the north. More zones will unlock as you level up.",
+          "action": "show_zone_map"
+        },
+        "farewell": {
+          "text": "Good luck, adventurer!"
+        }
+      },
+      "options": [
+        {"text": "How do I play?", "next": "train"},
+        {"text": "Where should I go?", "next": "zones"},
+        {"text": "Thanks!", "next": "farewell"}
+      ]
+    }
+  ]
+}
