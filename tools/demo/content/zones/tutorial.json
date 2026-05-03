@@ -140,5 +140,19 @@
       ],
       "completes_objective": "move_wasd"
     }
+  ],
+  "objectives": [
+    {
+      "id": "kill_dummy",
+      "type": "damage",
+      "count": 3,
+      "description": "Strike training dummies"
+    },
+    {
+      "id": "meet_trainer",
+      "type": "interact",
+      "count": 1,
+      "description": "Speak with Instructor Aldric"
+    }
   ]
 }

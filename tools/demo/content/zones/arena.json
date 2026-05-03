@@ -87,7 +87,11 @@
         "wave": 1,
         "name": "First Blood",
         "enemies": [
-          {"archetype": "wolf", "count": 3, "level": 2}
+          {
+            "archetype": "wolf",
+            "count": 3,
+            "level": 2
+          }
         ],
         "spawn_delay": 2.0,
         "completion_message": "Wave 1 complete! Prepare for more enemies..."
@@ -96,8 +100,16 @@
         "wave": 2,
         "name": "Bandit Raid",
         "enemies": [
-          {"archetype": "wolf", "count": 2, "level": 2},
-          {"archetype": "bandit", "count": 2, "level": 3}
+          {
+            "archetype": "wolf",
+            "count": 2,
+            "level": 2
+          },
+          {
+            "archetype": "bandit",
+            "count": 2,
+            "level": 3
+          }
         ],
         "spawn_delay": 3.0,
         "completion_message": "Wave 2 complete! The real challenge approaches..."
@@ -106,9 +118,21 @@
         "wave": 3,
         "name": "Final Stand",
         "enemies": [
-          {"archetype": "bandit", "count": 3, "level": 3},
-          {"archetype": "bandit_archer", "count": 2, "level": 3},
-          {"archetype": "wolf", "count": 3, "level": 2}
+          {
+            "archetype": "bandit",
+            "count": 3,
+            "level": 3
+          },
+          {
+            "archetype": "bandit_archer",
+            "count": 2,
+            "level": 3
+          },
+          {
+            "archetype": "wolf",
+            "count": 3,
+            "level": 2
+          }
         ],
         "spawn_delay": 5.0,
         "completion_message": "Victory! You've cleared the arena!"
@@ -121,9 +145,22 @@
         "gold_min": 100,
         "gold_max": 200,
         "items": [
-          {"id": 3, "chance": 0.6, "name": "Iron Longsword"},
-          {"id": 4, "chance": 0.4, "name": "Iron Shield"},
-          {"id": 10, "chance": 1.0, "name": "Health Potion", "qty": 5}
+          {
+            "id": 3,
+            "chance": 0.6,
+            "name": "Iron Longsword"
+          },
+          {
+            "id": 4,
+            "chance": 0.4,
+            "name": "Iron Shield"
+          },
+          {
+            "id": 10,
+            "chance": 1.0,
+            "name": "Health Potion",
+            "qty": 5
+          }
         ]
       }
     }
@@ -133,17 +170,37 @@
       "gold_min": 10,
       "gold_max": 25,
       "items": [
-        {"id": 10, "chance": 0.4, "name": "Health Potion"},
-        {"id": 11, "chance": 0.3, "name": "Wolf Pelt"}
+        {
+          "id": 10,
+          "chance": 0.4,
+          "name": "Health Potion"
+        },
+        {
+          "id": 11,
+          "chance": 0.3,
+          "name": "Wolf Pelt"
+        }
       ]
     },
     "arena_tier2": {
       "gold_min": 15,
       "gold_max": 35,
       "items": [
-        {"id": 10, "chance": 0.5, "name": "Health Potion"},
-        {"id": 2, "chance": 0.15, "name": "Iron Dagger"},
-        {"id": 5, "chance": 0.1, "name": "Leather Armor"}
+        {
+          "id": 10,
+          "chance": 0.5,
+          "name": "Health Potion"
+        },
+        {
+          "id": 2,
+          "chance": 0.15,
+          "name": "Iron Dagger"
+        },
+        {
+          "id": 5,
+          "chance": 0.1,
+          "name": "Leather Armor"
+        }
       ]
     }
   },
@@ -184,8 +241,15 @@
       "gold": 150,
       "title": "Arena Champion",
       "items": [
-        {"id": 3, "name": "Iron Longsword"},
-        {"id": 10, "qty": 3, "name": "Health Potion"}
+        {
+          "id": 3,
+          "name": "Iron Longsword"
+        },
+        {
+          "id": 10,
+          "qty": 3,
+          "name": "Health Potion"
+        }
       ]
     }
   },
@@ -227,6 +291,20 @@
         "Keep fighting! Victory is near!",
         "Show them what you're made of!"
       ]
+    }
+  ],
+  "objectives": [
+    {
+      "id": "wave_survival",
+      "type": "custom",
+      "count": 5,
+      "description": "Survive 5 waves"
+    },
+    {
+      "id": "boss_kill",
+      "type": "kill",
+      "count": 1,
+      "description": "Defeat the arena boss"
     }
   ]
 }
