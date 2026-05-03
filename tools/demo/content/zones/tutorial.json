@@ -51,6 +51,22 @@
       "loot_id": "tutorial"
     }
   ],
+  "objectives": [
+    {
+      "id": "attack_dummy",
+      "type": "kill",
+      "target": "training_dummy",
+      "count": 1,
+      "description": "Attack the training dummy"
+    },
+    {
+      "id": "kill_rabbit",
+      "type": "kill",
+      "target": "rabbit",
+      "count": 3,
+      "description": "Defeat 3 rabbits"
+    }
+  ],
   "loot_tables": {
     "tutorial": {
       "gold_min": 1,

@@ -1,8 +1,8 @@
 # PRD Gap Analysis Summary
 
-**Version:** 2.1  
+**Version:** 2.2  
 **Date:** 2026-05-03  
-**Status:** Complete with 10 gap PRDs
+**Status:** Complete with 14 gap PRDs
 
 ---
 
@@ -24,6 +24,10 @@ This document consolidates all PRDs created for identified gaps in the DarkAges 
 | GAP-008 | prd-gap-008-tutorial-zone-npc-spawning.md | P0-High | Tutorial zone spawning |
 | GAP-009 | prd-gap-009-client-save-state-restore.md | P1-Medium | Save/load runtime state restore |
 | GAP-010 | prd-gap-010-party-quest-integration-tests.md | P2-Medium | Party XP & Quest integration tests |
+| GAP-011 | prd-gap-011-combat-animation-sync.md | P0-Critical | Combat events → client animations |
+| GAP-012 | prd-gap-012-anti-cheat-implementation.md | P1-High | Anti-cheat detection + ban system |
+| GAP-013 | prd-gap-013-npc-dialogue-wiring.md | P1-High | NPC dialogue → quest handoff |
+| GAP-014 | prd-gap-014-save-system-wiring.md | P1-High | Save/load character data |
 
 ## Previous PRD Inventory (Feb 2026)
 
@@ -50,12 +54,16 @@ This document consolidates all PRDs created for identified gaps in the DarkAges 
 - GAP-002: Zone Objectives Integration
 - GAP-007: Arena Wave Spawning
 - GAP-008: Tutorial Zone Spawning
+- GAP-011: Combat-Animation Sync
 
 ### P1 - High Priority
 - GAP-003: NPC AI Behavior
 - GAP-005: World Data Population
 - GAP-006: Client Warnings Resolution
 - GAP-009: Client Save State Restore
+- GAP-012: Anti-Cheat Implementation
+- GAP-013: NPC Dialogue Wiring
+- GAP-014: Save System Wiring
 
 ### P2 - Medium (Production)
 - GAP-004: Production Metrics Dashboard
@@ -112,6 +120,10 @@ All PRDs saved to `/workspace/project/DarkAges/prd/`:
 - `prd-gap-008-tutorial-zone-npc-spawning.md`
 - `prd-gap-009-client-save-state-restore.md`
 - `prd-gap-010-party-quest-integration-tests.md`
+- `prd-gap-011-combat-animation-sync.md`
+- `prd-gap-012-anti-cheat-implementation.md`
+- `prd-gap-013-npc-dialogue-wiring.md`
+- `prd-gap-014-save-system-wiring.md`
 
 **Previous Gap PRDs (Feb 2026):**
 - `prd-npc-dialogue-system.md`

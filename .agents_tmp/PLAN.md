@@ -1,173 +1,90 @@
 # DarkAges Implementation Plan - PRD Progression
 
 **Last Updated:** 2026-05-03  
-**Review Focus:** Progress critical PRDs from gap analysis  
-**Selected Task:** Complete PRD-029 Client UI Integration + PRD-031 NPC AI Integration
+**Review Focus:** Resume development from end-of-session summary
+**Top-Priority Action:** Fix boss zone NPC definitions (Gap #1)
 
 ---
 
 # 1. OBJECTIVE
 
-Complete meaningful PRD work that delivers player-facing gameplay impact:
-
-1. **PRD-029: Client UI Integration** (HIGH priority) - Wire client UI panels to server data
-2. **PRD-031: NPC AI Behavior System** (MEDIUM priority) - Integrate AI into zone tick loop
-
-These are explicitly identified as gaps in PRD_GAP_ANALYSIS_SUMMARY.md and are autonomous-safe.
+Fix the MVP readiness gap for Demo Zones - specifically the boss zone that has 0 NPCs due to missing `npc_presets` in boss.json. This is the top-priority actionable item that is not blocked by external dependencies.
 
 ---
 
 # 2. CONTEXT SUMMARY
 
-## Verified State
-| Component | Status |
-|-----------|--------|
-| Server Inventory System | ✅ Implemented (PRD-021) |
-| Server Ability System | ✅ Implemented (PRD-022) |
-| Server Quest System | ✅ Implemented (PRD-025) |
-| NPCAISystem.hpp | ✅ Exists (stub implementation) |
-| InventoryPanel.cs | ✅ Exists (demo data) |
-| AbilityBar.cs | ✅ Exists |
-| QuestTracker.cs | ✅ Exists |
+## End-of-Session Summary (AGENTS.md, 2026-05-03)
 
-## What's Missing (Gap Analysis)
-| Gap | PRD | Impact |
-|-----|-----|--------|
-| Client UI panels not wired to server | PRD-029 | Players can't see inventory/abilities/quests |
-| NPCAISystem not in tick loop | PRD-031 | NPCs don't have AI behavior |
+### Completed Tasks:
+- Fixed 47 C# build errors in Godot 4.2 client
+- All tests passing: 1305 cases, 7254 assertions, 100%
+- Demo pipeline: 5/5 checks pass
+- 22 PRDs completed during execution
+
+### Active Gaps (Internal - Feasible Now):
+1. **Boss zone NPC definitions** - `boss.json` missing `npc_presets` array (top priority)
+2. **Zone objectives** - zone JSON configs lack `zone_objectives` array
+
+### External Blockers:
+- GNS runtime - WebRTC auth token required
+- Production DB - Docker daemon required
+
+### MVP Readiness Status:
+| Requirement | Status | Notes |
+|---|---|---|
+| P0-1: Combat Multiplayer Template | ✅ COMPLETE | FSM, hitbox/hurtbox, AnimationTree, IK, lock-on |
+| P0-2: Demo Zones | ⚠️ PARTIAL | 3 zones exist; boss zone has 0 NPCs |
+| P0-3: Gameplay | ✅ COMPLETE | Human-playable, visual feedback, demo mode |
 
 ---
 
 # 3. APPROACH OVERVIEW
 
-## Selected Approach
-1. **Phase 1: PRD-029 Client UI Integration**
-   - Wire InventoryPanel to receive server sync data
-   - Wire AbilityBar to receive ability data from server
-   - Wire QuestTracker to quest log data
-   - Add network packet handlers for RPG data sync
+Add `npc_presets` array to boss.json matching the pattern used in tutorial.json and arena.json. This will enable the boss entity (Gruk The Unstoppable) and minions to spawn when the zone loads.
 
-2. **Phase 2: PRD-031 NPC AI Integration**
-   - Add NPCAISystem::update() to ZoneServer tick loop
-   - Wire AI damage callback to combat events
-   - Add AI state component to NPCs
-
-## Why This Approach
-- Explicitly identified as HIGH priority gaps
-- Autonomous-safe (no specialists required)
-- High gameplay impact for demo
-- Server components already exist
+The fix follows the existing pattern:
+- archetype: maps to NPC type definition
+- count: number to spawn
+- spawn_at: spawn point reference
+- level, combat_type, behavior: boss-specific settings
 
 ---
 
 # 4. IMPLEMENTATION STEPS
 
-## Step 4.1: Prepare Network Protocol for RPG Data Sync
-**Goal:** Add packet types for inventory/ability/quest sync
-**Method:** Extend Protocol.cpp with serialization functions
+## Step 4.1: Add npc_presets to boss.json
+**Goal:** Enable boss entity spawning
+**Method:** Add npc_presets array after spawn_points, matching tutorial.json pattern
 
-Reference: `src/server/src/netcode/Protocol.cpp`
-
-Tasks:
-- [x] Add PACKET_INVENTORY_UPDATE serialization
-- [x] Add PACKET_ABILITY_UPDATE serialization  
-- [x] Add PACKET_QUEST_LOG_SYNC serialization
-- [x] Add corresponding packet IDs to PacketTypes.hpp
-
-## Step 4.2: Add Client Network Handlers
-**Goal:** Process server data on client
-**Method:** Add handler methods in NetworkManager
-
-Reference: `src/client/src/networking/NetworkManager.cs`
+Reference: `tools/demo/content/zones/boss.json`
 
 Tasks:
-- [x] Add ProcessInventoryUpdate() method
-- [x] Add ProcessAbilityUpdate() method
-- [x] Add ProcessQuestSync() method
-- [x] Emit signals for UI update
+- [x] Identify missing npc_presets array in boss.json
+- [ ] Add npc_presets with boss (ogre_chieftain) + minions (wolf, bandit)
+- [ ] Verify JSON syntax is valid
 
-## Step 4.3: Wire Inventory Panel to Network
-**Goal:** Display real inventory data
-**Method:** Connect NetworkManager signals to InventoryPanel
-
-Reference: `src/client/src/ui/InventoryPanel.cs`
-
-Tasks:
-- [x] Add NetworkManager reference
-- [x] Connect to InventoryUpdate signal
-- [x] Add UpdateSlots() method to refresh display
-- [x] Add item icon loading (placeholder textures)
-
-## Step 4.4: Wire Ability Bar to Network
-**Goal:** Display real ability data  
-**Method:** Connect NetworkManager signals to AbilityBar
-
-Reference: `src/client/src/ui/AbilityBar.cs`
-
-Tasks:
-- [x] Add NetworkManager reference
-- [x] Connect to AbilityUpdate signal  
-- [x] Populate ability buttons from server data
-- [x] Add cooldown visualization
-
-## Step 4.5: Wire Quest Tracker to Quest Log
-**Goal:** Display real quest data
-**Method:** Connect network signals to QuestTracker
-
-Reference: `src/client/src/ui/QuestTracker.cs`
-
-Tasks:
-- [x] Add NetworkManager reference
-- [x] Connect to QuestSync signal
-- [x] Update objectives display from server data
-- [x] Add progress tracking UI
-
-## Step 4.6: Integrate NPC AI into ZoneServer Tick
-**Goal:** NPCs exhibit behavior (idle/wander/chase/attack)
-**Method:** Call NPCAISystem::update() in zone loop
-
-Reference: `src/server/src/zones/ZoneServer.cpp`
-
-Tasks:
-- [x] Add npcAiSystem_ member to ZoneServer
-- [x] Call aiSystem.update() in Tick()
-- [x] Wire AI damage callback to combat events
-- [ ] Add NPCAIState component to spawned NPCs
-
-## Step 4.7: Build and Test
-**Goal:** Verify no regressions
-**Method:** Compile + run test suite
+## Step 4.2: Validate Demo Pipeline
+**Goal:** Verify boss zone now spawns NPCs
+**Method:** Run demo pipeline checks
 
 Reference: `tools/demo/demo --quick`
 
 Tasks:
-- [ ] Compile server with -DENABLE_GNS=OFF
-- [ ] Run unit tests (1299 cases minimum)
-- [ ] Verify GNS build compiles
-- [ ] Verify no warnings in new code
+- [ ] Verify boss.json parses correctly
+- [ ] Confirm npc_presets are detected on zone load
 
 ---
 
 # 5. TESTING AND VALIDATION
 
 ## Validation Criteria
+- boss.json parses as valid JSON
+- npc_presets array present with 3 entries (boss + 2 minion types)
+- Demo pipeline confirms boss entity loads (future check when build available)
 
-### For PRD-029 (Client UI)
-- [ ] Inventory panel shows items from server sync
-- [ ] Ability bar shows abilities with cooldowns
-- [ ] Quest tracker shows active quests
-- [ ] Network packets deserialize correctly
-- [ ] UI updates on data change
-
-### For PRD-031 (NPC AI)
-- [ ] NPCAISystem::update() compiles and runs
-- [ ] NPCs transition between states (idle->chase->attack)
-- [ ] AI damages players in melee range
-- [ ] No compile errors in ZoneServer
-
-### Success Indicators
-- Server compiles without errors
-- All 1299+ test cases pass
-- GNS build compiles (no regressions)
-- Client UI panels functional with real data
-- NPCs exhibit basic AI behavior in demo zones
+## Success Indicators
+- boss.json has npc_presets array
+- Archetypes reference valid NPC types (ogre_chieftain, wolf, bandit)
+- Spawn points correctly referenced
+- MVP P0-2 Demo Zones: boss zone now has NPCs instead of 0
