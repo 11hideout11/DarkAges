@@ -74,6 +74,19 @@ namespace DarkAges.Client.UI
         public static readonly float AnimSlow = 0.3f;
         public static readonly float AnimVerySlow = 0.5f;
         
+        // Panel animation properties
+        public static readonly float PanelFadeInDuration = 0.25f;
+        public static readonly float PanelFadeOutDuration = 0.15f;
+        public static readonly float PanelSlideOffset = 30.0f;
+        
+        // Hover animation properties
+        public static readonly float HoverScale = 1.02f;
+        public static readonly float HoverScaleDuration = 0.1f;
+        
+        // Button press animation
+        public static readonly float PressScale = 0.95f;
+        public static readonly float PressScaleDuration = 0.05f;
+        
         // === STYLING HELPERS ===
         
         /// <summary>
@@ -158,6 +171,26 @@ namespace DarkAges.Client.UI
             return new StyleBoxFlat
             {
                 BgColor = color,
+                CornerRadiusTopLeft = (int)cornerRadius,
+                CornerRadiusTopRight = (int)cornerRadius,
+                CornerRadiusBottomLeft = (int)cornerRadius,
+                CornerRadiusBottomRight = (int)cornerRadius
+            };
+        }
+        
+        /// <summary>
+        /// Create progress bar background style (dark)
+        /// </summary>
+        public static StyleBoxFlat CreateProgressBackgroundStyle(float cornerRadius = 2.0f)
+        {
+            return new StyleBoxFlat
+            {
+                BgColor = new Color(0.1f, 0.1f, 0.12f, 0.9f),
+                BorderColor = BorderNormal,
+                BorderWidthBottom = 1,
+                BorderWidthLeft = 1,
+                BorderWidthRight = 1,
+                BorderWidthTop = 1,
                 CornerRadiusTopLeft = (int)cornerRadius,
                 CornerRadiusTopRight = (int)cornerRadius,
                 CornerRadiusBottomLeft = (int)cornerRadius,
@@ -257,6 +290,45 @@ namespace DarkAges.Client.UI
             };
             
             return new[] { normal, hover, pressed, disabled };
+        }
+        
+        /// <summary>
+        /// Create a glowing accent border style for active/focused elements
+        /// </summary>
+        public static StyleBoxFlat CreateActiveStyle(float cornerRadius = 4.0f)
+        {
+            return new StyleBoxFlat
+            {
+                BgColor = PanelBackgroundHover,
+                BorderColor = AccentPrimary,
+                BorderWidthBottom = 2,
+                BorderWidthLeft = 2,
+                BorderWidthRight = 2,
+                BorderWidthTop = 2,
+                CornerRadiusTopLeft = (int)cornerRadius,
+                CornerRadiusTopRight = (int)cornerRadius,
+                CornerRadiusBottomLeft = (int)cornerRadius,
+                CornerRadiusBottomRight = (int)cornerRadius,
+                ContentMarginLeft = (int)SpacingM,
+                ContentMarginRight = (int)SpacingM,
+                ContentMarginTop = (int)SpacingM,
+                ContentMarginBottom = (int)SpacingM
+            };
+        }
+        
+        /// <summary>
+        /// Create a death screen style (dark overlay with red tint)
+        /// </summary>
+        public static StyleBoxFlat CreateDeathOverlayStyle(float cornerRadius = 0.0f)
+        {
+            return new StyleBoxFlat
+            {
+                BgColor = new Color(0.05f, 0.0f, 0.0f, 0.85f),
+                CornerRadiusTopLeft = (int)cornerRadius,
+                CornerRadiusTopRight = (int)cornerRadius,
+                CornerRadiusBottomLeft = (int)cornerRadius,
+                CornerRadiusBottomRight = (int)cornerRadius
+            };
         }
         
         /// <summary>

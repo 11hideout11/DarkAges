@@ -71,9 +71,13 @@ namespace DarkAges.Client.UI
             {
                 Name = "DeathPanel",
                 Visible = false,
-                AnchorsPreset = (int)LayoutPreset.FullRect,
-                Modulate = new Color(0, 0, 0, 0.7f)
+                AnchorsPreset = (int)LayoutPreset.FullRect
             };
+            
+            // Apply themed death overlay style
+            var deathStyle = UITheme.CreateDeathOverlayStyle();
+            _deathPanel.AddThemeStyleboxOverride("panel", deathStyle);
+            _deathPanel.Modulate = new Color(1, 1, 1, 0); // Start invisible for fade-in
             AddChild(_deathPanel);
             
             // Center container
@@ -99,7 +103,7 @@ namespace DarkAges.Client.UI
                 HorizontalAlignment = HorizontalAlignment.Center
             };
             _deathTitleLabel.AddThemeFontSizeOverride("font_size", 72);
-            _deathTitleLabel.AddThemeColorOverride("font_color", Colors.DarkRed);
+            _deathTitleLabel.Modulate = StatusHealth; // Use themed red color
             vbox.AddChild(_deathTitleLabel);
             
             // Killer info
@@ -298,11 +302,23 @@ namespace DarkAges.Client.UI
             _killerLabel.Text = $"Killed by: {_killerName}";
             _respawnProgress.Value = 0;
             
-            // Animation for dramatic effect
+            // Animation for dramatic effect with theme timing
             var tween = CreateTween();
-            tween.TweenProperty(_deathTitleLabel, "scale", new Vector2(1.2f, 1.2f), 0.3f)
-                 .SetEase(Tween.EaseType.Out);
-            tween.TweenProperty(_deathTitleLabel, "scale", Vector2.One, 0.2f);
+            tween.SetParallel(false);
+            
+            // Fade in overlay
+            tween.TweenProperty(_deathPanel, "modulate:a", 1.0f, UITheme.PanelFadeInDuration)
+                .SetEase(Tween.EaseType.Out);
+            
+            // Scale up title
+            tween.TweenProperty(_deathTitleLabel, "scale", new Vector2(1.2f, 1.2f), UITheme.AnimSlow)
+                .SetEase(Tween.EaseType.Out)
+                .From(Vector2.One);
+            
+            // Pulse effect after scale
+            tween.TweenProperty(_deathTitleLabel, "scale", Vector2.One, UITheme.AnimNormal)
+                .SetDelay(UITheme.AnimSlow)
+                .SetEase(Tween.EaseType.InOut);
         }
         
         private void HideDeathUI()
