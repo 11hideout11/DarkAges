@@ -1,4 +1,4 @@
-[gd_scene load_steps=10 format=3 uid="uid://player"]
+[gd_scene load_steps=12 format=3 uid="uid://player"]
 
 [ext_resource type="Script" path="res://src/prediction/PredictedPlayer.cs" id="1_player"]
 [ext_resource type="Script" path="res://src/combat/AttackFeedbackSystem.cs" id="2_attack"]
@@ -7,6 +7,8 @@
 [ext_resource type="Script" path="res://src/camera/CameraController.cs" id="5_cameracontroller"]
 [ext_resource type="PackedScene" path="res://scenes/CombatStateMachine.tscn" id="6_combatfsm"]
 [ext_resource type="Script" path="res://src/combat/FootIKController.cs" id="7_footik"]
+[ext_resource type="Script" path="res://src/camera/PhantomCamera.cs" id="8_phantom"]
+[ext_resource type="Script" path="res://src/combat/ProceduralLeaning.cs" id="9_lean"]
 
 [ext_resource type="AnimationNodeStateMachine" path="res://scenes/PlayerAnimationTree.tres" id="4_animationtree"]
 [sub_resource type="CapsuleShape3D" id="CapsuleShape3D_1"]
@@ -42,6 +44,17 @@ mesh = SubResource("CapsuleMesh_1")
 [node name="CameraRig" type="Node3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.6, 0)
 script = ExtResource("5_cameracontroller")
+
+[node name="PhantomCamera" type="Node3D" parent="CameraRig"]
+script = ExtResource("8_phantom")
+RotationSmoothing = 8.0
+DistanceSmoothing = 5.0
+MinDistance = 1.5
+MaxDistance = 5.0
+InputSensitivity = 0.003
+LockOnDistance = 3.0
+LockOnTransitionSpeed = 5.0
+LockOnAngleThreshold = 15.0
 
 [node name="SpringArm3D" type="SpringArm3D" parent="CameraRig"]
 spring_length = 4.0
@@ -87,3 +100,11 @@ Enabled = true
 
 [node name="CombatStateMachine" type="Node3D" parent="."]
 script = ExtResource("6_combatfsm")
+
+[node name="ProceduralLeaning" type="Node" parent="."]
+script = ExtResource("9_lean")
+LeanAngleMax = 15.0
+LeanSpeed = 3.0
+ReturnSpeed = 5.0
+TurnBankAngle = 8.0
+EnableDuringCombat = false

@@ -140,5 +140,13 @@
       ],
       "completes_objective": "move_wasd"
     }
+  ],
+  "objectives": [
+    {
+      "id": "kill_rabbits",
+      "type": "kill",
+      "required": true,
+      "count": 3
+    }
   ]
 }
