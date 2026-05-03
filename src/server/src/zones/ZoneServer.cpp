@@ -1199,6 +1199,9 @@ void ZoneServer::onClientConnected(ConnectionID connectionId) {
     connectionToEntity_[connectionId] = entity;
     entityToConnection_[entity] = connectionId;
 
+    // WP-3.3: Refresh zone difficulty based on connected players' NG+ cycles
+    refreshZoneDifficulty();
+
     // [GAMEPLAY_AGENT] Give player their starter kit (inventory, abilities, gear)
     itemSystem_.giveStarterKit(registry_, entity);
 
@@ -1599,6 +1602,28 @@ EntityID ZoneServer::spawnPlayer(ConnectionID connectionId, uint64_t playerId,
     entityToConnection_[entity] = connectionId;
 
     return entity;
+}
+
+void ZoneServer::refreshZoneDifficulty() {
+    // Scan all connected players to find the highest NG+ cycle
+    uint32_t maxNgPlus = 0;
+    playerManager_.forEachPlayer([&](EntityID entity, ConnectionID /*connId*/, const PlayerInfo* /*info*/) {
+        if (auto* prog = registry_.try_get<PlayerProgression>(entity)) {
+            if (prog->ngPlusCount > maxNgPlus) {
+                maxNgPlus = prog->ngPlusCount;
+            }
+        }
+    });
+
+    // Compute effective difficulty
+    float effectiveDifficulty = NewGamePlusSystem::getEffectiveDifficulty(
+        config_.difficultyMultiplier, maxNgPlus);
+    difficultySystem_.setDifficultyMultiplier(effectiveDifficulty);
+
+    if (maxNgPlus > 0) {
+        std::cout << "[ZONE " << config_.zoneId << "] New Game Plus cycle " << maxNgPlus
+                  << " active — effective difficulty: " << effectiveDifficulty << std::endl;
+    }
 }
 
 EntityID ZoneServer::spawnNPC(const Position& spawnPos, uint8_t level, uint16_t baseDamage,

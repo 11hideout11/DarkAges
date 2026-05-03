@@ -20,6 +20,7 @@
 #include "zones/AntiCheatHandler.hpp"
 #include "zones/ZoneObjectiveSystem.hpp"
 #include "zones/ZoneDifficultySystem.hpp"
+#include "combat/NewGamePlusSystem.hpp"
 #include "combat/PositionHistory.hpp"
 #include "combat/LagCompensatedCombat.hpp"
 #include "combat/CombatSystem.hpp"
@@ -246,6 +247,10 @@ public:
     [[nodiscard]] SpawnSystem& getSpawnSystem() { return spawnSystem_; }
     [[nodiscard]] ZoneObjectiveSystem& getZoneObjectiveSystem() { return zoneObjectiveSystem_; }
     [[nodiscard]] ZoneDifficultySystem& getDifficultySystem() { return difficultySystem_; }
+
+    // WP-3.3: New Game Plus — scan connected players and adjust zone difficulty
+    // based on the highest ngPlusCount among all players in the zone
+    void refreshZoneDifficulty();
     [[nodiscard]] LagCompensator* getLagCompensatorPtr() { return &lagCompensator_; }
     [[nodiscard]] MovementSystem& getMovementSystemRef() { return movementSystem_; }
     [[nodiscard]] Security::AntiCheatSystem& getAntiCheatRef() { return antiCheat_; }

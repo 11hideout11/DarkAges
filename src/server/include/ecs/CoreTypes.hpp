@@ -734,8 +734,12 @@ struct BossProfile {
      bool tutorialComplete{false};            // Tutorial zone (98) completed
      bool arenaComplete{false};             // Arena zone (99) completed  
      bool bossComplete{false};             // Boss zone (100) completed
-     uint32_t highestZoneUnlocked{98};      // Highest zone accessible
- };
+    uint32_t highestZoneUnlocked{98};      // Highest zone accessible
+
+    // WP-3.3: New Game Plus — resets zone progression but increases difficulty
+    // Each NG+ cycle adds 10% to effective difficulty multiplier
+    uint32_t ngPlusCount{0};                // Current NG+ cycle (0 = first playthrough)
+};
 
  // Player entity tag (marks an entity as a player character)
  struct PlayerComponent {};
