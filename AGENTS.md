@@ -10,7 +10,7 @@
 9. fix(combat): resolve circular dependency in combat state machine; restore copy semantics
 10. fix(combat): rewrite AttackState without Hitbox component and fix RecoveryState timing
 
-## State (2026-05-02)
+## State (2026-05-03)
 
 - Phase 0: COMPLETE — documented in PHASE0_SUMMARY.md
 - Phase 1-5: ✅ VERIFIED — Summary docs created (PHASE1-5_SUMMARY.md)
@@ -18,7 +18,7 @@
 - Phase 7: COMPLETE — All tests pass (1299 cases, 7248 assertions, 100%)
 - Phase 8: PARTIAL — multiple work packages complete, GNS compile-time fix merged; runtime integration pending
 - Phase 9: COMPLETE — performance budgets validated
-- **Art Pipeline**: RESEARCH PHASE COMPLETE — world-building capabilities documented; asset pipeline spec exists (43 assets); CC0 sourcing strategies cataloged; Godot 4.2 PBR workflow defined; manifest.json created at assets/manifest.json
+- **Art Pipeline**: RESEARCH PHASE COMPLETE — world-building capabilities documented
 - **Tests**: All suites passing (1299 cases, 7248 assertions, 100%)
 - **Test breakdown**:
   - unit_tests: 724 cases, 4012 assertions
@@ -51,7 +51,7 @@
 - ✅ buildZoneDefinition() enhanced with JSON parsing (objectives, wave count, time limits)
 - ✅ Include paths fixed (consolidated to entt/entt.hpp)
 - ✅ getZoneObjectiveSystem() accessor added to ZoneServer
-- 📋 Snapshot replication for zone objectives pending (EmitEvent TODO)
+- ✅ COMPLETE: Zone objective client replication via event-based sync (PACKET_ZONE_OBJECTIVE_UPDATE)
 
 ### PRD-010: Hitbox/Hurtbox Validation
 - ✅ Collision matrix documented at `docs/collision-matrix.md`
@@ -127,14 +127,24 @@
 ### PRD-016: SDFGI/SSAO Lighting
 - ✅ IMPLEMENTED in `Main.tscn` lines 36-38: sdfgi_enabled=true, ssao_enabled=true, ssil_enabled=true
 
+### PRD-030: Zone Objective Client Replication
+- ✅ Server: ZoneObjectiveSystem with event emission (EmitEvent method)
+- ✅ Network: serializeZoneObjectiveUpdate / PACKET_ZONE_OBJECTIVE_UPDATE in Protocol.cpp
+- ✅ Client: NetworkManager.ProcessZoneObjectiveUpdate parses packet and emits ZoneObjectiveUpdateReceived signal
+- ✅ UI: QuestTracker.cs displays zone objectives in dedicated panel
+- ✅ TSCN: QuestTracker.tscn updated with ZoneObjectiveList RichTextLabel
+
 ---
 
-## Execution Summary (2026-05-02)
+## Execution Summary (2026-05-03)
 
 ### PRDs Addressed
-- **12 total PRDs completed** during execution (ADDED PRD-023)
+- **13 total PRDs completed** during execution (ADDED PRD-030)
 - **3 PRDs pending** (requires specialized agents or Docker)
 - **Test baseline**: 2129 cases, 12644 assertions, 100% passing
+
+### This Session's Commits
+- feat(client): Zone objective client replication (PRD-030) - QuestTracker displays zone objectives
 
 ### Files Created (11 files)
 1. `CombatStateMachine.tscn` - Node-based FSM template
