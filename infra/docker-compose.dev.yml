@@ -1,21 +1,6 @@
+# Redis is already running as a systemd service on port 6379 — this file only starts Scylla
+# To run Redis in Docker instead: stop system Redis first (`sudo systemctl stop redis-server`)
 services:
-  redis:
-    image: redis:7-alpine
-    container_name: darkages-redis
-    ports:
-      - "6379:6379"
-    volumes:
-      - redis_data:/data
-    command: redis-server --appendonly yes --maxmemory 512mb --maxmemory-policy allkeys-lru
-    healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
-      interval: 5s
-      timeout: 3s
-      retries: 5
-    restart: unless-stopped
-    networks:
-      - darkages-network
-
   scylla:
     image: scylladb/scylla:5.4
     container_name: darkages-scylla
@@ -23,7 +8,7 @@ services:
       - "9042:9042"
     volumes:
       - scylla_data:/var/lib/scylla
-    command: --smp 1 --memory 1G --developer-mode 1 --overprovisioned
+    command: --smp 1 --memory 1G --developer-mode 1 --overprovisioned 1
     healthcheck:
       test: ["CMD", "cqlsh", "-e", "describe keyspaces"]
       interval: 30s
