@@ -607,5 +607,90 @@ std::vector<uint8_t> serializeDialogueResponse(const DialogueResponsePacket& pkt
     return data;
 }
 
+// ============================================================================
+// Inventory Serialization
+// ============================================================================
+
+std::vector<uint8_t> serializeInventorySync(const InventorySyncPacket& pkt) {
+    std::vector<uint8_t> data;
+    data.reserve(1 + 4 + 4 + 192);  // type + gold + slotCount + 24 slots
+    data.push_back(static_cast<uint8_t>(PacketType::PACKET_INVENTORY_SYNC));
+
+    auto appendUInt32 = [&data](uint32_t value) {
+        const uint8_t* bytes = reinterpret_cast<const uint8_t*>(&value);
+        data.insert(data.end(), bytes, bytes + sizeof(uint32_t));
+    };
+
+    // Gold (as uint32 for wire format)
+    uint32_t goldBits = static_cast<uint32_t>(pkt.gold);
+    appendUInt32(goldBits);
+    appendUInt32(pkt.slotCount);
+
+    // All slots
+    for (uint32_t i = 0; i < pkt.slotCount && i < 24; ++i) {
+        appendUInt32(pkt.slots[i].itemId);
+        appendUInt32(pkt.slots[i].quantity);
+    }
+
+    return data;
+}
+
+bool deserializeInventorySync(std::span<const uint8_t> data, InventorySyncPacket& outPkt) {
+    if (data.size() < 9) return false;  // minimum: type(1) + gold(4) + count(4)
+
+    auto readUInt32 = [](const uint8_t* p) -> uint32_t {
+        uint32_t v;
+        memcpy(&v, p, sizeof(uint32_t));
+        return v;
+    };
+
+    outPkt.gold = static_cast<float>(readUInt32(data.data() + 1));
+    outPkt.slotCount = std::min(readUInt32(data.data() + 5), 24u);
+
+    size_t offset = 9;
+    for (uint32_t i = 0; i < outPkt.slotCount && offset + 8 <= data.size(); ++i) {
+        outPkt.slots[i].itemId = readUInt32(data.data() + offset);
+        outPkt.slots[i].quantity = readUInt32(data.data() + offset + 4);
+        offset += 8;
+    }
+
+    return true;
+}
+
+std::vector<uint8_t> serializeInventoryUpdate(const InventoryUpdatePacket& pkt) {
+    std::vector<uint8_t> data;
+    data.reserve(10);  // type + slotIndex + itemId + quantity
+    data.push_back(static_cast<uint8_t>(PacketType::PACKET_INVENTORY_UPDATE));
+    data.push_back(pkt.slotIndex);
+
+    auto appendUInt32 = [&data](uint32_t value) {
+        const uint8_t* bytes = reinterpret_cast<const uint8_t*>(&value);
+        data.insert(data.end(), bytes, bytes + sizeof(uint32_t));
+    };
+
+    appendUInt32(pkt.itemId);
+    appendUInt32(pkt.quantity);
+
+    return data;
+}
+
+bool deserializeInventoryUpdate(std::span<const uint8_t> data, InventoryUpdatePacket& outPkt) {
+    if (data.size() < 10) return false;
+
+    outPkt.slotIndex = data[1];
+    // Helper to read uint32 from bytes (little-endian)
+    auto readUInt32 = [](const uint8_t* p) -> uint32_t {
+        return static_cast<uint32_t>(p[0]) |
+               (static_cast<uint32_t>(p[1]) << 8 |
+               (static_cast<uint32_t>(p[2]) << 16 |
+               (static_cast<uint32_t>(p[3]) << 24);
+    };
+
+    outPkt.itemId = readUInt32(data.data() + 2);
+    outPkt.quantity = readUInt32(data.data() + 6);
+
+    return true;
+}
+
 } // namespace Protocol
 } // namespace DarkAges
