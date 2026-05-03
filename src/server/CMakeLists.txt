@@ -100,6 +100,7 @@ set(SERVER_SOURCES
     src/memory/LeakDetector.cpp
     src/memory/PlayerProfileStore.cpp
     src/social/GuildSystem.cpp
+    src/social/PartySystem.cpp
     src/security/AntiCheat.cpp
     src/security/ViolationTracker.cpp
     src/security/DDoSProtection.cpp
@@ -221,6 +222,7 @@ set(SERVER_HEADERS
     include/memory/PooledAllocator.hpp
     include/memory/PlayerProfileStore.hpp
     include/social/GuildSystem.hpp
+    include/social/PartySystem.hpp
     include/Constants.hpp
     include/security/AntiCheat.hpp
     include/security/AntiCheatConfig.hpp
