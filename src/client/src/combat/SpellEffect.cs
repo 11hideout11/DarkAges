@@ -20,10 +20,10 @@ namespace DarkAges.Combat
         [Export] public bool AutoDelete = true;
 
         // Particle systems
-        private GPUParticles3D _fire;
-        private GPUParticles3D _ice;
-        private GPUParticles3D _lightning;
-        private GPUParticles3D _heal;
+        private GpuParticles3D _fire;
+        private GpuParticles3D _ice;
+        private GpuParticles3D _lightning;
+        private GpuParticles3D _heal;
 
         // State
         private SpellType _currentSpell = SpellType.Fire;
@@ -32,10 +32,10 @@ namespace DarkAges.Combat
         public override void _Ready()
         {
             // Get particle references
-            _fire = GetNodeOrNull<GPUParticles3D>("Fire");
-            _ice = GetNodeOrNull<GPUParticles3D>("Ice");
-            _lightning = GetNodeOrNull<GPUParticles3D>("Lightning");
-            _heal = GetNodeOrNull<GPUParticles3D>("Heal");
+            _fire = GetNodeOrNull<GpuParticles3D>("Fire");
+            _ice = GetNodeOrNull<GpuParticles3D>("Ice");
+            _lightning = GetNodeOrNull<GpuParticles3D>("Lightning");
+            _heal = GetNodeOrNull<GpuParticles3D>("Heal");
         }
 
         /// <summary>
@@ -130,14 +130,14 @@ namespace DarkAges.Combat
             var scene = GD.Load<PackedScene>("res://scenes/SpellEffect.tscn");
             if (scene == null)
             {
-                GD.Warning("[SpellEffect] Failed to load SpellEffect.tscn");
+                GD.PushWarning("[SpellEffect] Failed to load SpellEffect.tscn");
                 return;
             }
             
             var instance = scene.Instantiate<SpellEffect>();
             if (instance == null)
             {
-                GD.Warning("[SpellEffect] Failed to instantiate");
+                GD.PushWarning("[SpellEffect] Failed to instantiate");
                 return;
             }
             

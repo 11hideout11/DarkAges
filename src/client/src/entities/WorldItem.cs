@@ -143,7 +143,7 @@ namespace DarkAges.Client
             }
         }
         
-        public override void _OnBodyEntered(Node body)
+        private void _OnBodyEntered(Node body)
         {
             // Used when colliding with area
             if (body.Name == "Player" || body.IsInGroup("local_player"))
@@ -180,7 +180,7 @@ namespace DarkAges.Client
             // Particle effect or animation on pickup
             var tween = CreateTween();
             tween.TweenProperty(this, "scale", Vector3.Zero, 0.2f);
-            tween.TweenCallback(QueueFree);
+            tween.TweenCallback(Callable.From(QueueFree));
         }
         
         private void Despawn()
@@ -188,7 +188,7 @@ namespace DarkAges.Client
             // Fade out and remove
             var tween = CreateTween();
             tween.TweenProperty(this, "modulate:a", 0.0f, 0.5f);
-            tween.TweenCallback(QueueFree);
+            tween.TweenCallback(Callable.From(QueueFree));
         }
         
         /// <summary>

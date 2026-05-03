@@ -115,7 +115,7 @@ namespace DarkAges.Audio
                 }
                 catch (Exception ex)
                 {
-                    GD.Warning($"[AudioManager] Failed to load {sfx}: {ex.Message}");
+                    GD.PushWarning($"[AudioManager] Failed to load {sfx}: {ex.Message}");
                     _sfxLibrary[sfx] = CreateSilentStream();
                 }
             }
@@ -136,7 +136,7 @@ namespace DarkAges.Audio
         {
             if (!_sfxLibrary.TryGetValue(sfxName, out var stream))
             {
-                GD.Warning($"[AudioManager] SFX not found: {sfxName}");
+                GD.PushWarning($"[AudioManager] PlaySfx SFX not found: {sfxName}");
                 return;
             }
             
@@ -156,7 +156,7 @@ namespace DarkAges.Audio
         {
             if (!_sfxLibrary.TryGetValue(sfxName, out var stream))
             {
-                GD.Warning($"[AudioManager] SFX not found: {sfxName}");
+                GD.PushWarning($"[AudioManager] PlaySfx SFX not found: {sfxName}");
                 return;
             }
             

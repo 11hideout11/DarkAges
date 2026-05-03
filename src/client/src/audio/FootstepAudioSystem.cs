@@ -19,7 +19,7 @@ namespace DarkAges.Audio
         private AudioManager _audioManager;
         private float _stepTimer = 0f;
         private bool _wasMoving = false;
-        private PlayerEntity _player;
+        private CharacterBody3D _player;
 
         public override void _Ready()
         {
@@ -45,7 +45,8 @@ namespace DarkAges.Audio
             
             if (isMoving)
             {
-                float stepInterval = _player.IsRunning ? RunStepInterval : WalkStepInterval;
+                bool isRunning = velocity > 5.0f;
+                float stepInterval = isRunning ? RunStepInterval : WalkStepInterval;
                 _stepTimer += (float)delta;
                 
                 if (_stepTimer >= stepInterval)
@@ -67,7 +68,7 @@ namespace DarkAges.Audio
             var players = GetTree().GetNodesInGroup("Player");
             if (players.Count > 0)
             {
-                _player = players[0] as PlayerEntity;
+                _player = players[0] as CharacterBody3D;
             }
         }
 

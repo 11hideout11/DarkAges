@@ -105,9 +105,9 @@ namespace DarkAges.Combat
                 return false;
                 
             var state = _combatFsm.CurrentState;
-            return state == CombatState.Dodge ||
-                   state == CombatState.Hit ||
-                   state == CombatState.Death ||
+            return state == CombatStateMachineController.CombatState.Dodge ||
+                   state == CombatStateMachineController.CombatState.Hit ||
+                   state == CombatStateMachineController.CombatState.Death ||
                    _player is CharacterBody3D cb && !cb.IsOnFloor();
         }
         

@@ -249,7 +249,7 @@ namespace DarkAges
             _interactionPanel.OffsetBottom = -60;
             _interactionPanel.Visible = false;
             // Theme styling
-            _interactionPanel.AddThemeStyleBoxOverride("panel", CreateThemedPanelStyle());
+            _interactionPanel.AddThemeStyleboxOverride("panel", CreateThemedPanelStyle());
             AddChild(_interactionPanel);
             
             var container = new HBoxContainer();
@@ -273,7 +273,10 @@ namespace DarkAges
             style.CornerRadiusTopRight = 8;
             style.CornerRadiusBottomLeft = 8;
             style.CornerRadiusBottomRight = 8;
-            style.SetContentMargins(10, 10, 10, 10);
+            style.ContentMarginLeft = 10;
+            style.ContentMarginTop = 10;
+            style.ContentMarginRight = 10;
+            style.ContentMarginBottom = 10;
             return style;
         }
         
@@ -319,7 +322,7 @@ namespace DarkAges
             foreach (var kvp in GameState.Instance.Entities)
             {
                 var entity = kvp.Value;
-                if (entity.NpcId > 0 && entity.InteractionRange > 0)
+                if (entity.DialogueTreeId > 0 && entity.InteractionRange > 0)
                 {
                     float dist = playerPos.DistanceTo(entity.Position);
                     if (dist <= entity.InteractionRange)
@@ -340,7 +343,7 @@ namespace DarkAges
         private void OnEntitySpawned(uint entityId, Vector3 position)
         {
             var entity = GameState.Instance.GetEntity(entityId);
-            if (entity != null && entity.NpcId > 0 && entity.InteractionRange > 0)
+            if (entity != null && entity.DialogueTreeId > 0 && entity.InteractionRange > 0)
             {
                 // Will be checked in next _Process
             }
@@ -360,7 +363,7 @@ namespace DarkAges
             _dialoguePanel.SetSize(new Vector2(400, 300));
             _dialoguePanel.Visible = false;
             // Theme styling
-            _dialoguePanel.AddThemeStyleBoxOverride("panel", CreateThemedPanelStyle());
+            _dialoguePanel.AddThemeStyleboxOverride("panel", CreateThemedPanelStyle());
             AddChild(_dialoguePanel);
             
             var vbox = new VBoxContainer();
@@ -385,7 +388,7 @@ namespace DarkAges
             vbox.AddChild(_dialogueOptions);
         }
         
-        private void ShowDialogue(string npcName, string text, string[] options)
+        private void ShowDialogue(string npcName, string text, string[] options, uint npcId, uint dialogueId)
         {
             if (_dialogueNpcName != null) _dialogueNpcName.Text = npcName;
             if (_dialogueText != null) _dialogueText.Text = text;
@@ -416,13 +419,13 @@ namespace DarkAges
         {
             _dialoguePanel.Visible = false;
             GameState.Instance.SetDialogueActive(false);
-            NetworkManager.Instance.SendDialogueResponse(optionIndex);
+            NetworkManager.Instance.SendDialogueResponse(GameState.Instance.ActiveDialogueId, (byte)optionIndex);
         }
         
         private void OnDialogueStart(uint npcId, uint dialogueId, string npcName, string dialogueText, string[] options)
         {
             // Handle legacy event signature
-            ShowDialogue(npcName, dialogueText, options);
+            ShowDialogue(npcName, dialogueText, options, npcId, dialogueId);
         }
         
         // ============================================================================
@@ -440,7 +443,7 @@ namespace DarkAges
             _questPanel.OffsetBottom = 130;
             _questPanel.Visible = false;
             // Theme styling
-            _questPanel.AddThemeStyleBoxOverride("panel", CreateThemedPanelStyle());
+            _questPanel.AddThemeStyleboxOverride("panel", CreateThemedPanelStyle());
             AddChild(_questPanel);
             
             var vbox = new VBoxContainer();
@@ -508,7 +511,7 @@ namespace DarkAges
             _inventoryPanel.OffsetBottom = -10;
             _inventoryPanel.Visible = false;
             // Theme styling
-            _inventoryPanel.AddThemeStyleBoxOverride("panel", CreateThemedPanelStyle());
+            _inventoryPanel.AddThemeStyleboxOverride("panel", CreateThemedPanelStyle());
             AddChild(_inventoryPanel);
             
             var hbox = new HBoxContainer();

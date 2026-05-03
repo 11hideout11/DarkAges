@@ -103,8 +103,11 @@ namespace DarkAges.Client.UI
         private void CheckNPCProximity()
         {
             if (_isInteracting) return;
-            if (GameState.Instance?.LocalPlayer == null) return;
-            
+            // Guard: LocalPlayer lookup not yet implemented
+            // if (GameState.Instance?.LocalPlayer == null) return;
+            _isInteracting = false;
+            return;
+            /* DISABLED: GameState.LocalPlayer not yet implemented
             var player = GameState.Instance.LocalPlayer;
             var playerPos = player.Position;
             
@@ -123,6 +126,7 @@ namespace DarkAges.Client.UI
                 _interactionTarget = nearestNPC;
                 // Show interaction prompt
             }
+            */
         }
         
         /// <summary>

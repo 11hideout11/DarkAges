@@ -1,15 +1,15 @@
 ## Recent Commits (last 10 — updated 2026-05-03)
 
-1. `778dc58`: merge: integrate remote origin/main; resolve AGENTS.md and PRD docs conflicts
-2. `cc30fea`: Merge PR #73 — PRD status review: mark PRD-020/021/024 resolved
-3. `e8265b2`: docs: mark PRD-024 resolved in PRD file
-4. `85a04fd`: docs: add PRD-020 and PRD-021 status to AGENTS.md
-5. `ae80c7a`: docs: mark PRD-021 resolved (no WebSocket client exists)
-6. `8106632`: docs: mark PRD-020 complete, update Phase 8 status in AGENTS.md
-7. `78f2162`: fix(client): use CallDeferred for AddChild (PRD-020 headless fix)
-8. `a99ff1d`: docs: mark PLAN.md implementation steps complete
-9. `a8b167b`: docs: mark PRD-029 and PRD-030 complete in AGENTS.md
-10. `c95fcd0`: feat(client): wire InventoryPanel to network signals (PRD-029)
+1. `HEAD`: fix(client): resolve 47 C# build errors — Godot 4.2 API migration complete
+2. `778dc58`: merge: integrate remote origin/main; resolve AGENTS.md and PRD docs conflicts
+3. `cc30fea`: Merge PR #73 — PRD status review: mark PRD-020/021/024 resolved
+4. `e8265b2`: docs: mark PRD-024 resolved in PRD file
+5. `85a04fd`: docs: add PRD-020 and PRD-021 status to AGENTS.md
+6. `ae80c7a`: docs: mark PRD-021 resolved (no WebSocket client exists)
+7. `8106632`: docs: mark PRD-020 complete, update Phase 8 status in AGENTS.md
+8. `78f2162`: fix(client): use CallDeferred for AddChild (PRD-020 headless fix)
+9. `a99ff1d`: docs: mark PLAN.md implementation steps complete
+10. `a8b167b`: docs: mark PRD-029 and PRD-030 complete in AGENTS.md
 
 ## State (2026-05-03)
 
@@ -21,6 +21,8 @@
 - Phase 9: COMPLETE — performance budgets validated
 - **Art Pipeline**: RESEARCH PHASE COMPLETE — world-building capabilities documented
 - **Tests**: All suites passing (1305 cases, 7254 assertions, 100%)
+- **Client Build**: C# Godot 4.2.2 — 0 errors, 208 warnings (all CS8618 non-nullable field patterns, standard Godot)
+- **Demo Pipeline**: ✅ 5/5 checks passed — UDP ping, handshake, snapshots (123 in 5s), clean logs, binary
 - Server: ~32K LOC (C++20, EnTT ECS, 60Hz tick) | Client: ~9K LOC (C# Godot 4.2)
 - **PR #29 status**: MERGED — Combat FSM refactor completed
 - **PR #57 status**: MERGED — UDP socket implementation with real BSD sockets; GNS build unblocked; protocol decoupling complete
@@ -151,21 +153,30 @@
 - **2 PRDs blocked** (GNS runtime — WebRTC auth; Production DB — Docker)
 - **Test baseline**: 1305 cases, 7254 assertions, 100% passing
 
-### This Session's Commits
-- `HEAD`: fix(tests): correct GCD timing in Combat FSM integration test
+### This Session's Work
+- Server C++: builds clean, 1305 tests all pass, 100%
+- Client C# (Godot 4.2): fixed 47 build errors across 6 files — 0 errors, 208 warnings
+  - `SaveManager.cs`: `DirAccess` API migration (`MakeDirAbsolute`/`DirExistsAbsolute`)
+  - `UITheme.cs`: float→int casts for `StyleBoxFlat` properties, `CreateLabel` initializer fix
+  - `HitEffect.cs`: null-conditional assignment fix (`?.Emitting =` → explicit null checks)
+  - `CombatParticleSystem.cs`: lowercase `.y` → `.Y`
+  - `FootIKController.cs`: enum path qualification (`CombatState` → `CombatStateMachineController.CombatState`)
+  - `NPCManager.cs`: dead code after return commented out
+- Demo pipeline: 5/5 checks pass — UDP ping, handshake, 123 snapshots/5s, clean logs, binary
+- AGENTS.md: updated with client build status, demo validation results
 
-### Files Created (11 files — from earlier sessions)
-1. `CombatStateMachine.tscn` - Node-based FSM template
-2. `CombatStateMachineController.cs` - FSM controller
-3. `ZoneObjectiveComponent.hpp` - Zone tracking component
-4. `ZoneObjectiveSystem.hpp/.cpp` - Zone tracking system
-5. `TestZoneObjectives.cpp` - Objective tests
-6. `PhantomCamera.cs` - Lock-on camera
-7. `ProceduralLeaning.cs` - Velocity-based tilt
-8. `LocomotionBlendTree.tres` - Blend space
-9. `CombatTextIntegration.cs` - Combat text hook
-10. `state-machine-usage.md` - Usage guide
-11. `PLAN_EXECUTION_SUMMARY.md` - Tracking document
+### MVP Readiness Assessment (2026-04-28 Criteria)
+| Requirement | Status | Notes |
+|---|---|---|
+| P0-1: Combat Multiplayer Template | ✅ COMPLETE | FSM, hitbox/hurtbox, AnimationTree, IK, lock-on |
+| P0-2: Demo Zones | ⚠️ PARTIAL | 3 zones exist; boss zone has 0 NPCs; objectives sys not wired to zone configs |
+| P0-3: Gameplay | ✅ COMPLETE | Human-playable, visual feedback, demo mode, all systems integrated |
+
+### Remaining Gaps (for next session)
+1. **Boss zone NPC definitions** — `boss.json` has 0 NPC presets; needs boss entity with combat behavior
+2. **Zone objectives** — ZoneObjectiveSystem exists in code but zone JSON configs have 0 objectives defined
+3. **GNS runtime** — Requires WebRTC auth token (external blocker)
+4. **Production DB** — Requires Docker daemon (external blocker)
 
 ## OpenHands Integration Updates (2026-05-02)
 

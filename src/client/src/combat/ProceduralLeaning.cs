@@ -99,7 +99,7 @@ namespace DarkAges.Combat
             }
             
             // Find model node
-            _model = GetParentOrNull<Node3D>("Model");
+            _model = GetNodeOrNull<Node3D>("Model");
             if (_model == null)
             {
                 // Create a pivot if no model
@@ -107,7 +107,7 @@ namespace DarkAges.Combat
             }
             
             // Get animation state machine
-            _combatFsm = GetParentOrNull<CombatStateMachineController>("CombatStateMachine");
+            _combatFsm = GetNodeOrNull<CombatStateMachineController>("CombatStateMachine");
             
             GD.Print("[ProceduralLeaning] Initialized");
         }

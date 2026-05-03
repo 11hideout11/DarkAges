@@ -158,9 +158,9 @@ namespace DarkAges.Particles
             {
                 effect.GlobalPosition = position + EffectOffset;
                 effect.Rotation = new Vector3(
-                    Mathf.Atan2(normal.x, normal.z),
+                    Mathf.Atan2(normal.X, normal.Z),
                     0,
-                    Mathf.Atan2(-normal.y, Mathf.Sqrt(normal.x * normal.x + normal.z * normal.z))
+                    Mathf.Atan2(-normal.Y, Mathf.Sqrt(normal.X * normal.X + normal.Z * normal.Z))
                 );
                 
                 var hitEffect = effect as DarkAges.Combat.HitEffect;
@@ -206,11 +206,11 @@ namespace DarkAges.Particles
             if (player == null) return;
             
             var forward = -player.GlobalTransform.Basis.Z;
-            forward.y = 0;
+            forward.Y = 0;
             forward = forward.Normalized();
             
             var spawnPos = player.GlobalPosition + forward * 1.5f + EffectOffset;
-            spawnPos.y = 0.5f;
+            spawnPos.Y = 0.5f;
             
             var effect = GetPooledHitEffect();
             if (effect != null)

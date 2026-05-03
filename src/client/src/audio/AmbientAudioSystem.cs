@@ -80,7 +80,7 @@ namespace DarkAges.Audio
         /// </summary>
         public void SetZoneAmbient(string ambientTrack)
         {
-            bool wasPlaying = _ambientPlayer?.IsPlaying() ?? false;
+            bool wasPlaying = _ambientPlayer?.Playing ?? false;
             
             _currentAmbientTrack = ambientTrack;
             

@@ -85,18 +85,18 @@ namespace DarkAges.Client.UI
             {
                 BgColor = PanelBackground,
                 BorderColor = BorderNormal,
-                BorderWidthBottom = borderWidth,
-                BorderWidthLeft = borderWidth,
-                BorderWidthRight = borderWidth,
-                BorderWidthTop = borderWidth,
-                CornerRadiusTopLeft = cornerRadius,
-                CornerRadiusTopRight = cornerRadius,
-                CornerRadiusBottomLeft = cornerRadius,
-                CornerRadiusBottomRight = cornerRadius,
-                ContentMarginLeft = SpacingM,
-                ContentMarginRight = SpacingM,
-                ContentMarginTop = SpacingM,
-                ContentMarginBottom = SpacingM
+                BorderWidthBottom = (int)borderWidth,
+                BorderWidthLeft = (int)borderWidth,
+                BorderWidthRight = (int)borderWidth,
+                BorderWidthTop = (int)borderWidth,
+                CornerRadiusTopLeft = (int)cornerRadius,
+                CornerRadiusTopRight = (int)cornerRadius,
+                CornerRadiusBottomLeft = (int)cornerRadius,
+                CornerRadiusBottomRight = (int)cornerRadius,
+                ContentMarginLeft = (int)SpacingM,
+                ContentMarginRight = (int)SpacingM,
+                ContentMarginTop = (int)SpacingM,
+                ContentMarginBottom = (int)SpacingM
             };
             return style;
         }
@@ -114,14 +114,14 @@ namespace DarkAges.Client.UI
                 BorderWidthLeft = 2,
                 BorderWidthRight = 2,
                 BorderWidthTop = 2,
-                CornerRadiusTopLeft = cornerRadius,
-                CornerRadiusTopRight = cornerRadius,
-                CornerRadiusBottomLeft = cornerRadius,
-                CornerRadiusBottomRight = cornerRadius,
-                ContentMarginLeft = SpacingM,
-                ContentMarginRight = SpacingM,
-                ContentMarginTop = SpacingM,
-                ContentMarginBottom = SpacingM
+                CornerRadiusTopLeft = (int)cornerRadius,
+                CornerRadiusTopRight = (int)cornerRadius,
+                CornerRadiusBottomLeft = (int)cornerRadius,
+                CornerRadiusBottomRight = (int)cornerRadius,
+                ContentMarginLeft = (int)SpacingM,
+                ContentMarginRight = (int)SpacingM,
+                ContentMarginTop = (int)SpacingM,
+                ContentMarginBottom = (int)SpacingM
             };
             return style;
         }
@@ -139,10 +139,10 @@ namespace DarkAges.Client.UI
                 BorderWidthLeft = 1,
                 BorderWidthRight = 1,
                 BorderWidthTop = 1,
-                CornerRadiusTopLeft = cornerRadius,
-                CornerRadiusTopRight = cornerRadius,
-                CornerRadiusBottomLeft = cornerRadius,
-                CornerRadiusBottomRight = cornerRadius,
+                CornerRadiusTopLeft = (int)cornerRadius,
+                CornerRadiusTopRight = (int)cornerRadius,
+                CornerRadiusBottomLeft = (int)cornerRadius,
+                CornerRadiusBottomRight = (int)cornerRadius,
                 ContentMarginLeft = 2,
                 ContentMarginRight = 2,
                 ContentMarginTop = 2,
@@ -158,24 +158,25 @@ namespace DarkAges.Client.UI
             return new StyleBoxFlat
             {
                 BgColor = color,
-                CornerRadiusTopLeft = cornerRadius,
-                CornerRadiusTopRight = cornerRadius,
-                CornerRadiusBottomLeft = cornerRadius,
-                CornerRadiusBottomRight = cornerRadius
+                CornerRadiusTopLeft = (int)cornerRadius,
+                CornerRadiusTopRight = (int)cornerRadius,
+                CornerRadiusBottomLeft = (int)cornerRadius,
+                CornerRadiusBottomRight = (int)cornerRadius
             };
         }
         
         /// <summary>
         /// Create text label with theme styling
         /// </summary>
-        public static Label CreateLabel(string text = "", int fontSize = FontSizeBody)
+        public static Label CreateLabel(string text = "", int fontSize = 14)
         {
-            return new Label
+            var label = new Label
             {
                 Text = text,
-                AddThemeFontSizeOverride("font_size", fontSize),
                 Modulate = TextPrimary
             };
+            label.AddThemeFontSizeOverride("font_size", fontSize);
+            return label;
         }
         
         /// <summary>
@@ -191,14 +192,14 @@ namespace DarkAges.Client.UI
                 BorderWidthLeft = 1,
                 BorderWidthRight = 1,
                 BorderWidthTop = 1,
-                CornerRadiusTopLeft = cornerRadius,
-                CornerRadiusTopRight = cornerRadius,
-                CornerRadiusBottomLeft = cornerRadius,
-                CornerRadiusBottomRight = cornerRadius,
-                ContentMarginLeft = SpacingM,
-                ContentMarginRight = SpacingM,
-                ContentMarginTop = SpacingS,
-                ContentMarginBottom = SpacingS
+                CornerRadiusTopLeft = (int)cornerRadius,
+                CornerRadiusTopRight = (int)cornerRadius,
+                CornerRadiusBottomLeft = (int)cornerRadius,
+                CornerRadiusBottomRight = (int)cornerRadius,
+                ContentMarginLeft = (int)SpacingM,
+                ContentMarginRight = (int)SpacingM,
+                ContentMarginTop = (int)SpacingS,
+                ContentMarginBottom = (int)SpacingS
             };
             
             var hover = new StyleBoxFlat
@@ -209,14 +210,14 @@ namespace DarkAges.Client.UI
                 BorderWidthLeft = 1,
                 BorderWidthRight = 1,
                 BorderWidthTop = 1,
-                CornerRadiusTopLeft = cornerRadius,
-                CornerRadiusTopRight = cornerRadius,
-                CornerRadiusBottomLeft = cornerRadius,
-                CornerRadiusBottomRight = cornerRadius,
-                ContentMarginLeft = SpacingM,
-                ContentMarginRight = SpacingM,
-                ContentMarginTop = SpacingS,
-                ContentMarginBottom = SpacingS
+                CornerRadiusTopLeft = (int)cornerRadius,
+                CornerRadiusTopRight = (int)cornerRadius,
+                CornerRadiusBottomLeft = (int)cornerRadius,
+                CornerRadiusBottomRight = (int)cornerRadius,
+                ContentMarginLeft = (int)SpacingM,
+                ContentMarginRight = (int)SpacingM,
+                ContentMarginTop = (int)SpacingS,
+                ContentMarginBottom = (int)SpacingS
             };
             
             var pressed = new StyleBoxFlat
@@ -227,14 +228,14 @@ namespace DarkAges.Client.UI
                 BorderWidthLeft = 1,
                 BorderWidthRight = 1,
                 BorderWidthTop = 1,
-                CornerRadiusTopLeft = cornerRadius,
-                CornerRadiusTopRight = cornerRadius,
-                CornerRadiusBottomLeft = cornerRadius,
-                CornerRadiusBottomRight = cornerRadius,
-                ContentMarginLeft = SpacingM,
-                ContentMarginRight = SpacingM,
-                ContentMarginTop = SpacingS,
-                ContentMarginBottom = SpacingS
+                CornerRadiusTopLeft = (int)cornerRadius,
+                CornerRadiusTopRight = (int)cornerRadius,
+                CornerRadiusBottomLeft = (int)cornerRadius,
+                CornerRadiusBottomRight = (int)cornerRadius,
+                ContentMarginLeft = (int)SpacingM,
+                ContentMarginRight = (int)SpacingM,
+                ContentMarginTop = (int)SpacingS,
+                ContentMarginBottom = (int)SpacingS
             };
             
             var disabled = new StyleBoxFlat
@@ -245,14 +246,14 @@ namespace DarkAges.Client.UI
                 BorderWidthLeft = 1,
                 BorderWidthRight = 1,
                 BorderWidthTop = 1,
-                CornerRadiusTopLeft = cornerRadius,
-                CornerRadiusTopRight = cornerRadius,
-                CornerRadiusBottomLeft = cornerRadius,
-                CornerRadiusBottomRight = cornerRadius,
-                ContentMarginLeft = SpacingM,
-                ContentMarginRight = SpacingM,
-                ContentMarginTop = SpacingS,
-                ContentMarginBottom = SpacingS
+                CornerRadiusTopLeft = (int)cornerRadius,
+                CornerRadiusTopRight = (int)cornerRadius,
+                CornerRadiusBottomLeft = (int)cornerRadius,
+                CornerRadiusBottomRight = (int)cornerRadius,
+                ContentMarginLeft = (int)SpacingM,
+                ContentMarginRight = (int)SpacingM,
+                ContentMarginTop = (int)SpacingS,
+                ContentMarginBottom = (int)SpacingS
             };
             
             return new[] { normal, hover, pressed, disabled };

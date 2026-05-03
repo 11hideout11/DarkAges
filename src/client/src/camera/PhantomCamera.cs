@@ -1,5 +1,6 @@
 using Godot;
 using System;
+using System.Linq;
 
 namespace DarkAges.Camera
 {
@@ -284,7 +285,7 @@ namespace DarkAges.Camera
         /// </summary>
         public void AttemptLockOn()
         {
-            var player = GetParent().GetParent(); // CameraRig -> Player
+            var player = GetParent().GetParent() as Node3D; // CameraRig -> Player
             if (player == null) return;
             
             // Find nearest enemy in range
@@ -352,10 +353,10 @@ namespace DarkAges.Camera
             if (_lockedTarget == null) return;
             
             // Get all enemies (including the current one) and sort by distance
-            var player = GetParent().GetParent();
+            var player = GetParent().GetParent() as Node3D;
             var nearby = GetTree().GetNodesInGroup("enemies");
             
-            var targets = new Godot.Collections.Array<Node3D>();
+            var targets = new System.Collections.Generic.List<Node3D>();
             foreach (var node in nearby)
             {
                 if (node is Node3D target)
@@ -371,12 +372,7 @@ namespace DarkAges.Camera
             if (targets.Count == 0) return;
             
             // Sort by distance
-            targets.Sort((a, b) => 
-            {
-                float distA = player.GlobalPosition.DistanceTo(a.GlobalPosition);
-                float distB = player.GlobalPosition.DistanceTo(b.GlobalPosition);
-                return distA.CompareTo(distB);
-            });
+            targets = targets.OrderBy(t => player.GlobalPosition.DistanceTo(t.GlobalPosition)).ToList();
             
             // Find current target's index, then advance by direction
             int currentIdx = -1;
@@ -415,7 +411,7 @@ namespace DarkAges.Camera
         {
             if (_lockedTarget == null) return;
             
-            var player = GetParent().GetParent();
+            var player = GetParent().GetParent() as Node3D;
             if (player == null) return;
             
             // Calculate desired camera position behind target

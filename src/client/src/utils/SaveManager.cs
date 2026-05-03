@@ -71,14 +71,14 @@ namespace DarkAges.Client
         }
         
         // Settings structure
-        private class GameSettings
+        public class GameSettings
         {
             public GraphicsSettings graphics = new();
             public AudioSettings audio = new();
             public ControlsSettings controls = new();
         }
         
-        private class GraphicsSettings
+        public class GraphicsSettings
         {
             public string quality = "medium";
             public int width = 1920;
@@ -87,7 +87,7 @@ namespace DarkAges.Client
             public bool vsync = true;
         }
         
-        private class AudioSettings
+        public class AudioSettings
         {
             public float masterVolume = 0.8f;
             public float sfxVolume = 0.7f;
@@ -95,7 +95,7 @@ namespace DarkAges.Client
             public bool mute = false;
         }
         
-        private class ControlsSettings
+        public class ControlsSettings
         {
             public float mouseSensitivity = 1.0f;
             public bool invertY = false;
@@ -114,10 +114,10 @@ namespace DarkAges.Client
         
         private void EnsureSaveDirectory()
         {
-            var saveDir = GetSaveDirectory();
-            if (!DirExists(saveDir))
+            // Use DirAccessAbsolute APIs for Godot 4.2
+            if (!DirAccess.DirExistsAbsolute("user://saves"))
             {
-                MakeDirectory(saveDir);
+                DirAccess.MakeDirAbsolute("user://saves");
             }
         }
         
@@ -227,23 +227,10 @@ namespace DarkAges.Client
                     return false;
                 }
                 
-                // Restore player state to GameState
-                if (GameState.Instance?.LocalPlayer != null)
-                {
-                    var player = GameState.Instance.LocalPlayer;
-                    player.Name = saveData.player.name;
-                    player.Level = saveData.player.level;
-                    player.Experience = saveData.player.experience;
-                    player.Gold = saveData.player.gold;
-                    
-                    // Teleport to saved position
-                    var position = new Vector3(
-                        saveData.player.posX,
-                        saveData.player.posY,
-                        saveData.player.posZ
-                    );
-                    player.Teleport(position, saveData.player.zoneId);
-                }
+                // TODO: Restore player state to GameState once LocalPlayer property exists
+                // GameState stores entities as EntityData (name/position only — no Level/Gold/Teleport)
+                // Currently saves/loads the JSON file but runtime state restore is pending
+                GD.Print("[SaveManager] Save data loaded — runtime state restore pending (no LocalPlayer property)");
                 
                 GD.Print($"[SaveManager] Loaded from slot {slotIndex}");
                 return true;

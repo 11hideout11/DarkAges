@@ -19,9 +19,9 @@ namespace DarkAges.Combat
         [Export] public bool AutoDelete = true;
 
         // Particle systems
-        private GPUParticles3D _sparks;
-        private GPUParticles3D _blood;
-        private GPUParticles3D _dust;
+        private GpuParticles3D _sparks;
+        private GpuParticles3D _blood;
+        private GpuParticles3D _dust;
 
         // State
         private EffectType _currentEffect = EffectType.Sparks;
@@ -30,14 +30,14 @@ namespace DarkAges.Combat
         public override void _Ready()
         {
             // Get particle references
-            _sparks = GetNodeOrNull<GPUParticles3D>("Sparks");
-            _blood = GetNodeOrNull<GPUParticles3D>("Blood");
-            _dust = GetNodeOrNull<GPUParticles3D>("Dust");
+            _sparks = GetNodeOrNull<GpuParticles3D>("Sparks");
+            _blood = GetNodeOrNull<GpuParticles3D>("Blood");
+            _dust = GetNodeOrNull<GpuParticles3D>("Dust");
             
             // Pre-warm particles (emit once)
-            _sparks?.Emitting;
-            _blood?.Emitting;
-            _dust?.Emitting;
+            if (_sparks != null) _sparks.Emitting = false;
+            if (_blood != null) _blood.Emitting = false;
+            if (_dust != null) _dust.Emitting = false;
         }
 
         /// <summary>
@@ -117,14 +117,14 @@ namespace DarkAges.Combat
             var scene = GD.Load<PackedScene>("res://scenes/HitEffect.tscn");
             if (scene == null)
             {
-                GD.Warning("[HitEffect] Failed to load HitEffect.tscn");
+                GD.PushWarning("[HitEffect] Failed to load HitEffect.tscn");
                 return;
             }
             
             var instance = scene.Instantiate<HitEffect>();
             if (instance == null)
             {
-                GD.Warning("[HitEffect] Failed to instantiate");
+                GD.PushWarning("[HitEffect] Failed to instantiate");
                 return;
             }
             

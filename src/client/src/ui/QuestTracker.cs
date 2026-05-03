@@ -25,7 +25,7 @@ namespace DarkAges.Client.UI
             _background = GetNode<ColorRect>("Background");
             _questList = GetNode<RichTextLabel>("QuestList");
             _zoneObjectiveList = GetNode<RichTextLabel>("ZoneObjectiveList");
-            _quests = new Dictionary<uint, Dictionary<uint, (uint, uint, byte)>();
+            _quests = new Dictionary<uint, Dictionary<uint, (uint current, uint required, byte status)>>();
             _zoneObjectives = new Dictionary<string, (ushort, ushort, byte, byte)>();
 
             // Apply theme styling to background

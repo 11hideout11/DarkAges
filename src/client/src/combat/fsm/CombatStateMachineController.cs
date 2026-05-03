@@ -266,7 +266,15 @@ namespace DarkAges.Combat.FSM
         }
         
         /// <summary>
-        /// Start global cooldown
+        /// Start global cooldown - public wrapper for external callers
+        /// </summary>
+        public void StartGlobalCooldown()
+        {
+            StartCooldown();
+        }
+        
+        /// <summary>
+        /// Start global cooldown (internal)
         /// </summary>
         private void StartCooldown()
         {
@@ -453,7 +461,7 @@ namespace DarkAges.Combat.FSM
             // Track overlapping hit stops; only save the prior timescale on the first one
             if (_activeHitStopCount == 0)
             {
-                _hitStopRestoreTimeScale = Engine.TimeScale;
+                _hitStopRestoreTimeScale = (float)Engine.TimeScale;
             }
             _activeHitStopCount++;
             Engine.TimeScale = 0.1f;

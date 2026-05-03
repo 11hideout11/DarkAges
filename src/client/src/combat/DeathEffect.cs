@@ -18,8 +18,8 @@ namespace DarkAges.Combat
         [Export] public bool AutoDelete = true;
 
         // Particle systems
-        private GPUParticles3D _explosion;
-        private GPUParticles3D _smoke;
+        private GpuParticles3D _explosion;
+        private GpuParticles3D _smoke;
 
         // State
         private DeathType _currentDeath = DeathType.Explosion;
@@ -28,8 +28,8 @@ namespace DarkAges.Combat
         public override void _Ready()
         {
             // Get particle references
-            _explosion = GetNodeOrNull<GPUParticles3D>("Explosion");
-            _smoke = GetNodeOrNull<GPUParticles3D>("Smoke");
+            _explosion = GetNodeOrNull<GpuParticles3D>("Explosion");
+            _smoke = GetNodeOrNull<GpuParticles3D>("Smoke");
         }
 
         /// <summary>
@@ -94,14 +94,14 @@ namespace DarkAges.Combat
             var scene = GD.Load<PackedScene>("res://scenes/DeathEffect.tscn");
             if (scene == null)
             {
-                GD.Warning("[DeathEffect] Failed to load DeathEffect.tscn");
+                GD.PushWarning("[DeathEffect] Failed to load DeathEffect.tscn");
                 return;
             }
             
             var instance = scene.Instantiate<DeathEffect>();
             if (instance == null)
             {
-                GD.Warning("[DeathEffect] Failed to instantiate");
+                GD.PushWarning("[DeathEffect] Failed to instantiate");
                 return;
             }
             
