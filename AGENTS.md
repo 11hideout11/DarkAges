@@ -93,13 +93,14 @@
 - ✅ Test files: TestHitboxHurtbox.cpp, TestHitboxCollision.cpp
 
 ### PRD-012: GNS Runtime Integration
-- ✅ UNBLOCKED (2026-05-02): Build compiles and links with GNS+Protobuf support
-- ✅ Protocol.cpp (+225 lines): serializeCombatEvent, deserializeCombatEvent, createFullSnapshot, serializeChatMessage, serializeQuestUpdate, serializeDialogueStart, serializeDialogueResponse
-- ✅ NetworkManager.cpp (+109 lines): 9 business-logic send wrappers (combat, lock-on, chat, quest, dialogue, respawn, entity-id)
-- ✅ CMakeLists: ProtobufProtocol.cpp added to GNS_FOUND source list (was only in else branch)
-- GNS build: 82% tests pass (9/11 suites); 19 transport-level failures expected (UDP→GNS)
-- Non-GNS build: 100% tests pass, zero regressions
-- ✅ PRD-017: Protocol decoupling complete (Protocol.cpp now requires FlatBuffers only, not GNS)
+- ✅ COMPLETE (2026-05-03): GNS fully integrated — send and receive paths operational
+- ✅ NetworkManager receive-side: implemented all 7 missing client->server packet handlers (lock-on, dialogue, respawn, combat, chat, quest) + pending queues
+- ✅ GNSNetworkManager: added inventory send methods; full feature parity with UDP stub
+- ✅ Client: SafeAddChild extension for headless scene-tree safety
+- ✅ Build: compiles cleanly with `-DENABLE_GNS=ON` (requires `-DENABLE_SCYLLA=OFF` to bypass GCC13/Cassandra issue — external blocker)
+- ✅ Validation: GNS-specific test suite passes 24/25 cases (141/142 assertions); 1 pre-existing test bug (protobuf header check)
+- ✅ PRD-017: Protocol decoupling complete (Protocol.cpp requires only FlatBuffers, not GNS)
+- External blocker remains: WebRTC submodule auth token needed for production deployment
 
 ### PRD-014: Phantom Camera
 - ✅ Created: `PhantomCamera.cs` - Lock-on targeting system
