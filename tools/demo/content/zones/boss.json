@@ -40,62 +40,6 @@
       "name": "Legendary Chest"
     }
   ],
-  "npc_presets": [
-    {
-      "archetype": "ogre_chieftain",
-      "count": 1,
-      "spawn_at": "boss_arena_center",
-      "level": 10,
-      "health": 500,
-      "damage": 25,
-      "armor": 15,
-      "behavior": "boss",
-      "loot_id": "boss_epic"
-    },
-    {
-      "archetype": "wolf",
-      "count": 2,
-      "spawn_at": "minion_spawn_left",
-      "level": 5,
-      "health": 80,
-      "damage": 12,
-      "behavior": "aggressive",
-      "loot_id": "minion_tier3"
-    },
-    {
-      "archetype": "wolf",
-      "count": 2,
-      "spawn_at": "minion_spawn_right",
-      "level": 5,
-      "health": 80,
-      "damage": 12,
-      "behavior": "aggressive",
-      "loot_id": "minion_tier3"
-    }
-  ],
-  "objectives": [
-    {
-      "id": "reach_lair",
-      "type": "reach",
-      "target": "boss_arena_center",
-      "count": 1,
-      "description": "Enter the boss arena"
-    },
-    {
-      "id": "defeat_boss",
-      "type": "kill",
-      "target": "ogre_chieftain",
-      "count": 1,
-      "description": "Defeat Gruk The Unstoppable"
-    },
-    {
-      "id": "defeat_minions",
-      "type": "kill",
-      "target": "wolf",
-      "count": 4,
-      "description": "Defeat all minions"
-    }
-  ],
   "boss_encounter": {
     "enabled": true,
     "boss": {
@@ -405,21 +349,21 @@
       "particle_effect": "confetti"
     }
   ],
-  "objectives": [
-    {
-      "id": "kill_boss",
-      "type": "kill",
-      "required": true,
-      "count": 1
-    }
-  ],
   "npc_presets": [
     {
-      "archetype": "boss",
+      "archetype": "ogre_chieftain",
       "count": 1,
-      "radius": 10,
+      "radius": 0,
       "level": 10,
       "loot_id": "boss_epic"
+    }
+  ],
+  "objectives": [
+    {
+      "id": "defeat_gruk",
+      "type": "kill",
+      "count": 1,
+      "description": "Defeat Gruk The Unstoppable"
     }
   ]
 }

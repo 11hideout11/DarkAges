@@ -53,74 +53,30 @@
       "gold_min": 5,
       "gold_max": 15,
       "items": [
-        {
-          "id": 11,
-          "chance": 0.3,
-          "name": "Wolf Pelt"
-        },
-        {
-          "id": 10,
-          "chance": 0.2,
-          "name": "Health Potion"
-        }
+        { "id": 11, "chance": 0.3, "name": "Wolf Pelt" },
+        { "id": 10, "chance": 0.2, "name": "Health Potion" }
       ]
     },
     "bandit": {
       "gold_min": 10,
       "gold_max": 25,
       "items": [
-        {
-          "id": 2,
-          "chance": 0.15,
-          "name": "Iron Dagger"
-        },
-        {
-          "id": 10,
-          "chance": 0.25,
-          "name": "Health Potion"
-        }
+        { "id": 2, "chance": 0.15, "name": "Iron Dagger" },
+        { "id": 10, "chance": 0.25, "name": "Health Potion" }
       ]
     },
     "boss": {
       "gold_min": 100,
       "gold_max": 200,
       "items": [
-        {
-          "id": 3,
-          "chance": 0.5,
-          "name": "Iron Longsword"
-        },
-        {
-          "id": 4,
-          "chance": 0.3,
-          "name": "Iron Shield"
-        },
-        {
-          "id": 10,
-          "chance": 1.0,
-          "name": "Health Potion",
-          "quantity": 5
-        }
+        { "id": 3, "chance": 0.5, "name": "Iron Longsword" },
+        { "id": 4, "chance": 0.3, "name": "Iron Shield" },
+        { "id": 10, "chance": 1.0, "name": "Health Potion", "quantity": 5 }
       ]
     }
   },
-  "demo_quest": {
-    "id": "demo_welcome",
-    "quest_id": 99,
-    "title": "Welcome to DarkAges",
-    "auto_start": true,
-    "objectives": [
-      {
-        "type": "kill",
-        "target": "wolf",
-        "count": 3
-      }
-    ],
-    "rewards": {
-      "xp": 100,
-      "gold": 50,
-      "item_id": 10,
-      "item_qty": 3
-    }
-  }
+  "objectives": [
+    { "id": "wolf_hunter", "type": "kill", "count": 3, "description": "Hunt wolves in the area" },
+    { "id": "bandit_defeat", "type": "kill", "count": 2, "description": "Defeat bandits" }
+  ]
 }
