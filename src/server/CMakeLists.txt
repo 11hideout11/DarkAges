@@ -98,6 +98,7 @@ set(SERVER_SOURCES
     src/profiling/PerformanceMonitor.cpp
     src/memory/MemoryPool.cpp
     src/memory/LeakDetector.cpp
+    src/memory/PlayerProfileStore.cpp
     src/security/AntiCheat.cpp
     src/security/ViolationTracker.cpp
     src/security/DDoSProtection.cpp
@@ -217,6 +218,7 @@ set(SERVER_HEADERS
     include/memory/FixedVector.hpp
     include/memory/LeakDetector.hpp
     include/memory/PooledAllocator.hpp
+    include/memory/PlayerProfileStore.hpp
     include/Constants.hpp
     include/security/AntiCheat.hpp
     include/security/AntiCheatConfig.hpp
