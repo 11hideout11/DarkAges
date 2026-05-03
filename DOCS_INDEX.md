@@ -31,31 +31,27 @@
 ```
 DarkAges/
 ├── README.md              # Overview + quick start
-├── AGENTS.md             # Authoritative state (READ THIS FIRST)
+├── AGENTS.md             # Authoritative state (READ THIS)
+├── DOCS_INDEX.md         # Navigation index
 ├── VERSION              # Version number
+├── CMakeLists.txt        # Build configuration
+├── CONTRIBUTING.md      # Contribution guidelines
+├── AUTONOMOUS_LOG.md    # Active iteration log
 │
 ├── docs/                # Technical documentation
 │   ├── API_CONTRACTS.md
 │   ├── NETWORK_PROTOCOL.md
 │   ├── DATABASE_SCHEMA.md
 │   ├── collision-matrix.md
-│   └── ...
+│   └── archive/        # Organized historical docs
+│       ├── historical/   # Old validation reports, test logs
+│       ├── planning/   # Implementation plans
+│       ├── agent-workflows/ # Agent coordination docs
+│       └── research/   # Research and reviews
 │
 ├── prd/                 # Product Requirements (90+ docs)
-│   ├── prd-master.md    # Master PRD list
-│   ├── prd-001-server-core.md
-│   └── ...
-│
 ├── phases/              # Phase execution summaries
-│   ├── PHASE0_SUMMARY.md
-│   ├── PHASE1-5_SUMMARY.md
-│   └── ...
-│
-├── docs/archive/         # Historical docs (2026-01)
-│
-├── reports/             # Build/test reports
-│
-└── openhands-adaptation/ # OpenHands integration
+└── src/                # Source code (server + client)
 ```
 
 ---
