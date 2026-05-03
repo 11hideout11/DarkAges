@@ -2,6 +2,7 @@ using Godot;
 using System;
 using DarkAges.Networking;
 using DarkAges.Combat;
+using DarkAges.Client.UI;
 
 namespace DarkAges.Client.UI
 {
@@ -11,9 +12,10 @@ namespace DarkAges.Client.UI
     /// </summary>
     public partial class HealthBarSystem : Control
     {
-        [Export] public Color HealthyColor = new Color(0.2f, 0.8f, 0.2f);
-        [Export] public Color WarningColor = new Color(1.0f, 0.8f, 0.2f);
-        [Export] public Color CriticalColor = new Color(1.0f, 0.2f, 0.2f);
+        // Use UITheme colors
+        [Export] public Color HealthyColor = UITheme.StatusHealthHigh;
+        [Export] public Color WarningColor = UITheme.AccentPrimary;
+        [Export] public Color CriticalColor = UITheme.StatusHealth;
         [Export] public float WarningThreshold = 0.5f;
         [Export] public float CriticalThreshold = 0.25f;
         [Export] public float SmoothSpeed = 10.0f;

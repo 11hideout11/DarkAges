@@ -4,11 +4,13 @@ using System.Collections.Generic;
 using System.Linq;
 using DarkAges.Combat;
 using DarkAges.Entities;
+using DarkAges.Client.UI;
 
 namespace DarkAges.Client.UI
 {
     /// <summary>
     /// [CLIENT_AGENT] WP-7-4 Floating combat text system for damage numbers and combat feedback.
+    /// Uses UITheme for consistent styling.
     /// </summary>
     public partial class CombatTextSystem : Node
     {
