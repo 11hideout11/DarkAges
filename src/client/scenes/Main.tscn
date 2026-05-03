@@ -1,4 +1,4 @@
-[gd_scene load_steps=18 format=3 uid="uid://c8yvxg3ulq3a"]
+[gd_scene load_steps=19 format=3 uid="uid://c8yvxg3ulq3a"]
 
 [ext_resource type="Script" path="res://scripts/Main.cs" id="1_main"]
 [ext_resource type="PackedScene" uid="uid://player" path="res://scenes/Player.tscn" id="2_player"]
@@ -11,6 +11,7 @@
 [ext_resource type="Script" path="res://src/ui/CombatTextSystem.cs" id="9_combattext"]
 [ext_resource type="Script" path="res://src/audio/AudioManager.cs" id="10_audomanager"]
 [ext_resource type="Script" path="res://src/audio/CombatAudioSystem.cs" id="11_combataudio"]
+[ext_resource type="Script" path="res://src/particles/CombatParticleSystem.cs" id="12_particles"]
 [ext_resource type="Script" path="res://src/audio/FootstepAudioSystem.cs" id="13_footstep"]
 [ext_resource type="Script" path="res://src/audio/AmbientAudioSystem.cs" id="14_ambient"]
 [ext_resource type="Script" path="res://src/audio/UIAudioSystem.cs" id="15_uiaudio"]

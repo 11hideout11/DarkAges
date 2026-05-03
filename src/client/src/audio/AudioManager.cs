@@ -74,14 +74,23 @@ namespace DarkAges.Audio
             // Load combat SFX from audio folder
             string[] sfxFiles = new string[]
             {
+                // Combat sounds
                 "sword_swing",
                 "sword_hit",
                 "sword_block",
-                "footstep",
                 "death",
                 "jump",
                 "heal",
-                "coin_collect"
+                "coin_collect",
+                // Footstep sounds (variations)
+                "footstep",
+                // UI sounds
+                "ui_click",
+                "ui_hover",
+                "ui_error",
+                "ui_success",
+                "menu_open",
+                "menu_close"
             };
             
             foreach (string sfx in sfxFiles)
