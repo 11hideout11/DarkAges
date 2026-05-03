@@ -40,6 +40,53 @@
       "name": "Legendary Chest"
     }
   ],
+  "npc_presets": [
+    {
+      "archetype": "wolf",
+      "count": 2,
+      "radius": 8,
+      "level": 3,
+      "loot_id": "minion_tier3",
+      "behavior": "aggressive",
+      "spawn_marker": "Lair Entrance"
+    },
+    {
+      "archetype": "bandit",
+      "count": 2,
+      "radius": 10,
+      "level": 4,
+      "loot_id": "boss_epic",
+      "behavior": "aggressive",
+      "spawn_marker": "Boss Arena"
+    },
+    {
+      "archetype": "bandit_archer",
+      "count": 1,
+      "radius": 12,
+      "level": 4,
+      "loot_id": "boss_epic",
+      "behavior": "ranged",
+      "spawn_marker": "Boss Arena"
+    },
+    {
+      "archetype": "ogre_chieftain",
+      "count": 1,
+      "radius": 5,
+      "level": 5,
+      "loot_id": "boss_epic",
+      "behavior": "aggressive",
+      "spawn_marker": "Boss Arena"
+    },
+    {
+      "archetype": "wolf",
+      "count": 2,
+      "radius": 6,
+      "level": 3,
+      "loot_id": "minion_tier3",
+      "behavior": "patrol",
+      "spawn_marker": "Left Spawn"
+    }
+  ],
   "boss_encounter": {
     "enabled": true,
     "boss": {
@@ -347,23 +394,6 @@
       "dialogue": "Gruk falls! Victory is yours! The Legendary Chest appears!",
       "screen_flash": "gold",
       "particle_effect": "confetti"
-    }
-  ],
-  "npc_presets": [
-    {
-      "archetype": "ogre_chieftain",
-      "count": 1,
-      "radius": 0,
-      "level": 10,
-      "loot_id": "boss_epic"
-    }
-  ],
-  "objectives": [
-    {
-      "id": "defeat_gruk",
-      "type": "kill",
-      "count": 1,
-      "description": "Defeat Gruk The Unstoppable"
     }
   ]
 }
