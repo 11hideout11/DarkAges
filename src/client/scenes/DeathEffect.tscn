@@ -1,0 +1,53 @@
+[gd_scene load_steps=5 format=3 uid="uid://deatheffect"]
+
+[ext_resource type="Script" path="res://src/combat/DeathEffect.cs" id="1_deatheffect"]
+
+[sub_resource type="ParticleProcessMaterial" id="ParticleProcessMaterial_explosion"]
+emission_shape = 1
+emission_sphere_radius = 0.5f
+direction = Vector3(0, 1, 0)
+spread = 180f
+gravity = Vector3(0, -3, 0)
+initial_velocity_min = 2f
+initial_velocity_max = 5f
+damping_min = 1f
+damping_max = 3f
+scale_min = 0.1f
+scale_max = 0.4f
+color = Color(0.8f, 0.2f, 0.2f, 1)
+
+[sub_resource type="ParticleProcessMaterial" id="ParticleProcessMaterial_smoke"]
+emission_shape = 1
+emission_sphere_radius = 0.4f
+direction = Vector3(0, 1, 0)
+spread = 160f
+gravity = Vector3(0, 1, 0)
+initial_velocity_min = 0.5f
+initial_velocity_max = 1.5f
+damping_min = 1f
+damping_max = 2f
+scale_min = 0.2f
+scale_max = 0.5f
+color = Color(0.3f, 0.3f, 0.3f, 0.6f)
+
+[sub_resource type="QuadMesh" id="QuadMesh_particle"]
+size = Vector2(0.3f, 0.3f)
+
+[node name="DeathEffect" type="Node3D"]
+script = ExtResource("1_deatheffect")
+
+[node name="Explosion" type="GPUParticles3D" parent="."]
+emitting = false
+amount = 48
+lifetime = 0.8f
+explosiveness = 0.8f
+process_material = SubResource("ParticleProcessMaterial_explosion")
+draw_pass_1 = SubResource("QuadMesh_particle")
+
+[node name="Smoke" type="GPUParticles3D" parent="."]
+emitting = false
+amount = 24
+lifetime = 1.5f
+explosiveness = 0.1f
+process_material = SubResource("ParticleProcessMaterial_smoke")
+draw_pass_1 = SubResource("QuadMesh_particle")
