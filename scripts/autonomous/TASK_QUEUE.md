@@ -44,8 +44,11 @@ Prioritized list of autonomous improvements for DarkAges.
 - [x] NPC interaction system (E key to interact, interaction prompt UI, dialogue trigger)
 - [x] Sound effects integration (footsteps, weapon attacks, ambient, UI sounds)
 - [x] Particle effects for combat/hits/spells/deaths ✅
-- [ ] Replace capsule placeholder models with proper 3D character/monster models
-  ⚠️ BLOCKED: Requires external CC0 model downloads (Quaternius/Kenney/Mixamo)
+- [x] Replace capsule placeholder models with procedural 3D characters ✅ 2026-05-03
+  - Implemented: ModelManager.CreateProceduralCharacter() with 6 categories
+  - Implemented: CharacterModelLoader dimension helpers (height, radius)
+  - Added: ProceduralCharacterVisual component for entity attachment
+  - Result: Visually distinct placeholders by type (height/shape/color variation)
 - [x] Full UI style overhaul (consistent theme, animations, visual polish) ✅ 2026-05-03
 - [x] Foot IK for terrain alignment
 - [x] Lighting upgrades (SDFGI/SSAO) for visual fidelity

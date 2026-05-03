@@ -108,6 +108,62 @@ namespace DarkAges.Entities
         {
             return PlaceholderColors.GetValueOrDefault(type, new Color(0.5, 0.5, 0.5));
         }
+
+        /// <summary>
+        /// Convert CharacterType to ModelManager category for procedural generation.
+        /// </summary>
+        public static Client.ModelManager.ModelCategory GetModelCategory(CharacterType type)
+        {
+            return type switch
+            {
+                CharacterType.PlayerMale => Client.ModelManager.ModelCategory.PlayerMale,
+                CharacterType.PlayerFemale => Client.ModelManager.ModelCategory.PlayerFemale,
+                CharacterType.Goblin => Client.ModelManager.ModelCategory.Goblin,
+                CharacterType.Skeleton => Client.ModelManager.ModelCategory.Skeleton,
+                CharacterType.Orc => Client.ModelManager.ModelCategory.Orc,
+                CharacterType.Troll => Client.ModelManager.ModelCategory.Troll,
+                _ => Client.ModelManager.ModelCategory.PlayerMale
+            };
+        }
+
+        /// <summary>
+        /// Get visual radius for collision detection based on character type.
+        /// Different monster types have different collision sizes.
+        /// </summary>
+        public static float GetCollisionRadius(CharacterType type)
+        {
+            return type switch
+            {
+                CharacterType.PlayerMale => 0.3f,
+                CharacterType.PlayerFemale => 0.25f,
+                CharacterType.Goblin => 0.35f,
+                CharacterType.Skeleton => 0.2f,
+                CharacterType.Orc => 0.45f,
+                CharacterType.Troll => 0.55f,
+                CharacterType.NPC => 0.3f,
+                CharacterType.Boss => 0.5f,
+                _ => 0.3f
+            };
+        }
+
+        /// <summary>
+        /// Get visual height for the character type.
+        /// </summary>
+        public static float GetVisualHeight(CharacterType type)
+        {
+            return type switch
+            {
+                CharacterType.PlayerMale => 1.8f,
+                CharacterType.PlayerFemale => 1.6f,
+                CharacterType.Goblin => 1.2f,
+                CharacterType.Skeleton => 1.85f,
+                CharacterType.Orc => 2.0f,
+                CharacterType.Troll => 2.4f,
+                CharacterType.NPC => 1.7f,
+                CharacterType.Boss => 2.5f,
+                _ => 1.8f
+            };
+        }
         
         /// <summary>
         /// Check if a model exists for the given type.
