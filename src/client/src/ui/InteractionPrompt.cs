@@ -20,10 +20,13 @@ namespace DarkAges.Client.UI
         
         public override void _Ready()
         {
-            // Create UI elements
+            // Create UI elements with theme styling
             _promptLabel = new Label();
             _promptLabel.HorizontalAlignment = HorizontalAlignment.Center;
-            _promptLabel.AddThemeFontSizeOverride("font_size", 16);
+            _promptLabel.AddThemeFontSizeOverride("font_size", UITheme.FontSizeBody);
+            _promptLabel.Modulate = UITheme.TextPrimary;
+            // Add outline effect via shadow
+            _promptLabel.Set("outline_size", 2);
             AddChild(_promptLabel);
             
             _distanceBar = new ProgressBar();
@@ -32,6 +35,13 @@ namespace DarkAges.Client.UI
             _distanceBar.Value = 100;
             _distanceBar.CustomMinimumSize = new Vector2(100, 8);
             _distanceBar.Position = new Vector2(0, 24);
+            
+            // Apply themed progress bar styling
+            var bgStyle = UITheme.CreateProgressBackgroundStyle(cornerRadius: 4f);
+            _distanceBar.AddThemeStyleboxOverride("background", bgStyle);
+            var fillStyle = UITheme.CreateProgressFillStyle(UITheme.AccentPrimary, cornerRadius: 4f);
+            _distanceBar.AddThemeStyleboxOverride("fill", fillStyle);
+            
             AddChild(_distanceBar);
             
             // Initially hidden
