@@ -17,7 +17,7 @@
 15. `59bc9e8`: feat: implement orchestration phases 1-3 server systems
 16. `109e5a4`: fix(cron): reset failure threshold
 17. `ee05f89`: feat: Add tests for DailyChallengeSystem
-18. (pending): docs: update test counts, add PRD-041 performance benchmarks
+18. `04d8d77`: Merge PR #90 — PRD-041 server performance baseline (15 suites, all <1% of 16ms budget)
 
 ## State (2026-05-03 — updated post-merge)
 
@@ -37,7 +37,7 @@
 - **PR #57 status**: MERGED — UDP socket implementation with real BSD sockets; GNS build unblocked; protocol decoupling complete
 - **PR #50 status**: NOT FOUND in current git history — JSON database integration (items, abilities, quests, zones) already exists in codebase
 
-### Component Status (24 PRDs)
+### Component Status (25 PRDs)
 
 | PRD | Status | Notes |
 |-----|--------|-------|
@@ -208,7 +208,7 @@
 1. **PRD-012 GNS Production**: WebRTC signaling token needed for production. Custom UDP stub works for dev/demo.
 2. **ScyllaDB full build (GCC13)**: Cassandra driver header issue on GCC13+. Requires `-DENABLE_SCYLLA=OFF`.
 
-> ⚠️ **Scope Note:** The 24 PRDs above represent the *original core scope* (PRD-001 through PRD-024). The `prd/` directory additionally contains ~120 specification documents (feature PRDs, gap analyses, orchestration phase PRDs) — all currently marked "Proposed" and largely unimplemented. See [PRD_INVENTORY.md](docs/PRD_INVENTORY.md) for the complete inventory.
+> ⚠️ **Scope Note:** The 25 PRDs above represent the *original core scope* (PRD-001 through PRD-024 + PRD-041). The `prd/` directory additionally contains ~120 specification documents (feature PRDs, gap analyses, orchestration phase PRDs) — all currently marked "Proposed" and largely unimplemented. See [PRD_INVENTORY.md](docs/PRD_INVENTORY.md) for the complete inventory.
 
 ## This Session's Work (2026-05-03 — session 12: PRD-041 Server Performance Baseline)
 
@@ -226,10 +226,12 @@
 - ✅ **Test baseline**: 1322 cases, 7310 assertions, 100% pass — zero regressions
 
 ### Commits
-- `c5c6f78`: feat(prd-036): wire ProgressionCalculator into ExperienceSystem + ItemSystem pipelines
+- `04d8d77`: Merge PR #90 — PRD-041 server performance baseline (squashed)
+- `d383378`: feat(prd-041): performance benchmark baseline - 15 suites, all <1% of 16ms budget
 
 ### Current Milestone Status
-- **25/25 core PRDs + orchestration PRDs complete** — PRD-041 performance baseline established
+- **25/25 core PRDs + orchestration PRDs complete** — PRD-041 merged via PR #90
+- **Phase 2 (Production Ready) COMPLETE** — all 3 key PRDs done (PRD-038 monitoring, PRD-039 account system, PRD-041 server performance)
 - **~120 additional PRD specifications in `prd/`** — all "Proposed", largely unimplemented
 - **Only remaining gaps**: GNS WebRTC signaling token (production) and ScyllaDB GCC13 build issue
 - All tests: 1322 cases, 7310 assertions, 100% pass
