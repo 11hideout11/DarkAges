@@ -659,8 +659,18 @@ struct Mana {
      uint32_t xpReward{50};                   // XP given to killer
      uint32_t respawnTimeMs{10000};           // Respawn delay (10s default)
      NPCArchetype archetype{NPCArchetype::Melee}; // Combat archetype
- };
+    };
 
+// [COMBAT_AGENT] Boss encounter profile — phase transitions and ability sets
+struct BossProfile {
+    uint32_t phaseCount{0};                  // Number of phases (max 4)
+    uint32_t currentPhase{0};                // Current phase index (0-based)
+    float phaseHealthThresholds[4];          // Health % threshold to ENTER each phase (e.g., [100, 66, 33, 10])
+    float phaseDamageMult[4];                // Damage multiplier per phase
+    uint8_t phaseAbilityCount[4];            // Number of abilities in each phase
+    uint32_t phaseAbilityIds[4][3];          // Ability IDs for each phase (max 3 abilities per phase)
+    uint32_t lastSpecialAttackTimeMs{0};     // For ability cooldown tracking
+};
 
  struct Interactable {
      float interactionRange{3.0f};          // Max interaction distance (meters)

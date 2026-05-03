@@ -20,6 +20,7 @@
 #include <chrono>
 #include <cstring>
 #include <ctime>
+#include <unordered_map>
 #include <glm/glm.hpp>
 #include <cmath>
 #include <cstdint>
@@ -238,6 +239,8 @@ bool ZoneServer::initialize(const ZoneConfig& config) {
 
     // [GAMEPLAY_AGENT] Wire NPC AI system with combat system and damage callback
     npcAISystem_.setCombatSystem(&combatSystem_);
+    npcAISystem_.setAbilitySystem(&abilitySystem_);
+    npcAISystem_.setStatusEffectSystem(&statusEffectSystem_);
     npcAISystem_.setDamageCallback([this](EntityID npc, EntityID target, int16_t damage) {
         Position loc{0, 0, 0, 0};
         if (const auto* pos = registry_.try_get<Position>(target)) {
@@ -357,7 +360,25 @@ bool ZoneServer::initialize(const ZoneConfig& config) {
     zoneEventSystem_.setItemSystem(&itemSystem_);
     zoneEventSystem_.setBossSpawnCallback([this](float x, float z, uint8_t level) -> EntityID {
         Position spawnPos = Position::fromVec3(glm::vec3(x, 0, z));
-        return spawnNPC(spawnPos, level, 20, 25.0f, 50.0f, 3.0f, 500, 0);
+        EntityID boss = spawnNPC(spawnPos, level, 20, 25.0f, 50.0f, 3.0f, 500, 0);
+
+        // Attach BossProfile if a boss encounter is configured
+        if (boss != entt::null && !currentBossConfig_.phases.empty()) {
+            BossProfile profile{};
+            profile.phaseCount = static_cast<uint8_t>(currentBossConfig_.phases.size());
+            for (uint8_t i = 0; i < profile.phaseCount && i < 4; ++i) {
+                profile.phaseHealthThresholds[i] = currentBossConfig_.phases[i].healthThreshold;
+                profile.phaseDamageMult[i] = currentBossConfig_.phases[i].damageMultiplier;
+                profile.phaseAbilityCount[i] = static_cast<uint8_t>(currentBossConfig_.phases[i].abilityIds.size());
+                for (size_t j = 0; j < currentBossConfig_.phases[i].abilityIds.size() && j < 3; ++j) {
+                    profile.phaseAbilityIds[i][j] = currentBossConfig_.phases[i].abilityIds[j];
+                }
+            }
+            profile.currentPhase = 0;
+            registry_.emplace<BossProfile>(boss, profile);
+        }
+
+        return boss;
     });
 
     // [GAMEPLAY_AGENT] Initialize dialogue system
@@ -504,6 +525,8 @@ bool ZoneServer::initialize(const ZoneConfig& config) {
         if (config_.demoMode && !config_.zoneConfigPath.empty()) {
             // Load demo configuration from JSON file
             if (loadDemoConfig(config_.zoneConfigPath)) {
+                // Load boss encounter configuration (must happen after demo config JSON is parsed)
+                loadBossEncounterConfig();
                 populateNPCsFromDemoConfig();
             } else {
                 std::cerr << "[ZONE " << config_.zoneId << "] Failed to load demo config, falling back to default NPCs" << std::endl;
@@ -538,42 +561,17 @@ void ZoneServer::run() {
 
  // [DEMO_AGENT] In demo mode, start zone event immediately for continuous play
  if (config_.demoMode) {
- // Register the showcase world boss event (Event ID 99)
- ZoneEventDefinition bossEvent{};
- bossEvent.eventId = 99;
- std::strncpy(bossEvent.name, "World Boss: Shadow Ogre", sizeof(bossEvent.name) - 1);
- std::strncpy(bossEvent.description, "A powerful ogre has emerged!", sizeof(bossEvent.description) - 1);
- bossEvent.type = ZoneEventType::WorldBoss;
- bossEvent.requiredPlayers = 1; // Min players to auto-start
- bossEvent.maxParticipants = 100;
- bossEvent.phaseCount = 1;
- bossEvent.phases[0].phaseId = 1;
- std::strncpy(bossEvent.phases[0].name, "The Battle Begins", sizeof(bossEvent.phases[0].name) - 1);
- bossEvent.phases[0].durationMs = 300000; // 5 minute phase
- bossEvent.phases[0].bossNpcArchetypeId = static_cast<uint32_t>(NPCArchetype::Boss); // Boss archetype
- bossEvent.phases[0].bossLevel = 5;
- bossEvent.phases[0].objectiveCount = 1;
- bossEvent.phases[0].objectives[0].type = EventObjectiveType::KillBoss;
- bossEvent.phases[0].objectives[0].requiredCount = 1;
- std::strncpy(bossEvent.phases[0].objectives[0].description, "Defeat the Shadow Ogre",
- sizeof(bossEvent.phases[0].objectives[0].description) - 1);
- bossEvent.cooldownMs = 0; // No cooldown for demo
- bossEvent.spawnX = 0.0f;
- bossEvent.spawnZ = 0.0f;
- bossEvent.spawnRadius = 10.0f;
- bossEvent.reward.xpReward = 500;
- bossEvent.reward.goldReward = 100;
- bossEvent.reward.bonusItemId = 3; // Iron Longsword
- bossEvent.reward.bonusItemQuantity = 1;
- zoneEventSystem_.registerEvent(bossEvent);
-
- // Start the event immediately
- uint32_t currentTime = getCurrentTimeMs();
- zoneEventSystem_.startEvent(registry_, 99, currentTime);
- chatSystem_.broadcastSystemMessage(registry_, "[EVENT] World Boss Event: Shadow Ogre has appeared!",
- currentTime);
-
- std::cout << "[ZONE " << config_.zoneId << "] [DEMO] World boss event started" << std::endl;
+     if (!currentBossConfig_.phases.empty()) {
+         ZoneEventDefinition bossEvent = buildZoneEventFromBossConfig();
+         zoneEventSystem_.registerEvent(bossEvent);
+         uint32_t currentTime = getCurrentTimeMs();
+         zoneEventSystem_.startEvent(registry_, bossEvent.eventId, currentTime);
+         std::string msg = "[EVENT] " + std::string(bossEvent.name) + " has appeared!";
+         chatSystem_.broadcastSystemMessage(registry_, msg.c_str(), currentTime);
+         std::cout << "[ZONE " << config_.zoneId << "] [DEMO] Boss event started: " << bossEvent.name << std::endl;
+     } else {
+         std::cout << "[ZONE " << config_.zoneId << "] [DEMO] No boss config loaded — skipping event autostart" << std::endl;
+     }
  }
 
  while (running_) {
@@ -2154,6 +2152,180 @@ bool ZoneServer::loadDemoConfig(const std::string& configPath) {
     }
 }
 
+// [COMBAT_AGENT] Parse boss encounter from loaded demo JSON and populate currentBossConfig_
+bool ZoneServer::loadBossEncounterConfig() {
+    if (demoConfigJson_.empty()) {
+        std::cerr << "[ZONE " << config_.zoneId << "] No demo config loaded, cannot load boss encounter" << std::endl;
+        return false;
+    }
+
+    try {
+        nlohmann::json j = nlohmann::json::parse(demoConfigJson_);
+        if (!j.contains("boss_encounter")) {
+            std::cout << "[ZONE " << config_.zoneId << "] No boss_encounter section in config" << std::endl;
+            return false;
+        }
+        const auto& encounter = j["boss_encounter"];
+        if (!encounter.value("enabled", false)) {
+            std::cout << "[ZONE " << config_.zoneId << "] Boss encounter disabled in config" << std::endl;
+            return false;
+        }
+
+        // Parse boss base stats
+        if (!encounter.contains("boss")) {
+            std::cerr << "[ZONE " << config_.zoneId << "] boss_encounter missing 'boss' object" << std::endl;
+            return false;
+        }
+        const auto& boss = encounter["boss"];
+        std::string archetypeName = boss.value("archetype", "ogre_chieftain");
+        currentBossConfig_.bossLevel = static_cast<uint8_t>(boss.value("level", 10));
+        currentBossConfig_.bossName = boss.value("name", "Gruk The Unstoppable");
+
+        uint32_t archetypeId = static_cast<uint32_t>(NPCArchetype::Boss);
+        if (archetypeName == "ogre_chieftain" || archetypeName == "boss_ogre") {
+            archetypeId = static_cast<uint32_t>(NPCArchetype::Boss);
+        }
+        currentBossConfig_.bossArchetypeId = archetypeId;
+
+        // Parse abilities map and register
+        std::unordered_map<std::string, uint32_t> abilityNameToId;
+        if (encounter.contains("abilities") && encounter["abilities"].is_object()) {
+            const auto& abilitiesJson = encounter["abilities"];
+            uint32_t nextAbilityId = 4;
+
+            for (auto& [abilityName, abilityData] : abilitiesJson.items()) {
+                if (!abilityData.is_object()) continue;
+
+                float damage = abilityData.value("damage", 25.0f);
+                float cooldownSec = abilityData.value("cooldown", 2.0f);
+                float range = abilityData.value("range", 3.0f);
+
+                uint16_t manaCost = static_cast<uint16_t>(std::ceil(damage / 10.0f));
+                if (manaCost < 1) manaCost = 1;
+
+                AbilityDefinition def;
+                def.abilityId = nextAbilityId;
+                def.name = abilityName;
+                def.cooldownMs = static_cast<uint32_t>(cooldownSec * 1000.0f);
+                def.manaCost = manaCost;
+                def.range = range;
+                def.effectType = AbilityEffectType::Damage;
+
+                abilitySystem_.registerAbility(nextAbilityId, def);
+                currentBossConfig_.abilityIds.push_back(nextAbilityId);
+                abilityNameToId[abilityName] = nextAbilityId;
+                nextAbilityId++;
+            }
+
+            std::cout << "[ZONE " << config_.zoneId << "] Registered " << (nextAbilityId - 4)
+                      << " boss abilities from JSON" << std::endl;
+        }
+
+        // Parse phases
+        if (!encounter.contains("phases") || !encounter["phases"].is_array()) {
+            std::cerr << "[ZONE " << config_.zoneId << "] boss_encounter missing 'phases' array" << std::endl;
+            return false;
+        }
+        const auto& phasesJson = encounter["phases"];
+
+        for (const auto& phaseJson : phasesJson) {
+            BossEncounterConfig::PhaseConfig phaseCfg;
+            phaseCfg.name = phaseJson.value("name", "Phase " + std::to_string(currentBossConfig_.phases.size() + 1));
+            phaseCfg.healthThreshold = phaseJson.value("health_threshold", 100.0f) / 100.0f;
+            phaseCfg.damageMultiplier = phaseJson.value("modifiers", nlohmann::json::object())
+                                            .value("damage_mult", 1.0f);
+
+            if (phaseJson.contains("abilities") && phaseJson["abilities"].is_array()) {
+                for (const auto& abilityName : phaseJson["abilities"]) {
+                    auto it = abilityNameToId.find(abilityName.get<std::string>());
+                    if (it != abilityNameToId.end()) {
+                        phaseCfg.abilityIds.push_back(it->second);
+                    }
+                }
+            }
+            currentBossConfig_.phases.push_back(phaseCfg);
+        }
+
+        std::cout << "[ZONE " << config_.zoneId << "] Boss encounter loaded: " << currentBossConfig_.phases.size()
+                  << " phases, " << currentBossConfig_.abilityIds.size() << " unique abilities" << std::endl;
+        return true;
+    } catch (const std::exception& e) {
+        std::cerr << "[ZONE " << config_.zoneId << "] Failed to parse boss encounter: " << e.what() << std::endl;
+        return false;
+    }
+}
+
+// [COMBAT_AGENT] Build ZoneEventDefinition from currentBossConfig_
+ZoneEventDefinition ZoneServer::buildZoneEventFromBossConfig() const {
+    ZoneEventDefinition def{};
+    def.eventId = 99;
+    def.type = ZoneEventType::WorldBoss;
+    def.requiredPlayers = 1;
+    def.maxParticipants = 100;
+    def.cooldownMs = 0;
+
+    // Spawn location from JSON
+    def.spawnX = 0.0f;
+    def.spawnZ = 0.0f;
+    def.spawnRadius = 10.0f;
+    if (!demoConfigJson_.empty()) {
+        try {
+            auto j = nlohmann::json::parse(demoConfigJson_);
+            if (j.contains("spawn_points") && j["spawn_points"].is_array()) {
+                for (const auto& sp : j["spawn_points"]) {
+                    std::string type = sp.value("type", "");
+                    if (type == "boss_arena_center" || type == "player_start") {
+                        def.spawnX = sp.value("x", 0.0f);
+                        def.spawnZ = sp.value("z", 0.0f);
+                        break;
+                    }
+                }
+            }
+        } catch (...) {}
+    }
+
+    // Rewards
+    def.reward.xpReward = 500;
+    def.reward.goldReward = 100;
+    def.reward.bonusItemId = 3;
+    def.reward.bonusItemQuantity = 1;
+
+    // Name/description from config
+    std::string bossName = currentBossConfig_.bossName.empty() ? "Boss" : currentBossConfig_.bossName;
+    snprintf(def.name, sizeof(def.name), "Boss: %s", bossName.c_str());
+    snprintf(def.description, sizeof(def.description),
+             "A legendary boss awaits! Defeat %s to claim epic rewards.", bossName.c_str());
+
+    // Phase count
+    def.phaseCount = static_cast<uint32_t>(currentBossConfig_.phases.size());
+    if (def.phaseCount > MAX_EVENT_PHASES) def.phaseCount = MAX_EVENT_PHASES;
+
+    // Populate phases
+    for (uint32_t i = 0; i < def.phaseCount; ++i) {
+        const auto& srcPhase = currentBossConfig_.phases[i];
+        auto& dstPhase = def.phases[i];
+
+        dstPhase.phaseId = i + 1;
+        snprintf(dstPhase.name, sizeof(dstPhase.name), "%s", srcPhase.name.c_str());
+        dstPhase.durationMs = 0;
+
+        dstPhase.bossNpcArchetypeId = currentBossConfig_.bossArchetypeId;
+        dstPhase.bossLevel = currentBossConfig_.bossLevel;
+        dstPhase.npcCount = 0;
+        dstPhase.npcArchetypeId = 0;
+
+        // Objective: KillBoss
+        dstPhase.objectiveCount = 1;
+        dstPhase.objectives[0].type = EventObjectiveType::KillBoss;
+        dstPhase.objectives[0].targetId = 0;
+        dstPhase.objectives[0].requiredCount = 1;
+        snprintf(dstPhase.objectives[0].description, sizeof(dstPhase.objectives[0].description),
+                 "Defeat %s", bossName.c_str());
+    }
+
+    return def;
+}
+
 // [DEMO_AGENT] Populate NPCs from loaded demo configuration
 void ZoneServer::populateNPCsFromDemoConfig() {
     if (demoConfigJson_.empty()) {
@@ -2184,6 +2356,12 @@ void ZoneServer::populateNPCsFromDemoConfig() {
                 archetype = NPCArchetype::Caster;
             } else if (archetypeName == "boss" || archetypeName == "boss_ogre") {
                 archetype = NPCArchetype::Boss;
+            }
+
+            // [COMBAT_AGENT] Skip Boss archetype if a boss encounter is configured — boss spawns via event system
+            if (!currentBossConfig_.phases.empty() && archetype == NPCArchetype::Boss) {
+                std::cout << "[ZONE " << config_.zoneId << "] Skipping boss spawn from npc_presets — boss event will spawn via ZoneEventSystem" << std::endl;
+                continue; // Skip this preset entirely
             }
 
             // Spawn NPCs for this preset

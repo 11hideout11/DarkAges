@@ -486,8 +486,33 @@ void NPCAISystem::performNPCAttack(Registry& registry, EntityID npc, EntityID ta
         }
 
         case NPCArchetype::Boss: {
-            // Boss: higher base damage, more frequent abilities
+            // Boss scaling applied to base damage
             damage = static_cast<int16_t>(damage * 1.5f);
+
+            // Use BossProfile for phase-based ability logic if present
+            const BossProfile* bossProfile = registry.try_get<BossProfile>(npc);
+            if (bossProfile && bossProfile->phaseCount > 0) {
+                uint32_t phaseIdx = bossProfile->currentPhase;
+                if (phaseIdx < bossProfile->phaseCount && bossProfile->phaseAbilityCount[phaseIdx] > 0) {
+                    uint32_t abilityId = bossProfile->phaseAbilityIds[phaseIdx][0];
+                    const AbilityDefinition* abilityDef = abilitySystem_->getAbility(abilityId);
+                    if (abilityDef) {
+                        // Compute ability damage from manaCost (damage = manaCost * 10)
+                        damage = static_cast<int16_t>(abilityDef->manaCost * 10);
+                        // Apply phase damage multiplier
+                        damage = static_cast<int16_t>(damage * bossProfile->phaseDamageMult[phaseIdx]);
+                        // Cooldown check before using ability
+                        if (currentTimeMs - ai.lastAbilityTimeMs >= abilityDef->cooldownMs) {
+                            ai.lastAbilityTimeMs = currentTimeMs;
+                            // TODO: trigger telegraph & visual effects via NetworkManager
+                        }
+                        // Done with boss ability handling — skip generic logic
+                        break;
+                    }
+                }
+            }
+
+            // Fallback: random chance ability if no BossProfile or ability data missing
             bool useAbility = (currentTimeMs - ai.lastAbilityTimeMs >= 2000) &&
                              (static_cast<float>(std::rand()) / RAND_MAX < 0.4f);
             if (useAbility) {

@@ -122,6 +122,20 @@ void ZoneEventSystem::update(Registry& registry, uint32_t currentTimeMs) {
         }
 
         case ZoneEventState::Active: {
+            // Priority: health threshold triggers immediate phase advance
+            if (activeEvent_.bossEntity != entt::null) {
+                const CombatState* cs = registry.try_get<CombatState>(activeEvent_.bossEntity);
+                const BossProfile* bp = registry.try_get<BossProfile>(activeEvent_.bossEntity);
+                if (cs && bp && !cs->isDead && bp->phaseCount > activeEvent_.currentPhase + 1) {
+                    float healthPct = static_cast<float>(cs->health) / static_cast<float>(cs->maxHealth);
+                    uint32_t nextPhase = activeEvent_.currentPhase + 1;
+                    if (healthPct <= bp->phaseHealthThresholds[nextPhase]) {
+                        advancePhase(registry, currentTimeMs);
+                        break;
+                    }
+                }
+            }
+
             // Check if current phase has timed out
             const ZoneEventPhaseDefinition* phase = getCurrentPhaseDef();
             if (phase && phase->durationMs > 0) {
@@ -392,6 +406,14 @@ void ZoneEventSystem::advancePhase(Registry& registry, uint32_t currentTimeMs) {
     activeEvent_.currentPhase = nextPhase;
     activeEvent_.phaseStartTimeMs = currentTimeMs;
 
+    // Sync BossProfile currentPhase to match event phase (so AI uses correct abilities)
+    if (activeEvent_.bossEntity != entt::null) {
+        BossProfile* bp = registry.try_get<BossProfile>(activeEvent_.bossEntity);
+        if (bp) {
+            bp->currentPhase = nextPhase;
+        }
+    }
+
     // Reset objective progress for new phase
     for (uint32_t i = 0; i < MAX_EVENT_OBJECTIVES; ++i) {
         activeEvent_.objectiveProgress[i] = 0;
@@ -428,8 +450,11 @@ void ZoneEventSystem::spawnPhaseNPCs(Registry& registry, uint32_t currentTimeMs)
     }
 
     if (phase->bossNpcArchetypeId > 0 && bossSpawnCallback_) {
-        EntityID boss = bossSpawnCallback_(spawnX, spawnZ, phase->bossLevel);
-        activeEvent_.bossEntity = boss;
+        // Only spawn the boss once — if already present, skip (phase transition without respawning)
+        if (activeEvent_.bossEntity == entt::null) {
+            EntityID boss = bossSpawnCallback_(spawnX, spawnZ, phase->bossLevel);
+            activeEvent_.bossEntity = boss;
+        }
     }
 }
 

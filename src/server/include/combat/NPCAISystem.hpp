@@ -12,7 +12,9 @@
 
 namespace DarkAges {
 
-class CombatSystem;  // Forward declaration
+class CombatSystem;
+class AbilitySystem;
+class StatusEffectSystem;  // Forward declaration
 
 class NPCAISystem {
 public:
@@ -23,6 +25,10 @@ public:
 
     // Set the combat system for NPC attacks
     void setCombatSystem(CombatSystem* cs) { combatSystem_ = cs; }
+
+    // Set ability and status effect systems for boss AI
+    void setAbilitySystem(AbilitySystem* as) { abilitySystem_ = as; }
+    void setStatusEffectSystem(StatusEffectSystem* ses) { statusEffectSystem_ = ses; }
 
     // Set navigation grid for pathfinding (nullptr = disable pathfinding)
     void setNavigationGrid(NavigationGrid* grid) { navGrid_ = grid; }
@@ -109,6 +115,8 @@ private:
     static void posToFloat(const Position& pos, float& x, float& z);
 
     CombatSystem* combatSystem_{nullptr};
+    AbilitySystem* abilitySystem_{nullptr};
+    StatusEffectSystem* statusEffectSystem_{nullptr};
     NavigationGrid* navGrid_{nullptr};
     DamageCallback damageCallback_;
 

@@ -880,6 +880,7 @@ if(BUILD_TESTS AND TARGET Catch2::Catch2WithMain)
         src/server/tests/TestRecoveryState.cpp
         src/server/tests/TestCollisionUtils.cpp
         src/server/tests/TestAttackState.cpp
+        src/server/tests/TestCollisionLayerManager.cpp
     )
 
     # Conditionally include tests for optional features

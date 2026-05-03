@@ -109,6 +109,21 @@ struct ZoneConfig {
     bool enableInstrumentation{false};  // Enable server tick-state export
 };
 
+// [COMBAT_AGENT] Boss encounter configuration loaded from zone JSON
+struct BossEncounterConfig {
+    uint32_t bossArchetypeId{0};                    // NPC archetype ID for the boss
+    uint8_t bossLevel{10};                          // Boss level
+    std::string bossName;                           // Display name
+    std::vector<uint32_t> abilityIds;               // All abilities the boss can use
+    struct PhaseConfig {
+        std::string name;                          // Phase display name
+        float healthThreshold{0.0f};                // Health % to ENTER this phase (0.0-1.0)
+        float damageMultiplier{1.0f};               // Damage scaling in this phase
+        std::vector<uint32_t> abilityIds;           // Abilities active in this phase
+    };
+    std::vector<PhaseConfig> phases;                // Phase progression (max 4)
+};
+
 struct TickMetrics {
     uint64_t tickCount{0};
     uint64_t totalTickTimeUs{0};
@@ -266,6 +281,10 @@ private:
     void onZoneComplete(entt::entity player, uint16_t zoneId);
     uint32_t getNextZoneId(uint32_t currentZone) const;
 
+    // [COMBAT_AGENT] Boss encounter configuration
+    bool loadBossEncounterConfig();
+    ZoneEventDefinition buildZoneEventFromBossConfig() const;
+
     // Performance monitoring (delegated to PerformanceHandler)
 
     // Save player state to database
@@ -302,6 +321,11 @@ private:
     ZoneEventSystem zoneEventSystem_;
     DialogueSystem dialogueSystem_;
     SpawnSystem spawnSystem_;
+
+    // [COMBAT_AGENT] Boss encounter state for zone-based boss events
+    BossEncounterConfig currentBossConfig_;
+    bool bossEventActive_{false};
+    std::string pendingBossZoneEventId_;  // Zone event ID to autostart after NPC population
 
     // Pending dialogue data for network transmission (filled by text callback, consumed by responses callback)
     struct PendingDialogue {
