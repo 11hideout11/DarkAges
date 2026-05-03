@@ -42,6 +42,7 @@
 #include "monitoring/MetricsExporter.hpp"
 #include "memory/MemoryPool.hpp"
 #include "memory/FixedVector.hpp"
+#include "memory/PlayerProfileStore.hpp"
 #include <memory>
 #include <atomic>
 #include <chrono>
@@ -454,6 +455,9 @@ public:
 
     // [PRD-009] Zone objective system for tracking player objectives
     ZoneObjectiveSystem zoneObjectiveSystem_;
+
+    // [T1.1] Player profile persistence
+    std::unique_ptr<memory::PlayerProfileStore> profileStore_;
 
     // Handoff integration methods
     void initializeHandoffController();

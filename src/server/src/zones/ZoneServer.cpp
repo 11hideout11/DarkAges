@@ -77,6 +77,10 @@ bool ZoneServer::initialize(const ZoneConfig& config) {
 
     std::cout << "[ZONE " << config_.zoneId << "] Entity migration initialized" << std::endl;
 
+    // [T1.1] Initialize player profile store
+    profileStore_ = std::make_unique<memory::PlayerProfileStore>("./saves");
+    std::cout << "[ZONE " << config_.zoneId << "] Profile store initialized" << std::endl;
+
     // [ZONE_AGENT] Initialize aura zone handler
     auraManager_ = AuraProjectionManager(config_.zoneId);
     auraZoneHandler_.setRedis(redis_.get());
@@ -989,6 +993,11 @@ void ZoneServer::updateGameLogic() {
     // [PRD-009] Update zone objective system
     zoneObjectiveSystem_.Tick(Constants::DT_SECONDS);
 
+    // [T1.1] Process profile auto-saves
+    if (profileStore_) {
+        profileStore_->OnTick(Constants::TICK_DT_MS);
+    }
+
     auto elapsed = std::chrono::steady_clock::now() - start;
     metrics_.gameLogicTimeUs += std::chrono::duration_cast<std::chrono::microseconds>(elapsed).count();
 }
@@ -1257,6 +1266,14 @@ void ZoneServer::onClientDisconnected(ConnectionID connectionId) {
 
         // Save state via PlayerManager
         playerManager_.savePlayerState(entity);
+
+        // [T1.1] Persist player profile to disk
+        if (profileStore_ && const PlayerInfo* info = registry_.try_get<PlayerInfo>(entity)) {
+            auto profile = profileStore_->LoadCharacter(info->playerId);
+            if (profile) {
+                profileStore_->SaveCharacterImmediate(*profile);
+            }
+        }
 
         // [ZONE_AGENT] Full cleanup via despawnEntity (destroyedEntities_, replication, lagCompensator)
         despawnEntity(entity);
