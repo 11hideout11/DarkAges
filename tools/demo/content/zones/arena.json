@@ -80,6 +80,29 @@
       "behavior": "ranged"
     }
   ],
+  "objectives": [
+    {
+      "id": "wave_1",
+      "type": "kill",
+      "target": "wolf",
+      "count": 3,
+      "description": "Defeat Wave 1 wolves"
+    },
+    {
+      "id": "wave_2",
+      "type": "kill",
+      "target": "bandit",
+      "count": 4,
+      "description": "Defeat Wave 2 enemies"
+    },
+    {
+      "id": "wave_3",
+      "type": "kill",
+      "target": "bandit_archer",
+      "count": 8,
+      "description": "Defeat all Wave 3 enemies"
+    }
+  ],
   "wave_defense": {
     "enabled": true,
     "waves": [
