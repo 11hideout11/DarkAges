@@ -127,11 +127,12 @@
 ### PRD-016: SDFGI/SSAO Lighting
 - ✅ IMPLEMENTED in `Main.tscn` lines 36-38: sdfgi_enabled=true, ssao_enabled=true, ssil_enabled=true
 
-### PRD-030: Zone Objective Client Replication
-- ✅ Server: ZoneObjectiveSystem with event emission (EmitEvent method)
-- ✅ Network: serializeZoneObjectiveUpdate / PACKET_ZONE_OBJECTIVE_UPDATE in Protocol.cpp
-- ✅ Client: NetworkManager.ProcessZoneObjectiveUpdate parses packet and emits ZoneObjectiveUpdateReceived signal
-- ✅ UI: QuestTracker.cs displays zone objectives in dedicated panel
+### PRD-029: Client UI Integration
+- ✅ PACKET_INVENTORY_SYNC (19) and PACKET_INVENTORY_UPDATE (20) packet types
+- ✅ InventorySyncPacket and InventoryUpdatePacket protocol structs
+- ✅ Server: NetworkManager send methods implemented
+- ✅ ZoneServer: sends inventory sync on player connect
+- ⚠️ InventoryPanel signal handlers (code-complete)
 - ✅ TSCN: QuestTracker.tscn updated with ZoneObjectiveList RichTextLabel
 
 ---
