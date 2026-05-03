@@ -14,6 +14,7 @@ namespace DarkAges.Client.UI
         [Export] public int MaxDisplayedQuests = 10;
         [Export] public int MaxDisplayedZoneObjectives = 5;
 
+        private ColorRect _background;
         private RichTextLabel _questList;
         private RichTextLabel _zoneObjectiveList;
         private Dictionary<uint, Dictionary<uint, (uint current, uint required, byte status)>> _quests;
@@ -21,10 +22,36 @@ namespace DarkAges.Client.UI
 
         public override void _Ready()
         {
+            _background = GetNode<ColorRect>("Background");
             _questList = GetNode<RichTextLabel>("QuestList");
             _zoneObjectiveList = GetNode<RichTextLabel>("ZoneObjectiveList");
-            _quests = new Dictionary<uint, Dictionary<uint, (uint, uint, byte)>>();
+            _quests = new Dictionary<uint, Dictionary<uint, (uint, uint, byte)>();
             _zoneObjectives = new Dictionary<string, (ushort, ushort, byte, byte)>();
+
+            // Apply theme styling to background
+            if (_background != null)
+            {
+                _background.Color = UITheme.PanelBackground;
+            }
+
+            // Apply theme styling to text labels
+            if (_questList != null)
+            {
+                var questStyle = new StyleBoxFlat
+                {
+                    BgColor = new Color(0, 0, 0, 0)
+                };
+                _questList.AddThemeStyleboxOverride("normal", questStyle);
+            }
+
+            if (_zoneObjectiveList != null)
+            {
+                var zoneStyle = new StyleBoxFlat
+                {
+                    BgColor = new Color(0, 0, 0, 0)
+                };
+                _zoneObjectiveList.AddThemeStyleboxOverride("normal", zoneStyle);
+            }
 
             // Subscribe to network quest updates
             if (NetworkManager.Instance != null)
@@ -88,13 +115,15 @@ namespace DarkAges.Client.UI
                 var objectives = kvp.Value;
 
                 string questTitle = questId == 99 ? "Kill Rats" : $"Quest {questId}";
-                _questList.AppendText($"[color=Yellow]{questTitle}[/color]\n");
+                _questList.AppendText($"[color={UITheme.AccentPrimary.ToHtml()}]{questTitle}[/color]\n");
 
                 foreach (var objKvp in objectives)
                 {
                     uint idx = objKvp.Key;
                     var (cur, req, status) = objKvp.Value;
-                    string statusText = status == 1 ? "[color=Green]✓ COMPLETE[/color]" : $"[color=White]{cur}/{req}[/color]";
+                    string statusText = status == 1 
+                        ? $"[color={UITheme.StatusComplete.ToHtml()}]✓ COMPLETE[/color]" 
+                        : $"[color={UITheme.TextPrimary.ToHtml()}]{cur}/{req}[/color]";
                     _questList.AppendText($"  Obj {idx}: {statusText}\n");
                 }
             }
@@ -103,12 +132,14 @@ namespace DarkAges.Client.UI
             if (_zoneObjectiveList != null && _zoneObjectives.Count > 0)
             {
                 _zoneObjectiveList.Clear();
-                _zoneObjectiveList.AppendText("[color=Cyan]Zone Objectives:[/color]\n");
+                _zoneObjectiveList.AppendText($"[color={UITheme.StatusMana.ToHtml()}]Zone Objectives:[/color]\n");
                 foreach (var kvp in _zoneObjectives)
                 {
                     string objId = kvp.Key;
                     var (cur, req, type, wave) = kvp.Value;
-                    string statusText = cur >= req ? "[color=Green]✓ COMPLETE[/color]" : $"[color=White]{cur}/{req}[/color]";
+                    string statusText = cur >= req 
+                        ? $"[color={UITheme.StatusComplete.ToHtml()}]✓ COMPLETE[/color]" 
+                        : $"[color={UITheme.TextPrimary.ToHtml()}]{cur}/{req}[/color]";
                     string waveText = wave > 0 ? $" (Wave {wave})" : "";
                     _zoneObjectiveList.AppendText($"  {objId}: {statusText}{waveText}\n");
                 }

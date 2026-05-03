@@ -17,6 +17,7 @@ namespace DarkAges.Client.UI
         [Export] public bool VisibleByDefault { get; set; } = false;
         
         private GridContainer _grid;
+        private Label _titleLabel;
         private Dictionary<int, InventorySlotUI> _slots = new Dictionary<int, InventorySlotUI>();
         private bool _isVisible = false;
         
@@ -42,6 +43,10 @@ namespace DarkAges.Client.UI
         
         private void SetupUI()
         {
+            // Apply theme background to the panel itself
+            var panelStyle = UITheme.CreatePanelStyle(cornerRadius: 6f, borderWidth: 2f);
+            AddThemeStyleboxOverride("panel", panelStyle);
+            
             // Main container
             var vbox = new VBoxContainer();
             vbox.SetAnchorsPreset(LayoutPreset.FullRect);
@@ -49,15 +54,16 @@ namespace DarkAges.Client.UI
             vbox.SizeFlagsVertical = SizeFlags.ExpandFill;
             AddChild(vbox);
             
-            // Header
-            var header = new Label
+            // Header with theme styling
+            _titleLabel = new Label
             {
                 Text = "Inventory",
                 HorizontalAlignment = HorizontalAlignment.Center,
-                ThemeTypeVariation = "HeaderLarge",
-                CustomMinimumSize = new Vector2(0, 30)
+                CustomMinimumSize = new Vector2(0, 36)
             };
-            vbox.AddChild(header);
+            _titleLabel.AddThemeFontSizeOverride("font_size", UITheme.FontSizeHeader);
+            _titleLabel.Modulate = UITheme.AccentPrimary;
+            vbox.AddChild(_titleLabel);
             
             // Scroll container for the grid
             var scroll = new ScrollContainer
@@ -81,13 +87,21 @@ namespace DarkAges.Client.UI
                 CreateSlot(i);
             }
             
-            // Close button at bottom
+            // Close button at bottom with theme styling
             var closeBtn = new Button
             {
                 Text = "Close (I)",
-                CustomMinimumSize = new Vector2(0, 30),
+                CustomMinimumSize = new Vector2(0, 36),
                 SizeFlagsHorizontal = SizeFlags.ExpandFill
             };
+            closeBtn.AddThemeFontSizeOverride("font_size", UITheme.FontSizeBody);
+            
+            var buttonStyles = UITheme.CreateButtonStyles(cornerRadius: 4f);
+            closeBtn.AddThemeStyleboxOverride("normal", buttonStyles[0]);
+            closeBtn.AddThemeStyleboxOverride("hover", buttonStyles[1]);
+            closeBtn.AddThemeStyleboxOverride("pressed", buttonStyles[2]);
+            closeBtn.AddThemeStyleboxOverride("disabled", buttonStyles[3]);
+            
             closeBtn.Pressed += () => Toggle(false);
             vbox.AddChild(closeBtn);
         }
@@ -203,22 +217,14 @@ namespace DarkAges.Client.UI
             
             private void SetupUI()
             {
-                // Background panel
+                // Background panel with theme styling
                 _background = new Panel();
                 _background.SetAnchorsPreset(LayoutPreset.FullRect);
                 _container.AddChild(_background);
                 
-                // Style the background
-                var style = new StyleBoxFlat
-                {
-                    BgColor = new Color(0.15f, 0.15f, 0.15f, 0.9f),
-                    BorderColor = new Color(0.3f, 0.3f, 0.3f, 1.0f),
-                    BorderWidthBottom = 2,
-                    BorderWidthLeft = 2,
-                    BorderWidthRight = 2,
-                    BorderWidthTop = 2
-                };
-                _background.AddThemeStyleboxOverride("panel", style);
+                // Use theme slot style
+                var slotStyle = UITheme.CreateSlotStyle(cornerRadius: 3f);
+                _background.AddThemeStyleboxOverride("panel", slotStyle);
                 
                 // Item icon (colored square)
                 _itemIcon = new ColorRect();
@@ -228,15 +234,20 @@ namespace DarkAges.Client.UI
                 _itemIcon.Visible = false;
                 _container.AddChild(_itemIcon);
                 
-                // Stack count label
+                // Stack count label with theme styling
                 _stackLabel = new Label();
                 _stackLabel.SetAnchorsPreset(LayoutPreset.BottomRight);
                 _stackLabel.OffsetLeft = -25;
                 _stackLabel.OffsetTop = -20;
                 _stackLabel.OffsetRight = -2;
-                _stackLabel.Set("theme_override_font_sizes/font_size", 12);
+                _stackLabel.AddThemeFontSizeOverride("font_size", UITheme.FontSizeSmall);
+                _stackLabel.Modulate = UITheme.TextPrimary;
                 _stackLabel.HorizontalAlignment = HorizontalAlignment.Right;
                 _container.AddChild(_stackLabel);
+                
+                // Hover effect - store for later use
+                _background.MouseEntered += OnMouseEntered;
+                _background.MouseExited += OnMouseExited;
                 
                 // Click handling
                 _background.GuiInput += OnGuiInput;
@@ -250,6 +261,20 @@ namespace DarkAges.Client.UI
                 _tooltip.AddChild(tooltipLabel);
                 
                 _container.AddChild(_tooltip);
+            }
+            
+            private void OnMouseEntered()
+            {
+                // Apply hover style
+                var hoverStyle = UITheme.CreateHoverStyle(cornerRadius: 3f);
+                _background.AddThemeStyleboxOverride("panel", hoverStyle);
+            }
+            
+            private void OnMouseExited()
+            {
+                // Revert to normal slot style
+                var normalStyle = UITheme.CreateSlotStyle(cornerRadius: 3f);
+                _background.AddThemeStyleboxOverride("panel", normalStyle);
             }
             
             private void OnGuiInput(InputEvent @event)
