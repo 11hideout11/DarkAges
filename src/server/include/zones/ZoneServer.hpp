@@ -30,6 +30,7 @@
 #include "combat/AbilitySystem.hpp"
 #include "combat/ItemSystem.hpp"
 #include "combat/ChatSystem.hpp"
+#include "social/GuildSystem.hpp"
 #include "combat/QuestSystem.hpp"
 #include "combat/CraftingSystem.hpp"
 #include "combat/TradeSystem.hpp"
@@ -233,6 +234,7 @@ public:
     [[nodiscard]] ItemSystem& getItemSystem() { return itemSystem_; }
     [[nodiscard]] QuestSystem& getQuestSystem() { return questSystem_; }
     [[nodiscard]] ChatSystem& getChatSystem() { return chatSystem_; }
+    [[nodiscard]] social::GuildSystem& getGuildSystem() { return guildSystem_; }
     [[nodiscard]] CraftingSystem& getCraftingSystem() { return craftingSystem_; }
     [[nodiscard]] TradeSystem& getTradeSystem() { return tradeSystem_; }
     [[nodiscard]] ZoneEventSystem& getZoneEventSystem() { return zoneEventSystem_; }
@@ -316,6 +318,7 @@ private:
     AbilitySystem abilitySystem_;
     ItemSystem itemSystem_;
     ChatSystem chatSystem_;
+    social::GuildSystem guildSystem_;
     QuestSystem questSystem_;
     CraftingSystem craftingSystem_;
     TradeSystem tradeSystem_;
