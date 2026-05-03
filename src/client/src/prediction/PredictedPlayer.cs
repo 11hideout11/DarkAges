@@ -313,8 +313,8 @@ namespace DarkAges
             };
             _serverGhost.MaterialOverride = ghostMaterial;
             
-            // Add to scene root so it moves independently
-            GetTree().Root.AddChild(_serverGhost);
+            // Add to scene root so it moves independently (use CallDeferred for headless safety)
+            CallDeferred(MethodName.AddChild, _serverGhost);
             _serverGhost.Visible = ShowServerGhost;
             
             // Debug label showing prediction stats
