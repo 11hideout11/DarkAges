@@ -40,14 +40,14 @@ void ProgressionCalculator::recalculateAllStats(entt::registry& registry, Entity
     int16_t totalBonusHP = 0;
     
     // Get equipment bonuses from inventory
-    InventoryComponent* inv = registry.try_get<InventoryComponent>(player);
+    Inventory* inv = registry.try_get<Inventory>(player);
     if (inv && itemSystem_) {
         // Iterate equipped items
         for (const auto& slot : inv->slots) {
             if (slot.itemId == 0 || slot.quantity == 0) continue;
             
             // Get item definition
-            ItemDefinition* def = itemSystem_->getItemDefinition(slot.itemId);
+            const ItemDefinition* def = itemSystem_->getItem(slot.itemId);
             if (!def) continue;
             
             const ItemStats& stats = def->stats;

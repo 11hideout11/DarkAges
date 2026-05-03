@@ -1,3 +1,4 @@
+#include "combat/ProgressionCalculator.hpp"
 #include "combat/ItemSystem.hpp"
 #include <cstring>
 #include <algorithm>
@@ -120,6 +121,11 @@ bool ItemSystem::equipItem(Registry& registry, EntityID entity, uint32_t itemId)
     // Remove from inventory
     removeFromInventory(registry, entity, itemId, 1);
 
+    // Recalculate derived stats (equipment affects combat stats via ProgressionCalculator)
+    if (progressionCalculator_) {
+        progressionCalculator_->recalculateAllStats(registry, entity);
+    }
+
     return true;
 }
 
@@ -144,6 +150,12 @@ bool ItemSystem::unequipItem(Registry& registry, EntityID entity, EquipSlot slot
 
     // Put back in inventory
     addToInventory(registry, entity, itemId, 1);
+
+    // Recalculate derived stats (equipment change affects combat stats)
+    if (progressionCalculator_) {
+        progressionCalculator_->recalculateAllStats(registry, entity);
+    }
+
     return true;
 }
 

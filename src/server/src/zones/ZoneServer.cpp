@@ -300,6 +300,13 @@ bool ZoneServer::initialize(const ZoneConfig& config) {
     // [GAMEPLAY_AGENT] Initialize item system with default item database
     itemSystem_.initializeDefaults();
 
+    // [PROGRESSION_AGENT] Wire progression calculator into item system for equipment stat updates
+    itemSystem_.setProgressionCalculator(&progressionCalculator_);
+    progressionCalculator_.setItemSystem(&itemSystem_);
+
+    // [PROGRESSION_AGENT] Wire progression calculator into experience system for level-up stat recalculation
+    experienceSystem_.setProgressionCalculator(&progressionCalculator_);
+
     // [GAMEPLAY_AGENT] Initialize quest system with default quests
     questSystem_.initializeDefaults();
     questSystem_.setItemSystem(&itemSystem_);

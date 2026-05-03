@@ -87,6 +87,11 @@ public:
         inventoryChangeCallback_ = std::move(cb);
     }
 
+    // Set the progression calculator to recalculate stats on equipment changes
+    void setProgressionCalculator(class ProgressionCalculator* calc) {
+        progressionCalculator_ = calc;
+    }
+
 private:
     // Item registry — flat array indexed by item ID
     // Max 4096 items in the game
@@ -94,6 +99,7 @@ private:
     std::vector<ItemDefinition> items_;
 
     InventoryChangeCallback inventoryChangeCallback_;
+    ProgressionCalculator* progressionCalculator_ = nullptr;
 };
 
 } // namespace DarkAges

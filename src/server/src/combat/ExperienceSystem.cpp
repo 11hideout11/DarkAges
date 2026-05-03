@@ -56,13 +56,18 @@ bool ExperienceSystem::awardXP(Registry& registry, EntityID player, uint64_t xpA
         prog->xpToNextLevel = xpForLevel(prog->level);
         leveledUp = true;
         
-        // PRD-036: Apply level-up stats via CombatState
-        CombatState* combat = registry.try_get<CombatState>(player);
-        if (combat) {
-            combat->strength += 1;
-            combat->dexterity += 1;
-            combat->vitality += 1;
-            combat->recalculateStats();
+        // PRD-036: Apply level-up stat bonuses via ProgressionCalculator (includes equipment scaling)
+        if (progressionCalculator_) {
+            progressionCalculator_->applyLevelUp(registry, player, prog->level);
+        } else {
+            // Fallback: Direct stat updates (testing without ProgressionCalculator)
+            CombatState* combat = registry.try_get<CombatState>(player);
+            if (combat) {
+                combat->strength += 1;
+                combat->dexterity += 1;
+                combat->vitality += 1;
+                combat->recalculateStats();
+            }
         }
 
         // Fire level-up callback

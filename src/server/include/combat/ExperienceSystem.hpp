@@ -9,6 +9,8 @@
 
 namespace DarkAges {
 
+class ProgressionCalculator;  // Forward declaration for PRD-036 wiring
+
 class ExperienceSystem {
 public:
     ExperienceSystem() = default;
@@ -36,9 +38,13 @@ public:
     using XPGainCallback = std::function<void(EntityID player, uint64_t xpGained)>;
     void setXPGainCallback(XPGainCallback cb) { xpGainCallback_ = std::move(cb); }
 
+    // PRD-036: Set progression calculator for equipment-scaled level-up stats
+    void setProgressionCalculator(ProgressionCalculator* calc) { progressionCalculator_ = calc; }
+
 private:
     LevelUpCallback levelUpCallback_;
     XPGainCallback xpGainCallback_;
+    ProgressionCalculator* progressionCalculator_{nullptr};
 };
 
 // ============================================================================

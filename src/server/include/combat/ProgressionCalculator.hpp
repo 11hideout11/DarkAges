@@ -12,7 +12,7 @@ namespace DarkAges {
 
 // Forward declarations
 class ItemSystem;
-class InventoryComponent;
+struct Inventory;
 
 class ProgressionCalculator {
 public:

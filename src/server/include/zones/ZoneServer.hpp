@@ -35,6 +35,7 @@
 #include "combat/TradeSystem.hpp"
 #include "combat/ZoneEventSystem.hpp"
 #include "combat/WorldProgressionSystem.hpp"
+#include "combat/ProgressionCalculator.hpp"
 #include "combat/DialogueSystem.hpp"
 #include "combat/SpawnSystem.hpp"
 #include "security/AntiCheat.hpp"
@@ -325,6 +326,9 @@ private:
 
     // [PROGRESSION_AGENT] World progression tracking (zone locks, completion)
     WorldProgressionSystem worldProgressionSystem_;
+
+    // [PROGRESSION_AGENT] Equipment/level-based stat recalculation
+    ProgressionCalculator progressionCalculator_;
 
     // [COMBAT_AGENT] Boss encounter state for zone-based boss events
     BossEncounterConfig currentBossConfig_;
