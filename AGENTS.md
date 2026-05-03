@@ -16,9 +16,13 @@
 - Phase 1-5: ✅ VERIFIED — Summary docs created (PHASE1-5_SUMMARY.md)
 - Phase 6: COMPLETE — build system hardening
 - Phase 7: COMPLETE — All tests pass (1302 cases, 7249 assertions, 100%)
-- Phase 8: PARTIAL — compile-time fix merged; runtime integration pending
+- Phase 8: COMPLETE — compile-time fix merged; GNS runtime integration in progress
 - Phase 9: COMPLETE — performance budgets validated
-- **Art Pipeline**: RESEARCH PHASE COMPLETE — world-building capabilities documented
+
+### PRD-020: Headless Fixes (CI Stability)
+- ✅ AddChild uses CallDeferred for thread-safe headless operation
+
+- **Art Pipeline**: RESEARCH PHASE COMPLETE
 - **Tests**: All suites passing (1302 cases, 7249 assertions, 100%)
 - **Test breakdown**:
   - unit_tests: 724 cases, 4012 assertions
