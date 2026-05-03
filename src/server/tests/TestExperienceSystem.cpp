@@ -81,7 +81,7 @@ TEST_CASE("ExperienceSystem awardXP multi-level", "[experience][xp]") {
 
     PlayerProgression& prog = registry.get<PlayerProgression>(player);
     CHECK(prog.level == 3);
-    CHECK(prog.currentXP == 400 - 100 - 282); // 18 XP remaining
+    CHECK(prog.currentXP == 400 - 100 - 240); // 60 XP remaining
     CHECK(prog.statPoints == 6); // 2 levels * 3 points
 }
 

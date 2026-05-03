@@ -236,8 +236,8 @@ TEST_CASE("XP formula scales correctly", "[combat][xp]") {
     REQUIRE(ExperienceSystem::xpForLevel(2) > 100);
     REQUIRE(ExperienceSystem::xpForLevel(5) > ExperienceSystem::xpForLevel(2));
     REQUIRE(ExperienceSystem::xpForLevel(10) > ExperienceSystem::xpForLevel(5));
-    // Level 10 should be about 3162
-    REQUIRE(ExperienceSystem::xpForLevel(10) == Catch::Approx(3162).margin(5));
+    // PRD-036: Level 10 → 10*100 + 10²*10 = 2000
+    REQUIRE(ExperienceSystem::xpForLevel(10) == 2000);
 }
 
 TEST_CASE("Awarding XP updates player progression", "[combat][xp]") {

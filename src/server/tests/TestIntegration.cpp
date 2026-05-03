@@ -174,7 +174,7 @@ TEST_CASE("Integration: Full combat → loot → XP → inventory cycle", "[inte
     // while(currentXP >= xpToNextLevel): true (100>=100)
     //   currentXP -= xpToNextLevel => 0
     //   level++ => 2
-    //   xpToNextLevel = xpForLevel(2) ≈ 283
+    //   xpToNextLevel = xpForLevel(2) = 240
     REQUIRE(prog.level == 2);
     REQUIRE(prog.currentXP == 0);
     REQUIRE(prog.xpToNextLevel == ExperienceSystem::xpForLevel(2));
