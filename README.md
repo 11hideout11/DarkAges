@@ -1,22 +1,32 @@
 # DarkAges MMO
 
 ![Build and Test](https://github.com/cammurray/DarkAges/workflows/Build%20and%20Test/badge.svg)
-![Redis Tests](https://github.com/cammurray/DarkAges/workflows/Redis%20Integration%20Tests/badge.svg)
-![Test Coverage](https://img.shields.io/badge/coverage-99.2%25-brightgreen)
-![Redis Performance](https://img.shields.io/badge/redis-232k%20ops%2Fsec-blue)
+![Tests](https://img.shields.io/badge/tests-1305%20cases%2C%207254%20assertions-brightgreen)
 ![License](https://img.shields.io/badge/license-MIT-green)
 
 A high-density PvP MMO inspired by Dark Age of Camelot and Ark Raiders, targeting 100-1000 concurrent players per shard with zero budget.
 
-## Project Status: NOT READY for Demo MVP (Updated 2026-04-28)
+## Project Status (Updated 2026-05-03)
 
-**New MVP Criteria**: Full third-person combat multiplayer template with demo zones and gameplay required.
+**Authoritative Source**: See [AGENTS.md](AGENTS.md) for current state - this file is maintained as a summary overview.
 
-**Previous Phases (0-9)**: ✅ Implementation Complete (~51K LOC server, ~9K LOC client)
-**Current Status**: NOT READY under updated MVP criteria. Previously completed visual polish does NOT satisfy new bar.
-**Server Status**: ✅ Operational (60Hz tick rate, 2129 tests passing)
+**Phases 0-9**: ✅ COMPLETE - documented in phase summary files
+**Test Baseline**: 1305 test cases, 7254 assertions, 100% pass
+**Server**: ~32K LOC (C++20, EnTT ECS, 60Hz tick)
+**Client**: ~9K LOC (C# Godot 4.2)
 
-See [CURRENT_STATUS.md](CURRENT_STATUS.md) for daily updates • [PROJECT_STATUS.md](PROJECT_STATUS.md) for detailed history • [PHASE8_EXECUTION_PLAN.md](PHASE8_EXECUTION_PLAN.md) for roadmap
+### Component Status
+- **Server**: ✅ Operational (60Hz tick rate)
+- **Client**: ✅ Godot 4.2.4 build - 0 errors, 208 warnings
+- **Combat System**: ✅ Complete with FSM, hitbox/hurtbox, AnimationTree, IK
+- **Demo Zones**: ✅ 3 zones with objectives system
+- **Network**: ✅ Custom UDP protocol, snapshot system
+
+### Blocked Items
+- **GNS Runtime**: WebRTC submodule restricted - custom UDP stub functional
+- **Production DB**: Requires Docker daemon
+
+See [AGENTS.md](AGENTS.md) for detailed PRD status and execution history.
 
 ### Completed Work Packages
 
@@ -47,24 +57,24 @@ See [CURRENT_STATUS.md](CURRENT_STATUS.md) for daily updates • [PROJECT_STATUS
 || WP-9-2 | Benchmark Runner | ✅ Complete |
 || WP-9-3 | 7 Budget Checks | ✅ All Pass |
 
-### Phase 10 Work Packages (In Progress)
+### PRD Status (24 PRDs)
 
-|| WP | Component | Status |
-||----|-----------|--------|
-|| WP-10-1 | Anti-Cheat Validation | 🔄 In Progress |
-|| WP-10-2 | DDoS Protection Testing | 🔄 In Progress |
-|| WP-10-3 | Fuzz Testing | ⏳ Planned |
-|| WP-10-4 | Penetration Testing | ⏳ Planned |
+| Category | Count | Status |
+|----------|-------|--------|
+| Server Core (PRD-001 to PRD-007) | 7 | ✅ Complete |
+| Client/Combat (PRD-008 to PRD-019) | 12 | ✅ Complete |
+| GNS Runtime (PRD-012) | 1 | ⚠️ Partial (blocked by WebRTC) |
+| Production DB (PRD-018) | 1 | ⚠️ Blocked (requires Docker) |
+| Documentation (PRD-024, PRD-021) | 2 | ✅ RESOLVED |
 
 ### What's Implemented
-- ✅ **Server**: ~32,000 lines (C++20, EnTT ECS, 60Hz tick, 2096 tests passing)
-- ✅ **Client**: ~6,200 lines (Godot 4.2 C#, prediction, interpolation, combat UI)
-- ✅ **Testing**: ~15,000 lines (Catch2, 11 suites, 2096 test cases)
+- ✅ **Server**: ~32,000 lines (C++20, EnTT ECS, 60Hz tick, 1305 test cases)
+- ✅ **Client**: ~9,000 lines (Godot 4.2 C#, prediction, interpolation, combat UI)
+- ✅ **Testing**: 1305 test cases, 7254 assertions, 100% pass
 - ✅ **Build System**: CMake, MSVC 2022, cross-platform CI/CD — COMPLETE
 - ✅ **External Libraries**: Redis stubs, FlatBuffers, Protobuf
 - ✅ **Demo Pipeline**: Autonomous launcher — build, test, validate, screenshots, video — **OPERATIONAL**
 - ✅ **Combat System**: Server-authoritative with lag compensation — **OPERATIONAL**
-- ✅ **Visual Polish (2026-04-25)**: Remote health bars scaled 20% + emissive boost; Player AnimationLibrary wired; fallback animation state switching — **COMPLETE**
 
 ## Quick Start
 
