@@ -287,8 +287,23 @@ This document tracks the gap between PRD specifications and actual implementatio
 
 When starting work on any feature:
 1. Check this document for status
-2. If PRD_ONLY → implementation is needed (create code in src/)
-3. Verify with: `ls src/server/src/` or `ls src/client/scripts/`
-4. Reference PRD in `prd/` for design spec
+2. If 📋 PRD_ONLY → implementation is needed (create code in src/)
+3. Look for **-IMPLEMENTATION.md** version of the PRD
+4. Verify with: `ls src/server/src/` or `ls src/client/scripts/`
+5. Reference implementation PRD in `prd/` for exact code specs
 
-**WARNING**: Do NOT assume a feature exists because a PRD file exists!
+**CRITICAL**: Implementation PRDs now exist with explicit code paths!
+
+### Implementation PRD Files Created
+
+| Feature | Implementation PRD | Status |
+|---------|------------------|--------|
+| Guild System | `prd-guild-system-IMPLEMENTATION.md` | Use this for implementation |
+| Party System | `prd-party-system-IMPLEMENTATION.md` | Use this for implementation |
+| Chat System | `prd-chat-system-IMPLEMENTATION.md` | Use this for implementation |
+| Friend System | `prd-friend-system-IMPLEMENTATION.md` | Use this for implementation |
+| Quest System | `prd-quest-system-INTEGRATION.md` | Data exists, wire it |
+| Crafting | `prd-crafting-system-IMPLEMENTATION.md` | Use this for implementation |
+| Achievement | `prd-achievement-system-IMPLEMENTATION.md` | Use this for implementation |
+| Minimap | `prd-minimap-IMPLEMENTATION.md` | Use this for implementation |
+| Loading Screen | `prd-loading-screen-IMPLEMENTATION.md` | Use this for implementation |
