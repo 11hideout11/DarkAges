@@ -195,5 +195,28 @@ namespace DarkAges.Client
             AddChild(_modelInstance);
             GD.Print("[ModelManager] Capsule fallback enabled");
         }
+
+        /// <summary>
+        /// Setup capsule with custom color for different character types
+        /// </summary>
+        /// <param name="color">Color for the capsule placeholder</param>
+        public void SetupCapsuleWithColor(Color color)
+        {
+            var capsuleMesh = new CapsuleMesh();
+            capsuleMesh.Radius = 0.3f;
+            capsuleMesh.Height = 1.8f;
+
+            _modelInstance = new MeshInstance3D();
+            _modelInstance.Name = "CapsulePlaceholder";
+            _modelInstance.Mesh = capsuleMesh;
+            
+            var material = new StandardMaterial3D();
+            material.AlbedoColor = color;
+            material.Roughness = 0.5f;
+            capsuleMesh.Material = material;
+            
+            AddChild(_modelInstance);
+            GD.Print($"[ModelManager] Colored capsule placeholder created: {color}");
+        }
     }
 }
