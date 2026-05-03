@@ -1,15 +1,15 @@
 ## Recent Commits (last 10 — updated 2026-05-03)
 
-1. `HEAD`: fix(client): resolve 47 C# build errors — Godot 4.2 API migration complete
-2. `778dc58`: merge: integrate remote origin/main; resolve AGENTS.md and PRD docs conflicts
-3. `cc30fea`: Merge PR #73 — PRD status review: mark PRD-020/021/024 resolved
-4. `e8265b2`: docs: mark PRD-024 resolved in PRD file
-5. `85a04fd`: docs: add PRD-020 and PRD-021 status to AGENTS.md
-6. `ae80c7a`: docs: mark PRD-021 resolved (no WebSocket client exists)
-7. `8106632`: docs: mark PRD-020 complete, update Phase 8 status in AGENTS.md
-8. `78f2162`: fix(client): use CallDeferred for AddChild (PRD-020 headless fix)
-9. `a99ff1d`: docs: mark PLAN.md implementation steps complete
-10. `a8b167b`: docs: mark PRD-029 and PRD-030 complete in AGENTS.md
+1. `8e1b163`: docs: fix README broken links and improve formatting
+2. `61a0288`: docs: add DOCS_INDEX.md navigation guide
+3. `409f230`: docs: sync AGENTS.md and README.md with current state
+4. `HEAD`: fix(client): resolve 47 C# build errors — Godot 4.2 API migration complete
+5. `778dc58`: merge: integrate remote origin/main; resolve AGENTS.md and PRD docs conflicts
+6. `cc30fea`: Merge PR #73 — PRD status review: mark PRD-020/021/024 resolved
+7. `e8265b2`: docs: mark PRD-024 resolved in PRD file
+8. `85a04fd`: docs: add PRD-020 and PRD-021 status to AGENTS.md
+9. `ae80c7a`: docs: mark PRD-021 resolved (no WebSocket client exists)
+10. `8106632`: docs: mark PRD-020 complete, update Phase 8 status in AGENTS.md
 
 ## State (2026-05-03)
 
