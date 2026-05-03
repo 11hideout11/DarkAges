@@ -487,6 +487,109 @@ void NetworkManager::update(uint32_t currentTimeMs) {
                         break;
                     }
 
+                    // --- GNS receive-side: handle client->server packets (previously unimplemented) ---
+                    case 5: { // PACKET_LOCK_ON_REQUEST
+                        if (msg->m_cbSize < 13) break;
+                        uint32_t targetEntity = *reinterpret_cast<const uint32_t*>(static_cast<const uint8_t*>(msg->m_pData) + 1);
+                        uint32_t clientTimestamp = *reinterpret_cast<const uint32_t*>(static_cast<const uint8_t*>(msg->m_pData) + 5);
+
+                        LockOnRequestPacket pkt;
+                        pkt.connectionId = connId;
+                        pkt.targetEntity = static_cast<EntityID>(targetEntity);
+                        pkt.clientTimestamp = clientTimestamp;
+                        pkt.receiveTimeMs = currentTimeMs;
+
+                        pendingLockOnRequests_.push_back(pkt);
+
+                        if (onLockOnRequest_) {
+                            onLockOnRequest_(pkt);
+                        }
+                        break;
+                    }
+
+                    case PacketType::DialogueResponse: { // 8
+                        if (msg->m_cbSize < 6) break;
+                        Protocol::DialogueResponsePacket drp;
+                        drp.connectionId = connId;
+                        std::memcpy(&drp.dialogueId, static_cast<const uint8_t*>(msg->m_pData) + 1, sizeof(uint32_t));
+                        drp.selectedOption = static_cast<const uint8_t*>(msg->m_pData)[5];
+                        drp.receiveTimeMs = currentTimeMs;
+
+                        if (onDialogueResponse_) {
+                            onDialogueResponse_(drp);
+                        }
+                        break;
+                    }
+
+                    case 9: { // PACKET_RESPAWN_REQUEST
+                        if (msg->m_cbSize < 5) break;
+                        uint32_t entityId = *reinterpret_cast<const uint32_t*>(static_cast<const uint8_t*>(msg->m_pData) + 1);
+                        pendingRespawnRequests_.push_back(static_cast<EntityID>(entityId));
+                        break;
+                    }
+
+                    case 10: { // PACKET_COMBAT_ACTION
+                        if (msg->m_cbSize < 10) break;
+                        uint8_t actionType = static_cast<const uint8_t*>(msg->m_pData)[1];
+                        uint32_t targetEntity = *reinterpret_cast<const uint32_t*>(static_cast<const uint8_t*>(msg->m_pData) + 2);
+                        uint32_t clientTimestamp = *reinterpret_cast<const uint32_t*>(static_cast<const uint8_t*>(msg->m_pData) + 6);
+
+                        CombatActionPacket cap;
+                        cap.connectionId = connId;
+                        cap.actionType = actionType;
+                        cap.targetEntity = static_cast<EntityID>(targetEntity);
+                        cap.clientTimestamp = clientTimestamp;
+                        cap.receiveTimeMs = currentTimeMs;
+
+                        pendingCombatActions_.push_back(cap);
+
+                        if (onCombatAction_) {
+                            onCombatAction_(cap);
+                        }
+                        break;
+                    }
+
+                    case 14: { // PACKET_CHAT
+                        if (msg->m_cbSize < 8) break;
+                        uint8_t channel = static_cast<const uint8_t*>(msg->m_pData)[1];
+                        uint32_t targetEntity = *reinterpret_cast<const uint32_t*>(static_cast<const uint8_t*>(msg->m_pData) + 2);
+                        uint16_t msgLen = *reinterpret_cast<const uint16_t*>(static_cast<const uint8_t*>(msg->m_pData) + 6);
+                        if (msgLen >= CHAT_MESSAGE_MAX_LEN) break;
+                        if (msg->m_cbSize < 8 + msgLen) break;
+
+                        ChatMessage chat{};
+                        chat.channel = static_cast<ChatChannel>(channel);
+                        chat.targetId = targetEntity;
+                        chat.timestampMs = currentTimeMs;
+                        chat.senderId = 0; // filled by ZoneServer on processing
+
+                        std::memcpy(chat.content, static_cast<const uint8_t*>(msg->m_pData) + 8, msgLen);
+                        chat.content[msgLen] = '\0';
+
+                        pendingChatMessages_.push_back(chat);
+
+                        if (onChat_) {
+                            onChat_(connId, chat);
+                        }
+                        break;
+                    }
+
+                    case 16: { // PACKET_QUEST_ACTION
+                        if (msg->m_cbSize < 10) break;
+                        QuestActionPacket qap;
+                        qap.connectionId = connId;
+                        std::memcpy(&qap.questId, static_cast<const uint8_t*>(msg->m_pData) + 1, sizeof(uint32_t));
+                        qap.actionType = static_cast<const uint8_t*>(msg->m_pData)[5];
+                        qap.receiveTimeMs = currentTimeMs;
+
+                        pendingQuestActions_.push_back(qap);
+
+                        if (onQuestAction_) {
+                            onQuestAction_(qap);
+                        }
+                        break;
+                    }
+
                     default:
                         // Unknown packet type, ignore
                         break;
@@ -506,6 +609,32 @@ std::vector<ClientInputPacket> NetworkManager::getPendingInputs() {
     std::swap(result, pendingInputs_);
     return result;
 }
+
+// --- GNS receive-side integration: new getter implementations ---
+std::vector<CombatActionPacket> NetworkManager::getPendingCombatActions() {
+    std::vector<CombatActionPacket> result;
+    std::swap(result, pendingCombatActions_);
+    return result;
+}
+
+std::vector<LockOnRequestPacket> NetworkManager::getPendingLockOnRequests() {
+    std::vector<LockOnRequestPacket> result;
+    std::swap(result, pendingLockOnRequests_);
+    return result;
+}
+
+std::vector<ChatMessage> NetworkManager::getPendingChatMessages() {
+    std::vector<ChatMessage> result;
+    std::swap(result, pendingChatMessages_);
+    return result;
+}
+
+std::vector<QuestActionPacket> NetworkManager::getPendingQuestActions() {
+    std::vector<QuestActionPacket> result;
+    std::swap(result, pendingQuestActions_);
+    return result;
+}
+// --- End getter additions ---
 
 void NetworkManager::clearProcessedInputs(uint32_t upToSequence) {
     // Remove all inputs with sequence <= upToSequence
@@ -892,7 +1021,9 @@ void NetworkManager::sendDialogueResponse(ConnectionID connectionId, const Proto
 // ============================================================================
 
 std::vector<EntityID> NetworkManager::getPendingRespawnRequests() {
-    return {};
+    std::vector<EntityID> result;
+    std::swap(result, pendingRespawnRequests_);
+    return result;
 }
 
 void NetworkManager::setConnectionEntityId(ConnectionID connectionId, EntityID entityId) {

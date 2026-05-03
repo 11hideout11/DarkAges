@@ -1,5 +1,6 @@
 using Godot;
 using System;
+using DarkAges.Util;
 
 namespace DarkAges.Camera
 {
@@ -63,7 +64,7 @@ namespace DarkAges.Camera
             _raycast.TargetPosition = new Vector3(0, 0, -MaxDistance); // Cast along local -Z (camera forward direction)
             _raycast.CollisionMask = 1; // collide with world layer
             _raycast.Enabled = true;
-            AddChild(_raycast);
+            SafeAddChild(_raycast);
 
             // Ensure mouse capture (should already be set, but just in case)
             Input.MouseMode = Input.MouseModeEnum.Captured;

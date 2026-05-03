@@ -33,7 +33,7 @@ enum class PacketType : uint8_t {
     ServerSnapshot = 2,   // Server -> Client: world state
     ReliableEvent = 3,    // Bidirectional: combat, pickups, etc.
     Ping = 4,             // Bidirectional: latency measurement
-    Handshake = 5,        // Connection setup
+    LockOnRequest = 5,    // Client -> Server: request target lock-on
     Disconnect = 6,       // Graceful disconnect
     DialogueStart = 7,    // Server -> Client: Begin dialogue with NPC
     DialogueResponse = 8  // Client -> Server: Player selected dialogue option
@@ -259,7 +259,10 @@ private:
     std::vector<ClientInputPacket> pendingInputs_;
     std::vector<LockOnRequestPacket> pendingLockOnRequests_;
     std::vector<QuestActionPacket> pendingQuestActions_;
-    
+    std::vector<CombatActionPacket> pendingCombatActions_;
+    std::vector<ChatMessage> pendingChatMessages_;
+    std::vector<EntityID> pendingRespawnRequests_;
+
     bool initialized_{false};
 };
 
