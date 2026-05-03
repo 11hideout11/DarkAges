@@ -1,4 +1,4 @@
-## Recent Commits (last 15 — updated 2026-05-03)
+## Recent Commits (last 16 — updated 2026-05-03)
 
 1. `c5c6f78`: feat(prd-036): wire ProgressionCalculator into ExperienceSystem + ItemSystem pipelines
 2. `6c14d9c`: MAJOR: synchronize repo to single source of truth — Master Truth doc, drift correction, PRD renumbering
@@ -21,11 +21,11 @@
 - Phase 0: COMPLETE — documented in PHASE0_SUMMARY.md
 - Phase 1-5: ✅ VERIFIED — Summary docs created (PHASE1-5_SUMMARY.md)
 - Phase 6: COMPLETE — build system hardening
-- Phase 7: COMPLETE — All tests pass (1316 cases, 7304 assertions, 100%)
+- Phase 7: COMPLETE — All tests pass (1322 cases, 7310 assertions, 100%)
 - Phase 8: ✅ COMPLETE — send+receive fully integrated; both GNS and custom UDP paths operational
 - Phase 9: COMPLETE — performance budgets validated
 - **Art Pipeline**: RESEARCH PHASE COMPLETE — world-building capabilities documented
-- **Tests**: All suites passing (1316 cases, 7304 assertions, 100%)
+- **Tests**: All suites passing (1322 cases, 7310 assertions, 100%)
 - **Client Build**: C# Godot 4.2.2 — 0 errors, 208 warnings (all CS8618 non-nullable field patterns, standard Godot)
 - **Demo Pipeline**: ✅ 5/5 checks passed — UDP ping, handshake, snapshots (123 in 5s), clean logs, binary
 - **Zone Advancement**: ✅ Wired — `onZoneComplete`→`getNextZoneId`→`triggerMigration` pipeline active (tutorial→arena→boss→tutorial). Tested: 15 handoff test cases, 96 assertions, including triggerMigration edge cases.
@@ -44,7 +44,7 @@
 | PRD-004 (Sharding) | ✅ Complete | Zone partitioning, entity migration |
 | PRD-005 (Client) | ✅ Complete | Godot 4.2 C#, prediction, reconciliation |
 | PRD-006 (Infrastructure) | ✅ Complete | Build system, CI, dependency management |
-| PRD-007 (Testing) | ✅ Complete | 1316 test cases, 7304 assertions, 100% pass |
+| PRD-007 (Testing) | ✅ Complete | 1322 test cases, 7310 assertions, 100% pass |
 | PRD-008 (Combat FSM) | ✅ Complete | CombatStateMachine.tscn + Controller.cs, wired to Player/RemotePlayer |
 | PRD-009 (Demo Zones) | ✅ Complete | ZoneObjectiveSystem, 3 curated zones, wave events |
 | PRD-010 (Hitbox Validation) | ✅ Complete | Collision matrix documented, Hitbox/Hurtbox layers |
@@ -159,7 +159,7 @@
 ### PRDs Addressed
 - **24/24 core PRDs complete** (PRD-001 through PRD-024)
 - **~120 additional PRD specs in `prd/`** — all "Proposed", largely unimplemented
-- **Test baseline**: 1316 cases, 7304 assertions, 100% passing
+- **Test baseline**: 1322 cases, 7310 assertions, 100% passing
 
 ### Recent Work (2026-05-03 — post-merge)
 
@@ -215,7 +215,7 @@
 - ✅ **ExperienceSystem level-up**: Now routes through `ProgressionCalculator::applyLevelUp()` which incorporates equipment bonuses via `recalculateAllStats()`, replacing the old inline stat bump
 - ✅ **Fallback path preserved**: Tests without ProgressionCalculator continue using inline stat bump (no test changes needed)
 - ✅ **ZoneServer::initialize() wiring**: All three systems cross-wired at initialization
-- ✅ **Full test pass**: 1316 cases, 7304 assertions, 100% — zero regressions
+- ✅ **Full test pass**: 1322 cases, 7310 assertions, 100% — zero regressions
 - ✅ **Types fixed**: `InventoryComponent`→`Inventory`, `getItemDefinition`→`getItem` to match actual codebase
 
 ### Commits
@@ -225,7 +225,7 @@
 - **24/24 core PRDs complete** — PRD-036 progression pipeline now fully operational
 - **~120 additional PRD specifications in `prd/`** — all "Proposed", largely unimplemented
 - **Only remaining gaps**: GNS WebRTC signaling token (production) and ScyllaDB GCC13 build issue
-- All tests: 1316 cases, 7304 assertions, 100% pass
+- All tests: 1322 cases, 7310 assertions, 100% pass
 
 ## Orchestration Execution Plan
 
@@ -258,11 +258,11 @@
 ### Environment Note
 - **CMake available in environment** — build and test pipeline operational
 - Last verified build: 0 C++ errors, fresh build succeeds
-- Last verified tests: 1316 cases, 7304 assertions, 100% pass (UDP-only mode, ENABLE_GNS=OFF)
+- Last verified tests: 1322 cases, 7310 assertions, 100% pass (UDP-only mode, ENABLE_GNS=OFF)
 
 ### Validation Approach
 - Verified git status: clean working tree, synced with origin/main
 - Fresh build from clean build directory: 0 errors, 2 unused-function warnings only
-- Full test suite: 1316/1316 pass, 7304 assertions, 100%
+- Full test suite: 1322/1322 pass, 7310 assertions, 100%
 - Cross-checked state across: AGENTS.md, README.md, PRD files, phase summaries
 - All PRD files exist and status verified against codebase
