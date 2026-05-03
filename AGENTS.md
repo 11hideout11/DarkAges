@@ -22,6 +22,9 @@
 ### PRD-020: Headless Fixes (CI Stability)
 - ✅ AddChild uses CallDeferred for thread-safe headless operation
 
+### PRD-021: Validator Connections
+- ✅ RESOLVED — No WebSocket client exists (validator reads JSON only)
+
 - **Art Pipeline**: RESEARCH PHASE COMPLETE
 - **Tests**: All suites passing (1302 cases, 7249 assertions, 100%)
 - **Test breakdown**:
