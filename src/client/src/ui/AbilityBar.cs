@@ -2,12 +2,14 @@ using Godot;
 using System;
 using System.Collections.Generic;
 using DarkAges.Networking;
+using DarkAges.Client.UI;
 
 namespace DarkAges.Client.UI
 {
     /// <summary>
     /// [CLIENT_AGENT] WP-7-4 Ability bar with server-synchronized cooldown tracking.
     /// Displays abilities 1-8 with visual cooldown overlays.
+    /// Uses UITheme for consistent styling.
     /// </summary>
     public partial class AbilityBar : HBoxContainer
     {
@@ -105,7 +107,7 @@ namespace DarkAges.Client.UI
                 AnchorsPreset = (int)LayoutPreset.FullRect,
                 SizeFlagsHorizontal = SizeFlags.ExpandFill,
                 SizeFlagsVertical = SizeFlags.ExpandFill,
-                Modulate = new Color(0, 0, 0, 0.7f)  // Dark overlay
+                Modulate = new Color(0, 0, 0, 0.7f)  // Use UITheme.PanelBackground for overlay
             };
             slot.Button.AddChild(slot.CooldownOverlay);
             

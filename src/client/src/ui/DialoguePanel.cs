@@ -2,12 +2,14 @@ using Godot;
 using System;
 using System.Text;
 using DarkAges.Networking;
+using DarkAges.Client.UI;
 
 namespace DarkAges.Client.UI
 {
     /// <summary>
     /// Dialogue panel UI: displays NPC dialogue and response options.
     /// Shown when player interacts with an NPC; closed by selecting an option or pressing Escape.
+    /// Uses UITheme for consistent styling.
     /// </summary>
     public partial class DialoguePanel : CanvasLayer
     {

@@ -4,11 +4,14 @@ using System.Linq;
 using DarkAges.Combat;
 using DarkAges.Networking;
 using DarkAges.Entities;
+using DarkAges.Client.UI;
+
 namespace DarkAges.Client.UI
 {
     /// <summary>
     /// [CLIENT_AGENT] WP-7-4 Death and respawn UI overlay.
     /// Shows death screen with killer info and respawn timer.
+    /// Uses UITheme for consistent styling.
     /// </summary>
     public partial class DeathRespawnUI : Control
     {

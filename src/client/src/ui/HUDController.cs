@@ -2,12 +2,14 @@ using Godot;
 using System;
 using DarkAges.Networking;
 using DarkAges.Combat;
+using DarkAges.Client.UI;
 
 namespace DarkAges.Client.UI
 {
     /// <summary>
     /// [CLIENT_AGENT] WP-7-4 Main HUD controller that coordinates all combat UI elements.
     /// Manages health bars, ability bar, target lock, combat text, death UI, and interaction prompt.
+    /// Uses UITheme for consistent styling.
     /// </summary>
     public partial class HUDController : CanvasLayer
     {

@@ -3,10 +3,27 @@
 ## Overview
 This document guides the import of CC0 3D character models into the DarkAges Godot 4.2.4 client.
 
-## Current State
-- Player uses CapsuleMesh placeholder (see `Player.tscn` lines 30-32)
+## Current State (2026-05-03)
+- Player uses CapsuleMesh placeholder (see `Player.tscn` lines 30-34)
 - RemotePlayer uses CapsuleMesh placeholder
-- Need to replace with proper humanoid models
+- CharacterModelLoader.cs handles runtime model loading with capsule fallback
+- Assets directories created but empty (need external model downloads)
+
+## BLOCKING: External Asset Downloads Required
+This task requires downloading CC0 3D models from external sources:
+1. Quaternius.com - CC0 rigged character models
+2. Kenney.nl - CC0 character packs
+3. Mixamo.com - Free account required, rigged characters with animations
+
+These downloads must be performed manually or via authenticated session as they require:
+- External network access to download sites
+- User account creation (Mixamo)
+- Acceptance of external license terms
+
+Once models are downloaded, place them in:
+- `src/client/assets/characters/player_male/player_male.glb`
+- `src/client/assets/characters/monsters/goblin/goblin.glb`
+- etc.
 
 **Asset Directory Structure:**
 ```

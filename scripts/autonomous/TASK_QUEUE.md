@@ -45,6 +45,7 @@ Prioritized list of autonomous improvements for DarkAges.
 - [x] Sound effects integration (footsteps, weapon attacks, ambient, UI sounds)
 - [x] Particle effects for combat/hits/spells/deaths ✅
 - [ ] Replace capsule placeholder models with proper 3D character/monster models
+  ⚠️ BLOCKED: Requires external CC0 model downloads (Quaternius/Kenney/Mixamo)
 - [ ] Full UI style overhaul (consistent theme, animations, visual polish)
 - [x] Foot IK for terrain alignment
 - [x] Lighting upgrades (SDFGI/SSAO) for visual fidelity
