@@ -1,16 +1,31 @@
 # PRD Gap Analysis Summary
 
-**Version:** 1.0  
+**Version:** 2.1  
 **Date:** 2026-05-03  
-**Status:** Complete  
+**Status:** Complete with 10 gap PRDs
 
 ---
 
-This document consolidates all PRD created for identified gaps in the DarkAges MMO project.
+This document consolidates all PRDs created for identified gaps in the DarkAges MMO project.
 
 ---
 
-## PRD Inventory Created
+## PRD Inventory Created (Gap Analysis - May 2026)
+
+| # | PRD | Priority | Status | Description |
+|---|-----|----------|--------|-------------|
+| GAP-001 | prd-gap-001-boss-npc-spawning.md | P0-Critical | Boss zone NPC spawning + phases |
+| GAP-002 | prd-gap-002-zone-objectives-integration.md | P0-High | Zone objectives wiring |
+| GAP-003 | prd-gap-003-npc-ai-behavior.md | P1-Medium | NPC AI state machine |
+| GAP-004 | prd-gap-004-production-metrics-dashboard.md | P2-Medium | Metrics dashboard |
+| GAP-005 | prd-gap-005-world-data-population.md | P1-Medium | Content data completeness |
+| GAP-006 | prd-gap-006-client-warnings-resolution.md | P1-Medium | 208 C# warning fixes |
+| GAP-007 | prd-gap-007-arena-wave-spawning.md | P0-High | Arena wave spawning |
+| GAP-008 | prd-gap-008-tutorial-zone-npc-spawning.md | P0-High | Tutorial zone spawning |
+| GAP-009 | prd-gap-009-client-save-state-restore.md | P1-Medium | Save/load runtime state restore |
+| GAP-010 | prd-gap-010-party-quest-integration-tests.md | P2-Medium | Party XP & Quest integration tests |
+
+## Previous PRD Inventory (Feb 2026)
 
 | # | PRD | Priority | Status | Description |
 |---|-----|----------|--------|-------------|
@@ -28,105 +43,88 @@ This document consolidates all PRD created for identified gaps in the DarkAges M
 
 ---
 
-## Priority Matrix
+## Current Priority Matrix
 
-### Critical (Must Fix)
-- Client UI Framework
-- Character Spawn/Login
-- Abilities Casting
+### P0 - Critical (Must Fix for Demo)
+- GAP-001: Boss Zone NPC Spawning
+- GAP-002: Zone Objectives Integration
+- GAP-007: Arena Wave Spawning
+- GAP-008: Tutorial Zone Spawning
 
-### High Priority
-- NPC Dialogue
-- Loot Drop
-- Spawn System
-- Death/Respawn
-- Save/Load
-- Production Database
-- GNS Runtime
+### P1 - High Priority
+- GAP-003: NPC AI Behavior
+- GAP-005: World Data Population
+- GAP-006: Client Warnings Resolution
+- GAP-009: Client Save State Restore
 
-### Medium
-- Sound/Music
+### P2 - Medium (Production)
+- GAP-004: Production Metrics Dashboard
+- GAP-010: Party/Quest Integration Tests
 
 ---
 
 ## Recommended Implementation Order
 
-### Phase 1: Playable Core (Weeks 1-3)
+### Phase 1: Playable Demo (Weeks 1-4)
 
-1. Character Spawn/Login Flow
-2. Client UI Framework
-3. Abilities Casting UI
-4. Death/Respawn System
+1. **GAP-008**: Tutorial Zone NPC Spawning
+2. **GAP-007**: Arena Wave Spawning  
+3. **GAP-001**: Boss Zone NPC Spawning
+4. **GAP-002**: Zone Objectives Integration
 
-→ Results: Player can create character, enter world, use abilities, die and respawn
+→ Results: All 3 demo zones playable end-to-end
 
-### Phase 2: Content (Weeks 4-6)
+### Phase 2: AI and Quality (Weeks 5-8)
 
-5. Loot Drop System
-6. Spawn System Completion
-7. NPC Dialogue System
+5. **GAP-003**: NPC AI Behavior
+6. **GAP-006**: Client Warnings Resolution
+7. **GAP-005**: World Data Population
 
-→ Results: Enemies spawn, drop loot, NPCs to talk to
+→ Results: Enemies act intelligently, clean build
 
-### Phase 3: Persistence (Weeks 7-9)
+### Phase 3: Production (Weeks 9-12)
 
-8. Save/Load System
-9. Production Database (if Docker available)
+8. **GAP-004**: Production Metrics Dashboard
 
-→ Results: Progress persists across sessions
-
-### Phase 4: Polish (Weeks 10-12)
-
-10. Sound/Music System
-11. GNS Runtime Integration
+→ Results: Observability for operators
 
 ---
 
-## Dependencies
+## Blocked Items (External)
 
-```
-Character Spawn/Login
-    ↓
-Client UI Framework ← Abilities Casting UI
-    ↓                  ↓
-Death/Respawn ← Loot Drop
-    ↓              ↓
-Spawn System Completion
-    ↓
-NPC Dialogue System
-    ↓
-Save/Load System ← Production Database
-```
-
----
-
-## Already Existing (Reuse, Don't Recreate)
-
-- data/items.json (52 items)
-- data/abilities.json (22 abilities)
-- data/quests.json (10 quests)
-- AbilitySystem.hpp (server)
-- CombatSystem.hpp (server)
-- Inventory data structures
-- CombatTextSystem (client)
-- Hotbar scene (client, incomplete)
+- **GNS Runtime**: Requires WebRTC auth token (external blocker)
+- **Production Database**: Requires Docker daemon (external blocker)
 
 ---
 
 ## Files Created
 
-All PRDs saved to repository root:
-- `/workspace/project/DarkAges/prd-npc-dialogue-system.md`
-- `/workspace/project/DarkAges/prd-client-ui-framework.md`
-- `/workspace/project/DarkAges/prd-abilities-casting-ui.md`
-- `/workspace/project/DarkAges/prd-production-database.md`
-- `/workspace/project/DarkAges/prd-loot-drop-system.md`
-- `/workspace/project/DarkAges/prd-spawn-system-completion.md`
-- `/workspace/project/DarkAges/prd-gns-runtime-integration.md`
-- `/workspace/project/DarkAges/prd-sound-music-system.md`
-- `/workspace/project/DarkAges/prd-save-load-system.md`
-- `/workspace/project/DarkAges/prd-character-spawn-login.md`
-- `/workspace/project/DarkAges/prd-death-respawn-system.md`
+All PRDs saved to `/workspace/project/DarkAges/prd/`:
+
+**New Gap PRDs (May 2026):**
+- `prd-gap-001-boss-npc-spawning.md`
+- `prd-gap-002-zone-objectives-integration.md`
+- `prd-gap-003-npc-ai-behavior.md`
+- `prd-gap-004-production-metrics-dashboard.md`
+- `prd-gap-005-world-data-population.md`
+- `prd-gap-006-client-warnings-resolution.md`
+- `prd-gap-007-arena-wave-spawning.md`
+- `prd-gap-008-tutorial-zone-npc-spawning.md`
+- `prd-gap-009-client-save-state-restore.md`
+- `prd-gap-010-party-quest-integration-tests.md`
+
+**Previous Gap PRDs (Feb 2026):**
+- `prd-npc-dialogue-system.md`
+- `prd-client-ui-framework.md`
+- `prd-abilities-casting-ui.md`
+- `prd-production-database.md`
+- `prd-loot-drop-system.md`
+- `prd-spawn-system-completion.md`
+- `prd-gns-runtime-integration.md`
+- `prd-sound-music-system.md`
+- `prd-save-load-system.md`
+- `prd-character-spawn-login.md`
+- `prd-death-respawn-system.md`
 
 ---
 
