@@ -11,7 +11,8 @@
 [ext_resource type="Script" path="res://src/ui/CombatTextSystem.cs" id="9_combattext"]
 [ext_resource type="Script" path="res://src/audio/AudioManager.cs" id="10_audomanager"]
 [ext_resource type="Script" path="res://src/audio/CombatAudioSystem.cs" id="11_combataudio"]
-[ext_resource type="Script" path="res://src/particles/CombatParticleSystem.cs" id="12_particles"]
+[ext_resource type="Script" path="res://src/entities/NPCManager.cs" id="13_npcman"]
+[ext_resource type="Script" path="res://src/utils/SaveManager.cs" id="14_saveman"]
 
 [sub_resource type="PlaneMesh" id="PlaneMesh_ground"]
 size = Vector2(200, 200)
@@ -176,3 +177,9 @@ script = ExtResource("11_combataudio")
 
 [node name="CombatParticleSystem" type="Node" parent="."]
 script = ExtResource("12_particles")
+
+[node name="NPCManager" type="Node" parent="."]
+script = ExtResource("13_npcman")
+
+[node name="SaveManager" type="Node" parent="."]
+script = ExtResource("14_saveman")
