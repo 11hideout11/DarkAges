@@ -105,6 +105,24 @@ After model import:
 - [ ] No z-fighting with shadow plane
 - [ ] Maintains 60fps
 
+## ModelManager Integration
+
+The game includes `ModelManager.cs` (`src/client/src/utils/ModelManager.cs`) for programmatic
+model loading and animation control. Usage:
+
+```csharp
+// In your player script
+var modelMgr = new ModelManager();
+modelMgr.LoadModel(ModelManager.ModelCategory.PlayerMale, "player_male");
+modelMgr.SetAnimationState(ModelManager.AnimationState.Idle);
+```
+
+### ModelManager Features
+- Load/unload character models at runtime
+- Animation state machine (idle, walk, run, attack_light, attack_heavy, block, hit, death)
+- Capsule fallback for prototyping
+- Visibility control
+
 ## Godot Version Requirement
 
 Pinned to **Godot 4.2.4** (NOT 4.6)
