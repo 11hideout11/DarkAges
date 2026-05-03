@@ -1,5 +1,15 @@
 ## Recent Commits (last 10 — updated 2026-05-03)
 
+1. `d6c3b03`: fix: zone advancement pipeline — onZoneComplete, triggerMigration, objective completion
+2. `HEAD`: fix(client): resolve 47 C# build errors — Godot 4.2 API migration complete
+3. `778dc58`: merge: integrate remote origin/main; resolve AGENTS.md and PRD docs conflicts
+4. `cc30fea`: Merge PR #73 — PRD status review: mark PRD-020/021/024 resolved
+5. `e8265b2`: docs: mark PRD-024 resolved in PRD file
+6. `ae80c7a`: docs: mark PRD-021 resolved (no WebSocket client exists)
+7. `8106632`: docs: mark PRD-020 complete, update Phase 8 status in AGENTS.md
+8. `78f2162`: fix(client): use CallDeferred for AddChild (PRD-020 headless fix)
+9. `a99ff1d`: docs: mark PLAN.md implementation steps complete
+10. `a8b167b`: docs: mark PRD-029 and PRD-030 complete in AGENTS.md
 1. `8e1b163`: docs: fix README broken links and improve formatting
 2. `61a0288`: docs: add DOCS_INDEX.md navigation guide
 3. `409f230`: docs: sync AGENTS.md and README.md with current state
@@ -23,6 +33,7 @@
 - **Tests**: All suites passing (1305 cases, 7254 assertions, 100%)
 - **Client Build**: C# Godot 4.2.2 — 0 errors, 208 warnings (all CS8618 non-nullable field patterns, standard Godot)
 - **Demo Pipeline**: ✅ 5/5 checks passed — UDP ping, handshake, snapshots (123 in 5s), clean logs, binary
+- **Zone Advancement**: ✅ Wired — `onZoneComplete`→`getNextZoneId`→`triggerMigration` pipeline active (tutorial→arena→boss→tutorial). Tested: 15 handoff test cases, 96 assertions, including triggerMigration edge cases.
 - Server: ~32K LOC (C++20, EnTT ECS, 60Hz tick) | Client: ~9K LOC (C# Godot 4.2)
 - **PR #29 status**: MERGED — Combat FSM refactor completed
 - **PR #57 status**: MERGED — UDP socket implementation with real BSD sockets; GNS build unblocked; protocol decoupling complete
@@ -153,30 +164,30 @@
 - **2 PRDs blocked** (GNS runtime — WebRTC auth; Production DB — Docker)
 - **Test baseline**: 1305 cases, 7254 assertions, 100% passing
 
-### This Session's Work
-- Server C++: builds clean, 1305 tests all pass, 100%
-- Client C# (Godot 4.2): fixed 47 build errors across 6 files — 0 errors, 208 warnings
-  - `SaveManager.cs`: `DirAccess` API migration (`MakeDirAbsolute`/`DirExistsAbsolute`)
-  - `UITheme.cs`: float→int casts for `StyleBoxFlat` properties, `CreateLabel` initializer fix
-  - `HitEffect.cs`: null-conditional assignment fix (`?.Emitting =` → explicit null checks)
-  - `CombatParticleSystem.cs`: lowercase `.y` → `.Y`
-  - `FootIKController.cs`: enum path qualification (`CombatState` → `CombatStateMachineController.CombatState`)
-  - `NPCManager.cs`: dead code after return commented out
-- Demo pipeline: 5/5 checks pass — UDP ping, handshake, 123 snapshots/5s, clean logs, binary
-- AGENTS.md: updated with client build status, demo validation results
+### This Session's Work (2026-05-03)
+- **Cross-reference audit**: Verified all 24 PRDs against actual codebase — all 24 match commit state
+- **Zone advancement pipeline**: Fixed and validated `onZoneComplete` signal subscription:
+  - `OnZoneComplete()` → `OnZoneCompleted()` (wrong method name; would not compile)
+  - Removed duplicate/broken `onZoneObjectiveCompleted` subscription
+  - Fixed `unique_ptr` access (`handoffController_.` → `handoffController->`)
+  - `getNextZoneId()`: tutorial(98)→arena(99)→boss(100)→tutorial(98)
+  - `triggerMigration()`: full handoff initialization in ZoneHandoffController
+  - ObjectiveSystem tick: emits `_zoneCompleteSignal` when all objectives met
+- **Build**: 0 errors (server C++), 11/11 test suites pass (100%)
+- **AGENTS.md**: Updated P0-2 to ✅ COMPLETE, corrected remaining gaps (both zone JSON gaps now resolved)
+- **Boss zone**: Already has NPC presets (ogre_chieftain boss + phases) — no longer a gap
+- **Zone advancement tests**: 2 new test cases (7 sections) for `triggerMigration` covering basic migration, duplicate/same-zone/unknown-zone rejection, multi-player concurrency, and missing zoneLookup edge case. All 15 handoff tests pass (96 assertions).
 
 ### MVP Readiness Assessment (2026-04-28 Criteria)
 | Requirement | Status | Notes |
 |---|---|---|
-| P0-1: Combat Multiplayer Template | ✅ COMPLETE | FSM, hitbox/hurtbox, AnimationTree, IK, lock-on |
-| P0-2: Demo Zones | ⚠️ PARTIAL | 3 zones exist; boss zone has 0 NPCs; objectives sys not wired to zone configs |
-| P0-3: Gameplay | ✅ COMPLETE | Human-playable, visual feedback, demo mode, all systems integrated |
+| P0-1: Combat Multiplayer Template | ✅ COMPLETE | FSM, hitbox/hurtbox, AnimationTree, IK, lock-on, PhantomCamera |
+| P0-2: Demo Zones | ✅ COMPLETE | 3 curated zones (tutorial/arena/boss) with NPC presets, objectives, and wave/boss events |
+| P0-3: Gameplay | ✅ COMPLETE | Human-playable, visual feedback, demo mode, zone advancement pipeline wired |
 
-### Remaining Gaps (for next session)
-1. **Boss zone NPC definitions** — `boss.json` has 0 NPC presets; needs boss entity with combat behavior
-2. **Zone objectives** — ZoneObjectiveSystem exists in code but zone JSON configs have 0 objectives defined
-3. **GNS runtime** — Requires WebRTC auth token (external blocker)
-4. **Production DB** — Requires Docker daemon (external blocker)
+### Remaining Gaps (as of 2026-05-03)
+1. **GNS runtime** — Requires WebRTC auth token (external blocker)
+2. **Production DB** — Requires Docker daemon (external blocker)
 
 ## OpenHands Integration Updates (2026-05-02)
 
@@ -186,7 +197,7 @@
 - Microagents present in `.openhands/microagents/` for Godot 4.2 pinning, server C++ conventions, networking, repo context
 - Documentation: `OPENHANDS_SKILLS_REFERENCE.md` — comprehensive skill reference
 
-Last updated: 2026-05-03
+Last updated: 2026-05-03 (session 3)
 
 ## Validation Attempt (2026-05-03)
 
