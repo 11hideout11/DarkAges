@@ -134,8 +134,8 @@ bool PartySystem::InvitePlayer(uint64_t party_id, uint64_t inviter_id, uint64_t 
         return false;
     }
     
-    // Add pending invitation
-    pending_invitations_.push_back(party_id);
+    // Add pending invitation (party_id, target_id)
+    pending_invitations_.push_back({party_id, target_id});
     
     std::cout << "[PartySystem] Invited " << target_id 
               << " to party " << party_id << std::endl;
@@ -146,12 +146,27 @@ bool PartySystem::InvitePlayer(uint64_t party_id, uint64_t inviter_id, uint64_t 
 bool PartySystem::AcceptInvitation(uint64_t player_id, uint64_t party_id) {
     std::lock_guard<std::mutex> lock(mutex_);
     
-    // Remove from pending
-    auto inv_it = std::find(pending_invitations_.begin(), pending_invitations_.end(), party_id);
-    if (inv_it == pending_invitations_.end()) {
+    // BUG-5 fix: Must check this player was invited to this party
+    // pending_invitations_ stores (party_id, target_id) pairs
+    bool found = false;
+    for (auto it = pending_invitations_.begin(); it != pending_invitations_.end(); ++it) {
+        if (it->first == party_id && it->second == player_id) {
+            found = true;
+            pending_invitations_.erase(it);
+            break;
+        }
+    }
+    if (!found) {
+        std::cout << "[PartySystem] No invitation found for player " << player_id 
+                  << " to party " << party_id << std::endl;
         return false;
     }
-    pending_invitations_.erase(inv_it);
+    
+    // BUG-17 fix: Re-check player not already in another party
+    if (player_party_.count(player_id)) {
+        std::cout << "[PartySystem] Player already in party: " << player_id << std::endl;
+        return false;
+    }
     
     // Add to party
     auto pit = parties_.find(party_id);
@@ -276,6 +291,19 @@ bool PartySystem::TransferLeadership(uint64_t party_id, uint64_t current_leader,
     
     // Only current leader can transfer
     if (party.leader_id != current_leader) {
+        return false;
+    }
+    
+    // BUG-4 fix: Verify new leader is a current member
+    bool is_member = false;
+    for (const auto& member : party.members) {
+        if (member.player_id == new_leader_id) {
+            is_member = true;
+            break;
+        }
+    }
+    if (!is_member) {
+        std::cout << "[PartySystem] New leader not a member: " << new_leader_id << std::endl;
         return false;
     }
     

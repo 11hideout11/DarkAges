@@ -219,7 +219,8 @@ private:
     std::mutex mutex_;
     std::unordered_map<uint64_t, Party> parties_;
     std::unordered_map<uint64_t, uint64_t> player_party_;
-    std::vector<uint64_t> pending_invitations_;
+    // BUG-3, BUG-5 fix: key by (party_id, target_id) to properly track invites
+    std::vector<std::pair<uint64_t, uint64_t>> pending_invitations_;
     std::atomic<uint64_t> next_party_id_{1};
 
     bool CanInvite(const Party& party, uint64_t player_id) const;

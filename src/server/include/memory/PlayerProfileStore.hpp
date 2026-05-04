@@ -77,6 +77,12 @@ public:
     void SaveCharacterImmediate(const PlayerProfile& profile);
 
     /**
+     * @brief Internal save without locking (caller holds mutex)
+     * @param profile Profile to save
+     */
+    void SaveCharacterInternal(const PlayerProfile& profile);
+
+    /**
      * @brief Get all characters for an account
      * @param account_id Account to query
      * @return List of character info (without sensitive data)
@@ -125,6 +131,7 @@ private:
     std::string GetProfilePath(uint64_t character_id) const;
     bool ValidateName(const std::string& name) const;
     void ApplyStarterLoadout(PlayerProfile& profile) const;
+    PlayerProfile ParseProfileJson(uint64_t character_id, const std::string& json) const;
 };
 
 // ============================================================================

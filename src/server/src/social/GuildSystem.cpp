@@ -39,6 +39,14 @@ std::optional<uint64_t> GuildSystem::CreateGuild(
         return std::nullopt;
     }
     
+    // Check name is unique (BUG-1 fix)
+    for (const auto& [id, g] : guilds_) {
+        if (g.name == name) {
+            std::cout << "[GuildSystem] Guild name already taken: " << name << std::endl;
+            return std::nullopt;
+        }
+    }
+    
     // Check player not already in guild
     if (player_guild_.count(leader_id)) {
         std::cout << "[GuildSystem] Player already in guild: " << leader_id << std::endl;
@@ -174,6 +182,12 @@ bool GuildSystem::InvitePlayer(uint64_t guild_id, uint64_t inviter_id, uint64_t 
 
 bool GuildSystem::AcceptInvitation(uint64_t player_id, uint64_t guild_id) {
     std::lock_guard<std::mutex> lock(mutex_);
+    
+    // BUG-2 fix: Check player not already in guild
+    if (player_guild_.count(player_id)) {
+        std::cout << "[GuildSystem] Player already in guild: " << player_id << std::endl;
+        return false;
+    }
     
     // Find invitation
     for (auto& inv : invitations_) {
