@@ -867,7 +867,7 @@ if(BUILD_TESTS AND TARGET Catch2::Catch2WithMain)
         src/server/tests/TestCraftingSystem.cpp
         src/server/tests/TestTradeSystem.cpp
         src/server/tests/TestZoneEventSystem.cpp
-        src/server/tests/TestDialogueSystem.cpp
+        src/server/tests/TestNewGamePlusSystem.cpp
         src/server/tests/TestExperienceSystem.cpp
         src/server/tests/TestSpawnSystem.cpp
         src/server/tests/TestSpawnSystemIntegration.cpp

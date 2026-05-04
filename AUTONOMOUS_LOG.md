@@ -925,3 +925,8 @@
 ============================================================
 [dev-loop] Starting at 2026-05-04 02:00 UTC [mode=deep]
 [dev-loop] Agent Map: /root/projects/DarkAges/AGENTS.md
+
+[2026-05-04T04:05:36.987065+00:00] FAILURE: ============================================================
+[dev-loop] Starting at 2026-05-04 04:05 UTC [mode=once]
+[dev-loop] Agent Map: /root/projects/DarkAges/AGENTS.md (age=0d)
+[dev-loop] Context
