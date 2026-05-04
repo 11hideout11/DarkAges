@@ -58,8 +58,9 @@ ZoneServer::ZoneServer()
       inputHandler_(*this),
       performanceHandler_(*this),
       antiCheatHandler_(*this),
-        dailyChallengeSystem_(nullptr){
-    dailyChallengeSystem_ = DailyChallengeSystem(&networkManager_);
+    network_(std::make_unique<NetworkManager>()),
+    dailyChallengeSystem_(&*network_)
+{
 }
 ZoneServer::~ZoneServer() = default;
 

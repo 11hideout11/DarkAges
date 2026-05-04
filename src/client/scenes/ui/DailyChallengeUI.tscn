@@ -1,0 +1,60 @@
+<gd_scene format="3" load_steps="3">
+    <ext_resource type="Script" path="res://src/ui/DailyChallengeUI.cs" />
+    <node name="DailyChallengeUI" type="VBoxContainer">
+        <node name="Challenge1" type="Panel">
+            <node name="Name" type="Label">
+                <default>
+                    <font>res://ui/fonts/DefaultFont.tres</font>
+                    <horizontal_alignment>0</horizontal_alignment>
+                    <vertical_alignment>1</vertical_alignment>
+                    <size_flags_horizontal>3</size_flags_horizontal>
+                    <size_flags_vertical>0</size_flags_vertical>
+                </default>
+            </node>
+            <node name="ProgressBar" type="ProgressBar">
+                <default>
+                    <min>0</min>
+                    <max>1</max>
+                    <value>0.5</value>
+                    <step>0.01</step>
+                </default>
+            </node>
+            <node name="ProgressLabel" type="Label">
+                <default>
+                    <font>res://ui/fonts/DefaultFont.tres</font>
+                    <horizontal_alignment>1</horizontal_alignment>
+                    <vertical_alignment>1</vertical_alignment>
+                </default>
+            </node>
+            <node name="ClaimButton" type="Button">
+                <default>
+                    <text>Claim Rewards</text>
+                    <font>res://ui/fonts/DefaultFont.tres</font>
+                    <h_align>1</h_align>
+                    <v_align>1</v_align>
+                </default>
+            </node>
+            <node name="RewardLabel" type="Label">
+                <default>
+                    <font>res://ui/fonts/DefaultFont.tres</font>
+                    <horizontal_alignment>1</horizontal_alignment>
+                    <vertical_alignment>1</vertical_alignment>
+                </default>
+            </node>
+        </node>
+        <node name="Challenge2" type="Panel">
+            <node name="Name" type="Label" />
+            <node name="ProgressBar" type="ProgressBar" />
+            <node name="ProgressLabel" type="Label" />
+            <node name="ClaimButton" type="Button" />
+            <node name="RewardLabel" type="Label" />
+        </node>
+        <node name="Challenge3" type="Panel">
+            <node name="Name" type="Label" />
+            <node name="ProgressBar" type="ProgressBar" />
+            <node name="ProgressLabel" type="Label" />
+            <node name="ClaimButton" type="Button" />
+            <node name="RewardLabel" type="Label" />
+        </node>
+    </node>
+</gd_scene>

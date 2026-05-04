@@ -39,6 +39,7 @@
 #include "combat/ProgressionCalculator.hpp"
 #include "combat/DialogueSystem.hpp"
 #include "combat/SpawnSystem.hpp"
+#include "combat/DailyChallengeSystem.hpp"
 #include "security/AntiCheat.hpp"
 #include "profiling/PerfettoProfiler.hpp"
 #include "profiling/PerformanceMonitor.hpp"

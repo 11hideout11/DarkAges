@@ -18,12 +18,15 @@ namespace DarkAges.Client.UI
         private HealthBarSystem _targetHealthBar;
         private AbilityBar _abilityBar;
         private TargetLockSystem _targetLockSystem;
-        private CombatTextSystem _combatTextSystem;
-        private DeathRespawnUI _deathRespawnUI;
-        private ChatPanel _chatPanel;
+// Quest Tracker
         private QuestTracker _questTracker;
+
+        // Dialogue Panel
         private DialoguePanel _dialoguePanel;
-        
+
+        // Daily Challenge UI
+        private DailyChallengeUI _dailyChallengeUI;
+
         // Crosshair
         private TextureRect _crosshair;
         private TextureRect _hitMarker;
@@ -119,6 +122,14 @@ namespace DarkAges.Client.UI
                 AddChild(_chatPanel);
             }
 
+            // Daily Challenge UI
+            _dailyChallengeUI = GetNode<DailyChallengeUI>("DailyChallengeUI");
+            if (_dailyChallengeUI == null)
+            {
+                _dailyChallengeUI = new DailyChallengeUI();
+                AddChild(_dailyChallengeUI);
+            }
+
             // Quest Tracker
             _questTracker = GetNode<QuestTracker>("QuestTracker");
             if (_questTracker == null)
@@ -144,6 +155,12 @@ namespace DarkAges.Client.UI
             if (NetworkManager.Instance != null)
             {
                 NetworkManager.Instance.DialogueStartReceived += OnDialogueStart;
+            }
+
+            // Connect to daily challenge updates
+            if (NetworkManager.Instance != null)
+            {
+                NetworkManager.Instance.DailyChallengeUpdateReceived += OnDailyChallengeUpdate;
             }
 
             // Interaction Prompt (Phase 2.5)
@@ -289,6 +306,13 @@ namespace DarkAges.Client.UI
         private void OnDialogueStart(uint npcId, uint dialogueId, string npcName, string dialogueText, string[] options)
         {
             _dialoguePanel?.ShowDialogue(npcId, npcName, dialogueText, options, dialogueId);
+        }
+
+        private void OnDailyChallengeUpdate(uint accountId, uint challengeId, uint progress, 
+            uint xpReward, uint goldReward, uint itemReward)
+        {
+            GD.Print($"[HUDController] Daily challenge update: challenge={challengeId} progress={progress}");
+            _dailyChallengeUI?.UpdateChallenge(accountId, challengeId, progress, xpReward, goldReward, itemReward);
         }
 
         

@@ -65,12 +65,15 @@ namespace DarkAges.Networking
     public delegate void ZoneObjectiveUpdateReceivedEventHandler(byte eventType, string objectiveId, ushort currentProgress, ushort requiredProgress, byte waveNumber, string message);
     [Signal]
     public delegate void DialogueStartReceivedEventHandler(uint npcId, uint dialogueId, string npcName, string dialogueText, string[] options);
-    [Signal]
+[Signal]
     public delegate void InventorySyncReceivedEventHandler(float gold, int[] itemIds, int[] quantities);
     [Signal]
     public delegate void InventoryUpdateReceivedEventHandler(int slotIndex, int itemId, int quantity);
+    [Signal]
+    public delegate void DailyChallengeUpdateReceivedEventHandler(uint accountId, uint challengeId, uint progress, 
+        uint xpReward, uint goldReward, uint itemReward);
 
- // Socket
+    // Socket
         private UdpClient? _udpClient;
         private IPEndPoint? _serverEndPoint;
         private Thread? _receiveThread;
@@ -112,6 +115,7 @@ namespace DarkAges.Networking
         private const byte PACKET_INVENTORY_SYNC = 19;       // Server -> Client: full inventory sync on login
         private const byte PACKET_INVENTORY_UPDATE = 20;      // Server -> Client: incremental inventory change
         private const byte PACKET_DIALOGUE_RESPONSE = 8;  // Client -> Server: dialogue option selected
+        private const byte PACKET_DAILY_CHALLENGE_UPDATE = 21; // Server -> Client: daily challenge progress update
 
         public override void _EnterTree()
         {
@@ -464,6 +468,9 @@ namespace DarkAges.Networking
                     break;
                 case PACKET_INVENTORY_UPDATE:
                     ProcessInventoryUpdate(data);
+                    break;
+                case PACKET_DAILY_CHALLENGE_UPDATE:
+                    ProcessDailyChallengeUpdate(data);
                     break;
                 default:
                     GD.Print($"[NetworkManager] Unknown packet type: {packetType}");
@@ -1038,7 +1045,7 @@ namespace DarkAges.Networking
         /// Process incremental inventory update from server.
         /// Format: [type:1=20][slotIndex:1][itemId:4][quantity:4]
         /// </summary>
-        private void ProcessInventoryUpdate(byte[] data)
+private void ProcessInventoryUpdate(byte[] data)
         {
             if (data.Length < 10) return;
 
@@ -1048,6 +1055,25 @@ namespace DarkAges.Networking
 
             GD.Print($"[NetworkManager] Inventory update: slot={slotIndex} item={itemId} qty={quantity}");
             EmitSignal(SignalName.InventoryUpdateReceived, slotIndex, itemId, quantity);
+        }
+
+        /// <summary>
+        /// Process daily challenge update from server.
+        /// Format: [type:1=21][accountId:4][challengeId:4][progress:4][xpReward:4][goldReward:4][itemReward:4]
+        /// </summary>
+        private void ProcessDailyChallengeUpdate(byte[] data)
+        {
+            if (data.Length < 25) return; // Minimum: type(1) + 6*uint32(24)
+
+            uint accountId = BitConverter.ToUInt32(data, 1);
+            uint challengeId = BitConverter.ToUInt32(data, 5);
+            uint progress = BitConverter.ToUInt32(data, 9);
+            uint xpReward = BitConverter.ToUInt32(data, 13);
+            uint goldReward = BitConverter.ToUInt32(data, 17);
+            uint itemReward = BitConverter.ToUInt32(data, 21);
+
+            GD.Print($"[NetworkManager] Daily challenge update: account={accountId} challenge={challengeId} progress={progress}");
+            EmitSignal(SignalName.DailyChallengeUpdateReceived, accountId, challengeId, progress, xpReward, goldReward, itemReward);
         }
     }
 }
