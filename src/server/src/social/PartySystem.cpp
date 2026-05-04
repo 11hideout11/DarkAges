@@ -199,13 +199,18 @@ bool PartySystem::AcceptInvitation(uint64_t player_id, uint64_t party_id) {
 void PartySystem::DeclineInvitation(uint64_t player_id, uint64_t party_id) {
     std::lock_guard<std::mutex> lock(mutex_);
     
-    auto it = std::find(pending_invitations_.begin(), pending_invitations_.end(), party_id);
-    if (it != pending_invitations_.end()) {
-        pending_invitations_.erase(it);
+    // BUG-3 fix: match on (party_id, target_id), not just party_id
+    for (auto it = pending_invitations_.begin(); it != pending_invitations_.end(); ++it) {
+        if (it->first == party_id && it->second == player_id) {
+            pending_invitations_.erase(it);
+            std::cout << "[PartySystem] Player " << player_id 
+                      << " declined party " << party_id << std::endl;
+            return;
+        }
     }
     
-    std::cout << "[PartySystem] Player " << player_id 
-              << " declined party " << party_id << std::endl;
+    std::cout << "[PartySystem] No pending invite found for player " << player_id 
+              << " to party " << party_id << std::endl;
 }
 
 bool PartySystem::KickMember(uint64_t party_id, uint64_t kicker_id, uint64_t target_id) {

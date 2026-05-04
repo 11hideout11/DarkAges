@@ -1267,12 +1267,37 @@ void ZoneServer::onClientDisconnected(ConnectionID connectionId) {
         // Save state via PlayerManager
         playerManager_.savePlayerState(entity);
 
-        // [T1.1] Persist player profile to disk
+        // [T1.1] FIX-7: Persist player with entity state copy
         if (profileStore_ && const PlayerInfo* info = registry_.try_get<PlayerInfo>(entity)) {
-            auto profile = profileStore_->LoadCharacter(info->playerId);
-            if (profile) {
-                profileStore_->SaveCharacterImmediate(*profile);
+            // Get entity stats from components
+            float health = 100.0f, maxHealth = 100.0f;
+            float mana = 100.0f, maxMana = 100.0f;
+            float x = 0, y = 0, z = 0;
+            uint8_t level = 1;
+            uint32_t experience = 0, currency = 0;
+            uint32_t home_zone = config_.zoneId;
+            
+            if (const auto* stats = registry_.try_get<Stats>(entity)) {
+                health = stats->health;
+                maxHealth = stats->maxHealth;
+                mana = stats->mana;
+                maxMana = stats->maxMana;
+                level = stats->level;
+                experience = stats->experience;
+                currency = stats->currency;
             }
+            if (const auto* pos = registry_.try_get<Position>(entity)) {
+                x = pos->x;
+                y = pos->y;
+                z = pos->z;
+            }
+            
+            // Update and save with entity state
+            profileStore_->UpdateAndSave(
+                info->playerId, level, experience, currency,
+                health, maxHealth, mana, maxMana,
+                x, y, z, home_zone
+            );
         }
 
         // [ZONE_AGENT] Full cleanup via despawnEntity (destroyedEntities_, replication, lagCompensator)

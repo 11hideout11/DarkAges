@@ -413,4 +413,64 @@ PlayerProfile PlayerProfileStore::ParseProfileJson(uint64_t character_id, const 
     return profile;
 }
 
+void PlayerProfileStore::UpdateAndSave(
+    uint64_t character_id,
+    uint8_t level,
+    uint32_t experience,
+    uint32_t currency,
+    float health,
+    float maxHealth,
+    float mana,
+    float maxMana,
+    float world_x,
+    float world_y,
+    float world_z,
+    uint32_t home_zone
+) {
+    std::lock_guard<std::mutex> lock(mutex_);
+    
+    // Load existing or create new
+    PlayerProfile profile;
+    auto it = cache_.find(character_id);
+    if (it != cache_.end()) {
+        profile = it->second;
+    } else {
+        // Load from disk if not cached
+        std::string path = GetProfilePath(character_id);
+        std::ifstream file(path);
+        if (file.is_open()) {
+            std::stringstream buffer;
+            buffer << file.rdbuf();
+            profile = ParseProfileJson(character_id, buffer.str());
+        } else {
+            std::cout << "[ProfileStore] Character not found for update: " << character_id << std::endl;
+            return;
+        }
+    }
+    
+    // FIX-7: Copy entity state to profile before saving
+    profile.level = level;
+    profile.experience = experience;
+    profile.currency = currency;
+    profile.health = health;
+    profile.max_health = maxHealth;
+    profile.mana = mana;
+    profile.max_mana = maxMana;
+    profile.position.x = world_x;
+    profile.position.y = world_y;
+    profile.position.z = world_z;
+    profile.home_zone_id = home_zone;
+    profile.last_save = std::chrono::system_clock::now();
+    profile.dirty = false;
+    
+    // Update cache
+    cache_[character_id] = profile;
+    
+    // Save to disk
+    SaveCharacterInternal(profile);
+    
+    std::cout << "[ProfileStore] Updated and saved character: " << character_id 
+              << " (Lv" << (int)level << ")" << std::endl;
+}
+
 } // namespace DarkAges

@@ -83,6 +83,27 @@ public:
     void SaveCharacterInternal(const PlayerProfile& profile);
 
     /**
+     * @brief Update profile from entity and save (FIX-7: entity state copy)
+     * @param character_id ID to update
+     * @param level Current level
+     * @param experience Current XP
+     * @param currency Current gold
+     * @param health Current HP
+     * @param maxHealth Max HP
+     * @param mana Current MP
+     * @param maxMana Max MP
+     * @param world_x World position X
+     * @param world_y World position Y
+     * @param world_z World position Z
+     * @param home_zone Home zone ID
+     */
+    void UpdateAndSave(uint64_t character_id, uint8_t level, uint32_t experience, 
+                    uint32_t currency, float health, float maxHealth,
+                    float mana, float maxMana,
+                    float world_x, float world_y, float world_z,
+                    uint32_t home_zone);
+
+    /**
      * @brief Get all characters for an account
      * @param account_id Account to query
      * @return List of character info (without sensitive data)
