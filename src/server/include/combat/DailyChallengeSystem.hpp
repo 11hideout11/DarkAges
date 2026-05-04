@@ -4,6 +4,7 @@
 #include <vector>
 #include <cstdint>
 #include <entt/entt.hpp>
+#include <netcode/NetworkManager.hpp>
 
 // ============================================================================
 // Daily Challenge System — PRD-040 Integration
@@ -36,6 +37,7 @@ struct DailyChallenge {
 
 // Player's challenge progress
 struct ChallengeProgress {
+    uint32_t accountId{0};
     uint32_t challengeId{0};
     uint32_t progress{0};
     bool completed{false};
@@ -44,7 +46,7 @@ struct ChallengeProgress {
 
 class DailyChallengeSystem {
 public:
-    DailyChallengeSystem() = default;
+    DailyChallengeSystem(NetworkManager* network);
     
     // PRD-040: Generate daily challenges (3 per day)
     void generateDailyChallenges();
@@ -65,6 +67,9 @@ public:
     // PRD-040: Check if challenges need regeneration
     bool needsRegeneration();
     
+    // Send daily challenges to a specific player (client)
+    void sendDailyChallengesToClient(ConnectionID connectionId);
+    
 private:
     void generateChallenge(DailyChallenge& chal, uint32_t seed);
     uint32_t getDayOfYear();
@@ -72,6 +77,7 @@ private:
     std::vector<DailyChallenge> dailyChallenges_;
     std::vector<ChallengeProgress> playerProgress_;
     uint32_t lastGenerateDay_{0};
+    NetworkManager* network_{nullptr};
 };
 
 } // namespace DarkAges

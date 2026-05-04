@@ -57,7 +57,9 @@ ZoneServer::ZoneServer()
       auraZoneHandler_(*this),
       inputHandler_(*this),
       performanceHandler_(*this),
-      antiCheatHandler_(*this) {
+      antiCheatHandler_(*this),
+        dailyChallengeSystem_(nullptr){
+    dailyChallengeSystem_ = DailyChallengeSystem(&networkManager_);
 }
 ZoneServer::~ZoneServer() = default;
 
@@ -1169,6 +1171,7 @@ void ZoneServer::updateDatabase() {
 }
 
 void ZoneServer::onClientConnected(ConnectionID connectionId) {
+    dailyChallengeSystem_.sendDailyChallengesToClient(connectionId);
     std::cout << "[ZONE " << config_.zoneId << "] Client connected: " << connectionId << std::endl;
 
     // [ZONE_AGENT] Use PlayerManager to register player

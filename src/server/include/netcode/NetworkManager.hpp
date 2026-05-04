@@ -212,6 +212,7 @@ public:
     // Send quest update to a specific client
     void sendQuestUpdate(ConnectionID connectionId, const QuestUpdatePacket& msg);
     void sendZoneObjectiveUpdate(ConnectionID connectionId, const ZoneObjectiveUpdatePacket& msg);
+    void sendDailyChallengeUpdate(ConnectionID connectionId, const DailyChallengePacket& msg);
 
     // Send dialogue start (NPC conversation) to a specific client
     void sendDialogueStart(ConnectionID connectionId, const Protocol::DialogueStartPacket& pkt);

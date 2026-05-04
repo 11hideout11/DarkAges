@@ -1,3 +1,4 @@
+#pragma once
 #ifndef DARKAGES_PROTOCOL_HPP
 #define DARKAGES_PROTOCOL_HPP
 
@@ -135,3 +136,13 @@ bool deserializeInventoryUpdate(std::span<const uint8_t> data, InventoryUpdatePa
 } // namespace DarkAges
 
 #endif // DARKAGES_PROTOCOL_HPP
+
+
+struct DailyChallengePacket {
+    uint32_t accountId;
+    uint32_t challengeId;
+    uint32_t progress;
+    uint32_t xpReward;
+    uint32_t goldReward;
+    uint32_t itemReward;
+};

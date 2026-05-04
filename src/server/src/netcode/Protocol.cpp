@@ -658,6 +658,134 @@ bool deserializeInventorySync(std::span<const uint8_t> data, InventorySyncPacket
     return true;
 }
 
+// ============================================================================
+// Daily Challenge Packet Serialization
+// ============================================================================
+
+std::vector<uint8_t> serializeDailyChallenge(const DailyChallengePacket& pkt) {
+    std::vector<uint8_t> data;
+    // Calculate sizes: challengeId(4) + nameLen(1) + nameLen bytes + descLen(1) + descLen bytes + type(1) + target(4) + progress(4) + completed(1) + xpReward(4) + goldReward(4) + itemReward(4)
+    size_t nameLen = strnlen(pkt.name.c_str(), 47);
+    size_t descLen = strnlen(pkt.description.c_str(), 95);
+    data.reserve(4 + 1 + nameLen + 1 + descLen + 1 + 4 + 4 + 1 + 4 + 4 + 4);
+    
+    auto appendUInt32 = [&data](uint32_t value) {
+        const uint8_t* bytes = reinterpret_cast<const uint8_t*>(&value);
+        data.insert(data.end(), bytes, bytes + sizeof(uint32_t));
+    };
+    
+    // Challenge ID
+    appendUInt32(pkt.challengeId);
+    
+    // Name (length-prefixed)
+    data.push_back(static_cast<uint8_t>(nameLen));
+    data.insert(data.end(), pkt.name.begin(), pkt.name.end());
+    
+    // Description (length-prefixed)
+    data.push_back(static_cast<uint8_t>(descLen));
+    data.insert(data.end(), pkt.description.begin(), pkt.description.end());
+    
+    // Type (as uint8_t)
+    data.push_back(pkt.type);
+    
+    // Target
+    appendUInt32(pkt.target);
+    
+    // Progress
+    appendUInt32(pkt.progress);
+    
+    // Completed flag
+    data.push_back(pkt.completed ? 1 : 0);
+    
+    // XP Reward
+    appendUInt32(pkt.xpReward);
+    
+    // Gold Reward
+    appendUInt32(pkt.goldReward);
+    
+    // Item Reward
+    appendUInt32(pkt.itemReward);
+    
+    return data;
+}
+
+bool deserializeDailyChallenge(std::span<const uint8_t> data, DailyChallengePacket& outPkt) {
+    size_t idx = 0;
+    if (data.size() < 4) return false;
+    
+    // Challenge ID
+    if (idx + 4 > data.size()) return false;
+    outPkt.challengeId = static_cast<uint32_t>(data[idx]) |
+                        (static_cast<uint32_t>(data[idx+1]) << 8) |
+                        (static_cast<uint32_t>(data[idx+2]) << 16) |
+                        (static_cast<uint32_t>(data[idx+3]) << 24);
+    idx += 4;
+    
+    // Name length
+    if (idx >= data.size()) return false;
+    uint8_t nameLen = data[idx++];
+    if (idx + nameLen > data.size()) return false;
+    outPkt.name.assign(reinterpret_cast<const char*>(&data[idx]), nameLen);
+    idx += nameLen;
+    
+    // Description length
+    if (idx >= data.size()) return false;
+    uint8_t descLen = data[idx++];
+    if (idx + descLen > data.size()) return false;
+    outPkt.description.assign(reinterpret_cast<const char*>(&data[idx]), descLen);
+    idx += descLen;
+    
+    // Type
+    if (idx >= data.size()) return false;
+    outPkt.type = data[idx++];
+    
+    // Target
+    if (idx + 4 > data.size()) return false;
+    outPkt.target = static_cast<uint32_t>(data[idx]) |
+                   (static_cast<uint32_t>(data[idx+1]) << 8) |
+                   (static_cast<uint32_t>(data[idx+2]) << 16) |
+                   (static_cast<uint32_t>(data[idx+3]) << 24);
+    idx += 4;
+    
+    // Progress
+    if (idx + 4 > data.size()) return false;
+    outPkt.progress = static_cast<uint32_t>(data[idx]) |
+                     (static_cast<uint32_t>(data[idx+1]) << 8) |
+                     (static_cast<uint32_t>(data[idx+2]) << 16) |
+                     (static_cast<uint32_t>(data[idx+3]) << 24);
+    idx += 4;
+    
+    // Completed flag
+    if (idx >= data.size()) return false;
+    outPkt.completed = (data[idx++] != 0);
+    
+    // XP Reward
+    if (idx + 4 > data.size()) return false;
+    outPkt.xpReward = static_cast<uint32_t>(data[idx]) |
+                     (static_cast<uint32_t>(data[idx+1]) << 8) |
+                     (static_cast<uint32_t>(data[idx+2]) << 16) |
+                     (static_cast<uint32_t>(data[idx+3]) << 24);
+    idx += 4;
+    
+    // Gold Reward
+    if (idx + 4 > data.size()) return false;
+    outPkt.goldReward = static_cast<uint32_t>(data[idx]) |
+                       (static_cast<uint32_t>(data[idx+1]) << 8) |
+                       (static_cast<uint32_t>(data[idx+2]) << 16) |
+                       (static_cast<uint32_t>(data[idx+3]) << 24);
+    idx += 4;
+    
+    // Item Reward
+    if (idx + 4 > data.size()) return false;
+    outPkt.itemReward = static_cast<uint32_t>(data[idx]) |
+                       (static_cast<uint32_t>(data[idx+1]) << 8) |
+                       (static_cast<uint32_t>(data[idx+2]) << 16) |
+                       (static_cast<uint32_t>(data[idx+3]) << 24);
+    
+    return true;
+}
+
+
 std::vector<uint8_t> serializeInventoryUpdate(const InventoryUpdatePacket& pkt) {
     std::vector<uint8_t> data;
     data.reserve(10);  // type + slotIndex + itemId + quantity

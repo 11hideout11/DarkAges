@@ -712,6 +712,29 @@ void NetworkManager::sendZoneObjectiveUpdate(ConnectionID connectionId, const Zo
     it->second.quality.bytesSent += packet.size();
 }
 
+void NetworkManager::sendDailyChallengeUpdate(ConnectionID connectionId, const Protocol::DailyChallengePacket& msg) {
+    auto* udp = static_cast<GNSInternal*>(internal_.get());
+    if (udp->sockfd < 0) return;
+
+    auto payload = Protocol::serializeDailyChallenge(msg);
+    if (payload.empty()) return;
+
+    std::vector<uint8_t> packet;
+    packet.reserve(1 + payload.size());
+    packet.push_back(static_cast<uint8_t>(Protocol::PacketType::PACKET_DAILY_CHALLENGE_UPDATE));
+    packet.insert(packet.end(), payload.begin(), payload.end());
+
+    std::lock_guard<std::recursive_mutex> lock(udp->connectionsMutex);
+    auto it = udp->connections.find(connectionId);
+    if (it == udp->connections.end()) return;
+
+    sendto(udp->sockfd, packet.data(), packet.size(), 0,
+           reinterpret_cast<sockaddr*>(&it->second.addr), sizeof(it->second.addr));
+    udp->totalBytesSent += packet.size();
+    it->second.quality.packetsSent++;
+    it->second.quality.bytesSent += packet.size();
+}
+
 void NetworkManager::sendDialogueStart(ConnectionID connectionId, const Protocol::DialogueStartPacket& pkt) {
     auto* udp = static_cast<GNSInternal*>(internal_.get());
     if (udp->sockfd < 0) return;

@@ -225,28 +225,7 @@ public:
     // AOI debugging
     [[nodiscard]] AreaOfInterestSystem& getAOISystem() { return areaOfInterestSystem_; }
 
-    // [ZONE_AGENT] Accessors for extracted handler classes
-    [[nodiscard]] std::unordered_map<ConnectionID, EntityID>* getConnectionToEntityPtr() { return &connectionToEntity_; }
-    [[nodiscard]] std::unordered_map<EntityID, ConnectionID>* getEntityToConnectionPtr() { return &entityToConnection_; }
-    [[nodiscard]] TickMetrics& getMetricsRef() { return metrics_; }
-    [[nodiscard]] CombatSystem* getCombatSystemPtr() { return &combatSystem_; }
-    [[nodiscard]] StatusEffectSystem& getStatusEffectSystem() { return statusEffectSystem_; }
-    [[nodiscard]] ProjectileSystem& getProjectileSystem() { return projectileSystem_; }
-    [[nodiscard]] NPCAISystem& getNPCAISystem() { return npcAISystem_; }
-    [[nodiscard]] ExperienceSystem& getExperienceSystem() { return experienceSystem_; }
-    [[nodiscard]] LootSystem& getLootSystem() { return lootSystem_; }
-    [[nodiscard]] AbilitySystem& getAbilitySystem() { return abilitySystem_; }
-    [[nodiscard]] ItemSystem& getItemSystem() { return itemSystem_; }
-    [[nodiscard]] QuestSystem& getQuestSystem() { return questSystem_; }
-    [[nodiscard]] ChatSystem& getChatSystem() { return chatSystem_; }
-    [[nodiscard]] CraftingSystem& getCraftingSystem() { return craftingSystem_; }
-    [[nodiscard]] TradeSystem& getTradeSystem() { return tradeSystem_; }
-    [[nodiscard]] ZoneEventSystem& getZoneEventSystem() { return zoneEventSystem_; }
-    [[nodiscard]] DialogueSystem& getDialogueSystem() { return dialogueSystem_; }
-    [[nodiscard]] SpawnSystem& getSpawnSystem() { return spawnSystem_; }
-    [[nodiscard]] ZoneObjectiveSystem& getZoneObjectiveSystem() { return zoneObjectiveSystem_; }
-    [[nodiscard]] ZoneDifficultySystem& getDifficultySystem() { return difficultySystem_; }
-    [[nodiscard]] LagCompensator* getLagCompensatorPtr() { return &lagCompensator_; }
+    // [ZONE_AGENT] Accessors for extracted handler classes\n    [[nodiscard]] std::unordered_map<ConnectionID, EntityID>* getConnectionToEntityPtr() { return &connectionToEntity_; }\n    [[nodiscard]] std::unordered_map<EntityID, ConnectionID>* getEntityToConnectionPtr() { return &entityToConnection_; }\n    [[nodiscard]] TickMetrics& getMetricsRef() { return metrics_; }\n    [[nodiscard]] CombatSystem* getCombatSystemPtr() { return &combatSystem_; }\n    [[nodiscard]] StatusEffectSystem& getStatusEffectSystem() { return statusEffectSystem_; }\n    [[nodiscard]] ProjectileSystem& getProjectileSystem() { return projectileSystem_; }\n    [[nodiscard]] NPCAISystem& getNPCAISystem() { return npcAISystem_; }\n    [[nodiscard]] ExperienceSystem& getExperienceSystem() { return experienceSystem_; }\n    [[nodiscard]] LootSystem& getLootSystem() { return lootSystem_; }\n    [[nodiscard]] AbilitySystem& getAbilitySystem() { return abilitySystem_; }\n    [[nodiscard]] ItemSystem& getItemSystem() { return itemSystem_; }\n    [[nodiscard]] QuestSystem& getQuestSystem() { return questSystem_; }\n    [[nodiscard]] ChatSystem& getChatSystem() { return chatSystem_; }\n    [[nodiscard]] CraftingSystem& getCraftingSystem() { return craftingSystem_; }\n    [[nodiscard]] TradeSystem& getTradeSystem() { return tradeSystem_; }\n    [[nodiscard]] ZoneEventSystem& getZoneEventSystem() { return zoneEventSystem_; }\n    [[nodiscard]] DialogueSystem& getDialogueSystem() { return dialogueSystem_; }\n    [[nodiscard]] SpawnSystem& getSpawnSystem() { return spawnSystem_; }\n    [[nodiscard]] ZoneObjectiveSystem& getZoneObjectiveSystem() { return zoneObjectiveSystem_; }\n    [[nodiscard]] ZoneDifficultySystem& getDifficultySystem() { return difficultySystem_; }\n    [[nodiscard]] DailyChallengeSystem& getDailyChallengeSystem() { return dailyChallengeSystem_; }\n    [[nodiscard]] LagCompensator* getLagCompensatorPtr() { return &lagCompensator_; }
     [[nodiscard]] MovementSystem& getMovementSystemRef() { return movementSystem_; }
     [[nodiscard]] Security::AntiCheatSystem& getAntiCheatRef() { return antiCheat_; }
     [[nodiscard]] bool isQoSDegraded() const { return qosDegraded_; }
@@ -471,6 +450,9 @@ public:
 
     // [PHASE 3] Zone difficulty system for Hard Mode scaling
     ZoneDifficultySystem difficultySystem_;
+
+    // [PRD-040] Daily challenge system for player engagement
+    DailyChallengeSystem dailyChallengeSystem_;
 
     // Handoff integration methods
     void initializeHandoffController();

@@ -887,6 +887,7 @@ if(BUILD_TESTS AND TARGET Catch2::Catch2WithMain)
         src/server/tests/TestCollisionLayerManager.cpp
         src/server/tests/TestDailyChallengeSystem.cpp
         src/server/tests/TestWorldProgressionSystem.cpp
+        src/server/tests/TestCooldownState.cpp
     )
 
     # Conditionally include tests for optional features
